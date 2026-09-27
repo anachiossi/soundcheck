@@ -55,8 +55,8 @@ test('repo files are readable: one row per line', () => {
 
 test('only files whose fingerprint changed are downloaded', () => {
   const local = { ...project, shas: { 'film.json': 'a', 'presets/1.json': 'b' } };
-  assert.deepEqual(filesToDownload(local, { 'film.json': 'a', 'presets/1.json': 'c', 'presets/9.json': 'd' }),
-    ['presets/1.json', 'presets/9.json']);
+  assert.deepEqual(filesToDownload(local, { 'film.json': 'a', 'presets/1.json': 'c', 'presets/9.json': 'd', 'inbox.json': 'e' }),
+    ['presets/1.json', 'presets/9.json'], 'inbox.json is not an app file');
 });
 
 test('changes from another device arrive', () => {
@@ -120,4 +120,9 @@ test('preferred TX, and lavs of the preferred model in the preferred colour', ()
 test('kit: which scenes use a TX (so it cannot be deleted)', () => {
   assert.deepEqual(scenesUsing(project, 'transmitters', '2'), ['1', '2']);
   assert.deepEqual(scenesUsing(project, 'lavaliers', '99'), []);
+});
+
+test('files an older app version skipped are downloaded again', () => {
+  const local = { ...project, shas: { 'lines/script/2.json': 'x', 'presets/1.json': 'b' }, lines: {} };
+  assert.deepEqual(filesToDownload(local, { 'lines/script/2.json': 'x', 'presets/1.json': 'b' }), ['lines/script/2.json']);
 });

@@ -132,9 +132,19 @@ export function upgradeOutbox(project) {
   return { ...project, outbox, conflicts };
 }
 
-// Which files must be downloaded: new or different from what this device has.
+// Which files must be downloaded: new or different from what this device has, or
+// marked as received but missing (an older app version skipped kinds of files it
+// didn't know yet, like lines/ before 🎙 Cues).
 export function filesToDownload(project, remoteShas) {
-  return Object.keys(remoteShas).filter(path => remoteShas[path] !== project.shas?.[path]);
+  return Object.keys(remoteShas).filter(path => isAppFile(path) &&
+    (remoteShas[path] !== project.shas?.[path] || fileContent(project, path) === undefined));
+}
+
+// The kinds of files the app uses (the folder also holds e.g. inbox.json for the pipeline).
+function isAppFile(path) {
+  const key = path.replace(/\.json$/, '');
+  return Boolean(sceneFromPath(path) || proposalFromPath(path) || linesFromPath(path)
+    || key === 'film' || key === 'scenes' || LISTS.includes(key));
 }
 
 // JSON text for the repo: readable, with each small record on one line, e.g.
