@@ -233,15 +233,24 @@ button.kit-item:hover { background: #f1f5f9; }
 .pdf-page { width: 100%; height: auto; border: 1px solid var(--line); border-radius: 4px; background: #fff; }
 
 /* ---- 11. Cues (full screen, learn the lines) -------------------------------- */
-.cues { position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column; gap: 2vh;
-  padding: calc(12px + env(safe-area-inset-top)) 20px calc(14px + env(safe-area-inset-bottom));
+/* Easy reading: one text size per screen size, regular weight, generous line and word
+   spacing, left-aligned, short lines, dark text on a soft cream panel. */
+:root { --cue-size: clamp(24px, 3.2vw + 12px, 42px); --cue-paper: #fffbf0; --cue-ink: #1f2430; }
+.cues { position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column; gap: 12px;
+  padding: calc(12px + env(safe-area-inset-top)) 16px calc(14px + env(safe-area-inset-bottom));
   user-select: none; -webkit-user-select: none; cursor: pointer; touch-action: manipulation; }
 .cues__top, .cues__bottom { display: flex; justify-content: space-between; align-items: center; gap: 10px;
-  font-size: 16px; font-weight: 700; opacity: .85; }
+  font-size: 16px; font-weight: 700; }
 .cues__close { border: 0; background: rgba(0,0,0,.18); color: inherit; border-radius: 999px; width: 40px; height: 40px; font-size: 18px; }
-.cues__name { font-size: clamp(28px, 7vw, 56px); font-weight: 800; letter-spacing: .5px; line-height: 1.1; }
-.cues__text { flex: 1; min-height: 0; overflow: hidden; font-weight: 600; line-height: 1.22; }
-.cues__text p { margin: 0 0 .5em; }
+.cues__name { font-size: clamp(26px, 5vw, 44px); font-weight: 800; letter-spacing: .04em; line-height: 1.1; text-align: center; }
+.cues__name small { font-size: 18px; font-weight: 600; letter-spacing: 0; opacity: .85; }
+.cues__panel { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column;
+  background: var(--cue-paper); color: var(--cue-ink); border-radius: 18px; padding: 22px 22px 18px; }
+.cues__text { flex: 1; min-height: 0; overflow: hidden; width: 100%; max-width: 28em; margin: 0 auto; white-space: pre-line;
+  font-size: var(--cue-size); font-weight: 500; line-height: 1.55; letter-spacing: .02em; word-spacing: .12em; text-align: left; }
+.cues__measure { position: absolute; top: 22px; left: 0; right: 0; visibility: hidden; flex: none; height: auto; overflow: visible; pointer-events: none; }
+.cues__continues { align-self: flex-end; margin-top: 8px; font-size: 17px; font-weight: 700; color: #6b5a2e; }
+.cues__continues--hidden { visibility: hidden; } /* keeps its space, so every page has the same room */
 .cues--end { background: var(--ink); color: #fff; align-items: center; justify-content: center; text-align: center; cursor: default; }
 .cues--end h1 { font-size: 56px; margin: 0; }
 .cues--end .btn { min-width: 220px; font-size: 18px; color: var(--ink); }
