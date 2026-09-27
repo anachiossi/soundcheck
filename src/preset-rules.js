@@ -1,10 +1,10 @@
 // preset-rules.js — rules for editing a scene's preset (no screen code):
 // • warnings: the same TX or lav twice in one scene (same frequency on two actors!)
 // • suggestions: the TX/lav a character already wears in other scenes that day
-// • applyOutbox: saved-on-device changes win over older data from the Sheets
-// Used by: editing.js, sync.js, parts/picker.js, parts/scene-table.js
+// • preferences: the character's preferred TX, and lavs of the preferred model + colour
+// Used by: editing.js, kit-editing.js, parts/picker.js, parts/scene-editor.js, screens/kit.js
 
-import { shootingDays } from './model.js';
+import { shootingDays, naturalCompare } from './model.js';
 
 export function emptyRow() {
   return { key: newKey(), char_id: '', tx_id: '', lav_id: '', speaker: 'yes' };
@@ -55,13 +55,29 @@ export function sameDaySuggestions(project, sceneId, charId) {
   return result;
 }
 
-// outbox = { '12': { rows, saved_at } } — changes saved on this device, not uploaded yet.
-export function applyOutbox(presets, outbox = {}) {
-  const result = { ...presets };
-  for (const [sceneId, change] of Object.entries(outbox)) {
-    result[sceneId] = { scene_id: sceneId, updated_at: change.saved_at, rows: change.rows };
-  }
-  return result;
+// From the character's preferences (see model.js): the preferred TX, or the
+// lavs of the preferred model in the preferred colour (then just the model).
+export function preferredFor(project, charId, field) {
+  const character = project.characters.find(c => String(c.id) === String(charId));
+  if (!character) return [];
+  if (field === 'tx_id') return character.pref_tx ? [String(character.pref_tx)] : [];
+  if (field !== 'lav_id') return [];
+  const models = [character.pref_lav_model, character.pref_lav_model_2].filter(Boolean).map(m => m.toLowerCase());
+  const colour = (character.pref_lav_color || '').toLowerCase();
+  if (!models.length && !colour) return [];
+  const fits = lav => (!models.length || models.includes(String(lav.model).toLowerCase()));
+  const best = project.lavaliers.filter(lav => fits(lav) && (!colour || lav.color.toLowerCase() === colour));
+  const rest = project.lavaliers.filter(lav => fits(lav) && !best.includes(lav));
+  return [...best, ...(colour && best.length ? [] : rest)].map(lav => String(lav.id));
+}
+
+// Scenes whose preset uses this character / TX / lav, e.g. ['2', '11'].
+const FIELD = { characters: 'char_id', transmitters: 'tx_id', lavaliers: 'lav_id' };
+export function scenesUsing(project, list, id) {
+  return Object.values(project.presets)
+    .filter(preset => preset.rows.some(row => String(row[FIELD[list]]) === String(id)))
+    .map(preset => String(preset.scene_id))
+    .sort(naturalCompare);
 }
 
 // Rows as stored (without the screen-only `key`).

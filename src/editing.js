@@ -8,6 +8,7 @@
 import { getState, setState, saveAndShow, showMessage } from './state.js';
 import { emptyRow, newKey, cleanRows } from './preset-rules.js';
 import { syncNow } from './sync.js';
+import { presetFile } from './store/repo-files.js';
 
 const SPEAKER_NEXT = { yes: 'no', no: 'maybe', maybe: 'yes' };
 
@@ -64,7 +65,7 @@ export async function saveEdit() {
   const rows = cleanRows(edit.rows).filter(r => r.char_id || r.tx_id || r.lav_id);
   const savedAt = new Date().toISOString();
   const presets = { ...project.presets, [edit.sceneId]: { scene_id: edit.sceneId, updated_at: savedAt, rows } };
-  const outbox = { ...project.outbox, [edit.sceneId]: { rows, saved_at: savedAt } };
+  const outbox = { ...project.outbox, [presetFile(edit.sceneId)]: { saved_at: savedAt } };
   await saveAndShow({ ...project, presets, outbox }, { edit: null, picker: null });
   showMessage('ok', `Scene #${edit.sceneId} saved.` + (navigator.onLine ? '' : ' It will upload when there is signal.'));
   syncNow();

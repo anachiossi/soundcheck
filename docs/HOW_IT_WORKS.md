@@ -18,14 +18,14 @@
 | Week / day banners, scene chips | `src/parts/banners.js` |
 | The Schedule screen (Day / Week / All film) | `src/screens/schedule.js` |
 | Scene lookup | `src/screens/scenes.js` |
-| Kit (characters, TX, lavs) | `src/screens/kit.js` |
+| Kit (characters, TX, lavs) | `src/screens/kit.js`; its form `src/parts/item-form.js`; saving `src/kit-editing.js` |
 | Films on this device, import, backup | `src/screens/projects.js` |
 | The exported images | `src/export/image.js` (layout), `src/export/draw.js` (shapes) |
 | What a project contains | the comment at the top of `src/model.js` |
 | What happens when a button is pressed | the actions in `src/state.js` |
 | Editing a scene (draft, save) | `src/editing.js`, the editor table `src/parts/scene-editor.js` |
 | The picker that slides up | `src/parts/picker.js` |
-| Warnings (TX twice) and "same as other scenes today" | `src/preset-rules.js` |
+| Warnings (TX twice), "same as other scenes today", preferred TX/lav | `src/preset-rules.js` |
 | Uploading / downloading, "Keep mine" | `src/sync.js` (logic), `src/store/github.js` (talks to GitHub) |
 | How a film is split into files | `src/store/repo-files.js` |
 | Week / all-film images | `src/export/schedule-images.js` |

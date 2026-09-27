@@ -7,6 +7,7 @@
 import { useEffect, useState } from '../vendor/preact-htm.js';
 import * as local from './store/local.js';
 import { defaultDay, localTodayIso } from './model.js';
+import { upgradeOutbox } from './store/repo-files.js';
 
 let state = {
   project: null,            // the open film (see model.js)
@@ -88,8 +89,9 @@ export async function start() {
 
   const prefs = loadJson('sc_prefs', {});
   const projectId = prefs.projectId || state.projects[0]?.id;
-  const project = projectId ? await local.loadProject(projectId) : null;
-  if (!project) return setState({ screen: 'projects' });
+  const saved = projectId ? await local.loadProject(projectId) : null;
+  if (!saved) return setState({ screen: 'projects' });
+  const project = upgradeOutbox(saved);
 
   const { projectId: _, ...choices } = prefs;
   const draft = loadJson('sc_edit', null);
@@ -113,8 +115,9 @@ export const removeLookup = sceneId => setState({ lookup: state.lookup.filter(id
 export const clearLookup = () => setState({ lookup: [] });
 
 export async function openProject(projectId) {
-  const project = await local.loadProject(projectId);
-  if (!project) return showMessage('error', 'That film is not on this device.');
+  const saved = await local.loadProject(projectId);
+  if (!saved) return showMessage('error', 'That film is not on this device.');
+  const project = upgradeOutbox(saved);
   setState({ project, screen: 'schedule', lookup: [], edit: null, picker: null,
     day: defaultDay(project, localTodayIso()), week: null });
 }
@@ -124,8 +127,9 @@ export async function importProjectFile(file) {
   try {
     const incoming = await local.readProjectFile(file);
     const existing = await local.loadProject(incoming.id);
-    const project = { outbox: {}, conflicts: {}, shas: {}, ...incoming,
-      ...(existing && { outbox: existing.outbox || {}, conflicts: existing.conflicts || {} }) };
+    const kept = existing && upgradeOutbox(existing);
+    const project = upgradeOutbox({ outbox: {}, conflicts: {}, shas: {}, ...incoming,
+      ...(kept && { outbox: kept.outbox, conflicts: kept.conflicts }) });
     await local.saveProject(project);
     await openProject(project.id);
     showMessage('ok', `${project.name} is now saved on this device.`);

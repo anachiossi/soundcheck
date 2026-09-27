@@ -1,6 +1,6 @@
 // sync.js — keeps the device and the soundcheck-data repo in step.
 //   1. download: files that changed in the repo (by their sha fingerprint)
-//   2. upload:   scenes saved on this device (the outbox), all in ONE commit
+//   2. upload:   files changed on this device (the outbox), all in ONE commit
 // Runs by itself when the app opens, when signal comes back, when you come
 // back to the app, and right after every Save. With no signal nothing happens:
 // changes wait safely in the outbox.
@@ -9,9 +9,10 @@
 import { getState, setState, saveAndShow, showMessage } from './state.js';
 import { defaultDay, localTodayIso } from './model.js';
 import * as github from './store/github.js';
-import { applyRemote, filesToDownload, emptyProject, presetFile, formatJson } from './store/repo-files.js';
+import { applyRemote, filesToDownload, emptyProject, fileContent, setFileContent, formatJson } from './store/repo-files.js';
 
 let lastSync = 0;
+let runAgain = false; // a save happened while syncing: sync once more right after
 const QUIET_GAP = 60 * 1000; // automatic syncs at most once a minute
 
 export function startAutoSync() {
@@ -23,7 +24,8 @@ export function startAutoSync() {
 
 export async function syncNow({ loud = false } = {}) {
   const { connection, project, sync } = getState();
-  if (!connection || !project || !navigator.onLine || sync.running) return;
+  if (!connection || !project || !navigator.onLine) return;
+  if (sync.running) { runAgain = true; return; }
   // A film added from a file doesn't know its folder yet: same id, same folder.
   if (!project.folder) await saveAndShow({ ...project, folder: `projects/${project.id}` });
   lastSync = Date.now();
@@ -42,10 +44,14 @@ export async function syncNow({ loud = false } = {}) {
       }
     }
     setState({ sync: { running: false, error: null, at: new Date().toISOString() } });
-    if (loud) showMessage('ok', uploaded ? `Uploaded ${uploaded} scene(s).` : 'Everything is up to date.');
+    if (loud) showMessage('ok', uploaded ? `Uploaded ${uploaded} change(s).` : 'Everything is up to date.');
   } catch (error) {
     setState({ sync: { running: false, error: error.message } });
     if (loud) showMessage('error', `Couldn't sync: ${error.message}. Your changes are safe on this device.`);
+  }
+  if (runAgain) {
+    runAgain = false;
+    syncNow();
   }
 }
 
@@ -71,46 +77,46 @@ async function download(connection, tree) {
 
 async function upload(connection, tree) {
   const project = getState().project;
-  const sceneIds = Object.keys(project.outbox || {}).filter(id => !project.conflicts?.[id]);
-  if (!sceneIds.length) return 0;
+  const paths = Object.keys(project.outbox || {}).filter(path => !project.conflicts?.[path]);
+  if (!paths.length) return 0;
 
   const files = {};
-  for (const id of sceneIds) {
-    const change = project.outbox[id];
-    const preset = { scene_id: id, updated_at: change.saved_at, updated_by: connection.device, rows: change.rows };
-    files[`${project.folder}/${presetFile(id)}`] = formatJson(preset);
+  for (const path of paths) {
+    let content = fileContent(project, path);
+    if (path.startsWith('presets/')) content = { ...content, updated_at: project.outbox[path].saved_at, updated_by: connection.device };
+    files[`${project.folder}/${path}`] = formatJson(content);
   }
-  const names = sceneIds.map(id => '#' + id).join(', ');
+  const names = paths.map(path => path.replace(/^presets\//, '#').replace(/\.json$/, '')).join(', ');
   await github.commitFiles(connection, tree, files, `Edit ${names} — ${connection.device}`);
 
-  // Uploaded: take these scenes out of the outbox and remember their new fingerprints.
+  // Uploaded: take these files out of the outbox and remember their new fingerprints.
   const after = await github.readTree(connection);
   const latest = getState().project;
   const outbox = { ...latest.outbox };
   const shas = { ...latest.shas };
-  for (const id of sceneIds) {
-    if (outbox[id]?.saved_at === project.outbox[id].saved_at) delete outbox[id];
-    shas[presetFile(id)] = after.files[`${project.folder}/${presetFile(id)}`];
+  for (const path of paths) {
+    if (outbox[path]?.saved_at === project.outbox[path].saved_at) delete outbox[path];
+    shas[path] = after.files[`${project.folder}/${path}`];
   }
   await saveAndShow({ ...latest, outbox, shas });
-  return sceneIds.length;
+  return paths.length;
 }
 
-// A scene changed here AND on another device: keep one of the two.
-export async function resolveConflict(sceneId, keep) {
-  const project = getState().project;
-  const conflict = project.conflicts[sceneId];
-  const conflicts = { ...project.conflicts };
-  delete conflicts[sceneId];
-  const outbox = { ...project.outbox };
-  const presets = { ...project.presets };
+// A file (a scene, or the character/kit list) changed here AND on another
+// device: keep one of the two.
+export async function resolveConflict(path, keep) {
+  const project = { ...getState().project };
+  const conflict = project.conflicts[path];
+  project.conflicts = { ...project.conflicts };
+  delete project.conflicts[path];
+  project.outbox = { ...project.outbox };
   if (keep === 'theirs') {
-    delete outbox[sceneId];
-    presets[sceneId] = conflict.theirs;
+    delete project.outbox[path];
+    setFileContent(project, path, conflict.theirs);
   } else {
-    outbox[sceneId] = { ...outbox[sceneId], saved_at: new Date().toISOString() };
+    project.outbox[path] = { saved_at: new Date().toISOString() };
   }
-  await saveAndShow({ ...project, conflicts, outbox, presets });
+  await saveAndShow(project);
   syncNow();
 }
 

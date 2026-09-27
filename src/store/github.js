@@ -5,16 +5,27 @@
 
 const API = 'https://api.github.com';
 
+// Bad set Wi-Fi: give up after 20 s instead of waiting forever (changes stay in the outbox).
 async function call(connection, path, options = {}) {
-  const response = await fetch(`${API}/repos/${connection.owner}/${connection.repo}${path}`, {
-    ...options,
-    cache: 'no-store',
-    headers: {
-      Authorization: `Bearer ${connection.token}`,
-      Accept: 'application/vnd.github+json',
-      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
-    },
-  });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 20000);
+  let response;
+  try {
+    response = await fetch(`${API}/repos/${connection.owner}/${connection.repo}${path}`, {
+      ...options,
+      cache: 'no-store',
+      signal: controller.signal,
+      headers: {
+        Authorization: `Bearer ${connection.token}`,
+        Accept: 'application/vnd.github+json',
+        ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+      },
+    });
+  } catch (error) {
+    throw new Error(error.name === 'AbortError' ? 'no answer from GitHub (weak signal?)' : 'no connection to GitHub');
+  } finally {
+    clearTimeout(timer);
+  }
   if (!response.ok) {
     const error = new Error(explain(response.status));
     error.status = response.status;

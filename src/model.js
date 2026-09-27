@@ -10,7 +10,8 @@
       id: 'la-buona-educazione', name: 'La buona educazione',
       data_as_of: '2026-09-27T19:22:00Z',        when the data was last fetched
       sources: { ... },                           where "Refresh" downloads from
-      characters:   [{ id, name, actor, color }],
+      characters:   [{ id, name, actor, color,
+                       pref_tx, pref_tx_model, pref_lav_model, pref_lav_model_2, pref_lav_color }],
       transmitters: [{ id, model, color, connector, order }],
       lavaliers:    [{ id, model, color, connector, attenuated, brand }],
       schedule:     [{ scene_id, day, order, date, week, call, wrap }],

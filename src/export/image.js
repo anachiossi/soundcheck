@@ -43,7 +43,7 @@ export function footer(ctx, width, y, project) {
   const waiting = Object.keys(project.outbox || {}).length;
   if (waiting) {
     font(ctx, 600, 22);
-    text(ctx, `⚠ ${waiting} scene change(s) on this device not uploaded yet`, PAD, y + 64, width - 2 * PAD, '#ea580c');
+    text(ctx, `⚠ ${waiting} change(s) on this device not uploaded yet`, PAD, y + 64, width - 2 * PAD, '#ea580c');
   }
 }
 
@@ -78,6 +78,13 @@ export function drawScene(ctx, project, sceneId, y) {
     font(ctx, 400, 26); text(ctx, project.presets[sceneId] ? 'Preset has no rows' : 'No preset', PAD + 20, y + 30, 0, '#64748b');
     return y + ROW + 14;
   }
+  // Column titles, so "YES" reads as "this character speaks".
+  font(ctx, 600, 20);
+  text(ctx, 'CHARACTER', PAD + 24, y + 12, 0, '#64748b');
+  text(ctx, 'TX', PAD + 551, y + 12, 0, '#64748b', 'center');
+  text(ctx, 'LAV', PAD + 656, y + 12, 0, '#64748b');
+  text(ctx, 'SPEAKS', PAD + 940, y + 12, 0, '#64748b', 'center');
+  y += 34;
   for (const row of rows) {
     const h = ROW - 16;
     const c = row.character;

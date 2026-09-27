@@ -3,16 +3,16 @@
 // When you change any app file, bump VERSION so devices pick up the new files.
 // (Film data is NOT stored here; it lives in the per-film database.)
 
-const VERSION = 'soundcheck-v5';
+const VERSION = 'soundcheck-v6';
 const FILES = [
   './', 'index.html', 'app.css', 'manifest.webmanifest',
   'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png',
   'vendor/preact-htm.js',
   'vendor/fonts/inter-400.woff2', 'vendor/fonts/inter-600.woff2', 'vendor/fonts/inter-800.woff2',
   'src/main.js', 'src/state.js', 'src/model.js', 'src/colour.js',
-  'src/editing.js', 'src/sync.js', 'src/preset-rules.js',
+  'src/editing.js', 'src/kit-editing.js', 'src/sync.js', 'src/preset-rules.js',
   'src/store/local.js', 'src/store/github.js', 'src/store/repo-files.js',
-  'src/parts/pills.js', 'src/parts/scene-table.js', 'src/parts/scene-editor.js', 'src/parts/picker.js', 'src/parts/banners.js',
+  'src/parts/pills.js', 'src/parts/scene-table.js', 'src/parts/scene-editor.js', 'src/parts/picker.js', 'src/parts/banners.js', 'src/parts/item-form.js',
   'src/screens/schedule.js', 'src/screens/scenes.js', 'src/screens/kit.js', 'src/screens/projects.js',
   'src/export/draw.js', 'src/export/image.js', 'src/export/schedule-images.js', 'src/export/share.js',
 ];

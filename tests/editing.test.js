@@ -3,8 +3,8 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { warnings, usedByOtherRows, sameDaySuggestions, cleanRows } from '../src/preset-rules.js';
-import { projectToFiles, applyRemote, filesToDownload, formatJson, emptyProject, sameRows } from '../src/store/repo-files.js';
+import { warnings, usedByOtherRows, sameDaySuggestions, cleanRows, preferredFor, scenesUsing } from '../src/preset-rules.js';
+import { projectToFiles, applyRemote, filesToDownload, formatJson, emptyProject, sameRows, upgradeOutbox } from '../src/store/repo-files.js';
 
 const row = (char_id, tx_id, lav_id, speaker = 'yes') => ({ char_id, tx_id, lav_id, speaker });
 const project = {
@@ -65,20 +65,34 @@ test('changes from another device arrive', () => {
   assert.deepEqual(merged.presets['2'].rows, theirs.rows);
 });
 
+const mine = [row('1', '1', '7')];
+const edited = { ...project, presets: { ...project.presets, 2: { scene_id: '2', rows: mine } },
+  outbox: { 'presets/2.json': { saved_at: 't' } } };
+
 test('a scene saved on this device is never overwritten by the repo', () => {
-  const mine = [row('1', '1', '7')];
-  const local = { ...project, outbox: { 2: { rows: mine, saved_at: 't' } } };
-  const merged = applyRemote(local, { 'presets/2.json': { scene_id: '2', rows: [row('2', '2', '8')] } }, {});
-  assert.ok(merged.conflicts['2'], 'both changed it: the user must choose');
-  assert.deepEqual(merged.outbox['2'].rows, mine);
+  const merged = applyRemote(edited, { 'presets/2.json': { scene_id: '2', rows: [row('2', '2', '8')] } }, {});
+  assert.ok(merged.conflicts['presets/2.json'], 'both changed it: the user must choose');
+  assert.deepEqual(merged.presets['2'].rows, mine);
 });
 
 test('if the repo already has exactly my change, nothing is left to upload', () => {
-  const mine = [row('1', '1', '7')];
-  const local = { ...project, outbox: { 2: { rows: mine, saved_at: 't' } } };
-  const merged = applyRemote(local, { 'presets/2.json': { scene_id: '2', rows: mine } }, {});
-  assert.equal(merged.outbox['2'], undefined);
-  assert.equal(merged.conflicts['2'], undefined);
+  const merged = applyRemote(edited, { 'presets/2.json': { scene_id: '2', rows: mine } }, {});
+  assert.equal(merged.outbox['presets/2.json'], undefined);
+  assert.equal(merged.conflicts['presets/2.json'], undefined);
+});
+
+test('a changed character list is protected the same way', () => {
+  const renamed = { ...project, characters: [{ id: '1', name: 'ANNA B' }], outbox: { 'characters.json': { saved_at: 't' } } };
+  const merged = applyRemote(renamed, { 'characters.json': [{ id: '1', name: 'ANNA C' }] }, {});
+  assert.equal(merged.characters[0].name, 'ANNA B');
+  assert.ok(merged.conflicts['characters.json']);
+});
+
+test('devices with the old outbox (by scene number) are upgraded', () => {
+  const old = { ...project, outbox: { 12: { rows: mine, saved_at: 't' } }, conflicts: { 3: { theirs: {} } } };
+  const upgraded = upgradeOutbox(old);
+  assert.deepEqual(upgraded.outbox, { 'presets/12.json': { saved_at: 't' } });
+  assert.ok(upgraded.conflicts['presets/3.json']);
 });
 
 test('a new device starts empty, then fills from the repo', () => {
@@ -87,4 +101,23 @@ test('a new device starts empty, then fills from the repo', () => {
   assert.equal(merged.characters.length, 2);
   assert.equal(Object.keys(merged.presets).length, 2);
   assert.ok(sameRows(merged.presets['1'].rows, project.presets['1'].rows));
+});
+
+test('preferred TX, and lavs of the preferred model in the preferred colour', () => {
+  const film = {
+    ...project,
+    characters: [{ id: '1', name: 'ANNA', pref_tx: '5', pref_lav_model: '6060', pref_lav_color: '#FAF1D9' }, { id: '2', name: 'BRUNO' }],
+    lavaliers: [
+      { id: '1', model: '6060', color: '#000000' }, { id: '2', model: '6060', color: '#faf1d9' },
+      { id: '3', model: '4060', color: '#faf1d9' }, { id: '4', model: '6060', color: '#faf1d9' },
+    ],
+  };
+  assert.deepEqual(preferredFor(film, '1', 'tx_id'), ['5']);
+  assert.deepEqual(preferredFor(film, '1', 'lav_id'), ['2', '4']);
+  assert.deepEqual(preferredFor(film, '2', 'lav_id'), [], 'no preferences, no suggestions');
+});
+
+test('kit: which scenes use a TX (so it cannot be deleted)', () => {
+  assert.deepEqual(scenesUsing(project, 'transmitters', '2'), ['1', '2']);
+  assert.deepEqual(scenesUsing(project, 'lavaliers', '99'), []);
 });

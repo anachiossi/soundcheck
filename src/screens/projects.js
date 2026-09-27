@@ -59,8 +59,8 @@ function OpenFilm({ state }) {
   const waiting = Object.keys(project.outbox || {}).length;
   const conflicts = Object.keys(project.conflicts || {}).length;
   const status = sync.running ? 'Syncing…'
-    : conflicts ? `⚠ ${conflicts} scene(s) changed on two devices: open them to choose`
-    : waiting ? `● ${waiting} scene(s) saved here, waiting to upload`
+    : conflicts ? `⚠ ${conflicts} change(s) made on two devices: open them to choose`
+    : waiting ? `● ${waiting} change(s) saved here, waiting to upload`
     : sync.error ? `Last sync failed: ${sync.error}`
     : `✓ Up to date · data as of ${formatStamp(project.data_as_of)}`;
   return html`

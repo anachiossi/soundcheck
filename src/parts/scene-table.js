@@ -10,6 +10,7 @@ import { html } from '../../vendor/preact-htm.js';
 import { sceneRows, scheduleFor, sceneInfo, formatDate, formatStamp, timeClass } from '../model.js';
 import { startEdit } from '../editing.js';
 import { resolveConflict } from '../sync.js';
+import { presetFile } from '../store/repo-files.js';
 import { CharacterPill, TxPill, LavPill, SpeakerBadge } from './pills.js';
 import { SceneEditor } from './scene-editor.js';
 
@@ -17,8 +18,9 @@ export function SceneTable({ project, sceneId, edit, showDay = false, onRemove, 
   const when = scheduleFor(project, sceneId);
   const info = sceneInfo(project, sceneId);
   const editing = edit?.sceneId === sceneId;
-  const waiting = !!project.outbox?.[sceneId];
-  const conflict = project.conflicts?.[sceneId];
+  const file = presetFile(sceneId);
+  const waiting = !!project.outbox?.[file];
+  const conflict = project.conflicts?.[file];
 
   return html`
     <section class=${'scene' + (editing ? ' scene--editing' : '')} id=${'scene-' + sceneId}>
@@ -50,8 +52,8 @@ export function SceneTable({ project, sceneId, edit, showDay = false, onRemove, 
           <p><b>Changed on another device too</b> (${conflict.theirs.updated_by || 'unknown'}, ${formatStamp(conflict.theirs.updated_at)}).
             You see your version. Which one to keep?</p>
           <div class="toolbar">
-            <button class="btn btn--primary" onClick=${() => resolveConflict(sceneId, 'mine')}>Keep mine</button>
-            <button class="btn" onClick=${() => resolveConflict(sceneId, 'theirs')}>Use the other one</button>
+            <button class="btn btn--primary" onClick=${() => resolveConflict(file, 'mine')}>Keep mine</button>
+            <button class="btn" onClick=${() => resolveConflict(file, 'theirs')}>Use the other one</button>
           </div>
         </div>`}
       ${editing ? html`<${SceneEditor} project=${project} edit=${edit} />` : html`<${MicRows} project=${project} sceneId=${sceneId} />`}

@@ -30,7 +30,6 @@ async function device(name, width = 390) {
   const context = await browser.newContext({ viewport: { width, height: 844 }, deviceScaleFactor: 2 });
   const page = await context.newPage();
   page.on('pageerror', e => check(false, `${name} page error: ${e.message}`));
-  page.on('console', m => m.text().startsWith('SYNC') && console.log(`   [${name}] ${m.text()}`));
   await page.goto(URL);
   await page.fill('input[type=password]', TOKEN);
   await page.fill('input[placeholder^="e.g."]', `test ${name}`);
@@ -95,18 +94,41 @@ await A.page.click('#scene-11 >> text=Keep mine');
 for (let i = 0; i < 30; i++) { // check once a second, up to 30 s
   const done = await A.page.evaluate(async () => {
     const s = (await import('./src/state.js')).getState();
-    return !s.sync.running && !s.project.outbox['11'];
+    return !s.sync.running && !s.project.outbox['presets/11.json'] && !s.project.conflicts['presets/11.json'];
   });
   if (done) break;
   await A.page.waitForTimeout(1000);
 }
-console.log('   sync state after Keep mine:', JSON.stringify(await A.page.evaluate(async () => {
-  const s = (await import('./src/state.js')).getState();
-  return { sync: s.sync, outbox: Object.keys(s.project.outbox), conflicts: Object.keys(s.project.conflicts) };
-})));
 check((await api('projects/la-buona-educazione/presets/11.json')).rows[0].tx_id === '19', '"Keep mine": A\'s version is in the repo');
 
-// 5. images
+// 5. kit: change a character's actor + preferred TX; picker shows preferences
+await A.page.click('.tabs button:nth-child(3)');
+await A.page.click('button.kit-item:has-text("KLAUS")');
+await A.page.screenshot({ path: '.shots/kit-form.png', fullPage: true });
+await A.page.fill('.item-form label:has-text("Actor") input', 'Test Actor');
+await A.page.click('.item-form label:has-text("Preferred TX") .choice:text-is("21")');
+await A.page.click('.item-form .btn--primary');
+await A.page.waitForSelector('.message >> text=character 10 saved');
+for (let i = 0; i < 30; i++) {
+  const done = await A.page.evaluate(async () => {
+    const s = (await import('./src/state.js')).getState();
+    return !s.sync.running && !s.project.outbox['characters.json'];
+  });
+  if (done) break;
+  await A.page.waitForTimeout(1000);
+}
+const klaus = (await api('projects/la-buona-educazione/characters.json')).find(c => c.name === 'KLAUS');
+check(klaus.actor === 'Test Actor' && klaus.pref_tx === '21', 'kit: character change uploaded (actor + preferred TX)');
+await A.page.screenshot({ path: '.shots/kit.png' });
+await A.page.click('.tabs button:nth-child(2)');
+await A.page.click('#scene-2 button[title=Edit]');
+await A.page.click('#scene-2 .mics__row--edit >> nth=0 >> .edit-cell >> nth=2');
+check(await A.page.isVisible('.sheet >> text=Preferred for INES'), 'lav picker shows "Preferred for INES"');
+await A.page.screenshot({ path: '.shots/picker-lav-prefs.png' });
+await A.page.click('.sheet .icon-btn');
+await A.page.click('#scene-2 .edit-actions .btn:text-is("Cancel")');
+
+// 6. images
 const sizes = await A.page.evaluate(async () => {
   const { scheduleImages } = await import('./src/export/schedule-images.js');
   const { getState } = await import('./src/state.js');
