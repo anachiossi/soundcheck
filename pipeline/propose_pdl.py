@@ -77,7 +77,7 @@ def build_pdl_proposal(film_folder, email_folder, today=None):
         add(check_scene_info(as_odg_scene(scene), film["scenes"].get(scene["scene_id"])))
     for scene in future_scenes:
         add(check_scene_mics(scene["scene_id"], scene["cast"], None, film["presets"].get(scene["scene_id"]),
-                             film["characters"]))
+                             film["characters"], source="PDL"))
     if unscheduled:
         checks.append(f"{len(unscheduled)} scene(s) without a shooting day: {', '.join(s['scene_id'] for s in unscheduled)}")
 

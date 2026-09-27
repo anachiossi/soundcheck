@@ -18,7 +18,7 @@ def preferred_free_tx(character, rows):
     return tx if tx and tx not in used else ""
 
 
-def check_scene_mics(scene_id, odg_cast_ids, speaker_names, preset, characters):
+def check_scene_mics(scene_id, odg_cast_ids, speaker_names, preset, characters, source="ODG"):
     """speaker_names: None when there are no sides for this scene."""
     changes, warnings, checks = [], [], []
     by_id = {c["id"]: c for c in characters}
@@ -39,7 +39,7 @@ def check_scene_mics(scene_id, odg_cast_ids, speaker_names, preset, characters):
         if cid in in_preset:
             continue
         speaks = "yes" if cid in speakers else ("no" if speaker_names is not None else "maybe")
-        reason = "speaks in the sides" if cid in speakers else "in the ODG cast"
+        reason = "speaks in the sides" if cid in speakers else f"in the {source} cast"
         row = {"char_id": cid, "tx_id": preferred_free_tx(by_id.get(cid), rows), "lav_id": "", "speaker": speaks}
         changes.append({"text": f"Scene {scene_id}: add {name(cid)} ({reason})", "scene_id": scene_id,
                         "op": {"op": "add_row", "scene_id": scene_id, "row": row}})
@@ -47,7 +47,7 @@ def check_scene_mics(scene_id, odg_cast_ids, speaker_names, preset, characters):
     # 2. rows for people who are not in the scene
     for cid in in_preset:
         if odg_cast_ids and cid not in odg_cast_ids and cid not in speakers:
-            changes.append({"text": f"Scene {scene_id}: {name(cid)} has a mic but isn't in the ODG cast. Remove?",
+            changes.append({"text": f"Scene {scene_id}: {name(cid)} has a mic but isn't in the {source} cast. Remove?",
                             "scene_id": scene_id, "op": {"op": "remove_row", "scene_id": scene_id, "char_id": cid}})
 
     # 3. YES / NO from the sides
@@ -61,7 +61,7 @@ def check_scene_mics(scene_id, odg_cast_ids, speaker_names, preset, characters):
 
     if not changes:
         plural = lambda n, word: f"{n} {word}{'' if n == 1 else 's'}"
-        who = (f"{plural(len(odg_cast_ids), 'actor')} in the ODG = {plural(len(rows), 'mic')}"
+        who = (f"{plural(len(odg_cast_ids), 'actor')} in the {source} = {plural(len(rows), 'mic')}"
                if odg_cast_ids else plural(len(rows), "mic"))
         spoke = ", speakers match the sides" if speaker_names is not None else ""
         checks.append(f"Scene {scene_id}: {who}{spoke}")

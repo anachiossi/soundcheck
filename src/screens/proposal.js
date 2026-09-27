@@ -36,7 +36,9 @@ export function ProposalScreen({ state }) {
   return html`
     <button class="link back" onClick=${() => showScreen('schedule')}>‹ Back to schedule</button>
     <h2 class="section-title">${proposal.title}</h2>
-    <p class="muted">From the email "${proposal.source.subject}" · Day ${proposal.day}, ${formatDate(proposal.date, { weekday: true })}</p>
+    <p class="muted">From the email "${proposal.source.subject}" · ${proposal.kind === 'pdl'
+      ? 'the whole schedule, from today on'
+      : `Day ${proposal.day}, ${formatDate(proposal.date, { weekday: true })}`}</p>
 
     ${proposal.warnings.length > 0 && html`
       <div class="proposal-warnings">
