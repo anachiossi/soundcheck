@@ -76,8 +76,9 @@ export function KitScreen({ state }) {
       render=${c => html`
         <${CharacterPill} character=${c} />
         <small class="prefs">
-          ${c.pref_tx && html`TX ${c.pref_tx} · `}${c.pref_lav_model || ''}${c.pref_lav_model_2 ? ` / ${c.pref_lav_model_2}` : ''} ${lavColour(c.pref_lav_color)}
-          ${scenesUsing(project, 'characters', c.id).length} scenes
+          ${(c.pref_tx || c.pref_lav_model || c.pref_lav_color) && html`
+            <span>Prefers ${c.pref_tx && `TX ${c.pref_tx} · `}${c.pref_lav_model || 'lav'}${c.pref_lav_model_2 ? ` / ${c.pref_lav_model_2}` : ''} ${lavColour(c.pref_lav_color)}</span>`}
+          <span>in ${scenesUsing(project, 'characters', c.id).length} scenes</span>
         </small>`} />
     <${Section} ...${shared} list="transmitters" title="Transmitters"
       blank=${{ id: nextId('transmitters'), color: '#e9e9e9', order: project.transmitters.length + 1 }}

@@ -12,15 +12,15 @@ function coloured(background) {
   return `background:${bg};color:${textColourFor(bg)}`;
 }
 
-const firstName = full => (full || '').split(' ')[0];
-
+// Two lines: the character's NAME big, the actor's full name under it.
 export function CharacterPill({ character, id }) {
   if (!character) return html`<span class="pill pill--missing">${id ? `? ${id}` : '—'}</span>`;
   return html`
     <span class="pill pill--char" style=${coloured(character.color)}>
-      <b>${character.name}</b>
-      ${character.actor && html`<small class="only-wide">${character.actor}</small>
-        <small class="only-narrow">${firstName(character.actor)}</small>`}
+      <span class="pill__lines">
+        <b>${character.name}</b>
+        ${character.actor && html`<small>${character.actor}</small>`}
+      </span>
       <small class="pill__id">${character.id}</small>
     </span>`;
 }
