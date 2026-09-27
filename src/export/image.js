@@ -38,7 +38,8 @@ export const FOOTER_HEIGHT = 110;
 
 export function footer(ctx, width, y, project) {
   font(ctx, 400, 22);
-  text(ctx, `${project.name} · soundcheck · data as of ${formatStamp(project.data_as_of)}`, PAD, y + 30, width - 2 * PAD, '#64748b');
+  text(ctx, `${project.name} · data as of ${formatStamp(project.data_as_of)}`, PAD, y + 30, width - 2 * PAD - 300, '#64748b');
+  text(ctx, 'soundcheck by anachiossi', width - PAD, y + 30, 300, '#64748b', 'right');
   const waiting = Object.keys(project.outbox || {}).length;
   if (waiting) {
     font(ctx, 600, 22);
