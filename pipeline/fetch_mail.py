@@ -7,13 +7,15 @@ Reads the mailbox with an app password:
 Which emails belong to a film is written in the film's folder (private data repo):
     projects/<film>/inbox.json   { "gmail_search": "subject:ODG has:attachment" }
 
-PDFs are saved in projects/<film>/_inbox/<date>_<subject>/ (not committed to git:
-scripts are confidential and big). Emails already downloaded are skipped.
+PDFs are saved in projects/<film>/_inbox/<date>_<subject>_<id>/ (not committed to git:
+scripts are confidential and big). Each email is recognised by its own Message-ID, so a
+corrected ODG sent again with the same subject is still a new email.
 
     python pipeline/fetch_mail.py D:/sound_check_data/projects/la-buona-educazione
 """
 
 import email
+import hashlib
 import imaplib
 import json
 import os
@@ -65,7 +67,9 @@ def fetch(film_folder):
         message = email.message_from_bytes(data[0][1])
         subject = decoded(message["Subject"]).replace("Fwd:", "").strip()
         date = parsedate_to_datetime(message["Date"]).strftime("%Y-%m-%d")
-        folder = inbox / f"{date}_{safe_name(subject)}"
+        message_id = (message["Message-ID"] or f"{date}-{subject}").strip()
+        short_id = hashlib.sha1(message_id.encode()).hexdigest()[:8]  # unique per email
+        folder = inbox / f"{date}_{safe_name(subject)}_{short_id}"
         if folder.exists():
             continue
         saved = []
@@ -77,7 +81,8 @@ def fetch(film_folder):
                 saved.append(name)
         if saved:
             (folder / "email.json").write_text(json.dumps(
-                {"subject": subject, "date": date, "from": decoded(message["From"]), "files": saved},
+                {"subject": subject, "date": date, "from": decoded(message["From"]), "files": saved,
+                 "message_id": message_id},
                 ensure_ascii=False, indent=2), encoding="utf-8")
             new.append(folder.name)
             print(f"  new: {folder.name}  ({', '.join(saved)})")

@@ -11,9 +11,9 @@ Only proposals are written. The film's data changes only when Ana accepts them i
 
     python pipeline/run.py D:/sound_check_data/projects/la-buona-educazione
     python pipeline/run.py <film folder> --all      (also days already shot, for testing)
-    python pipeline/run.py --every-film <data repo> --evening
-        every film with an inbox.json; --evening = only between 17:00 and midnight, Rome time
-        (this is what GitHub Actions runs every 30 minutes: .github/workflows/emails.yml)
+    python pipeline/run.py --every-film <data repo> --scheduled
+        every film with an inbox.json; --scheduled = only in the checking hours, Rome time:
+        04:00–10:00 and 17:00–24:00 (GitHub Actions runs it every 30 minutes: .github/workflows/emails.yml)
 """
 
 import datetime
@@ -46,13 +46,16 @@ def run(film_folder, include_past=False):
 
     today = datetime.date.today().isoformat()
     proposals = film / "proposals"
-    known = {json.loads(p.read_text(encoding="utf-8"))["source"]["subject"]: p.stem
-             for p in proposals.glob("*.json")} if proposals.exists() else {}
+    # emails already turned into a proposal: by Message-ID (older proposals: by subject)
+    known = set()
+    for path in proposals.glob("*.json") if proposals.exists() else []:
+        source = json.loads(path.read_text(encoding="utf-8"))["source"]
+        known.add(source.get("message_id") or source["subject"])
 
     written = []
     for email_folder in sorted((film / "_inbox").iterdir()):
         info = json.loads((email_folder / "email.json").read_text(encoding="utf-8"))
-        if info["subject"] in known:
+        if info.get("message_id") in known or info["subject"] in known:
             continue
         names = " ".join(info["files"]).upper()
         if "PDL" in names:
@@ -67,6 +70,7 @@ def run(film_folder, include_past=False):
         while (proposals / f"{name}.json").exists():  # a corrected ODG with the same number
             name += "-new"
         proposal["id"] = name
+        proposal["source"]["message_id"] = info.get("message_id", "")
         write_json(proposals / f"{name}.json", proposal)
         written.append(proposal)
         print(f"proposal {name}: {len(proposal['changes'])} changes, {len(proposal['warnings'])} warnings, "
@@ -111,15 +115,17 @@ def file_documents(film):
     return changed
 
 
-def is_evening_in_rome():
-    return datetime.datetime.now(zoneinfo.ZoneInfo("Europe/Rome")).hour >= 17
+def in_checking_hours():
+    """04:00–10:00 (an ODG sent after midnight) and 17:00–24:00 (the usual evening ODG), Rome time."""
+    hour = datetime.datetime.now(zoneinfo.ZoneInfo("Europe/Rome")).hour
+    return 4 <= hour < 10 or hour >= 17
 
 
 if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8")
     if "--every-film" in sys.argv:
-        if "--evening" in sys.argv and not is_evening_in_rome():
-            sys.exit("Not evening in Rome yet (17:00–24:00): nothing to do.")
+        if "--scheduled" in sys.argv and not in_checking_hours():
+            sys.exit("Outside the checking hours in Rome (04–10, 17–24): nothing to do.")
         repo = Path(sys.argv[sys.argv.index("--every-film") + 1])
         for film in sorted(p.parent for p in repo.glob("projects/*/inbox.json")):
             print(f"== {film.name}")
