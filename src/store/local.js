@@ -1,7 +1,8 @@
 // local.js — keeps projects on this device, so the app works with no signal.
 // Each film gets its OWN database ("soundcheck:<project-id>"), so starting a
 // new film never touches the data of an old one.
-// Also: import/export a project as a .json file (backup, AirDrop, Files app).
+// Also: import/export a project as a .json file (backup, AirDrop, Files app),
+// and the PDFs of each day (ODG, sides) for reading offline.
 // Used by: state.js
 
 import { PROJECT_FORMAT } from '../model.js';
@@ -9,19 +10,25 @@ import { PROJECT_FORMAT } from '../model.js';
 const PREFIX = 'soundcheck:';
 const STORE = 'project';
 
+const DOCS = 'docs'; // PDFs (ODG, sides) by their repo path, e.g. 'docs/day-6/odg.pdf'
+
 function openDb(projectId) {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(PREFIX + projectId, 1);
-    request.onupgradeneeded = () => request.result.createObjectStore(STORE);
+    const request = indexedDB.open(PREFIX + projectId, 2);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
+      if (!db.objectStoreNames.contains(DOCS)) db.createObjectStore(DOCS); // added in version 2
+    };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
   });
 }
 
-function run(db, mode, action) {
+function run(db, mode, action, store = STORE) {
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, mode);
-    const request = action(tx.objectStore(STORE));
+    const tx = db.transaction(store, mode);
+    const request = action(tx.objectStore(store));
     tx.oncomplete = () => resolve(request?.result);
     tx.onerror = () => reject(tx.error);
   });
@@ -39,6 +46,20 @@ export async function loadProject(projectId) {
   const project = await run(db, 'readonly', store => store.get('data'));
   db.close();
   return project || null;
+}
+
+// Documents (PDF files) kept on the device for offline reading.
+export async function saveDocument(projectId, path, bytes) {
+  const db = await openDb(projectId);
+  await run(db, 'readwrite', store => store.put(bytes, path), DOCS); // raw bytes: safest on iPhone
+  db.close();
+}
+
+export async function loadDocument(projectId, path) {
+  const db = await openDb(projectId);
+  const bytes = await run(db, 'readonly', store => store.get(path), DOCS);
+  db.close();
+  return bytes ? new Blob([bytes], { type: 'application/pdf' }) : null;
 }
 
 // The list of films on this device is kept in a small index so it can be

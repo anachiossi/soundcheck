@@ -59,6 +59,11 @@ Runs on the laptop, in Python. Nothing in the film changes until you accept it i
 | PDL → a whole review from today on: `proposals/pdl-<date>.json` | `pipeline/propose_pdl.py` |
 | All of it, then commit + push | `python pipeline/run.py D:/sound_check_data/projects/<film>` |
 | In the cloud: every 30 min, 17:00–24:00 Rome | `.github/workflows/emails.yml` in soundcheck-data |
+| ODG + sides PDFs filed as `docs/day-N/odg.pdf`, `sides.pdf` | `file_documents` in `pipeline/run.py` |
+
+📄 ODG / 📄 Sides buttons on each day: the PDFs of yesterday on are downloaded at sync
+(`downloadDocuments` in `src/sync.js`), kept on the device (`src/store/local.js`) and shown by
+`src/screens/document.js` with pdf.js (`vendor/pdfjs`).
 
 In the app: the 📬 banner → accept or reject each change (`src/screens/proposal.js`,
 `src/proposals.js`, and `src/proposal-rules.js` which applies a change).

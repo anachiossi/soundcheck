@@ -14,6 +14,7 @@ import { KitScreen } from './screens/kit.js';
 import { ProjectsScreen } from './screens/projects.js';
 import { Picker } from './parts/picker.js';
 import { ProposalScreen, ProposalBanner } from './screens/proposal.js';
+import { DocumentScreen } from './screens/document.js';
 
 const TABS = [
   ['schedule', 'Schedule', ScheduleScreen],
@@ -51,7 +52,9 @@ function App() {
   const state = useAppState();
   const { project, screen, message, busyText } = state;
   const current = project ? screen : 'projects';
-  const Screen = current === 'proposal' ? ProposalScreen : (TABS.find(([id]) => id === current) || TABS[0])[2];
+  const Screen = current === 'proposal' ? ProposalScreen
+    : current === 'document' ? DocumentScreen
+    : (TABS.find(([id]) => id === current) || TABS[0])[2];
 
   return html`
     <header class="topbar">
@@ -68,7 +71,7 @@ function App() {
     </nav>
     ${message && html`
       <div class=${'message message--' + message.kind} onClick=${clearMessage}>${message.text} <span>✕</span></div>`}
-    ${project && current !== 'proposal' && html`<${ProposalBanner} project=${project} />`}
+    ${project && !['proposal', 'document'].includes(current) && html`<${ProposalBanner} project=${project} />`}
     <main class="page"><${Screen} state=${state} /></main>
     <footer class="footer">© 2025–2026 Ana Chiossi · soundcheck<${AppVersion} /></footer>
     <${Picker} state=${state} />

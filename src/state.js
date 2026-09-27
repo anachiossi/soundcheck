@@ -12,8 +12,10 @@ import { upgradeOutbox } from './store/repo-files.js';
 let state = {
   project: null,            // the open film (see model.js)
   projects: local.listProjects(),
-  screen: 'schedule',       // 'schedule' | 'scenes' | 'kit' | 'projects' | 'proposal'
+  screen: 'schedule',       // 'schedule' | 'scenes' | 'kit' | 'projects' | 'proposal' | 'document'
   proposalId: null,         // the proposal open in the 'proposal' screen
+  documentPath: null,       // the PDF open in the 'document' screen, e.g. '…/docs/day-6/odg.pdf'
+  documentTitle: '',
   scheduleMode: 'day',      // 'day' | 'week' | 'all'
   day: null,                // chosen shooting day number
   week: null,               // chosen week number

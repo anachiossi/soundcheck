@@ -1,7 +1,18 @@
 // share.js — hands exported images to the phone's Share sheet (WhatsApp,
 // Photos, AirDrop, Files). Several images (e.g. "All film" in parts) go out
 // together. On a laptop, or if sharing isn't possible, the PNGs are downloaded.
-// Used by: screens/schedule.js, screens/scenes.js
+// Used by: screens/schedule.js, screens/scenes.js, screens/document.js
+
+// Any file (e.g. a PDF from the device) → Share sheet, or download on a laptop.
+export async function shareFile(blob, fileName) {
+  const file = new File([blob], fileName, { type: blob.type });
+  if (navigator.canShare?.({ files: [file] })) {
+    try { await navigator.share({ files: [file] }); return; } catch (error) { if (error.name === 'AbortError') return; }
+  }
+  const link = Object.assign(document.createElement('a'), { href: URL.createObjectURL(file), download: fileName });
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+}
 
 export async function shareCanvas(canvas, fileName) {
   return shareCanvases([canvas], fileName);

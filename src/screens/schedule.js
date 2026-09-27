@@ -1,6 +1,6 @@
 // schedule.js — the Schedule screen: the film by Day, by Week or All film.
 // Day:  pick a shooting day → its banner, scene chips, every scene's mic table,
-//       plus 📷 Day sheet and 📷 TX sheet images.
+//       📄 ODG / 📄 Sides (when that day's PDFs are on the device), 📷 Day and TX sheets.
 // Week: every day of the week, one after the other, + 📷 Week image.
 // All:  an overview of every week and day; tap a day to open it. + 📷 All film.
 // Every scene can be edited right here (✎ on its title bar).
@@ -45,6 +45,17 @@ async function exportScene(project, sceneId) {
   await shareCanvas(await sceneSheet(project, [sceneId], `Scene ${sceneId}`), `scene-${sceneId}.png`);
 }
 
+// 📄 ODG / 📄 Sides: only shown once that day's PDF is on this device.
+function DocumentButtons({ project, day }) {
+  const kinds = [['odg', 'ODG'], ['sides', 'Sides']];
+  return kinds.map(([file, label]) => {
+    const path = `${project.folder}/docs/day-${day}/${file}.pdf`;
+    if (!project.documents?.[path]) return null;
+    return html`<button class="btn btn--doc" key=${file}
+      onClick=${() => setState({ screen: 'document', documentPath: path, documentTitle: `${label} · Day ${day}` })}>📄 ${label}</button>`;
+  });
+}
+
 function DayView({ project, edit, dayNumber }) {
   const days = shootingDays(project);
   const day = days.find(d => d.day === dayNumber) || days[0];
@@ -63,6 +74,7 @@ function DayView({ project, edit, dayNumber }) {
     <${DayBanner} day=${day} />
     <${SceneChips} sceneIds=${sceneIds} onPick=${scrollToScene} />
     <div class="toolbar">
+      <${DocumentButtons} project=${project} day=${day.day} />
       <button class="btn" onClick=${async () => shareCanvas(await sceneSheet(project, sceneIds, `Day ${day.day} · mic list`), `day-${day.day}.png`)}>📷 Day sheet</button>
       <button class="btn" onClick=${async () => shareCanvas(await txSheet(project, day.day), `tx-day-${day.day}.png`)}>📷 TX sheet</button>
     </div>

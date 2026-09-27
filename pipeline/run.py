@@ -3,7 +3,9 @@
     2. for each new email: an ODG of today or later (+ its sides) → proposals/odg-<n>.json
        (propose.py); a PDL (+ scaletta) → a whole review from today on → proposals/pdl-<date>.json
        (propose_pdl.py)
-    3. commit + push the new proposals to the private data repo, so every device sees them
+    3. file each ODG email's PDFs as projects/<film>/docs/day-<n>/odg.pdf and sides.pdf, so the
+       app can open them offline (📄 buttons on each day)
+    4. commit + push the new proposals and documents to the private data repo
 
 Only proposals are written. The film's data changes only when Ana accepts them in the app.
 
@@ -70,15 +72,43 @@ def run(film_folder, include_past=False):
         print(f"proposal {name}: {len(proposal['changes'])} changes, {len(proposal['warnings'])} warnings, "
               f"{len(proposal['checks'])} checks OK")
 
-    if written:
-        git(repo, "add", str(proposals))
-        titles = ", ".join(p["title"] for p in written)
-        git(repo, "commit", "--quiet", "-m", f"Proposals from production emails: {titles}")
+    documents = file_documents(film)
+    if documents:
+        print(f"documents: {', '.join(documents)}")
+    if written or documents:
+        if written:
+            git(repo, "add", str(proposals))
+        if documents:
+            git(repo, "add", str(film / "docs"))
+        titles = ", ".join([p["title"] for p in written] + ([f"{len(documents)} document(s)"] if documents else []))
+        git(repo, "commit", "--quiet", "-m", f"From production emails: {titles}")
         git(repo, "push", "--quiet")
         print("pushed: the app will show them at the next sync")
     else:
-        print("nothing new to propose")
+        print("nothing new")
     return written
+
+
+def file_documents(film):
+    """Copy each ODG email's PDFs to docs/day-<n>/ (only when new or changed)."""
+    import shutil
+    from read_odg import read_odg
+    changed = []
+    for email_folder in sorted((film / "_inbox").iterdir()):
+        odg = next((p for p in email_folder.glob("*.pdf") if "ODG" in p.name.upper()), None)
+        if not odg:
+            continue
+        day = read_odg(odg)["number"]
+        sides = next((p for p in email_folder.glob("*.pdf") if "STRALCI" in p.name.upper()), None)
+        for source, name in ((odg, "odg.pdf"), (sides, "sides.pdf")):
+            if not source:
+                continue
+            target = film / "docs" / f"day-{day}" / name
+            if not target.exists() or target.read_bytes() != source.read_bytes():
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(source, target)
+                changed.append(f"day {day} {name}")
+    return changed
 
 
 def is_evening_in_rome():

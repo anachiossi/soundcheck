@@ -61,10 +61,14 @@ export async function readTree(connection) {
   return { commitSha: ref.object.sha, treeSha: commit.tree.sha, files };
 }
 
-export async function readJsonFile(connection, sha) {
+// Any file (e.g. a PDF) as raw bytes.
+export async function readFileBytes(connection, sha) {
   const blob = await call(connection, `/git/blobs/${sha}`);
-  const bytes = Uint8Array.from(atob(blob.content.replace(/\n/g, '')), c => c.charCodeAt(0));
-  return JSON.parse(new TextDecoder().decode(bytes));
+  return Uint8Array.from(atob(blob.content.replace(/\n/g, '')), c => c.charCodeAt(0));
+}
+
+export async function readJsonFile(connection, sha) {
+  return JSON.parse(new TextDecoder().decode(await readFileBytes(connection, sha)));
 }
 
 // Writes several files as ONE commit on top of `base` (from readTree).

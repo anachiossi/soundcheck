@@ -1,13 +1,16 @@
 // sync.js — keeps the device and the soundcheck-data repo in step.
 //   1. download: files that changed in the repo (by their sha fingerprint)
 //   2. upload:   files changed on this device (the outbox), all in ONE commit
+//   3. documents: the PDFs (ODG, sides) of yesterday, today and the coming days,
+//      kept on the device for reading offline
 // Runs by itself when the app opens, when signal comes back, when you come
 // back to the app, and right after every Save. With no signal nothing happens:
 // changes wait safely in the outbox.
 // Used by: main.js, editing.js, screens/projects.js, parts/scene-table.js
 
 import { getState, setState, saveAndShow, showMessage } from './state.js';
-import { defaultDay, localTodayIso } from './model.js';
+import { saveDocument } from './store/local.js';
+import { defaultDay, localTodayIso, shootingDays } from './model.js';
 import * as github from './store/github.js';
 import { applyRemote, filesToDownload, emptyProject, fileContent, setFileContent, formatJson } from './store/repo-files.js';
 
@@ -37,6 +40,7 @@ export async function syncNow({ loud = false } = {}) {
       await download(connection, tree);
       try {
         uploaded = await upload(connection, tree);
+        await downloadDocuments(connection, tree);
         break;
       } catch (error) {
         if (error.status !== 422 && error.status !== 409) throw error;
@@ -60,7 +64,8 @@ async function download(connection, tree) {
   const prefix = project.folder + '/';
   const remote = {};
   for (const [path, sha] of Object.entries(tree.files)) {
-    if (path.startsWith(prefix) && !path.startsWith(prefix + '_import/')) remote[path.slice(prefix.length)] = sha;
+    const inside = path.startsWith(prefix) ? path.slice(prefix.length) : null;
+    if (inside && !inside.startsWith('_import/') && !inside.startsWith('docs/')) remote[inside] = sha;
   }
   const changed = {};
   const paths = filesToDownload(project, remote);
@@ -73,6 +78,24 @@ async function download(connection, tree) {
   const merged = applyRemote(latest, changed, remote);
   merged.data_as_of = new Date().toISOString();
   await saveAndShow(merged);
+}
+
+// PDFs for 'docs/day-<n>/odg.pdf' and 'sides.pdf', from yesterday on, when new or changed.
+async function downloadDocuments(connection, tree) {
+  const project = getState().project;
+  const prefix = project.folder + '/docs/';
+  const yesterday = localTodayIso(new Date(Date.now() - 24 * 3600 * 1000));
+  const dates = Object.fromEntries(shootingDays(project).map(d => [d.day, d.date]));
+  const documents = { ...project.documents };
+  let fetched = 0;
+  for (const [path, sha] of Object.entries(tree.files)) {
+    const match = path.startsWith(prefix) && /day-(\d+)\/(odg|sides)\.pdf$/.exec(path);
+    if (!match || documents[path] === sha || (dates[match[1]] || '') < yesterday) continue;
+    await saveDocument(project.id, path, await github.readFileBytes(connection, sha));
+    documents[path] = sha;
+    fetched++;
+  }
+  if (fetched) await saveAndShow({ ...getState().project, documents });
 }
 
 async function upload(connection, tree) {

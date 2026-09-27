@@ -225,6 +225,13 @@ button.kit-item:hover { background: #f1f5f9; }
 .decision--rejected { color: var(--muted); }
 .checks { color: var(--yes); font-size: 15px; padding-left: 20px; }
 
+/* ---- 10. Documents (ODG, sides) ------------------------------------------- */
+.btn--doc { background: #fff7ed; border-color: #fed7aa; }
+.document-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.document-bar .back { margin: 0; }
+.pdf-pages { display: flex; flex-direction: column; gap: 10px; }
+.pdf-page { width: 100%; height: auto; border: 1px solid var(--line); border-radius: 4px; background: #fff; }
+
 /* ---- Phones --------------------------------------------------------------- */
 @media (max-width: 600px) {
   #app { padding: 8px 6px 24px; }
