@@ -5,7 +5,8 @@
 //
 // The folder (in the PRIVATE soundcheck-data repo) must contain sources.json:
 //   { "id": "...", "name": "...", "sources": { ...see sheets.js... } }
-// and may contain schedule.csv, used when the schedule sheet isn't published.
+// and may contain schedule.csv, used when the schedule sheet isn't published,
+// and scene_info.json (INT/EXT, set, synopsis… per scene, from the script breakdown).
 // Writes <folder>/<id>.soundcheck.json
 
 import { readFile, writeFile, access } from 'node:fs/promises';
@@ -30,6 +31,10 @@ if (!data.schedule) {
   console.log('schedule: from local schedule.csv');
 }
 
+const infoFile = join(folder, 'scene_info.json');
+const scenes = await readFile(infoFile, 'utf8').then(JSON.parse, () => undefined);
+if (scenes) console.log(`scene info: ${Object.keys(scenes).length} scenes`);
+
 const project = {
   format: PROJECT_FORMAT,
   version: 1,
@@ -38,6 +43,7 @@ const project = {
   data_as_of: new Date().toISOString(),
   sources: config.sources,
   ...data,
+  ...(scenes && { scenes }),
 };
 
 const out = join(folder, `${config.id}.soundcheck.json`);

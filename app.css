@@ -19,7 +19,11 @@
   --slate: #e5e7eb;         /* scene title bar */
   --yes-bg: #dcfce7;  --yes: #047857;
   --no-bg: #fee2e2;   --no: #b91c1c;
-  --warn: #ea580c;          /* connector "!" */
+  --warn: #ea580c;          /* connector "!", production notes */
+  --t-day: #fef3c7;   --t-day-ink: #92400e;       /* time-of-day tags */
+  --t-night: #1e293b; --t-night-ink: #e2e8f0;
+  --t-dusk: #fed7aa;  --t-dusk-ink: #9a3412;
+  --t-morning: #e0f2fe; --t-morning-ink: #075985;
   --danger: #dc2626;        /* attenuated lav outline, errors */
   --radius: 14px;
   --pill-h: 44px;
@@ -92,10 +96,19 @@ button { font: inherit; color: inherit; cursor: pointer; }
 
 /* ---- 5. Mic tables & pills ------------------------------------------------ */
 .scene { margin: 12px 0 18px; scroll-margin-top: 12px; }
-.slate { display: flex; align-items: center; gap: 12px; background: var(--slate); border-left: 8px solid var(--ink); border-radius: 8px; padding: 6px 8px 6px 12px; }
+.slate { background: var(--slate); border-left: 8px solid var(--ink); border-radius: 8px; padding: 6px 8px 8px 12px; }
+.slate__top { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .slate__badge { font-weight: 800; font-size: 24px; }
-.slate__label { flex: 1; color: #475569; font-weight: 600; }
-.slate__actions { display: flex; }
+.slate__set { flex: 1; font-weight: 800; font-size: 15px; min-width: 0; line-height: 1.2; }
+.slate__actions { display: flex; margin-left: auto; }
+.slate__details { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; color: #475569; margin-top: 2px; }
+.slate__synopsis { margin: 4px 0 0; font-size: 14px; line-height: 1.35; color: #334155; }
+.slate__notes { margin: 4px 0 0; font-size: 13px; color: var(--warn); font-weight: 600; }
+.tag { flex: 0 0 auto; font-size: 11px; font-weight: 800; letter-spacing: .3px; text-transform: uppercase; border-radius: 6px; padding: 3px 7px; background: var(--card); }
+.tag--day { background: var(--t-day); color: var(--t-day-ink); }
+.tag--night { background: var(--t-night); color: var(--t-night-ink); }
+.tag--dusk { background: var(--t-dusk); color: var(--t-dusk-ink); }
+.tag--morning { background: var(--t-morning); color: var(--t-morning-ink); }
 .scene__empty { color: var(--muted); margin: 10px 4px; }
 .mics { margin-top: 6px; }
 .mics__row { display: grid; grid-template-columns: minmax(0, 1fr) 60px 118px 58px; gap: 6px; align-items: end; padding: 3px 0; }
@@ -142,7 +155,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
   .pill--lav .pill__id { font-size: 13px; font-weight: 800; }
   .only-wide { display: none; }
   .only-narrow { display: inline; }
-  .slate__label { font-size: 13px; }
+  .slate__set { font-size: 13px; }
+  .slate__badge { font-size: 20px; }
+  .slate__synopsis { font-size: 13px; }
   .speaker { font-size: 11px; }
   .banner { font-size: 12px; padding: 8px 10px; }
 }

@@ -14,8 +14,10 @@
       transmitters: [{ id, model, color, connector, order }],
       lavaliers:    [{ id, model, color, connector, attenuated, brand }],
       schedule:     [{ scene_id, day, order, date, week, call, wrap }],
-      presets: { '12': { scene_id, updated_at, rows: [{ char_id, tx_id, lav_id, speaker }] } }
+      presets: { '12': { scene_id, updated_at, rows: [{ char_id, tx_id, lav_id, speaker }] } },
+      scenes:  { '12': { int_ext, time_of_day, set, location, pages, story_day, synopsis, notes } }
     }
+    `scenes` (the script breakdown) is optional: it comes from the analyzer, not the Sheets.
     speaker is 'yes', 'no' or 'maybe'.                                       */
 
 export const PROJECT_FORMAT = 'soundcheck-project';
@@ -67,6 +69,19 @@ export function unscheduledScenes(project) {
 export function allSceneIds(project) {
   const ids = new Set([...project.schedule.map(s => String(s.scene_id)), ...Object.keys(project.presets)]);
   return [...ids].sort(naturalCompare);
+}
+
+export function sceneInfo(project, sceneId) {
+  return project.scenes?.[String(sceneId)] || null;
+}
+
+// Groups the script's time of day (Italian or English) into 4 colours.
+export function timeClass(timeOfDay) {
+  const t = String(timeOfDay || '').toLowerCase();
+  if (/nott|night/.test(t)) return 'night';
+  if (/tramont|sera|dusk|evening|sunset/.test(t)) return 'dusk';
+  if (/mattin|alba|morning|dawn/.test(t)) return 'morning';
+  return 'day';
 }
 
 export function scheduleFor(project, sceneId) {

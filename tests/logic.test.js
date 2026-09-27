@@ -9,7 +9,7 @@ import { convertSheets, scheduleFromCsv } from '../src/store/sheets.js';
 import { textColourFor, isNearWhite } from '../src/colour.js';
 import {
   naturalCompare, toSpeaker, shootingDays, weeks, defaultDay, sceneRows,
-  unscheduledScenes, txPlanForDay, formatDate, allSceneIds,
+  unscheduledScenes, txPlanForDay, formatDate, allSceneIds, sceneInfo, timeClass,
 } from '../src/model.js';
 
 const raw = {
@@ -25,7 +25,8 @@ const raw = {
     { scene_id: '99', character_id: 1, tx_id: 1, lav_id: 7, speaker: 1 },
   ] },
 };
-const project = { id: 'test', name: 'Test film', ...convertSheets(raw) };
+const project = { id: 'test', name: 'Test film', ...convertSheets(raw),
+  scenes: { 2: { int_ext: 'INT', time_of_day: 'Notte', set: 'CASA - CUCINA', synopsis: 'Anna cooks.' } } };
 
 test('CSV: quotes, commas and line breaks inside a cell', () => {
   const rows = parseCsv('﻿a,b\r\n"x, y","line1\nline2"\r\n');
@@ -88,4 +89,18 @@ test('text colour is readable on light and dark backgrounds', () => {
   assert.equal(textColourFor('#fae039'), '#0f172a');
   assert.equal(textColourFor('#1e3a8a'), '#ffffff');
   assert.equal(isNearWhite('#e9e9e9'), true);
+});
+
+test('scene info (INT/EXT, set, synopsis) is found, and missing info is fine', () => {
+  assert.equal(sceneInfo(project, '2').set, 'CASA - CUCINA');
+  assert.equal(sceneInfo(project, '5'), null);
+  assert.equal(sceneInfo({ ...project, scenes: undefined }, '2'), null);
+});
+
+test('time of day in Italian or English gets the right colour group', () => {
+  assert.equal(timeClass('Notte'), 'night');
+  assert.equal(timeClass('Tramonto'), 'dusk');
+  assert.equal(timeClass('Mattina'), 'morning');
+  assert.equal(timeClass('Giorno'), 'day');
+  assert.equal(timeClass('NIGHT'), 'night');
 });

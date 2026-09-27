@@ -5,8 +5,8 @@
 // is never mistaken for the current plan.
 // Used by: screens/schedule.js, screens/scenes.js (through share.js)
 
-import { sceneRows, scheduleFor, shootingDays, txPlanForDay, formatDate, formatStamp } from '../model.js';
-import { newCanvas, box, text, font, pill } from './draw.js';
+import { sceneRows, scheduleFor, sceneInfo, timeClass, shootingDays, txPlanForDay, formatDate, formatStamp } from '../model.js';
+import { newCanvas, box, text, font, pill, tag, wrapLines } from './draw.js';
 
 const WIDTH = 1080;
 const PAD = 40;
@@ -15,6 +15,12 @@ const SPEAKER = {
   yes: ['YES', '#dcfce7', '#047857'],
   no: ['NO', '#fee2e2', '#b91c1c'],
   maybe: ['?', '#f1f5f9', '#64748b'],
+};
+const TIME = {                     // same colours as the tags in app.css
+  day: ['#fef3c7', '#92400e'],
+  night: ['#1e293b', '#e2e8f0'],
+  dusk: ['#fed7aa', '#9a3412'],
+  morning: ['#e0f2fe', '#075985'],
 };
 
 async function fontsReady() {
@@ -34,9 +40,9 @@ function footer(ctx, width, y, project) {
 
 export async function sceneSheet(project, sceneIds, title) {
   await fontsReady();
-  const heights = sceneIds.map(id => 110 + Math.max(1, sceneRows(project, id).length) * ROW);
-  const height = 150 + 30 + heights.reduce((a, b) => a + b, 0) + 80;
-  const { canvas, ctx } = newCanvas(WIDTH, height);
+  // Draw on a tall canvas, then cut it to the height actually used.
+  const roughHeight = 400 + sceneIds.reduce((sum, id) => sum + 420 + sceneRows(project, id).length * ROW, 0);
+  const { canvas, ctx } = newCanvas(WIDTH, roughHeight);
 
   const first = scheduleFor(project, sceneIds[0]);
   const dayPart = title.startsWith('Day') ? '' : `Day ${first?.day} · `;
@@ -46,15 +52,17 @@ export async function sceneSheet(project, sceneIds, title) {
   let y = 180;
   sceneIds.forEach(id => { y = drawScene(ctx, project, id, y); });
   footer(ctx, WIDTH, y, project);
-  return canvas;
+  return cropHeight(canvas, y + 80);
+}
+
+function cropHeight(canvas, height) {
+  const { canvas: result, ctx } = newCanvas(canvas.width, height);
+  ctx.drawImage(canvas, 0, 0);
+  return result;
 }
 
 function drawScene(ctx, project, sceneId, y) {
-  // slate: grey bar with a black stripe on the left and the big scene number
-  box(ctx, PAD, y, WIDTH - 2 * PAD, 76, 10, '#e5e7eb');
-  box(ctx, PAD, y, 12, 76, 0, '#0f172a');
-  font(ctx, 800, 40); text(ctx, `#${sceneId}`, PAD + 36, y + 39);
-  y += 96;
+  y = drawSlate(ctx, sceneId, sceneInfo(project, sceneId), y) + 20;
 
   const rows = sceneRows(project, sceneId);
   if (!rows.length) {
@@ -75,6 +83,39 @@ function drawScene(ctx, project, sceneId, y) {
     y += ROW;
   }
   return y + 14;
+}
+
+// Slate: grey box with a black stripe, "#12 INT Notte SET", then location ·
+// pages · story day, the synopsis (up to 3 lines) and the production note.
+function drawSlate(ctx, sceneId, info, y) {
+  const x = PAD + 36;
+  const width = WIDTH - 2 * PAD - 56;
+  font(ctx, 400, 26);
+  const synopsis = wrapLines(ctx, info?.synopsis, width, 3);
+  font(ctx, 600, 24);
+  const notes = wrapLines(ctx, info?.notes ? `⚠ ${info.notes}` : '', width, 2);
+  const details = [info?.location && `📍 ${info.location}`, info?.pages && `${info.pages} pg`,
+    info?.story_day && `story day ${info.story_day}`].filter(Boolean).join('   ·   ');
+  const height = 76 + (details ? 40 : 0) + synopsis.length * 34 + notes.length * 32 + (info ? 16 : 0);
+
+  box(ctx, PAD, y, WIDTH - 2 * PAD, height, 10, '#e5e7eb');
+  box(ctx, PAD, y, 12, height, 0, '#0f172a');
+  font(ctx, 800, 40); text(ctx, `#${sceneId}`, x, y + 39);
+  let tagX = x + ctx.measureText(`#${sceneId}`).width + 20;
+  if (info?.int_ext) tagX += tag(ctx, info.int_ext, tagX, y + 17, '#ffffff', '#0f172a') + 10;
+  if (info?.time_of_day) {
+    const [bg, fg] = TIME[timeClass(info.time_of_day)];
+    tagX += tag(ctx, info.time_of_day, tagX, y + 17, bg, fg) + 16;
+  }
+  font(ctx, 800, 28); text(ctx, info?.set || '', tagX, y + 39, WIDTH - PAD - 20 - tagX);
+
+  let lineY = y + 76;
+  if (details) { font(ctx, 400, 24); text(ctx, details, x, lineY + 14, width, '#475569'); lineY += 40; }
+  font(ctx, 400, 26);
+  synopsis.forEach(line => { text(ctx, line, x, lineY + 14, 0, '#334155'); lineY += 34; });
+  font(ctx, 600, 24);
+  notes.forEach(line => { text(ctx, line, x, lineY + 14, 0, '#ea580c'); lineY += 32; });
+  return y + height;
 }
 
 export async function txSheet(project, dayNumber) {

@@ -35,6 +35,32 @@ export function text(ctx, value, x, y, maxWidth, colour = '#0f172a', align = 'le
   ctx.fillText(s, x, y);
 }
 
+// Splits a sentence into lines that fit maxWidth (uses the current ctx font).
+export function wrapLines(ctx, value, maxWidth, maxLines = 3) {
+  const lines = [];
+  let line = '';
+  for (const word of String(value || '').split(/\s+/).filter(Boolean)) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && line) { lines.push(line); line = word; }
+    else line = test;
+  }
+  if (line) lines.push(line);
+  if (lines.length > maxLines) {
+    lines.length = maxLines;
+    lines[maxLines - 1] += ' …';
+  }
+  return lines;
+}
+
+// A small rounded label like INT or Notte; returns its width.
+export function tag(ctx, value, x, y, fill, colour) {
+  font(ctx, 800, 24);
+  const w = ctx.measureText(value).width + 28;
+  box(ctx, x, y, w, 42, 8, fill);
+  text(ctx, value, x + 14, y + 22, 0, colour);
+  return w;
+}
+
 // A coloured pill with one bold line and an optional small second line.
 export function pill(ctx, x, y, w, h, colour, main, sub, { outline } = {}) {
   const bg = colour && !isNearWhite(colour) ? colour : '#f1f5f9';
