@@ -1,11 +1,10 @@
-// sheets.js — downloads a project's data from the current Google Sheets and
-// converts it into the soundcheck project shape (see model.js).
-// This is the only file that knows about Sheets; when the data leaves Sheets,
-// a different file replaces this one and nothing else changes.
-// Used by: state.js (Refresh button), tools/snapshot.mjs
+// sheets.js — reads a film's data from the OLD Google Sheets and converts it
+// into the soundcheck shape (see src/model.js). Only used once per film, to
+// move it out of the Sheets. The app itself never talks to the Sheets.
+// Used by: tools/import-from-sheets.mjs
 
-import { parseCsv } from '../csv.js';
-import { toSpeaker } from '../model.js';
+import { parseCsv } from './csv.js';
+import { toSpeaker } from '../src/model.js';
 
 /*  sources = {
       characters_csv, transmitters_csv, lavaliers_csv,   published CSV links

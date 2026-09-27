@@ -4,8 +4,8 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseCsv } from '../src/csv.js';
-import { convertSheets, scheduleFromCsv } from '../src/store/sheets.js';
+import { parseCsv } from '../tools/csv.js';
+import { convertSheets, scheduleFromCsv } from '../tools/sheets.js';
 import { textColourFor, isNearWhite } from '../src/colour.js';
 import {
   naturalCompare, toSpeaker, shootingDays, weeks, defaultDay, sceneRows,

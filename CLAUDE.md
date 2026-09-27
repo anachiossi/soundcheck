@@ -8,7 +8,7 @@ the same folder; the "Suggested" column is the default decision unless Ana marke
 ## Code rules
 1. No build step, no npm packages in the app. `index.html` → `src/main.js`. Only `vendor/` holds outside code.
 2. One job per file, under ~200 lines. Every file starts with a plain-English comment: what it does, who uses it.
-3. All data changes go through actions in `src/state.js`. Screens never change data themselves.
+3. All data changes go through actions in `src/state.js`, `src/editing.js` or `src/sync.js`. Screens never change data themselves.
 4. Plain names (`scene`, `row`, `character`, `tx`, `lav`). No clever one-liners, no abbreviations.
 5. Colours and sizes only as tokens at the top of `app.css`.
 6. Dates are `YYYY-MM-DD` strings; never `new Date('2026-09-21')` (time zones shift the day).
@@ -17,15 +17,20 @@ the same folder; the "Suggested" column is the default decision unless Ana marke
 
 ## Data safety
 - This repo is **public**. Never commit film data, sheet links, Apps Script URLs or tokens.
-  Film data lives in the private repo `soundcheck-data` (cloned at `D:\sound_check_data`),
-  one folder per film. Project files `*.soundcheck.json` are gitignored here.
-- Never write to the live Google Sheets / Apps Script without Ana's explicit OK.
+- Film data = JSON files in the private repo `soundcheck-data` (cloned at `D:\sound_check_data`),
+  one folder per film (layout: top of `src/store/repo-files.js`). It is the master copy.
+  The app reads/writes it through `src/store/github.js` with a per-device key.
+- The Google Sheets are retired (archive). `tools/import-from-sheets.mjs` is only for moving an
+  old film in. The app never talks to the Sheets.
+- Tests that write to GitHub run ONLY on a scratch branch (`sync-test`), never `main`.
 
 ## Commands
 - `npm test` — logic tests (must pass before every commit)
 - `npm run serve` then `node tests/screens.mjs <project file>` — screenshots at phone/iPad/laptop
   size + offline check, into `.shots/` (gitignored)
-- `node tools/snapshot.mjs D:\sound_check_data\projects\<film>` — rebuild a film's project file from Sheets
+- `GH_TOKEN=… SC_BRANCH=sync-test node tests/sync.mjs` — edit/sync end-to-end on real GitHub
+  (create the branch from main first; delete it after)
+- `node tools/import-from-sheets.mjs D:\sound_check_data\projects\<film>` — move an old film out of Sheets
 
 ## Logging
 Log decisions dated in `D:\script_read_claude\docs\` and in mempalace (wing `sessions`, room `planning`).

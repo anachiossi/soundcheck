@@ -1,11 +1,11 @@
-// state.js — the ONE place where the app's data lives and changes.
-// Screens read `state` and call the actions below; they never change data
-// themselves. After every change, the screen is redrawn from the new state.
-// Used by: main.js and every screen.
+// state.js — the ONE place where the app's data lives.
+// Screens read `state` and call actions; they never change data themselves.
+// Actions live here (navigation, films on the device), in editing.js (changing
+// presets) and in sync.js (GitHub). After every change the screen is redrawn.
+// Used by: main.js, editing.js, sync.js and every screen.
 
 import { useEffect, useState } from '../vendor/preact-htm.js';
 import * as local from './store/local.js';
-import { fetchFromSheets } from './store/sheets.js';
 import { defaultDay, localTodayIso } from './model.js';
 
 let state = {
@@ -17,8 +17,13 @@ let state = {
   week: null,               // chosen week number
   lookup: [],               // scene ids chosen in the Scenes screen
   online: navigator.onLine,
-  busy: false,              // true while downloading
   message: null,            // { kind: 'ok' | 'error', text }
+  connection: loadJson('sc_github', null), // GitHub: { owner, repo, branch, token, device }
+  films: null,              // films in the repo (null = not looked yet)
+  sync: { running: false, error: null },
+  edit: null,               // scene being edited: { sceneId, rows }
+  picker: null,             // open picker: { rowIndex, field }
+  busyText: null,           // e.g. 'Making images…'
 };
 
 const listeners = new Set();
@@ -27,7 +32,7 @@ export function getState() {
   return state;
 }
 
-function setState(changes) {
+export function setState(changes) {
   state = { ...state, ...changes };
   savePreferences();
   listeners.forEach(listener => listener(state));
@@ -44,48 +49,53 @@ export function useAppState() {
   return current;
 }
 
+// Saves the film on the device and shows it.
+export async function saveAndShow(project, extra = {}) {
+  await local.saveProject(project);
+  setState({ project, projects: local.listProjects(), ...extra });
+}
+
 // ---- remembered choices (per device) ------------------------------------------
 
-const PREFS_KEY = 'sc_prefs';
-
 function savePreferences() {
-  const { screen, scheduleMode, day, week, lookup, project } = state;
+  const { screen, scheduleMode, day, week, lookup, project, edit } = state;
   try {
-    localStorage.setItem(PREFS_KEY, JSON.stringify({ screen, scheduleMode, day, week, lookup, projectId: project?.id }));
+    localStorage.setItem('sc_prefs', JSON.stringify({ screen, scheduleMode, day, week, lookup, projectId: project?.id }));
+    localStorage.setItem('sc_edit', JSON.stringify(edit && { ...edit, projectId: project?.id }));
   } catch { /* private mode: fine, just not remembered */ }
 }
 
-function loadPreferences() {
-  try { return JSON.parse(localStorage.getItem(PREFS_KEY) || '{}'); } catch { return {}; }
+function loadJson(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
+}
+
+export function saveConnection(connection) {
+  try { localStorage.setItem('sc_github', JSON.stringify(connection)); } catch { /* ignore */ }
+  setState({ connection, films: null });
+}
+
+export function forgetConnection() {
+  try { localStorage.removeItem('sc_github'); } catch { /* ignore */ }
+  setState({ connection: null, films: null });
 }
 
 // ---- actions --------------------------------------------------------------------
 
 export async function start() {
-  addEventListener('online', () => { setState({ online: true }); autoUpdate(); });
-  document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && autoUpdate());
+  addEventListener('online', () => setState({ online: true }));
   addEventListener('offline', () => setState({ online: false }));
   local.askForPersistentStorage();
 
-  const prefs = loadPreferences();
+  const prefs = loadJson('sc_prefs', {});
   const projectId = prefs.projectId || state.projects[0]?.id;
   const project = projectId ? await local.loadProject(projectId) : null;
   if (!project) return setState({ screen: 'projects' });
 
   const { projectId: _, ...choices } = prefs;
-  setState({ ...choices, project });
+  const draft = loadJson('sc_edit', null);
+  const edit = draft?.projectId === project.id ? { sceneId: draft.sceneId, rows: draft.rows } : null;
+  setState({ ...choices, project, edit });
   if (state.day === null) setState({ day: defaultDay(project, localTodayIso()) });
-  autoUpdate();
-}
-
-// When there is signal, quietly fetch fresh data (at most every 10 minutes),
-// so the film stays current without pressing anything. No signal: nothing happens.
-const TEN_MINUTES = 10 * 60 * 1000;
-function autoUpdate() {
-  const project = state.project;
-  if (!navigator.onLine || state.busy || !project?.sources) return;
-  if (Date.now() - new Date(project.data_as_of).getTime() < TEN_MINUTES) return;
-  refreshFromSheets({ quiet: true });
 }
 
 export const showScreen = screen => setState({ screen, message: null });
@@ -93,6 +103,7 @@ export const setScheduleMode = scheduleMode => setState({ scheduleMode });
 export const pickDay = day => setState({ day, scheduleMode: 'day' });
 export const pickWeek = week => setState({ week, scheduleMode: 'week' });
 export const clearMessage = () => setState({ message: null });
+export const showMessage = (kind, text) => setState({ message: { kind, text } });
 
 export function addLookup(sceneId) {
   if (!sceneId || state.lookup.includes(sceneId)) return;
@@ -103,37 +114,23 @@ export const clearLookup = () => setState({ lookup: [] });
 
 export async function openProject(projectId) {
   const project = await local.loadProject(projectId);
-  if (!project) return setState({ message: { kind: 'error', text: 'That project is not on this device.' } });
-  setState({ project, screen: 'schedule', lookup: [], day: defaultDay(project, localTodayIso()), week: null });
+  if (!project) return showMessage('error', 'That film is not on this device.');
+  setState({ project, screen: 'schedule', lookup: [], edit: null, picker: null,
+    day: defaultDay(project, localTodayIso()), week: null });
 }
 
+// Backup file → device. Unsent changes already on the device are kept.
 export async function importProjectFile(file) {
   try {
-    const project = await local.readProjectFile(file);
+    const incoming = await local.readProjectFile(file);
+    const existing = await local.loadProject(incoming.id);
+    const project = { outbox: {}, conflicts: {}, shas: {}, ...incoming,
+      ...(existing && { outbox: existing.outbox || {}, conflicts: existing.conflicts || {} }) };
     await local.saveProject(project);
-    setState({ projects: local.listProjects() });
     await openProject(project.id);
-    setState({ message: { kind: 'ok', text: `${project.name} is now saved on this device.` } });
+    showMessage('ok', `${project.name} is now saved on this device.`);
   } catch (error) {
-    setState({ message: { kind: 'error', text: error.message } });
-  }
-}
-
-// Download fresh data from the Sheets. If anything fails, the offline copy stays.
-// quiet: automatic update, so no messages (the "data …" stamp shows it worked).
-export async function refreshFromSheets({ quiet = false } = {}) {
-  const project = state.project;
-  if (!project?.sources) return;
-  setState({ busy: true, ...(quiet ? {} : { message: null }) });
-  try {
-    const fresh = await fetchFromSheets(project.sources);
-    const updated = { ...project, ...fresh, schedule: fresh.schedule || project.schedule, data_as_of: new Date().toISOString() };
-    await local.saveProject(updated);
-    setState({ project: updated, projects: local.listProjects(), busy: false,
-      ...(quiet ? {} : { message: { kind: 'ok', text: 'Updated from Sheets.' } }) });
-  } catch (error) {
-    setState({ busy: false, ...(quiet ? {} : { message: { kind: 'error',
-      text: `Couldn't update (${error.message}). You're still seeing the saved copy.` } }) });
+    showMessage('error', error.message);
   }
 }
 

@@ -144,11 +144,54 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .file-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .help { padding-left: 20px; line-height: 1.6; }
 
+/* ---- 7. Editing, picker, sync ------------------------------------------- */
+.scene--editing { outline: 3px solid var(--accent); outline-offset: 6px; border-radius: 10px; }
+.scene__waiting { margin: 6px 4px 0; font-size: 13px; font-weight: 600; color: var(--warn); }
+.mics__row--edit { grid-template-columns: minmax(0, 1fr) 60px 118px 58px 64px; align-items: center; }
+.edit-cell { border: 0; background: none; padding: 0; min-width: 0; text-align: left; border-radius: 999px; }
+.edit-cell:focus-visible { outline: 3px solid var(--accent); }
+.pill--empty { border: 2px dashed #94a3b8; color: var(--muted); justify-content: center; font-weight: 600; font-size: 13px; }
+.row-tools { display: flex; justify-content: flex-end; }
+.row-tools .icon-btn { font-size: 18px; padding: 6px; }
+.icon-btn:disabled { opacity: .25; }
+.add-row { margin: 6px 0; }
+.edit-warnings { margin: 6px 0; padding: 8px 12px 8px 28px; background: #fff7ed; color: var(--warn); border-radius: 8px; font-weight: 600; }
+.edit-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+.btn--danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+.conflict { margin: 8px 0; padding: 10px 12px; border-radius: 10px; background: #fff7ed; border: 1px solid #fed7aa; }
+.conflict p { margin: 0 0 4px; }
+.sheet-backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, .35); z-index: 10; }
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 11; max-width: 640px; margin: 0 auto; max-height: 78vh; overflow-y: auto;
+  background: var(--card); border-radius: 18px 18px 0 0; padding: 12px 14px calc(16px + env(safe-area-inset-bottom)); box-shadow: 0 -8px 30px rgba(0,0,0,.2); }
+.sheet__head { display: flex; justify-content: space-between; align-items: center; position: sticky; top: -12px; background: var(--card); padding: 4px 0; }
+.sheet__tools { display: flex; gap: 8px; margin: 6px 0 10px; }
+.sheet__tools input { flex: 1; font: inherit; font-size: 16px; padding: 9px 14px; border: 1px solid #cbd5e1; border-radius: 999px; }
+.sheet__hint { margin: 4px 0; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+.sheet__grid { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); margin-bottom: 12px; }
+.sheet__grid--char_id { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+.option { display: flex; flex-direction: column; gap: 2px; border: 0; background: none; padding: 2px; text-align: center; border-radius: 16px; min-width: 0; }
+.option small { font-size: 11px; color: var(--muted); }
+.option--used { opacity: .4; }
+.option--current { outline: 3px solid var(--accent); }
+.busy { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 18px; border-radius: 999px; z-index: 20; }
+.badge--warn { background: #fff7ed; color: var(--warn); font-weight: 700; border: 0; }
+.warn-text { color: var(--warn); font-weight: 600; }
+.form { display: flex; flex-direction: column; gap: 10px; max-width: 420px; }
+.form label { display: flex; flex-direction: column; gap: 4px; font-weight: 600; font-size: 14px; }
+.form input { font: inherit; font-size: 16px; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 10px; }
+.form details summary { cursor: pointer; color: var(--muted); margin-bottom: 8px; }
+.link { border: 0; background: none; color: var(--accent); text-decoration: underline; padding: 0; }
+.connection { margin-top: 18px; font-size: 13px; }
+.more .btn { margin: 0 8px 8px 0; }
+
 /* ---- Phones --------------------------------------------------------------- */
 @media (max-width: 600px) {
   #app { padding: 8px 6px 24px; }
   .page { padding: 10px 8px; }
   .mics__row { grid-template-columns: minmax(0, 1fr) 48px 92px 46px; gap: 4px; }
+  .mics__row--edit { grid-template-columns: minmax(0, 1fr) 48px 84px 46px 30px; }
+  .row-tools { flex-direction: column; }
+  .row-tools .icon-btn { padding: 0 4px; font-size: 15px; }
   .pill { padding: 4px 10px; }
   .pill--lav { padding: 4px 8px; gap: 4px; }
   .pill--lav b { font-size: 14px; }

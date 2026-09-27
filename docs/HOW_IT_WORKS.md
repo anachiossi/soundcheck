@@ -2,10 +2,12 @@
 
 ## The big idea
 - The **app** (these files) is public on GitHub Pages. It contains no film data.
-- Each **film** is one project file (`<film>.soundcheck.json`). On a device, every film gets its
-  own little database, so a new film never erases an old one.
-- The app always reads from the device, so it works with no signal. "Update from Sheets"
-  downloads fresh data when there is internet.
+- The **data** is JSON files in the private repo `soundcheck-data`, one folder per film.
+  You can open and read them on github.com: one preset file per scene, one row per line.
+- Each device keeps its own copy (one small database per film), so it works with no signal.
+- **Saving** a scene stores it on the device at once and puts it in the *outbox*. When there is
+  signal, `sync.js` uploads the outbox (one commit) and downloads what other devices changed.
+- If two devices changed the same scene, the app asks which version to keep.
 
 ## Where things are
 | I want to change… | Open this file |
@@ -19,19 +21,26 @@
 | Kit (characters, TX, lavs) | `src/screens/kit.js` |
 | Films on this device, import, backup | `src/screens/projects.js` |
 | The exported images | `src/export/image.js` (layout), `src/export/draw.js` (shapes) |
-| How Sheets columns become app data | `src/store/sheets.js` |
 | What a project contains | the comment at the top of `src/model.js` |
 | What happens when a button is pressed | the actions in `src/state.js` |
+| Editing a scene (draft, save) | `src/editing.js`, the editor table `src/parts/scene-editor.js` |
+| The picker that slides up | `src/parts/picker.js` |
+| Warnings (TX twice) and "same as other scenes today" | `src/preset-rules.js` |
+| Uploading / downloading, "Keep mine" | `src/sync.js` (logic), `src/store/github.js` (talks to GitHub) |
+| How a film is split into files | `src/store/repo-files.js` |
+| Week / all-film images | `src/export/schedule-images.js` |
 
 ## Recipes
 **Change a colour:** edit its token in `app.css` (e.g. `--accent: #1e3a8a;`). Save, refresh.
 
 **Try a change on the laptop:** in `D:\sound_check` run `npm run serve`, open
-http://localhost:8321, add the film file from Projects.
+http://localhost:8321, connect in Projects and download the film.
 
 **After changing any app file:** bump `VERSION` in `sw.js` (e.g. `soundcheck-v2`), otherwise
 installed devices keep showing the old version.
 
-**New film:** create `D:\sound_check_data\projects\<film-id>\sources.json` (copy an old one,
-change id, name and the sheet links), run `node tools/snapshot.mjs D:\sound_check_data\projects\<film-id>`,
-then add the resulting file in the app (Projects → Add film).
+**Fix something by hand:** edit the JSON file on github.com (e.g. `presets/12.json`), commit.
+Devices pick it up at their next sync.
+
+**New film:** make a folder `projects/<film-id>/` in soundcheck-data with the same files as an
+existing film (the analyzer pipeline will write these). It appears in Projects on every device.

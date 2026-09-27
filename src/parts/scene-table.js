@@ -1,22 +1,27 @@
 // scene-table.js — one scene: the grey "slate" title bar and its mic table
 // (Character · TX · Lav · Speaks). The slate shows #12, INT/EXT, time of day
 // and the set, then location · pages · story day, the synopsis and any
-// production note (when the film has scene info from the script breakdown). Column names are printed small above
-// the first row instead of a header bar, to save height on phones.
+// production note. ✎ turns the table into the editor (scene-editor.js).
+// "● not uploaded" = saved on this device, waiting for signal.
+// Column names are printed small above the first row, to save height on phones.
 // Used by: screens/schedule.js, screens/scenes.js
 
 import { html } from '../../vendor/preact-htm.js';
-import { sceneRows, scheduleFor, sceneInfo, formatDate, timeClass } from '../model.js';
+import { sceneRows, scheduleFor, sceneInfo, formatDate, formatStamp, timeClass } from '../model.js';
+import { startEdit } from '../editing.js';
+import { resolveConflict } from '../sync.js';
 import { CharacterPill, TxPill, LavPill, SpeakerBadge } from './pills.js';
+import { SceneEditor } from './scene-editor.js';
 
-export function SceneTable({ project, sceneId, showDay = false, onRemove, onExport }) {
-  const rows = sceneRows(project, sceneId);
+export function SceneTable({ project, sceneId, edit, showDay = false, onRemove, onExport }) {
   const when = scheduleFor(project, sceneId);
-  const hasPreset = !!project.presets[sceneId];
   const info = sceneInfo(project, sceneId);
+  const editing = edit?.sceneId === sceneId;
+  const waiting = !!project.outbox?.[sceneId];
+  const conflict = project.conflicts?.[sceneId];
 
   return html`
-    <section class="scene" id=${'scene-' + sceneId}>
+    <section class=${'scene' + (editing ? ' scene--editing' : '')} id=${'scene-' + sceneId}>
       <header class="slate">
         <div class="slate__top">
           <span class="slate__badge">#${sceneId}</span>
@@ -24,8 +29,9 @@ export function SceneTable({ project, sceneId, showDay = false, onRemove, onExpo
           ${info?.time_of_day && html`<span class=${'tag tag--' + timeClass(info.time_of_day)}>${info.time_of_day}</span>`}
           <span class="slate__set">${info?.set || `Scene ${sceneId}`}</span>
           <span class="slate__actions">
-            ${onExport && html`<button class="icon-btn" onClick=${() => onExport(sceneId)} title="Export image">📷</button>`}
-            ${onRemove && html`<button class="icon-btn icon-btn--remove" onClick=${() => onRemove(sceneId)} title="Remove">✕</button>`}
+            ${!editing && html`<button class="icon-btn" onClick=${() => startEdit(sceneId)} title="Edit">✎</button>`}
+            ${!editing && onExport && html`<button class="icon-btn" onClick=${() => onExport(sceneId)} title="Export image">📷</button>`}
+            ${!editing && onRemove && html`<button class="icon-btn icon-btn--remove" onClick=${() => onRemove(sceneId)} title="Remove">✕</button>`}
           </span>
         </div>
         ${(info || (showDay && when)) && html`
@@ -38,29 +44,44 @@ export function SceneTable({ project, sceneId, showDay = false, onRemove, onExpo
         ${info?.synopsis && html`<p class="slate__synopsis">${info.synopsis}</p>`}
         ${info?.notes && html`<p class="slate__notes">⚠ ${info.notes}</p>`}
       </header>
-      ${!hasPreset && html`<p class="scene__empty">No preset for this scene.</p>`}
-      ${hasPreset && rows.length === 0 && html`<p class="scene__empty">Preset has no rows.</p>`}
-      ${rows.length > 0 && html`
-        <div class="mics">
-          ${rows.map((row, i) => html`
-            <div class="mics__row" key=${i}>
-              <div class="mics__cell mics__cell--char">
-                ${i === 0 && html`<span class="mics__label">Character</span>`}
-                <${CharacterPill} character=${row.character} id=${row.char_id} />
-              </div>
-              <div class="mics__cell mics__cell--tx">
-                ${i === 0 && html`<span class="mics__label">TX</span>`}
-                <${TxPill} tx=${row.tx} character=${row.character} id=${row.tx_id} />
-              </div>
-              <div class="mics__cell mics__cell--lav">
-                ${i === 0 && html`<span class="mics__label">Lav</span>`}
-                <${LavPill} lav=${row.lav} id=${row.lav_id} mismatch=${row.connectorMismatch} />
-              </div>
-              <div class="mics__cell mics__cell--spk">
-                ${i === 0 && html`<span class="mics__label">Speaks</span>`}
-                <${SpeakerBadge} speaker=${row.speaker} />
-              </div>
-            </div>`)}
+      ${waiting && !conflict && html`<p class="scene__waiting">● Saved on this device, not uploaded yet</p>`}
+      ${conflict && html`
+        <div class="conflict">
+          <p><b>Changed on another device too</b> (${conflict.theirs.updated_by || 'unknown'}, ${formatStamp(conflict.theirs.updated_at)}).
+            You see your version. Which one to keep?</p>
+          <div class="toolbar">
+            <button class="btn btn--primary" onClick=${() => resolveConflict(sceneId, 'mine')}>Keep mine</button>
+            <button class="btn" onClick=${() => resolveConflict(sceneId, 'theirs')}>Use the other one</button>
+          </div>
         </div>`}
+      ${editing ? html`<${SceneEditor} project=${project} edit=${edit} />` : html`<${MicRows} project=${project} sceneId=${sceneId} />`}
     </section>`;
+}
+
+function MicRows({ project, sceneId }) {
+  const rows = sceneRows(project, sceneId);
+  if (!project.presets[sceneId]) return html`<p class="scene__empty">No preset yet. Tap ✎ to add mics.</p>`;
+  if (!rows.length) return html`<p class="scene__empty">No mics in this scene.</p>`;
+  return html`
+    <div class="mics">
+      ${rows.map((row, i) => html`
+        <div class="mics__row" key=${i}>
+          <div class="mics__cell">
+            ${i === 0 && html`<span class="mics__label">Character</span>`}
+            <${CharacterPill} character=${row.character} id=${row.char_id} />
+          </div>
+          <div class="mics__cell">
+            ${i === 0 && html`<span class="mics__label">TX</span>`}
+            <${TxPill} tx=${row.tx} character=${row.character} id=${row.tx_id} />
+          </div>
+          <div class="mics__cell">
+            ${i === 0 && html`<span class="mics__label">Lav</span>`}
+            <${LavPill} lav=${row.lav} id=${row.lav_id} mismatch=${row.connectorMismatch} />
+          </div>
+          <div class="mics__cell">
+            ${i === 0 && html`<span class="mics__label">Speaks</span>`}
+            <${SpeakerBadge} speaker=${row.speaker} />
+          </div>
+        </div>`)}
+    </div>`;
 }

@@ -1,7 +1,7 @@
 // csv.js — turns CSV text (from Google Sheets) into a list of objects.
 // Handles quoted cells, commas and line breaks inside quotes, Windows line
 // endings and the invisible "BOM" character some exports start with.
-// Used by: store/sheets.js
+// Used by: tools/sheets.js
 
 export function parseCsv(text) {
   const rows = [];

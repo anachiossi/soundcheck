@@ -1,6 +1,7 @@
 // image.js — makes shareable PNG images from the local data (works offline):
 //   sceneSheet(project, sceneIds, title)  one or more scenes (scene card / day sheet)
 //   txSheet(project, day)                 each TX × each scene of the day
+// (Week / all-film images: schedule-images.js, built from the same pieces.)
 // Every image carries the film name and "data as of …" so an old screenshot
 // is never mistaken for the current plan.
 // Used by: screens/schedule.js, screens/scenes.js (through share.js)
@@ -8,8 +9,8 @@
 import { sceneRows, scheduleFor, sceneInfo, timeClass, shootingDays, txPlanForDay, formatDate, formatStamp } from '../model.js';
 import { newCanvas, box, text, font, pill, tag, wrapLines } from './draw.js';
 
-const WIDTH = 1080;
-const PAD = 40;
+export const WIDTH = 1080;
+export const PAD = 40;
 const ROW = 96;
 const SPEAKER = {
   yes: ['YES', '#dcfce7', '#047857'],
@@ -23,19 +24,26 @@ const TIME = {                     // same colours as the tags in app.css
   morning: ['#e0f2fe', '#075985'],
 };
 
-async function fontsReady() {
+export async function fontsReady() {
   try { await Promise.all([document.fonts.load('800 30px Inter'), document.fonts.load('400 22px Inter')]); } catch { /* system font */ }
 }
 
-function header(ctx, width, title, subtitle) {
+export function header(ctx, width, title, subtitle) {
   box(ctx, 0, 0, width, 150, 0, '#1e3a8a');
   font(ctx, 800, 44); text(ctx, title, PAD, 58, width - 2 * PAD, '#ffffff');
   font(ctx, 400, 28); text(ctx, subtitle, PAD, 110, width - 2 * PAD, '#dbeafe');
 }
 
-function footer(ctx, width, y, project) {
+export const FOOTER_HEIGHT = 110;
+
+export function footer(ctx, width, y, project) {
   font(ctx, 400, 22);
   text(ctx, `${project.name} · soundcheck · data as of ${formatStamp(project.data_as_of)}`, PAD, y + 30, width - 2 * PAD, '#64748b');
+  const waiting = Object.keys(project.outbox || {}).length;
+  if (waiting) {
+    font(ctx, 600, 22);
+    text(ctx, `⚠ ${waiting} scene change(s) on this device not uploaded yet`, PAD, y + 64, width - 2 * PAD, '#ea580c');
+  }
 }
 
 export async function sceneSheet(project, sceneIds, title) {
@@ -52,16 +60,16 @@ export async function sceneSheet(project, sceneIds, title) {
   let y = 180;
   sceneIds.forEach(id => { y = drawScene(ctx, project, id, y); });
   footer(ctx, WIDTH, y, project);
-  return cropHeight(canvas, y + 80);
+  return cropHeight(canvas, y + FOOTER_HEIGHT);
 }
 
-function cropHeight(canvas, height) {
+export function cropHeight(canvas, height) {
   const { canvas: result, ctx } = newCanvas(canvas.width, height);
   ctx.drawImage(canvas, 0, 0);
   return result;
 }
 
-function drawScene(ctx, project, sceneId, y) {
+export function drawScene(ctx, project, sceneId, y) {
   y = drawSlate(ctx, sceneId, sceneInfo(project, sceneId), y) + 20;
 
   const rows = sceneRows(project, sceneId);
@@ -124,7 +132,7 @@ export async function txSheet(project, dayNumber) {
   const plan = txPlanForDay(project, dayNumber);
   const colWidth = 200;
   const width = Math.max(WIDTH, PAD * 2 + 130 + plan.scenes.length * colWidth);
-  const height = 150 + 40 + 70 + plan.transmitters.length * ROW + 80;
+  const height = 150 + 40 + 70 + plan.transmitters.length * ROW + FOOTER_HEIGHT;
   const { canvas, ctx } = newCanvas(width, height);
 
   header(ctx, width, `TX sheet · Day ${dayNumber}`, day ? `${formatDate(day.date, { weekday: true })} · ${day.call}–${day.wrap}` : '');
@@ -150,5 +158,5 @@ export async function txSheet(project, dayNumber) {
     y += ROW;
   }
   footer(ctx, width, y, project);
-  return canvas;
+  return cropHeight(canvas, y + FOOTER_HEIGHT);
 }

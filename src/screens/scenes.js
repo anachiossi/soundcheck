@@ -1,6 +1,6 @@
 // scenes.js — the Scenes screen: look up any scenes, side by side.
 // Type a scene number (or tap one from the list); each chosen scene shows its
-// mic table with ✕ to remove it and 📷 to export it. Choices are remembered.
+// mic table with ✎ to edit, 📷 to export and ✕ to remove it. Choices are remembered.
 // Used by: main.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
@@ -36,7 +36,7 @@ export function ScenesScreen({ state }) {
       ${matches.length === 0 && html`<span class="empty">No scene "${query}".</span>`}
     </div>
     ${lookup.map(id => html`
-      <${SceneTable} key=${id} project=${project} sceneId=${id} showDay
+      <${SceneTable} key=${id} project=${project} edit=${state.edit} sceneId=${id} showDay
         onRemove=${removeLookup}
         onExport=${async sceneId => shareCanvas(await sceneSheet(project, [sceneId], `Scene ${sceneId}`), `scene-${sceneId}.png`)} />`)}`;
 }
