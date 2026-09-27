@@ -62,7 +62,8 @@ function loadPreferences() {
 // ---- actions --------------------------------------------------------------------
 
 export async function start() {
-  addEventListener('online', () => setState({ online: true }));
+  addEventListener('online', () => { setState({ online: true }); autoUpdate(); });
+  document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && autoUpdate());
   addEventListener('offline', () => setState({ online: false }));
   local.askForPersistentStorage();
 
@@ -74,6 +75,17 @@ export async function start() {
   const { projectId: _, ...choices } = prefs;
   setState({ ...choices, project });
   if (state.day === null) setState({ day: defaultDay(project, localTodayIso()) });
+  autoUpdate();
+}
+
+// When there is signal, quietly fetch fresh data (at most every 10 minutes),
+// so the film stays current without pressing anything. No signal: nothing happens.
+const TEN_MINUTES = 10 * 60 * 1000;
+function autoUpdate() {
+  const project = state.project;
+  if (!navigator.onLine || state.busy || !project?.sources) return;
+  if (Date.now() - new Date(project.data_as_of).getTime() < TEN_MINUTES) return;
+  refreshFromSheets({ quiet: true });
 }
 
 export const showScreen = screen => setState({ screen, message: null });
@@ -108,19 +120,20 @@ export async function importProjectFile(file) {
 }
 
 // Download fresh data from the Sheets. If anything fails, the offline copy stays.
-export async function refreshFromSheets() {
+// quiet: automatic update, so no messages (the "data …" stamp shows it worked).
+export async function refreshFromSheets({ quiet = false } = {}) {
   const project = state.project;
   if (!project?.sources) return;
-  setState({ busy: true, message: null });
+  setState({ busy: true, ...(quiet ? {} : { message: null }) });
   try {
     const fresh = await fetchFromSheets(project.sources);
     const updated = { ...project, ...fresh, schedule: fresh.schedule || project.schedule, data_as_of: new Date().toISOString() };
     await local.saveProject(updated);
     setState({ project: updated, projects: local.listProjects(), busy: false,
-      message: { kind: 'ok', text: 'Updated from Sheets.' } });
+      ...(quiet ? {} : { message: { kind: 'ok', text: 'Updated from Sheets.' } }) });
   } catch (error) {
-    setState({ busy: false, message: { kind: 'error',
-      text: `Couldn't update (${error.message}). You're still seeing the saved copy.` } });
+    setState({ busy: false, ...(quiet ? {} : { message: { kind: 'error',
+      text: `Couldn't update (${error.message}). You're still seeing the saved copy.` } }) });
   }
 }
 

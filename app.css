@@ -161,3 +161,5 @@ button { font: inherit; color: inherit; cursor: pointer; }
   .speaker { font-size: 11px; }
   .banner { font-size: 12px; padding: 8px 10px; }
 }
+.more { margin-top: 18px; }
+.more summary { cursor: pointer; color: var(--muted); font-weight: 600; margin-bottom: 10px; }
