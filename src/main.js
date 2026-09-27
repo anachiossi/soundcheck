@@ -1,10 +1,10 @@
 // main.js — starts the app: loads the saved film, then draws the top bar
 // (with the sync badge), the tabs, the current screen and, when open, the
 // picker. Starts automatic syncing, and registers sw.js so the app itself is
-// stored on the device and opens with no signal.
+// stored on the device and opens with no signal (and updates itself).
 // Used by: index.html
 
-import { html, render } from '../vendor/preact-htm.js';
+import { html, render, useState, useEffect } from '../vendor/preact-htm.js';
 import { useAppState, start, showScreen, clearMessage } from './state.js';
 import { startAutoSync, syncNow } from './sync.js';
 import { formatStamp } from './model.js';
@@ -34,6 +34,18 @@ function SyncBadge({ state }) {
   return html`<span class="badge">✓ ${formatStamp(project.data_as_of)}</span>`;
 }
 
+// Which version this device runs = the name of the app files saved by sw.js.
+function AppVersion() {
+  const [version, setVersion] = useState('');
+  useEffect(() => {
+    window.caches?.keys().then(keys => {
+      const ours = keys.filter(k => k.startsWith('soundcheck-')).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+      setVersion((ours.pop() || '').replace('soundcheck-', ''));
+    });
+  }, []);
+  return version && html` · ${version}`;
+}
+
 function App() {
   const state = useAppState();
   const { project, screen, message, busyText } = state;
@@ -56,7 +68,7 @@ function App() {
     ${message && html`
       <div class=${'message message--' + message.kind} onClick=${clearMessage}>${message.text} <span>✕</span></div>`}
     <main class="page"><${Screen} state=${state} /></main>
-    <footer class="footer">© 2025–2026 Ana Chiossi · soundcheck</footer>
+    <footer class="footer">© 2025–2026 Ana Chiossi · soundcheck<${AppVersion} /></footer>
     <${Picker} state=${state} />
     ${busyText && html`<div class="busy">${busyText}</div>`}`;
 }
@@ -64,6 +76,13 @@ function App() {
 render(html`<${App} />`, document.getElementById('app'));
 start().then(startAutoSync);
 
+// Updates: look for a new version at start and whenever you come back to the
+// app; when it has been downloaded, reload once so you see it straight away.
+// (A half-finished scene edit survives the reload: it's remembered on the device.)
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-  navigator.serviceWorker.register('./sw.js');
+  const hadVersion = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.register('./sw.js').then(registration => {
+    document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && registration.update());
+  });
+  navigator.serviceWorker.addEventListener('controllerchange', () => hadVersion && location.reload());
 }
