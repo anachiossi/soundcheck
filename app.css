@@ -249,6 +249,21 @@ button.kit-item:hover { background: #f1f5f9; }
 .cues__again { font-size: 22px !important; padding: 16px 28px; }
 .cues__source { opacity: .7; }
 
+/* ---- 12. Cues tab: choosing a scene --------------------------------------- */
+.cue-day { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.cue-day__arrow { font-size: 26px; padding: 6px 18px; }
+.cue-day__title { display: flex; flex-direction: column; align-items: center; font-size: 20px; }
+.cue-day__title span { color: var(--muted); font-size: 16px; }
+.cue-scenes { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+.cue-scene { display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; padding: 16px;
+  border: 0; border-left: 8px solid var(--ink); border-radius: 12px; background: var(--slate); }
+.cue-scene:disabled { opacity: .5; }
+.cue-scene__id { font-size: 28px; font-weight: 800; }
+.cue-scene__text { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cue-scene__text b { font-size: 17px; }
+.cue-scene__text small { color: #475569; font-size: 15px; }
+.cue-scene__go { font-size: 30px; }
+
 /* ---- Phones --------------------------------------------------------------- */
 @media (max-width: 600px) {
   #app { padding: 8px 6px 24px; }
@@ -270,4 +285,6 @@ button.kit-item:hover { background: #f1f5f9; }
   .slate__badge { font-size: 22px; }
   .speaker { font-size: 14px; }
   .banner { font-size: 13px; padding: 8px 10px; }
+  .tabs { gap: 3px; }
+  .tabs button { padding: 10px 4px; font-size: 15px; }
 }

@@ -36,8 +36,9 @@ for (const [name, [width, height]] of Object.entries(SIZES)) {
   await page.fill('.search input', '15'); await page.press('.search input', 'Enter');
   await page.fill('.search input', '7A'); await page.press('.search input', 'Enter');
   await shot('scenes');
-  await page.click('.tabs button:nth-child(3)'); await shot('kit');
-  await page.click('.tabs button:nth-child(4)'); await shot('projects');
+  await page.click('.tabs button:nth-child(3)'); await shot('cues');
+  await page.click('.tabs button:nth-child(4)'); await shot('kit');
+  await page.click('.tabs button:nth-child(5)'); await shot('projects');
 
   if (name === 'laptop') {
     // Exported images, drawn in the page exactly as the 📷 buttons do.

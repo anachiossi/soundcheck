@@ -16,10 +16,12 @@ import { Picker } from './parts/picker.js';
 import { ProposalScreen, ProposalBanner } from './screens/proposal.js';
 import { DocumentScreen } from './screens/document.js';
 import { CuesScreen } from './screens/cues.js';
+import { CuesPickerScreen } from './screens/cues-picker.js';
 
 const TABS = [
   ['schedule', 'Schedule', ScheduleScreen],
   ['scenes', 'Scenes', ScenesScreen],
+  ['cues-picker', 'Cues', CuesPickerScreen],
   ['kit', 'Kit', KitScreen],
   ['projects', 'Projects', ProjectsScreen],
 ];
