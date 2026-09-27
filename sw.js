@@ -3,7 +3,7 @@
 // When you change any app file, bump VERSION so devices pick up the new files.
 // (Film data is NOT stored here; it lives in the per-film database.)
 
-const VERSION = 'soundcheck-v15';
+const VERSION = 'soundcheck-v16';
 const FILES = [
   './', 'index.html', 'app.css', 'manifest.webmanifest',
   'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png',
@@ -18,8 +18,11 @@ const FILES = [
   'src/export/draw.js', 'src/export/image.js', 'src/export/schedule-images.js', 'src/export/share.js',
 ];
 
+// cache: 'reload' = always fetch fresh files from the site. Without it the browser may
+// hand back copies it kept for up to 10 minutes, and a new version would store old files.
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(VERSION).then(cache => cache.addAll(FILES)).then(() => self.skipWaiting()));
+  const fresh = FILES.map(file => new Request(file, { cache: 'reload' }));
+  event.waitUntil(caches.open(VERSION).then(cache => cache.addAll(fresh)).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', event => {
