@@ -1,7 +1,8 @@
 """fetch_mail.py — downloads call sheets (ODG) and sides (STRALCI) from Gmail.
 
-Reads the mailbox with an app password kept ONLY on this laptop:
-    ~/.soundcheck/gmail.txt   line 1: the Gmail address, line 2: the app password
+Reads the mailbox with an app password:
+    on the laptop: ~/.soundcheck/gmail.txt   line 1: the Gmail address, line 2: the app password
+    in the cloud (GitHub Actions): the secrets GMAIL_ADDRESS and GMAIL_APP_PASSWORD
 
 Which emails belong to a film is written in the film's folder (private data repo):
     projects/<film>/inbox.json   { "gmail_search": "subject:ODG has:attachment" }
@@ -15,6 +16,7 @@ scripts are confidential and big). Emails already downloaded are skipped.
 import email
 import imaplib
 import json
+import os
 import re
 import sys
 from email.header import decode_header
@@ -23,6 +25,8 @@ from pathlib import Path
 
 
 def read_login():
+    if os.environ.get("GMAIL_APP_PASSWORD"):
+        return os.environ["GMAIL_ADDRESS"], os.environ["GMAIL_APP_PASSWORD"].replace(" ", "")
     path = Path.home() / ".soundcheck" / "gmail.txt"
     lines = [line.strip() for line in path.read_text(encoding="utf-8-sig").splitlines() if line.strip()]
     return lines[0], lines[1].replace(" ", "")

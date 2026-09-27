@@ -8,10 +8,14 @@ Only proposals are written. The film's data changes only when Ana accepts them i
 
     python pipeline/run.py D:/sound_check_data/projects/la-buona-educazione
     python pipeline/run.py <film folder> --all      (also days already shot, for testing)
+    python pipeline/run.py --every-film <data repo> --evening
+        every film with an inbox.json; --evening = only between 17:00 and midnight, Rome time
+        (this is what GitHub Actions runs every 30 minutes: .github/workflows/emails.yml)
 """
 
 import datetime
 import json
+import zoneinfo
 import subprocess
 import sys
 from pathlib import Path
@@ -33,7 +37,7 @@ def write_json(path, content):
 def run(film_folder, include_past=False):
     film = Path(film_folder)
     repo = film.parent.parent
-    git(repo, "pull", "--rebase", "--quiet")
+    git(repo, "pull", "--rebase", "--autostash", "--quiet")
     fetch(film)
 
     today = datetime.date.today().isoformat()
@@ -69,6 +73,18 @@ def run(film_folder, include_past=False):
     return written
 
 
+def is_evening_in_rome():
+    return datetime.datetime.now(zoneinfo.ZoneInfo("Europe/Rome")).hour >= 17
+
+
 if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8")
-    run(sys.argv[1], include_past="--all" in sys.argv)
+    if "--every-film" in sys.argv:
+        if "--evening" in sys.argv and not is_evening_in_rome():
+            sys.exit("Not evening in Rome yet (17:00–24:00): nothing to do.")
+        repo = Path(sys.argv[sys.argv.index("--every-film") + 1])
+        for film in sorted(p.parent for p in repo.glob("projects/*/inbox.json")):
+            print(f"== {film.name}")
+            run(film)
+    else:
+        run(sys.argv[1], include_past="--all" in sys.argv)
