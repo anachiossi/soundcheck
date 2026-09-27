@@ -14,7 +14,7 @@ import json
 import re
 import sys
 
-import fitz
+import pymupdf as fitz  # the PDF reader (PyMuPDF)
 
 SCENE_X = (40, 70)      # scene number column
 HEADING_X = (100, 120)  # INT./EST. heading column

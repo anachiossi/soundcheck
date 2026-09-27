@@ -14,7 +14,7 @@ import json
 import re
 import sys
 
-import fitz
+import pymupdf as fitz  # the PDF reader (PyMuPDF)
 
 MONTHS = {m: i + 1 for i, m in enumerate(
     ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno",
