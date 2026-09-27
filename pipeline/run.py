@@ -4,7 +4,7 @@
        (propose.py); a PDL (+ scaletta) → a whole review from today on → proposals/pdl-<date>.json
        (propose_pdl.py)
     3. file each ODG email's PDFs as projects/<film>/docs/day-<n>/odg.pdf and sides.pdf, so the
-       app can open them offline (📄 buttons on each day)
+       app can open them offline (📄 buttons on each day), and the sides' lines for 🎙 Cues
     4. commit + push the new proposals and documents to the private data repo
 
 Only proposals are written. The film's data changes only when Ana accepts them in the app.
@@ -83,7 +83,7 @@ def run(film_folder, include_past=False):
         if written:
             git(repo, "add", str(proposals))
         if documents:
-            git(repo, "add", str(film / "docs"))
+            git(repo, "add", str(film / "docs"), str(film / "lines"))
         titles = ", ".join([p["title"] for p in written] + ([f"{len(documents)} document(s)"] if documents else []))
         git(repo, "commit", "--quiet", "-m", f"From production emails: {titles}")
         git(repo, "push", "--quiet")
@@ -94,16 +94,22 @@ def run(film_folder, include_past=False):
 
 
 def file_documents(film):
-    """Copy each ODG email's PDFs to docs/day-<n>/ (only when new or changed)."""
+    """Copy each ODG email's PDFs to docs/day-<n>/ and the sides' lines to lines/sides/
+    (only when new or changed)."""
     import shutil
+    from cue_lines import write_sides_lines
     from read_odg import read_odg
     changed = []
     for email_folder in sorted((film / "_inbox").iterdir()):
         odg = next((p for p in email_folder.glob("*.pdf") if "ODG" in p.name.upper()), None)
         if not odg:
             continue
-        day = read_odg(odg)["number"]
+        sheet = read_odg(odg)
+        day = sheet["number"]
         sides = next((p for p in email_folder.glob("*.pdf") if "STRALCI" in p.name.upper()), None)
+        if sides:  # the lines of the day's scenes, for 🎙 Cues
+            scene_ids = [s["scene_id"] for s in sheet["scenes"]]
+            changed += [f"Cues of scene {sid} (sides)" for sid in write_sides_lines(film, sides, day, scene_ids)]
         for source, name in ((odg, "odg.pdf"), (sides, "sides.pdf")):
             if not source:
                 continue

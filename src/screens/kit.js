@@ -1,5 +1,5 @@
-// kit.js — the Kit screen: characters (with their preferences), transmitters
-// and lavaliers. Tap one to change it, "+ Add" for a new one.
+// kit.js — the Kit screen: the script (📄 PDF, offline), characters (with their
+// preferences), transmitters and lavaliers. Tap one to change it, "+ Add" for a new one.
 // Changes sync like scene edits (kit-editing.js).
 // Used by: main.js
 
@@ -10,6 +10,8 @@ import { scenesUsing } from '../preset-rules.js';
 import { resolveConflict } from '../sync.js';
 import { CharacterPill, TxPill, LavPill } from '../parts/pills.js';
 import { ItemForm } from '../parts/item-form.js';
+import { setState } from '../state.js';
+import { cuesSummary } from '../cues-rules.js';
 
 const distinct = values => [...new Set(values.filter(Boolean))].sort(naturalCompare);
 
@@ -69,7 +71,17 @@ export function KitScreen({ state }) {
   const lavColour = colour => colour && html`<span class="swatch" style=${`background:${colour}`}></span>`;
   const nextId = list => String(Math.max(0, ...project[list].map(i => Number(i.id)).filter(Number.isFinite)) + 1);
 
+  const script = cuesSummary(project);
+  const scriptPath = `${project.folder}/docs/script.pdf`;
   return html`
+    <h2 class="section-title">Script ${script.version && html`<small>${script.version}</small>`}</h2>
+    <div class="toolbar">
+      ${project.documents?.[scriptPath]
+        ? html`<button class="btn btn--doc" onClick=${() => setState({ screen: 'document', documentPath: scriptPath,
+            documentTitle: `Script ${script.version}` })}>📄 Script</button>`
+        : html`<span class="muted">The script PDF downloads at the next sync with signal.</span>`}
+      <span class="muted">🎙 Cues for ${script.script} scenes${script.sides ? `, ${script.sides} updated from the sides` : ''}</span>
+    </div>
     <p class="muted">Tap anything to change it.</p>
     <${Section} ...${shared} list="characters" title="Characters" wide
       blank=${{ id: nextId('characters'), color: '#94a3b8' }}

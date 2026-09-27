@@ -68,3 +68,11 @@ Runs on the laptop, in Python. Nothing in the film changes until you accept it i
 In the app: the 📬 banner → accept or reject each change (`src/screens/proposal.js`,
 `src/proposals.js`, and `src/proposal-rules.js` which applies a change).
 Which emails belong to a film: `projects/<film>/inbox.json` in the data repo.
+
+## 🎙 Cues (learn a scene's lines)
+| What | File |
+|---|---|
+| Who says what, from sides / script PDFs | `pipeline/read_lines.py` → `pipeline/cue_lines.py` writes `lines/sides/<scene>.json`, `lines/script/<scene>.json` |
+| New script version (by hand) | `python pipeline/cue_lines.py <film folder> "<script.pdf>" "<version>"` |
+| Which lines a scene shows (sides → script → base scene for 7fin) | `src/cues-rules.js` |
+| The full-screen mode | `src/screens/cues.js` + section 11 of `app.css` |

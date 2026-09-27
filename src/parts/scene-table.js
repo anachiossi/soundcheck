@@ -1,7 +1,7 @@
 // scene-table.js — one scene: the grey "slate" title bar and its mic table
 // (Character · TX · Lav · Speaks). The slate shows #12, INT/EXT, time of day
 // and the set, then location · pages · story day, the synopsis and any
-// production note. ✎ turns the table into the editor (scene-editor.js).
+// production note. 🎙 opens Cues (learn the lines), ✎ turns the table into the editor.
 // "● not uploaded" = saved on this device, waiting for signal.
 // Column names are printed small above the first row, to save height on phones.
 // Used by: screens/schedule.js, screens/scenes.js
@@ -9,6 +9,8 @@
 import { html } from '../../vendor/preact-htm.js';
 import { sceneRows, scheduleFor, sceneInfo, formatDate, formatStamp, timeClass } from '../model.js';
 import { startEdit } from '../editing.js';
+import { getState, setState } from '../state.js';
+import { cueLines } from '../cues-rules.js';
 import { resolveConflict } from '../sync.js';
 import { presetFile } from '../store/repo-files.js';
 import { CharacterPill, TxPill, LavPill, SpeakerBadge } from './pills.js';
@@ -31,6 +33,8 @@ export function SceneTable({ project, sceneId, edit, showDay = false, onRemove, 
           ${info?.time_of_day && html`<span class=${'tag tag--' + timeClass(info.time_of_day)}>${info.time_of_day}</span>`}
           <span class="slate__set">${info?.set || `Scene ${sceneId}`}</span>
           <span class="slate__actions">
+            ${!editing && cueLines(project, sceneId) && html`<button class="icon-btn" title="Cues: learn the lines"
+              onClick=${() => setState({ screen: 'cues', cuesScene: sceneId, cuesFrom: getState().screen })}>🎙</button>`}
             ${!editing && html`<button class="icon-btn" onClick=${() => startEdit(sceneId)} title="Edit">✎</button>`}
             ${!editing && onExport && html`<button class="icon-btn" onClick=${() => onExport(sceneId)} title="Export image">📷</button>`}
             ${!editing && onRemove && html`<button class="icon-btn icon-btn--remove" onClick=${() => onRemove(sceneId)} title="Remove">✕</button>`}

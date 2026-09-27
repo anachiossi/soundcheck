@@ -80,7 +80,8 @@ async function download(connection, tree) {
   await saveAndShow(merged);
 }
 
-// PDFs for 'docs/day-<n>/odg.pdf' and 'sides.pdf', from yesterday on, when new or changed.
+// PDFs: 'docs/day-<n>/odg.pdf' and 'sides.pdf' from yesterday on, and 'docs/script.pdf',
+// when new or changed.
 async function downloadDocuments(connection, tree) {
   const project = getState().project;
   const prefix = project.folder + '/docs/';
@@ -89,8 +90,10 @@ async function downloadDocuments(connection, tree) {
   const documents = { ...project.documents };
   let fetched = 0;
   for (const [path, sha] of Object.entries(tree.files)) {
-    const match = path.startsWith(prefix) && /day-(\d+)\/(odg|sides)\.pdf$/.exec(path);
-    if (!match || documents[path] === sha || (dates[match[1]] || '') < yesterday) continue;
+    if (!path.startsWith(prefix) || !path.endsWith('.pdf') || documents[path] === sha) continue;
+    const match = /day-(\d+)\/(odg|sides)\.pdf$/.exec(path);
+    const isScript = path === prefix + 'script.pdf'; // the full script: always kept (📄 in Kit)
+    if (!isScript && (!match || (dates[match[1]] || '') < yesterday)) continue;
     await saveDocument(project.id, path, await github.readFileBytes(connection, sha));
     documents[path] = sha;
     fetched++;

@@ -232,6 +232,23 @@ button.kit-item:hover { background: #f1f5f9; }
 .pdf-pages { display: flex; flex-direction: column; gap: 10px; }
 .pdf-page { width: 100%; height: auto; border: 1px solid var(--line); border-radius: 4px; background: #fff; }
 
+/* ---- 11. Cues (full screen, learn the lines) -------------------------------- */
+.cues { position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column; gap: 2vh;
+  padding: calc(12px + env(safe-area-inset-top)) 20px calc(14px + env(safe-area-inset-bottom));
+  user-select: none; -webkit-user-select: none; cursor: pointer; touch-action: manipulation; }
+.cues__top, .cues__bottom { display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  font-size: 16px; font-weight: 700; opacity: .85; }
+.cues__close { border: 0; background: rgba(0,0,0,.18); color: inherit; border-radius: 999px; width: 40px; height: 40px; font-size: 18px; }
+.cues__name { font-size: clamp(28px, 7vw, 56px); font-weight: 800; letter-spacing: .5px; line-height: 1.1; }
+.cues__text { flex: 1; min-height: 0; overflow: hidden; font-weight: 600; line-height: 1.22; }
+.cues__text p { margin: 0 0 .5em; }
+.cues--end { background: var(--ink); color: #fff; align-items: center; justify-content: center; text-align: center; cursor: default; }
+.cues--end h1 { font-size: 56px; margin: 0; }
+.cues--end .btn { min-width: 220px; font-size: 18px; color: var(--ink); }
+.cues--end .btn--primary { color: #fff; }
+.cues__again { font-size: 22px !important; padding: 16px 28px; }
+.cues__source { opacity: .7; }
+
 /* ---- Phones --------------------------------------------------------------- */
 @media (max-width: 600px) {
   #app { padding: 8px 6px 24px; }

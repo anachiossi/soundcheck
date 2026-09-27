@@ -15,6 +15,7 @@ import { ProjectsScreen } from './screens/projects.js';
 import { Picker } from './parts/picker.js';
 import { ProposalScreen, ProposalBanner } from './screens/proposal.js';
 import { DocumentScreen } from './screens/document.js';
+import { CuesScreen } from './screens/cues.js';
 
 const TABS = [
   ['schedule', 'Schedule', ScheduleScreen],
@@ -52,6 +53,7 @@ function App() {
   const state = useAppState();
   const { project, screen, message, busyText } = state;
   const current = project ? screen : 'projects';
+  if (current === 'cues') return html`<${CuesScreen} key=${state.cuesScene} state=${state} />`; // full screen
   const Screen = current === 'proposal' ? ProposalScreen
     : current === 'document' ? DocumentScreen
     : (TABS.find(([id]) => id === current) || TABS[0])[2];
