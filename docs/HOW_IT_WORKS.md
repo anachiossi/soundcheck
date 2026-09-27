@@ -44,3 +44,19 @@ Devices pick it up at their next sync.
 
 **New film:** make a folder `projects/<film-id>/` in soundcheck-data with the same files as an
 existing film (the analyzer pipeline will write these). It appears in Projects on every device.
+
+## Production emails → proposals (pipeline/)
+Runs on the laptop, in Python. Nothing in the film changes until you accept it in the app.
+
+| Step | File |
+|---|---|
+| Download ODG + sides from Gmail (app password in `~/.soundcheck/gmail.txt`) | `pipeline/fetch_mail.py` |
+| Read the ODG: day, times, scenes, cast, department notes | `pipeline/read_odg.py` |
+| Read the sides: who speaks in each scene | `pipeline/read_sides.py` |
+| Compare with the film (date, times, scenes, cast, speakers) | `pipeline/compare.py`, `pipeline/compare_mics.py` |
+| Write `proposals/odg-N.json` | `pipeline/propose.py` |
+| All of it, then commit + push | `python pipeline/run.py D:/sound_check_data/projects/<film>` |
+
+In the app: the 📬 banner → accept or reject each change (`src/screens/proposal.js`,
+`src/proposals.js`, and `src/proposal-rules.js` which applies a change).
+Which emails belong to a film: `projects/<film>/inbox.json` in the data repo.

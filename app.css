@@ -207,6 +207,24 @@ button.kit-item:hover { background: #f1f5f9; }
 .swatch { display: inline-block; width: 16px; height: 16px; border-radius: 50%; border: 1px solid #94a3b8; vertical-align: middle; }
 .prefs { display: flex; flex-wrap: wrap; gap: 2px 14px; color: #475569; font-size: 15px; margin: 4px 0 0 8px; }
 
+/* ---- 9. Proposals (from production emails) ------------------------------- */
+.proposal-banner { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; width: 100%; margin: 0 0 10px;
+  padding: 12px 14px; border: 2px solid var(--accent); border-radius: 12px; background: var(--accent-soft); font-size: 16px; text-align: left; }
+.proposal-banner span { color: var(--accent); font-weight: 700; }
+.back { margin-bottom: 8px; font-size: 16px; }
+.proposal-warnings { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 10px; padding: 10px 14px; margin: 10px 0; font-size: 15px; }
+.proposal-warnings ul { margin: 6px 0 0; padding-left: 20px; }
+.changes { list-style: none; padding: 0; margin: 0 0 12px; }
+.change { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 4px; border-bottom: 1px solid var(--line); font-size: 16px; }
+.change__text { flex: 1 1 240px; }
+.change--decided .change__text { color: var(--muted); }
+.decision-buttons { display: flex; gap: 6px; }
+.btn--small { padding: 8px 14px; }
+.decision { font-weight: 700; font-size: 14px; }
+.decision--accepted { color: var(--yes); }
+.decision--rejected { color: var(--muted); }
+.checks { color: var(--yes); font-size: 15px; padding-left: 20px; }
+
 /* ---- Phones --------------------------------------------------------------- */
 @media (max-width: 600px) {
   #app { padding: 8px 6px 24px; }

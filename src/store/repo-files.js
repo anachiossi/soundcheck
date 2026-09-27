@@ -11,6 +11,7 @@
 //     schedule.json        [{ scene_id, day, order, date, week, call, wrap }]
 //     scenes.json          { '12': { int_ext, time_of_day, set, location, pages, story_day, synopsis, notes } }
 //     presets/12.json      { scene_id, updated_at, updated_by, rows: [{ char_id, tx_id, lav_id, speaker }] }
+//     proposals/odg-6.json changes suggested from a production email (see pipeline/), to accept or reject
 //
 // One file per scene preset: saving scene 12 never touches scene 13.
 
@@ -26,11 +27,19 @@ function sceneFromPath(relativePath) {
   return match ? match[1] : null;
 }
 
+export const proposalFile = id => `proposals/${id}.json`;
+
+function proposalFromPath(relativePath) {
+  const match = /^proposals\/(.+)\.json$/.exec(relativePath);
+  return match ? match[1] : null;
+}
+
 export function projectToFiles(project) {
   const files = { 'film.json': { format: FILM_FORMAT, version: 1, id: project.id, name: project.name } };
   for (const key of LISTS) files[`${key}.json`] = project[key];
   files['scenes.json'] = project.scenes || {};
   for (const [sceneId, preset] of Object.entries(project.presets)) files[presetFile(sceneId)] = preset;
+  for (const [id, proposal] of Object.entries(project.proposals || {})) files[proposalFile(id)] = proposal;
   return files;
 }
 
@@ -38,7 +47,7 @@ export function projectToFiles(project) {
 export function emptyProject(film, folder) {
   return {
     format: PROJECT_FORMAT, version: 1, id: film.id, name: film.name, folder,
-    characters: [], transmitters: [], lavaliers: [], schedule: [], scenes: {}, presets: {},
+    characters: [], transmitters: [], lavaliers: [], schedule: [], scenes: {}, presets: {}, proposals: {},
     shas: {}, outbox: {}, conflicts: {}, data_as_of: null,
   };
 }
@@ -52,6 +61,8 @@ export function emptyProject(film, folder) {
 export function fileContent(project, path) {
   const sceneId = sceneFromPath(path);
   if (sceneId) return project.presets[sceneId];
+  const proposalId = proposalFromPath(path);
+  if (proposalId) return project.proposals?.[proposalId];
   const key = path.replace(/\.json$/, '');
   if (key === 'film') return { format: FILM_FORMAT, version: 1, id: project.id, name: project.name };
   return project[key];
@@ -61,7 +72,9 @@ export function fileContent(project, path) {
 export function setFileContent(project, path, content) {
   const sceneId = sceneFromPath(path);
   const key = path.replace(/\.json$/, '');
+  const proposalId = proposalFromPath(path);
   if (sceneId) project.presets = { ...project.presets, [sceneId]: content };
+  else if (proposalId) project.proposals = { ...project.proposals, [proposalId]: content };
   else if (key === 'film') project.name = content.name;
   else if (LISTS.includes(key) || key === 'scenes') project[key] = content;
 }

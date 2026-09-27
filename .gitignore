@@ -2,3 +2,4 @@ node_modules/
 .shots/
 _seed/
 *.soundcheck.json
+__pycache__/
