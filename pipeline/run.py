@@ -1,7 +1,8 @@
 """run.py — the whole morning check, in one go:
     1. download new production emails (fetch_mail.py)
-    2. for each ODG of today or later without a proposal yet: read ODG + sides, compare
-       with the film's data, write projects/<film>/proposals/odg-<n>.json (propose.py)
+    2. for each new email: an ODG of today or later (+ its sides) → proposals/odg-<n>.json
+       (propose.py); a PDL (+ scaletta) → a whole review from today on → proposals/pdl-<date>.json
+       (propose_pdl.py)
     3. commit + push the new proposals to the private data repo, so every device sees them
 
 Only proposals are written. The film's data changes only when Ana accepts them in the app.
@@ -23,6 +24,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from fetch_mail import fetch  # noqa: E402
 from propose import build_proposal  # noqa: E402
+from propose_pdl import build_pdl_proposal  # noqa: E402
 
 
 def git(repo, *args):
@@ -48,10 +50,16 @@ def run(film_folder, include_past=False):
     written = []
     for email_folder in sorted((film / "_inbox").iterdir()):
         info = json.loads((email_folder / "email.json").read_text(encoding="utf-8"))
-        if info["subject"] in known or not any("ODG" in f.upper() for f in info["files"]):
+        if info["subject"] in known:
             continue
-        proposal = build_proposal(film, email_folder)
-        if proposal["date"] < today and not include_past:
+        names = " ".join(info["files"]).upper()
+        if "PDL" in names:
+            proposal = build_pdl_proposal(film, email_folder)
+        elif "ODG" in names:
+            proposal = build_proposal(film, email_folder)
+            if proposal["date"] < today and not include_past:
+                continue
+        else:
             continue
         name = proposal["id"]
         while (proposals / f"{name}.json").exists():  # a corrected ODG with the same number

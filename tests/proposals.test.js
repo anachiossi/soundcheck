@@ -66,3 +66,12 @@ test('open proposals and what is left to decide', () => {
   assert.deepEqual(openProposals(f).map(p => p.id), ['odg-6']);
   assert.deepEqual(undecided(proposal).map(c => c.id), ['c2']);
 });
+
+test('a brand-new shooting day gets its date, week and times', () => {
+  const { film: f } = applyChange(film, { op: 'set_day_scenes', day: 31, scene_ids: ['2'],
+    fields: { date: '2026-11-02', week: 7, call: '08:00', wrap: '16:00' } });
+  const row = f.schedule.find(r => r.day === 31);
+  assert.equal(row.date, '2026-11-02');
+  assert.equal(row.week, 7);
+  assert.equal(f.schedule.filter(r => r.scene_id === '2').length, 1, 'moved, not copied');
+});

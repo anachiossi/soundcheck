@@ -55,21 +55,26 @@ def check_date(odg, subject_date):
     return (subject_date or printed), warnings
 
 
-def check_day(day_number, date, call, wrap, scene_ids, schedule, label):
-    """Date, call/wrap and the list of scenes of one shooting day."""
+def check_day(day_number, date, call, wrap, scene_ids, schedule, label, week=None):
+    """Date, call/wrap (and week) and the list of scenes of one shooting day."""
     changes, checks = [], []
     rows = sorted([s for s in schedule if s["day"] == day_number], key=lambda s: s["order"])
     now = [s["scene_id"] for s in rows]
     first = rows[0] if rows else {}
-    fields = {k: v for k, v in (("date", date), ("call", call), ("wrap", wrap)) if v and v != first.get(k)}
-    if fields:
+    wanted = (("date", date), ("call", call), ("wrap", wrap), ("week", week))
+    fields = {k: v for k, v in wanted if v and v != first.get(k)}
+    if rows and fields:
         before = ", ".join(f"{k} {first.get(k) or '—'} → {v}" for k, v in fields.items())
         changes.append({"text": f"{label}: {before}", "op": {"op": "set_day", "day": day_number, "fields": fields}})
-    else:
+    elif rows:
         checks.append(f"{label}: date and times match")
     if scene_ids != now:
-        changes.append({"text": f"{label}: scenes {' · '.join(now) or 'none'} → {' · '.join(scene_ids)}",
-                        "op": {"op": "set_day_scenes", "day": day_number, "scene_ids": scene_ids}})
+        op = {"op": "set_day_scenes", "day": day_number, "scene_ids": scene_ids}
+        if not rows:  # a new shooting day: it needs its date and times too
+            op["fields"] = {k: v for k, v in wanted if v}
+        text = (f"{label}: new day, {date}, scenes {' · '.join(scene_ids)}" if not rows
+                else f"{label}: scenes {' · '.join(now) or 'none'} → {' · '.join(scene_ids) or 'none (day removed)'}")
+        changes.append({"text": text, "op": op})
     else:
         checks.append(f"{label}: scenes {' · '.join(now)} match")
     return changes, checks
@@ -87,7 +92,8 @@ def check_scene_info(scene, info):
         "int_ext": lambda a, b: norm(a) == norm(b),
         "time_of_day": lambda a, b: norm(a)[:1] == norm(b)[:1],
         "set": lambda a, b: norm(a) == norm(b),
-        "synopsis": lambda a, b: norm(a) == norm(b),
+        # a synopsis cut short (PDL, scaletta) never replaces the full one (ODG)
+        "synopsis": lambda new, old: norm(old).startswith(norm(new)),
     }
     fields = {k: v for k, v in wanted.items()
               if v and not same.get(k, lambda a, b: str(a).strip() == str(b).strip())(v, info.get(k, ""))}

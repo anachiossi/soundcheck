@@ -15,8 +15,10 @@ const OPS = {
   },
 
   // the scenes of a shooting day, in order (a scene moved here leaves its old day)
-  set_day_scenes(film, { day, scene_ids }) {
-    const template = film.schedule.find(row => row.day === day) || { day, date: '', week: 0, call: '', wrap: '' };
+  // (a brand-new day brings its date, week and times in `fields`)
+  set_day_scenes(film, { day, scene_ids, fields = {} }) {
+    const existing = film.schedule.find(row => row.day === day);
+    const template = { day, date: '', week: 0, call: '', wrap: '', ...existing, ...fields };
     const kept = film.schedule.filter(row => row.day !== day && !scene_ids.includes(String(row.scene_id)));
     const added = scene_ids.map((sceneId, i) => ({ ...template, scene_id: sceneId, order: i + 1 }));
     film.schedule = [...kept, ...added];

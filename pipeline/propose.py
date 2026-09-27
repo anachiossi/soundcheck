@@ -92,7 +92,7 @@ def build_proposal(film_folder, email_folder):
         "day": odg["number"], "date": date,
         "source": {"subject": email["subject"], "received": email["date"], "files": email["files"]},
         "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
-        "status": "open",   # open → done (when every change is accepted or rejected)
+        "status": "open" if changes else "done",  # done when every change is accepted or rejected
         "decisions": {},    # { change id: 'accepted' | 'rejected' }, filled in the app
         "changes": changes, "warnings": warnings, "checks": checks, "notes": notes,
     }
