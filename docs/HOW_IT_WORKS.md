@@ -83,4 +83,5 @@ Which emails belong to a film: `projects/<film>/inbox.json` in the data repo.
 | Crew, receivers, headphones, the IFB list (one for the film) | `ifb/crew.json`, `ifb/receivers.json`, `ifb/headphones.json`, `ifb/list.json` in the data repo |
 | The list: OUT / ✓ back, still out, edit who has what | `src/screens/ifb-list.js`, actions in `src/ifb-editing.js`, picker `src/parts/ifb-picker.js` |
 | Crew lookup, Call / WhatsApp, 🚨 Emergency (who comes first) | `src/screens/ifb-crew.js`, rules in `src/ifb-rules.js` |
+| Crew on each ODG → new people proposed next to their role (numbers shift, IFB list follows; nobody removed; PERSONALE AGGIUNTO = daily) | `pipeline/read_crew.py`, `pipeline/compare_crew.py`; applied by `add_crew_member` in `src/proposal-rules.js` |
 | IFB Kit (same forms as the mic Kit) | `src/screens/ifb-kit.js` (uses `Section` from `src/screens/kit.js`) |

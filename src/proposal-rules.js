@@ -55,6 +55,24 @@ const OPS = {
     return ['characters.json'];
   },
 
+  // A new crew member, right after `after_name`; everyone after moves up one number,
+  // and the IFB list follows the new numbers. Nobody is ever removed.
+  add_crew_member(film, { person, after_name }) {
+    const crew = film.crew || [];
+    if (crew.some(c => c.name === person.name)) return [];
+    const at = crew.findIndex(c => c.name === after_name);
+    const inserted = [...crew];
+    inserted.splice(at === -1 ? crew.length : at + 1, 0, person);
+    const newNumber = {};
+    film.crew = inserted.map((c, i) => {
+      if (c.id) newNumber[c.id] = String(i + 1);
+      return { ...c, id: String(i + 1) };
+    });
+    const rows = film.ifbList?.rows || [];
+    film.ifbList = { ...film.ifbList, rows: rows.map(row => ({ ...row, crew_id: newNumber[row.crew_id] || row.crew_id })) };
+    return ['ifb/crew.json', 'ifb/list.json'];
+  },
+
   set_character(film, { id, fields }) {
     film.characters = film.characters.map(c => (c.id === id ? { ...c, ...fields } : c));
     return ['characters.json'];

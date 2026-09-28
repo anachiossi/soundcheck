@@ -5,6 +5,7 @@ and writes   projects/<film>/proposals/odg-<n>.json   with:
     changes   — each one can be accepted or rejected in the app (nothing changes before that)
     warnings  — probably errors in the ODG itself (e.g. a wrong date): nothing to change
     checks    — what was verified and is fine
+    ifb_today — who on the IFB list is not on the call sheet (crew changes are in `changes`)
     notes     — the ODG's sound / director / costume notes, per scene; each scene's notes
                 are also offered as a change (accepted → shown on the scene bar and images)
 
@@ -19,15 +20,19 @@ from pathlib import Path
 
 from compare import SOUND_NOTES, check_cast_list, check_date, check_day, check_scene_info, nice_date
 from compare_mics import check_scene_mics
+from compare_crew import check_crew
+from read_crew import read_crew
 from read_odg import read_odg
 from read_sides import read_sides
 
 
 def load_film(folder):
-    read = lambda name: json.loads((folder / name).read_text(encoding="utf-8"))
+    read = lambda name, empty=None: (json.loads((folder / name).read_text(encoding="utf-8"))
+                                     if (folder / name).exists() else empty)
     presets = {p.stem: json.loads(p.read_text(encoding="utf-8")) for p in (folder / "presets").glob("*.json")}
     return {"characters": read("characters.json"), "schedule": read("schedule.json"),
-            "scenes": read("scenes.json"), "presets": presets}
+            "scenes": read("scenes.json"), "presets": presets,
+            "crew": read("ifb/crew.json", []), "ifb_rows": (read("ifb/list.json", {}) or {}).get("rows", [])}
 
 
 def subject_date(subject, year):
@@ -84,6 +89,12 @@ def build_proposal(film_folder, email_folder):
     if sides_pdf is None:
         warnings.append("No sides (STRALCI) in this email: speakers were not checked.")
 
+    # IFB: the crew printed on the call sheet against the IFB crew list
+    ifb_today = []
+    if film["crew"]:
+        crew_changes, crew_checks, ifb_today = check_crew(read_crew(odg_pdf), film["crew"], film["ifb_rows"])
+        changes.extend(crew_changes), checks.extend(crew_checks)
+
     for number, change in enumerate(changes, 1):
         change["id"] = f"c{number}"
     return {
@@ -95,6 +106,7 @@ def build_proposal(film_folder, email_folder):
         "status": "open" if changes else "done",  # done when every change is accepted or rejected
         "decisions": {},    # { change id: 'accepted' | 'rejected' }, filled in the app
         "changes": changes, "warnings": warnings, "checks": checks, "notes": notes,
+        "ifb_today": ifb_today,  # who on the IFB list is not on today's call sheet
     }
 
 

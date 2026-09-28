@@ -214,6 +214,8 @@ button.kit-item:hover { background: #f1f5f9; }
 .back { margin-bottom: 8px; font-size: 16px; }
 .proposal-warnings { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 10px; padding: 10px 14px; margin: 10px 0; font-size: 15px; }
 .proposal-warnings ul { margin: 6px 0 0; padding-left: 20px; }
+.proposal-ifb { background: #fef3c7; border-radius: 10px; padding: 10px 14px; margin: 10px 0; font-size: 15px; }
+.proposal-ifb ul { margin: 6px 0 0; padding-left: 20px; }
 .changes { list-style: none; padding: 0; margin: 0 0 12px; }
 .change { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 4px; border-bottom: 1px solid var(--line); font-size: 16px; }
 .change__text { flex: 1 1 240px; }

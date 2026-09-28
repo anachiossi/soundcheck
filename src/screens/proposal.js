@@ -1,6 +1,7 @@
 // proposal.js — reviewing a proposal from a production email (e.g. ODG #6):
 //   ⚠ warnings  — probably mistakes on the sheet itself: nothing to change
 //   changes     — each one: ✓ Accept or ✕ Reject (or "Accept all")
+//   🎧 IFB today — who on the IFB list isn't on the call sheet
 //   ✓ checked   — what was compared and is fine
 // Also: the banner that shows up on every screen while a proposal waits.
 // Used by: main.js
@@ -44,6 +45,12 @@ export function ProposalScreen({ state }) {
       <div class="proposal-warnings">
         <b>⚠ Possible mistakes on the sheet (nothing to change)</b>
         <ul>${proposal.warnings.map(w => html`<li key=${w}>${w}</li>`)}</ul>
+      </div>`}
+
+    ${proposal.ifb_today?.length > 0 && html`
+      <div class="proposal-ifb">
+        <b>🎧 IFB today</b>
+        <ul>${proposal.ifb_today.map(t => html`<li key=${t}>${t}</li>`)}</ul>
       </div>`}
 
     <h2 class="section-title">Changes <small>${waiting.length} to decide</small></h2>

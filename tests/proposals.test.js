@@ -75,3 +75,14 @@ test('a brand-new shooting day gets its date, week and times', () => {
   assert.equal(row.week, 7);
   assert.equal(f.schedule.filter(r => r.scene_id === '2').length, 1, 'moved, not copied');
 });
+
+test('a new crew member goes after the same role; numbers shift and the IFB list follows', () => {
+  const f0 = { ...film,
+    crew: [{ id: '1', name: 'Anna', job: 'Regista' }, { id: '2', name: 'Bruno', job: 'Video Assist' }, { id: '3', name: 'Carla', job: 'Fonico' }],
+    ifbList: { rows: [{ crew_id: '3', rx_id: '1', hp_id: '1', out: true }, { crew_id: '2', rx_id: '2', hp_id: '2', out: false }] } };
+  const { film: f, files } = applyChange(f0, { op: 'add_crew_member', person: { name: 'Dora', job: 'Trainee', color: '#59d16c' }, after_name: 'Bruno' });
+  assert.deepEqual(f.crew.map(c => `${c.id} ${c.name}`), ['1 Anna', '2 Bruno', '3 Dora', '4 Carla']);
+  assert.deepEqual(f.ifbList.rows.map(r => r.crew_id), ['4', '2'], 'the set of Carla follows her to number 4');
+  assert.deepEqual(files, ['ifb/crew.json', 'ifb/list.json']);
+  assert.equal(applyChange(f, { op: 'add_crew_member', person: { name: 'Dora' }, after_name: 'Anna' }).film.crew.length, 4, 'never twice');
+});
