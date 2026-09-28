@@ -7,7 +7,7 @@
 //   • the character's colour frames the panel (and the phone's top strip), with the name on it
 // Tap the LEFT side → back · anywhere else → forward (a swipe only scrolls).
 // After the last line: The end / Start again. The screen stays awake (where allowed).
-// ✎ changes, deletes or adds lines when the director changes them (cue-line-editor.js).
+// The map button opens the Scene Map (cues-map.js). ✎ changes, deletes or adds lines when the director changes them (cue-line-editor.js).
 // Used by: main.js (opened from the Cues tab or the microphone on a scene)
 
 import { html, useEffect, useLayoutEffect, useRef, useState } from '../../vendor/preact-htm.js';
@@ -69,7 +69,7 @@ function useMoreBelow(ref, page) {
 export function CuesScreen({ state }) {
   const { project, cuesScene } = state;
   const cues = cueLines(project, cuesScene);
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState(() => Math.min(state.cuesLine || 0, Math.max(0, (cues?.lines.length || 1) - 1)));
   const [editor, setEditor] = useState(null); // { index, adding } while ✎ is open
   const textRef = useRef(null);
   const moreBelow = useMoreBelow(textRef, index);
@@ -79,7 +79,8 @@ export function CuesScreen({ state }) {
   const speakingColour = byId(project.characters).get(String(speaking?.char_id))?.color;
   useTopStripColour(speaking ? (speakingColour && !isNearWhite(speakingColour) ? speakingColour : '#475569') : '#0f172a');
 
-  const close = () => setState({ screen: state.cuesFrom || 'cues-picker', cuesScene: null });
+  // back to where Cues was opened from (the Scene Map keeps the scene)
+  const close = () => setState({ screen: state.cuesFrom || 'cues-picker', cuesScene: state.cuesFrom === 'cues-map' ? cuesScene : null, cuesLine: 0 });
   if (!cues) return html`<div class="cues cues--end"><p>No lines for scene ${cuesScene}.</p><button class="btn" onClick=${close}>Close</button></div>`;
 
   const lines = cues.lines;
@@ -110,6 +111,8 @@ export function CuesScreen({ state }) {
       <div class="cues__top">
         <span>${index + 1} / ${lines.length}</span>
         <span class="cues__scene">#${cuesScene}</span>
+        <button class="cues__close" onClick=${only(() => setState({ screen: 'cues-map', cuesLine: 0 }))} aria-label="Scene map">
+          <${Icon} name="map" /></button>
         <button class="cues__close cues__edit" onClick=${only(() => setEditor({ index, adding: false }))} aria-label="Edit this line">
           <${Icon} name="edit" /></button>
         <button class="cues__close" ...${closeProps(close)} aria-label="Close"><${Icon} name="close" /></button>

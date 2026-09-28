@@ -17,6 +17,7 @@ import { ProposalScreen, ProposalBanner } from './screens/proposal.js';
 import { DocumentScreen } from './screens/document.js';
 import { CuesScreen } from './screens/cues.js';
 import { CuesPickerScreen } from './screens/cues-picker.js';
+import { CuesMapScreen } from './screens/cues-map.js';
 import { IfbListScreen } from './screens/ifb-list.js';
 import { IfbCrewScreen } from './screens/ifb-crew.js';
 import { IfbKitScreen } from './screens/ifb-kit.js';
@@ -82,6 +83,7 @@ function App() {
   const tabs = TABS[state.department] || TABS.mics;
   const Screen = current === 'proposal' ? ProposalScreen
     : current === 'document' ? DocumentScreen
+    : current === 'cues-map' ? CuesMapScreen
     : (tabs.find(([id]) => id === current) || tabs[0])[2];
 
   return html`
@@ -95,7 +97,7 @@ function App() {
     </header>
     <nav class="tabs">
       ${tabs.map(([id, label]) => html`
-        <button key=${id} class=${id === current ? 'on' : ''} disabled=${!project && id !== 'projects'}
+        <button key=${id} class=${id === current || (id === 'cues-picker' && current === 'cues-map') ? 'on' : ''} disabled=${!project && id !== 'projects'}
                 onClick=${() => showScreen(id)}>${label}</button>`)}
     </nav>
     ${message && html`

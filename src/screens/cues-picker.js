@@ -1,7 +1,7 @@
 // cues-picker.js — the Cues tab: choose a scene to learn.
 // Opens on the shooting day chosen in the Schedule (today / next day); ‹ › change day.
 // Each scene of the day is a big button (scene, set, how many lines); tapping one opens
-// 🎙 Cues full screen. Below: any scene of the film by number.
+// 🎙 Cues full screen; the Map button next to it opens the Scene Map. Below: any scene by number.
 // Used by: main.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
@@ -10,12 +10,14 @@ import { pickDay, setState } from '../state.js';
 import { cueLines } from '../cues-rules.js';
 import { Icon } from '../parts/icons.js';
 
-const openCues = sceneId => setState({ screen: 'cues', cuesScene: sceneId, cuesFrom: 'cues-picker' });
+const openCues = sceneId => setState({ screen: 'cues', cuesScene: sceneId, cuesFrom: 'cues-picker', cuesLine: 0 });
+const openMap = sceneId => setState({ screen: 'cues-map', cuesScene: sceneId });
 
 function SceneButton({ project, sceneId }) {
   const cues = cueLines(project, sceneId);
   const info = sceneInfo(project, sceneId);
   return html`
+    <div class="cue-scene-row">
     <button class="cue-scene" disabled=${!cues} onClick=${() => openCues(sceneId)}>
       <span class="cue-scene__id">#${sceneId}</span>
       <span class="cue-scene__text">
@@ -23,7 +25,10 @@ function SceneButton({ project, sceneId }) {
         <small>${cues ? `${cues.lines.length} lines · ${cues.source}${cues.note ? ` · ${cues.note}` : ''}` : 'no dialogue'}</small>
       </span>
       <span class="cue-scene__go">${cues && html`<${Icon} name="mic" />`}</span>
-    </button>`;
+    </button>
+    ${cues && html`<button class="cue-scene__map" onClick=${() => openMap(sceneId)} aria-label=${`Scene map of ${sceneId}`}>
+      <${Icon} name="map" /><small>Map</small></button>`}
+    </div>`;
 }
 
 export function CuesPickerScreen({ state }) {

@@ -1,7 +1,7 @@
 // icons.js — small drawn icons for buttons (instead of emoji), thin lines in the
 // button's own text colour, so they look the same on every phone.
 //   <${Icon} name="edit" />   names: edit · mic · image · document · close · up · pin ·
-//                              download · inbox · headphones
+//                              download · inbox · headphones · map
 // Used by: the scene bar, Schedule, Cues, Kit, pickers, the top bar.
 
 import { html } from '../../vendor/preact-htm.js';
@@ -16,6 +16,7 @@ const DRAWINGS = {
   pin: html`<path d="M12 21s-6-5.6-6-10a6 6 0 0 1 12 0c0 4.4-6 10-6 10z" /><circle cx="12" cy="11" r="2" />`,
   download: html`<path d="M12 4v11M7 10l5 5 5-5" /><path d="M5 20h14" />`,
   inbox: html`<rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 7l9 6 9-6" />`,
+  map: html`<path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z" /><path d="M9 4v14M15 6v14" />`,
   headphones: html`<path d="M4 14v-2a8 8 0 0 1 16 0v2" /><rect x="3" y="13" width="5" height="8" rx="2" /><rect x="16" y="13" width="5" height="8" rx="2" />`,
 };
 
