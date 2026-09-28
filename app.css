@@ -289,6 +289,18 @@ button.kit-item:hover { background: #f1f5f9; }
 .cues--end .btn--primary { color: #fff; }
 .cues__again { font-size: 22px !important; padding: 16px 28px; }
 .cues__source { opacity: .7; }
+.cues__top > span:nth-child(2) { margin-right: auto; }          /* ✎ and ✕ sit together on the right */
+.cues__newer { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 12px;
+  background: rgba(0,0,0,.25); font-size: 15px; font-weight: 700; }
+.cues__newer span { flex: 1 1 100%; }
+.cues__newer .btn { color: var(--ink); padding: 6px 12px; }
+/* ✎ panel over Cues (Cues itself sits at z-index 30) */
+.sheet-backdrop.sheet--over-cues { z-index: 40; cursor: default; }
+.sheet.sheet--over-cues { z-index: 41; cursor: default; color: var(--ink); user-select: text; -webkit-user-select: text; }
+.cue-editor__text { width: 100%; box-sizing: border-box; font-family: var(--cue-font); font-size: 17px; line-height: 1.4;
+  padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 12px; resize: vertical; }
+.cue-editor__other { font: inherit; font-size: 16px; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 999px; background: var(--card); }
+.cue-editor__add, .cue-editor__undo { display: block; width: 100%; margin-top: 10px; }
 
 /* ---- 12. Cues tab: choosing a scene --------------------------------------- */
 .cue-day { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }

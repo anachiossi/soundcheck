@@ -3,7 +3,7 @@
 // When you change any app file, bump VERSION so devices pick up the new files.
 // (Film data is NOT stored here; it lives in the per-film database.)
 
-const VERSION = 'soundcheck-v25';
+const VERSION = 'soundcheck-v26';
 const FILES = [
   './', 'index.html', 'app.css', 'manifest.webmanifest',
   'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png',
@@ -12,7 +12,7 @@ const FILES = [
   'vendor/fonts/courier-prime-400.woff2', 'vendor/fonts/courier-prime-700.woff2',
   'src/main.js', 'src/state.js', 'src/model.js', 'src/colour.js',
   'src/editing.js', 'src/kit-editing.js', 'src/sync.js', 'src/preset-rules.js',
-  'src/proposals.js', 'src/proposal-rules.js', 'src/cues-rules.js', 'src/cues-phrases.js',
+  'src/proposals.js', 'src/proposal-rules.js', 'src/cues-rules.js', 'src/cues-phrases.js', 'src/cues-editing.js', 'src/parts/cue-line-editor.js',
   'src/ifb-editing.js', 'src/ifb-rules.js',
   'src/store/local.js', 'src/store/github.js', 'src/store/repo-files.js',
   'src/parts/pills.js', 'src/parts/scene-table.js', 'src/parts/scene-editor.js', 'src/parts/picker.js', 'src/parts/banners.js', 'src/parts/item-form.js', 'src/parts/ifb-picker.js', 'src/parts/icons.js',

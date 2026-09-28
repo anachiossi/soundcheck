@@ -44,3 +44,25 @@ test('every phrase on its own line: after , ; : . ? ! …', () => {
 test('no break after an abbreviation or inside a number', () => {
   assert.equal(phraseLines('Arriva l’Avv. Magnoni con 3.5 milioni.'), 'Arriva l’Avv. Magnoni con 3.5 milioni.');
 });
+
+test('lines edited on set win over the paper, and say what they came from', () => {
+  const edited = { ...project, lines: { ...project.lines,
+    'set/2': { based_on: 'Sides · Day 6', lines: [speech('INES', 'the director\'s words')] } } };
+  const cues = cueLines(edited, '2');
+  assert.equal(cues.lines[0].text, 'the director\'s words');
+  assert.equal(cues.source, 'Sides · Day 6 · edited on set');
+  assert.equal(cues.newer, null);
+});
+
+test('newer paper after an on-set edit is offered, not forced', () => {
+  const edited = { ...project, lines: { ...project.lines,
+    'set/2': { based_on: 'Script 21.08.26', lines: [speech('INES', 'mine')] } } };
+  const cues = cueLines(edited, '2');
+  assert.equal(cues.lines[0].text, 'mine');
+  assert.equal(cues.newer, 'Sides · Day 6');
+});
+
+test('an emptied on-set file (back to the paper) shows the paper again', () => {
+  const back = { ...project, lines: { ...project.lines, 'set/2': { based_on: 'Sides · Day 6', lines: [] } } };
+  assert.equal(cueLines(back, '2').lines[0].text, 'new words');
+});

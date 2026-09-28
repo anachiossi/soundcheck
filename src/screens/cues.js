@@ -7,6 +7,7 @@
 //   • the character's colour frames the panel (and the phone's top strip), with the name on it
 // Tap the LEFT side → back · anywhere else → forward (a swipe only scrolls).
 // After the last line: The end / Start again. The screen stays awake (where allowed).
+// ✎ changes, deletes or adds lines when the director changes them (cue-line-editor.js).
 // Used by: main.js (opened from the Cues tab or the microphone on a scene)
 
 import { html, useEffect, useLayoutEffect, useRef, useState } from '../../vendor/preact-htm.js';
@@ -15,6 +16,8 @@ import { textColourFor, isNearWhite } from '../colour.js';
 import { cueLines } from '../cues-rules.js';
 import { phraseLines } from '../cues-phrases.js';
 import { setState } from '../state.js';
+import { backToPaper, keepEdits } from '../cues-editing.js';
+import { CueLineEditor } from '../parts/cue-line-editor.js';
 import { Icon } from '../parts/icons.js';
 
 // A button's tap must not also reach the page behind it (which would turn the page).
@@ -67,6 +70,7 @@ export function CuesScreen({ state }) {
   const { project, cuesScene } = state;
   const cues = cueLines(project, cuesScene);
   const [index, setIndex] = useState(0);
+  const [editor, setEditor] = useState(null); // { index, adding } while ✎ is open
   const textRef = useRef(null);
   const moreBelow = useMoreBelow(textRef, index);
   useWakeLock();
@@ -96,7 +100,7 @@ export function CuesScreen({ state }) {
   const colour = byId(project.characters).get(String(line.char_id))?.color;
   const background = colour && !isNearWhite(colour) ? colour : '#475569';
   const onTap = event => {
-    if (event.target.closest('.cues__top, .cues__bottom')) return; // the bars never turn the page
+    if (editor || event.target.closest('.cues__top, .cues__bottom, .cues__newer')) return; // the bars never turn the page
     const back = event.clientX < innerWidth * 0.3;
     setIndex(i => (back ? Math.max(0, i - 1) : Math.min(lines.length, i + 1)));
   };
@@ -106,8 +110,16 @@ export function CuesScreen({ state }) {
       <div class="cues__top">
         <span>${index + 1} / ${lines.length}</span>
         <span class="cues__scene">#${cuesScene}</span>
+        <button class="cues__close cues__edit" onClick=${only(() => setEditor({ index, adding: false }))} aria-label="Edit this line">
+          <${Icon} name="edit" /></button>
         <button class="cues__close" ...${closeProps(close)} aria-label="Close"><${Icon} name="close" /></button>
       </div>
+      ${cues.newer && html`
+        <div class="cues__newer">
+          <span>New text arrived: ${cues.newer}</span>
+          <button class="btn" onClick=${only(() => { backToPaper(cuesScene); setIndex(0); })}>Use it</button>
+          <button class="btn" onClick=${only(() => keepEdits(cuesScene))}>Keep my changes</button>
+        </div>`}
       <div class="cues__name">${line.name}</div>
       <div class="cues__panel">
         <div class="cues__text" ref=${textRef}>
@@ -121,5 +133,7 @@ export function CuesScreen({ state }) {
         <span>${cues.source}${cues.note ? ` · ${cues.note}` : ''}</span>
         <span>${next ? `next: ${next.name}` : 'last line'}</span>
       </div>
+      ${editor && html`<${CueLineEditor} key=${`${index}-${editor.adding}`} project=${project} sceneId=${cuesScene}
+        cues=${cues} editor=${editor} setEditor=${setEditor} close=${() => setEditor(null)} goTo=${setIndex} />`}
     </div>`;
 }

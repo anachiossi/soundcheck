@@ -12,7 +12,8 @@
 //     scenes.json          { '12': { int_ext, time_of_day, set, location, pages, story_day, synopsis, notes } }
 //     presets/12.json      { scene_id, updated_at, updated_by, rows: [{ char_id, tx_id, lav_id, speaker }] }
 //     proposals/odg-6.json changes suggested from a production email (see pipeline/), to accept or reject
-//     lines/sides/2.json   who says what in scene 2 (from the day's sides; lines/script/2.json from the script)
+//     lines/sides/2.json   who says what in scene 2 (from the day's sides; lines/script/2.json from the script;
+//                          lines/set/2.json = changed on set in 🎙 Cues, wins over both)
 //     ifb/crew.json        [{ id, name, job, color, phone }]          IFB department:
 //     ifb/receivers.json   [{ id, model, color, connector }]
 //     ifb/headphones.json  [{ id, model, color, connector, attenuated }]
