@@ -11,14 +11,14 @@ Only proposals are written. The film's data changes only when Ana accepts them i
 
     python pipeline/run.py D:/sound_check_data/projects/la-buona-educazione
     python pipeline/run.py <film folder> --all      (also days already shot, for testing)
-    python pipeline/run.py --every-film <data repo> --scheduled
-        every film with an inbox.json; --scheduled = only in the checking hours, Rome time:
-        04:00–10:00 and 17:00–24:00 (GitHub Actions runs it every 30 minutes: .github/workflows/emails.yml)
+    python pipeline/run.py --every-film <data repo>
+        every film with an inbox.json (GitHub Actions runs it every 30 minutes, 04–10 and 17–24 Rome:
+        the hours are set only in .github/workflows/emails.yml — GitHub often starts a run late,
+        and a late run must still read the emails)
 """
 
 import datetime
 import json
-import zoneinfo
 import subprocess
 import sys
 from pathlib import Path
@@ -121,17 +121,9 @@ def file_documents(film):
     return changed
 
 
-def in_checking_hours():
-    """04:00–10:00 (an ODG sent after midnight) and 17:00–24:00 (the usual evening ODG), Rome time."""
-    hour = datetime.datetime.now(zoneinfo.ZoneInfo("Europe/Rome")).hour
-    return 4 <= hour < 10 or hour >= 17
-
-
 if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8")
     if "--every-film" in sys.argv:
-        if "--scheduled" in sys.argv and not in_checking_hours():
-            sys.exit("Outside the checking hours in Rome (04–10, 17–24): nothing to do.")
         repo = Path(sys.argv[sys.argv.index("--every-film") + 1])
         for film in sorted(p.parent for p in repo.glob("projects/*/inbox.json")):
             print(f"== {film.name}")
