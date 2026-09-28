@@ -1,7 +1,7 @@
 // github.js — the only file that talks to GitHub: reads and writes the film
 // files in the private soundcheck-data repo.
 // connection = { owner, repo, branch, token, device }   (saved on this device only)
-// Used by: sync.js, screens/projects.js
+// Used by: sync.js, screens/projects.js, email-robot.js
 
 const API = 'https://api.github.com';
 
@@ -41,6 +41,28 @@ function explain(status) {
   if (status === 409 || status === 422) return 'the repo changed meanwhile';
   return `GitHub answered ${status}`;
 }
+
+// The production-email robot (workflow emails.yml in this repo): its last run, and when the
+// Gmail trigger last checked the mailbox (variable LAST_GMAIL_CHECK, set by gmail-trigger.gs).
+// Returns { checkedAt, run: { status, conclusion, at } } or { noAccess: true } when the key
+// isn't allowed to see Actions / Variables.
+export async function emailRobot(connection) {
+  const quiet = promise => promise.catch(error => ({ error }));
+  const [runs, checked] = await Promise.all([
+    quiet(call(connection, '/actions/workflows/emails.yml/runs?per_page=1')),
+    quiet(call(connection, '/actions/variables/LAST_GMAIL_CHECK')),
+  ]);
+  if ([runs, checked].some(r => r.error?.status === 403 || r.error?.status === 401)) return { noAccess: true };
+  const last = runs.workflow_runs?.[0];
+  return {
+    noAccess: false,
+    checkedAt: checked.value || null,
+    run: last ? { status: last.status, conclusion: last.conclusion, at: last.created_at } : null,
+  };
+}
+
+export const startEmailRobot = connection => call(connection, '/actions/workflows/emails.yml/dispatches',
+  { method: 'POST', body: JSON.stringify({ ref: connection.branch }) });
 
 // Checks the key works and can write. Returns the repo's full name.
 export async function checkConnection(connection) {

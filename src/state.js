@@ -28,6 +28,7 @@ let state = {
   connection: loadJson('sc_github', null), // GitHub: { owner, repo, branch, token, device }
   films: null,              // films in the repo (null = not looked yet)
   sync: { running: false, error: null },
+  emailRobot: null,         // ✉ { checkedAt, run, noAccess, starting } (email-robot.js)
   edit: null,               // scene being edited: { sceneId, rows }
   picker: null,             // open picker: { rowIndex, field }
   busyText: null,           // e.g. 'Making images…'

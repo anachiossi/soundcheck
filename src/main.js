@@ -23,6 +23,7 @@ import { IfbCrewScreen } from './screens/ifb-crew.js';
 import { IfbKitScreen } from './screens/ifb-kit.js';
 import { IfbPicker } from './parts/ifb-picker.js';
 import { Icon } from './parts/icons.js';
+import { EmailBadge } from './parts/email-robot.js';
 
 // Two departments, each with its own big tabs. Projects is shared.
 const TABS = {
@@ -92,7 +93,7 @@ function App() {
         <span class="logo">soundcheck</span>
         ${project && html`<span class="topbar__film">${project.name}</span>`}
       </div>
-      <div class="topbar__status"><${SyncBadge} state=${state} /></div>
+      <div class="topbar__status"><${SyncBadge} state=${state} /> <${EmailBadge} state=${state} /></div>
       ${project && html`<${DepartmentSwitch} department=${state.department} />`}
     </header>
     <nav class="tabs">

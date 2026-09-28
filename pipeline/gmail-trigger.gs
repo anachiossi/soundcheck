@@ -3,12 +3,13 @@
 // or PDL has arrived, it starts the "Production emails" robot on GitHub right away
 // (GitHub's own timetable in emails.yml is only the backup — it often starts late or not at all).
 // Nothing is read or sent anywhere else: it only looks at subjects and message ids, then asks
-// GitHub to run the robot, which reads the emails itself.
+// GitHub to run the robot, which reads the emails itself. At every check it also leaves the time
+// on GitHub (variable LAST_GMAIL_CHECK), so the app's ✉ badge can show "checked 8 min ago".
 //
 // Setup (once, see docs/HOW_IT_WORKS.md → "Email robot trigger"):
 //   1. script.google.com (logged in as sound.chiossi@) → New project → paste this file
-//   2. Project settings → Script properties → GITHUB_TOKEN = the GitHub key (Actions: read and write,
-//      only the soundcheck-data repository)
+//   2. Project settings → Script properties → GITHUB_TOKEN = the GitHub key (only the soundcheck-data
+//      repository; Actions: read and write, Variables: read and write)
 //   3. Run setup() once and allow access to Gmail → it creates the 10-minute timer
 //   4. Triggers (clock icon) → the timer → Failure notifications: "Notify me immediately"
 
@@ -34,11 +35,33 @@ function checkForProductionEmails() {
       fresh.push({ id, subject: message.getSubject() });
     }
   }));
-  if (!fresh.length) return;
+  if (fresh.length) {
+    startRobot(fresh.map(email => email.subject).join(' | '));
+    properties.setProperty('SEEN', JSON.stringify([...seen, ...fresh.map(email => email.id)].slice(-REMEMBER)));
+    console.log(`Started the robot for: ${fresh.map(email => email.subject).join(', ')}`);
+  }
+  reportChecked();
+}
 
-  startRobot(fresh.map(email => email.subject).join(' | '));
-  properties.setProperty('SEEN', JSON.stringify([...seen, ...fresh.map(email => email.id)].slice(-REMEMBER)));
-  console.log(`Started the robot for: ${fresh.map(email => email.subject).join(', ')}`);
+// "Gmail was checked now" → GitHub variable LAST_GMAIL_CHECK (read by the app's ✉ badge).
+// Never fails the check: without the Variables permission the robot still starts.
+function reportChecked() {
+  const url = `https://api.github.com/repos/${REPO}/actions/variables`;
+  const body = { name: 'LAST_GMAIL_CHECK', value: new Date().toISOString() };
+  let code = github(`${url}/LAST_GMAIL_CHECK`, 'patch', body).getResponseCode();
+  if (code === 404) code = github(url, 'post', body).getResponseCode(); // the first time: create it
+  if (code >= 300) console.warn(`Couldn't report the check to GitHub (${code}): add "Variables: read and write" to the key.`);
+}
+
+function github(url, method, body) {
+  return UrlFetchApp.fetch(url, {
+    method,
+    contentType: 'application/json',
+    headers: { Authorization: `Bearer ${PropertiesService.getScriptProperties().getProperty('GITHUB_TOKEN')}`,
+               Accept: 'application/vnd.github+json' },
+    payload: JSON.stringify(body),
+    muteHttpExceptions: true,
+  });
 }
 
 function startRobot(reason) {

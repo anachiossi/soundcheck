@@ -104,3 +104,17 @@ test('time of day in Italian or English gets the right colour group', () => {
   assert.equal(timeClass('Giorno'), 'day');
   assert.equal(timeClass('NIGHT'), 'night');
 });
+
+// ---- ✉ email robot badge ----
+import { robotHealth, ago } from '../src/email-robot.js';
+
+test('email robot: checked recently = ok, 30+ min = late, failed run = failed', () => {
+  const now = Date.parse('2026-09-28T20:00:00Z');
+  const run = { status: 'completed', conclusion: 'success', at: '2026-09-28T19:00:00Z' };
+  assert.equal(robotHealth({ checkedAt: '2026-09-28T19:52:00Z', run }, now), 'ok');
+  assert.equal(robotHealth({ checkedAt: '2026-09-28T19:20:00Z', run }, now), 'late');
+  assert.equal(robotHealth({ checkedAt: '2026-09-28T19:55:00Z', run: { ...run, conclusion: 'failure' } }, now), 'failed');
+  assert.equal(robotHealth({ noAccess: true }, now), 'unknown');
+  assert.equal(ago('2026-09-28T19:52:00Z', now), '8 min ago');
+  assert.equal(ago('2026-09-28T17:00:00Z', now), '3 h ago');
+});

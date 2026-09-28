@@ -12,6 +12,7 @@ import { getState, setState, saveAndShow, showMessage } from './state.js';
 import { saveDocument } from './store/local.js';
 import { defaultDay, localTodayIso, shootingDays } from './model.js';
 import * as github from './store/github.js';
+import { refreshEmailRobot } from './email-robot.js';
 import { applyRemote, filesToDownload, emptyProject, fileContent, setFileContent, formatJson } from './store/repo-files.js';
 
 let lastSync = 0;
@@ -48,6 +49,7 @@ export async function syncNow({ loud = false } = {}) {
       }
     }
     setState({ sync: { running: false, error: null, at: new Date().toISOString() } });
+    refreshEmailRobot().catch(() => {}); // the ✉ badge (never blocks the sync)
     if (loud) showMessage('ok', uploaded ? `Uploaded ${uploaded} change(s).` : 'Everything is up to date.');
   } catch (error) {
     setState({ sync: { running: false, error: error.message } });

@@ -73,12 +73,19 @@ Which emails belong to a film: `projects/<film>/inbox.json` in the data repo.
 
 ### Email robot trigger (Apps Script) — setup once
 1. GitHub → Settings → Developer settings → Fine-grained tokens → Generate: repository access **only
-   soundcheck-data**, permission **Actions: Read and write**, expiry after the end of the shoot.
+   soundcheck-data**, permissions **Actions: Read and write** + **Variables: Read and write**.
 2. script.google.com, logged in as sound.chiossi@ → New project → paste `pipeline/gmail-trigger.gs`.
 3. ⚙ Project settings → Script properties → add `GITHUB_TOKEN` = the token.
 4. Choose `setup` in the function menu → Run → allow access. This creates the 10-minute timer.
 5. ⏰ Triggers → the timer → ✎ → Failure notification: **Notify me immediately**.
 Check: Executions (☰ list icon) shows each check; GitHub → Actions shows the runs it started.
+
+### ✉ badge in the app (emails checked · Check emails now)
+The top bar shows when Gmail was last checked (variable `LAST_GMAIL_CHECK`, set by the Gmail trigger at
+every check); orange after 30 minutes without a check or when the robot's last run failed. Tap it:
+last check, last robot run, **Check emails now** (starts the robot, waits, syncs).
+Files: `src/email-robot.js`, `src/parts/email-robot.js`, `emailRobot` / `startEmailRobot` in `src/store/github.js`.
+The app's GitHub key needs **Actions: Read and write** and **Variables: Read-only** besides Contents.
 
 ## 🎙 Cues (learn a scene's lines)
 | What | File |
