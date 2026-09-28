@@ -1,6 +1,7 @@
 // ifb-list.js — the IFB tab: who has which receiver and headphones (one list for the
 // whole film), and who still has them.
-//   • big OUT / ✓ back button per person: tap when you hand the set out or get it back
+//   • big button per person, yellow 🎧 out / green ✓ back: tap when you hand the set
+//     out or get it back (handing out is routine, so no alarm colours)
 //   • "3 of 5 out", a "still out" filter for wrap, All handed out / All back
 //   • ✎ Edit list: change who has what (draft → Save), with a warning for doubles
 // Used by: main.js
@@ -10,6 +11,14 @@ import { byId } from '../model.js';
 import { toggleOut, setAllOut, startIfbEdit, openIfbPicker, addIfbRow, deleteIfbRow, cancelIfbEdit, saveIfbEdit } from '../ifb-editing.js';
 import { ifbWarnings } from '../ifb-rules.js';
 import { CrewPill, GearPill } from '../parts/pills.js';
+
+// A small headphones drawing (not an emoji), in the button's text colour.
+const HeadphonesIcon = () => html`
+  <svg class="ifb-icon" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M4 14v-2a8 8 0 0 1 16 0v2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
+    <rect x="3" y="13" width="5" height="8" rx="2" fill="currentColor" />
+    <rect x="16" y="13" width="5" height="8" rx="2" fill="currentColor" />
+  </svg>`;
 
 function Labels() {
   return html`<div class="ifb-row ifb-row--labels"><span>Person</span><span>RX</span><span>HP</span><span></span></div>`;
@@ -76,7 +85,7 @@ export function IfbListScreen({ state }) {
           <${GearPill} item=${rx.get(String(row.rx_id))} person=${person} id=${row.rx_id} />
           <${GearPill} item=${hp.get(String(row.hp_id))} person=${person} id=${row.hp_id} />
           <button class=${'ifb-out ' + (row.out ? 'ifb-out--out' : 'ifb-out--back')} onClick=${() => toggleOut(index)}>
-            ${row.out ? 'OUT' : '✓ back'}
+            ${row.out ? html`<${HeadphonesIcon} /> out` : '✓ back'}
           </button>
         </div>`;
     })}
