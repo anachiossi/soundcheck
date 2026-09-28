@@ -249,7 +249,8 @@ button.kit-item:hover { background: #f1f5f9; }
 /* Looks like a script page: the name centred in capitals, the words in a centred
    column (left-aligned inside it, like dialogue), in Courier Prime — the screenplay
    typewriter font, redrawn to be clearer. Easy reading: one size per screen, generous
-   line and word spacing, dark on a soft cream panel, text centred in the panel.
+   line and word spacing, one phrase per line, dark on a soft cream panel; a long
+   speech scrolls inside the panel.
    The phone's safe margins keep text away from the camera cutout and the corners. */
 @font-face { font-family: 'Courier Prime'; font-weight: 400; src: url(vendor/fonts/courier-prime-400.woff2) format('woff2'); font-display: swap; }
 @font-face { font-family: 'Courier Prime'; font-weight: 700; src: url(vendor/fonts/courier-prime-700.woff2) format('woff2'); font-display: swap; }
@@ -270,16 +271,16 @@ button.kit-item:hover { background: #f1f5f9; }
 .cues__name small { font-size: .6em; letter-spacing: 0; text-transform: none; opacity: .85; }
 .cues__panel { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column;
   background: var(--cue-paper); color: var(--cue-ink); border-radius: 18px; padding: 18px 20px 14px; }
-.cues__text { flex: 1; min-height: 0; overflow: hidden; width: 100%; max-width: 30ch; margin: 0 auto;
-  display: flex; flex-direction: column; justify-content: center;          /* centred in the panel */
-  white-space: pre-line; text-align: left;
-  font-family: var(--cue-font); font-size: var(--cue-size); font-weight: 400;
-  -webkit-text-stroke: .35px currentColor;                                    /* a little thicker */
+.cues__text { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+  display: flex; flex-direction: column; }                                      /* a long speech scrolls */
+.cues__speech { margin: auto; width: 100%; max-width: 30ch; padding: 4px 0;     /* centred while it fits */
+  text-align: left; font-family: var(--cue-font); font-size: var(--cue-size); font-weight: 400;
+  -webkit-text-stroke: .35px currentColor;                                       /* a little thicker */
   line-height: 1.5; word-spacing: .08em; }
-.cues__measure { position: absolute; top: 18px; left: 0; right: 0; visibility: hidden; flex: none; height: auto;
-  overflow: visible; pointer-events: none; display: block; }
-.cues__continues { align-self: flex-end; margin-top: 6px; font-size: 16px; font-weight: 700; color: #6b5a2e; }
-.cues__continues--hidden { visibility: hidden; } /* keeps its space, so every page has the same room */
+.cues__phrase { margin: 0; }
+.cues__phrase + .cues__phrase { margin-top: .35em; }   /* a new phrase: a little space above */
+.cues__more { align-self: center; margin-top: 6px; font-size: 16px; font-weight: 700; color: #6b5a2e; }
+.cues__more--hidden { visibility: hidden; }            /* keeps its space, so the panel doesn't jump */
 .cues--end { background: var(--ink); color: #fff; align-items: center; justify-content: center; text-align: center; cursor: default; }
 .cues--end h1 { font-size: 56px; margin: 0; }
 .cues--end .btn { min-width: 220px; font-size: 18px; color: var(--ink); }

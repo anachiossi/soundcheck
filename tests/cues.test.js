@@ -34,23 +34,13 @@ test('summary for the Kit page', () => {
   assert.deepEqual(cuesSummary(project), { script: 3, sides: 1, version: '21.08.26' });
 });
 
-import { splitSpeech, scenePages } from '../src/cues-pages.js';
-const fitsWords = max => text => text.split(/\s+/).length <= max; // pretend a page holds `max` words
+import { phraseLines } from '../src/cues-phrases.js';
 
-test('a short speech stays on one page', () => {
-  assert.deepEqual(splitSpeech('Dai Maura, servila.', fitsWords(10)), ['Dai Maura, servila.']);
+test('every phrase on its own line: after , ; : . ? ! …', () => {
+  assert.equal(phraseLines('Guarda qua, fratello: lo spezzatino. Ieri? Sì… buttato insieme.'),
+    ['Guarda qua,', 'fratello:', 'lo spezzatino.', 'Ieri?', 'Sì…', 'buttato insieme.'].join('\n'));
 });
 
-test('a long speech continues on the next page, cut at the end of a sentence', () => {
-  const pages = splitSpeech('Uno due tre. Quattro cinque sei. Sette otto.', fitsWords(6));
-  assert.deepEqual(pages, ['Uno due tre. Quattro cinque sei.', 'Sette otto.']);
-});
-
-test('one sentence longer than a page is cut between words', () => {
-  assert.deepEqual(splitSpeech('a b c d e f g', fitsWords(3)), ['a b c', 'd e f', 'g']);
-});
-
-test('pages know their part, the line and who speaks next', () => {
-  const pages = scenePages([speech('INES', 'Uno due. Tre quattro.'), speech('ROY', 'Sì.')], fitsWords(2));
-  assert.deepEqual(pages.map(p => [p.line, p.part, p.parts, p.nextName]), [[0, 1, 2, 'ROY'], [0, 2, 2, 'ROY'], [1, 1, 1, '']]);
+test('no break after an abbreviation or inside a number', () => {
+  assert.equal(phraseLines('Arriva l’Avv. Magnoni con 3.5 milioni.'), 'Arriva l’Avv. Magnoni con 3.5 milioni.');
 });

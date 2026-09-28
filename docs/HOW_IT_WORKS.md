@@ -75,7 +75,8 @@ Which emails belong to a film: `projects/<film>/inbox.json` in the data repo.
 | Who says what, from sides / script PDFs | `pipeline/read_lines.py` → `pipeline/cue_lines.py` writes `lines/sides/<scene>.json`, `lines/script/<scene>.json` |
 | New script version (by hand) | `python pipeline/cue_lines.py <film folder> "<script.pdf>" "<version>"` |
 | Which lines a scene shows (sides → script → base scene for 7fin) | `src/cues-rules.js` |
-| The full-screen mode | `src/screens/cues.js` + section 11 of `app.css` |
+| The full-screen mode (one speech per page, scrolls when long) | `src/screens/cues.js` + section 11 of `app.css` |
+| One phrase per line (after , ; : . ? ! …) | `src/cues-phrases.js` |
 
 ## 🎧 IFB department (Mics | IFB switch at the top)
 | What | File |
