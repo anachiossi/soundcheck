@@ -14,6 +14,7 @@ import { SceneTable } from '../parts/scene-table.js';
 import { sceneSheet, txSheet } from '../export/image.js';
 import { scheduleImages } from '../export/schedule-images.js';
 import { shareCanvas, shareCanvases } from '../export/share.js';
+import { Icon } from '../parts/icons.js';
 
 const MODES = [['day', 'Day'], ['week', 'Week'], ['all', 'All film']];
 
@@ -52,7 +53,7 @@ function DocumentButtons({ project, day }) {
     const path = `${project.folder}/docs/day-${day}/${file}.pdf`;
     if (!project.documents?.[path]) return null;
     return html`<button class="btn btn--doc" key=${file}
-      onClick=${() => setState({ screen: 'document', documentPath: path, documentTitle: `${label} · Day ${day}` })}>📄 ${label}</button>`;
+      onClick=${() => setState({ screen: 'document', documentPath: path, documentTitle: `${label} · Day ${day}` })}><${Icon} name="document" /> ${label}</button>`;
   });
 }
 
@@ -75,8 +76,8 @@ function DayView({ project, edit, dayNumber }) {
     <${SceneChips} sceneIds=${sceneIds} onPick=${scrollToScene} />
     <div class="toolbar">
       <${DocumentButtons} project=${project} day=${day.day} />
-      <button class="btn" onClick=${async () => shareCanvas(await sceneSheet(project, sceneIds, `Day ${day.day} · mic list`), `day-${day.day}.png`)}>📷 Day sheet</button>
-      <button class="btn" onClick=${async () => shareCanvas(await txSheet(project, day.day), `tx-day-${day.day}.png`)}>📷 TX sheet</button>
+      <button class="btn" onClick=${async () => shareCanvas(await sceneSheet(project, sceneIds, `Day ${day.day} · mic list`), `day-${day.day}.png`)}><${Icon} name="image" /> Day sheet</button>
+      <button class="btn" onClick=${async () => shareCanvas(await txSheet(project, day.day), `tx-day-${day.day}.png`)}><${Icon} name="image" /> TX sheet</button>
     </div>
     ${sceneIds.map(id => html`<${SceneTable} key=${id} project=${project} edit=${edit} sceneId=${id} onExport=${id => exportScene(project, id)} />`)}`;
 }
@@ -91,7 +92,7 @@ function WeekView({ project, edit, weekNumber }) {
         <button key=${w.week} class=${'chip' + (w.week === week.week ? ' chip--on' : '')} onClick=${() => pickWeek(w.week)}>Week ${w.week}</button>`)}
     </div>
     <div class="toolbar">
-      <button class="btn" onClick=${() => exportDays(project, week.days.map(d => d.day), `Week ${week.week} · mic list`, `week-${week.week}.png`)}>📷 Week image</button>
+      <button class="btn" onClick=${() => exportDays(project, week.days.map(d => d.day), `Week ${week.week} · mic list`, `week-${week.week}.png`)}><${Icon} name="image" /> Week image</button>
     </div>
     <${WeekBanner} week=${week} />
     ${week.days.map(day => html`
@@ -108,7 +109,7 @@ function AllView({ project }) {
   return html`
     <p class="summary"><b>${days} shooting days</b> · ${all.length} weeks · ${Object.keys(project.presets).length} presets</p>
     <div class="toolbar">
-      <button class="btn" onClick=${() => exportDays(project, shootingDays(project).map(d => d.day), `${project.name} · all film`, 'all-film.png')}>📷 All film image</button>
+      <button class="btn" onClick=${() => exportDays(project, shootingDays(project).map(d => d.day), `${project.name} · all film`, 'all-film.png')}><${Icon} name="image" /> All film image</button>
     </div>
     ${all.map(week => html`
       <div key=${week.week}>

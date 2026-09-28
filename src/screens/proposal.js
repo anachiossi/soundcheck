@@ -11,11 +11,12 @@ import { setState, showScreen } from '../state.js';
 import { formatDate } from '../model.js';
 import { openProposals, undecided } from '../proposal-rules.js';
 import { acceptChange, rejectChange, acceptAll } from '../proposals.js';
+import { Icon } from '../parts/icons.js';
 
 export function ProposalBanner({ project }) {
   return openProposals(project).map(proposal => html`
     <button class="proposal-banner" key=${proposal.id} onClick=${() => setState({ screen: 'proposal', proposalId: proposal.id })}>
-      📬 <b>${proposal.title}</b>
+      <b class="with-icon"><${Icon} name="inbox" /> ${proposal.title}</b>
       <span>${undecided(proposal).length} to review${proposal.warnings.length ? ` · ⚠ ${proposal.warnings.length}` : ''} ›</span>
     </button>`);
 }

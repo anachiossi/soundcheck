@@ -43,7 +43,7 @@ export function footer(ctx, width, y, project) {
   const waiting = Object.keys(project.outbox || {}).length;
   if (waiting) {
     font(ctx, 600, 22);
-    text(ctx, `⚠ ${waiting} change(s) on this device not uploaded yet`, PAD, y + 64, width - 2 * PAD, '#ea580c');
+    text(ctx, `${waiting} change(s) on this device not uploaded yet`, PAD, y + 64, width - 2 * PAD, '#ea580c');
   }
 }
 
@@ -109,8 +109,8 @@ function drawSlate(ctx, sceneId, info, y) {
   font(ctx, 400, 26);
   const synopsis = wrapLines(ctx, info?.synopsis, width, 3);
   font(ctx, 600, 24);
-  const notes = wrapLines(ctx, info?.notes ? `⚠ ${info.notes}` : '', width, 2);
-  const details = [info?.location && `📍 ${info.location}`, info?.pages && `${info.pages} pg`,
+  const notes = wrapLines(ctx, info?.notes || '', width, 2); // orange = a production note
+  const details = [info?.location, info?.pages && `${info.pages} pg`,
     info?.story_day && `story day ${info.story_day}`].filter(Boolean).join('   ·   ');
   const height = 76 + (details ? 40 : 0) + synopsis.length * 34 + notes.length * 32 + (info ? 16 : 0);
 

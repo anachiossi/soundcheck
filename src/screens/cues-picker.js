@@ -8,6 +8,7 @@ import { html, useState } from '../../vendor/preact-htm.js';
 import { shootingDays, allSceneIds, sceneInfo, formatDate } from '../model.js';
 import { pickDay, setState } from '../state.js';
 import { cueLines } from '../cues-rules.js';
+import { Icon } from '../parts/icons.js';
 
 const openCues = sceneId => setState({ screen: 'cues', cuesScene: sceneId, cuesFrom: 'cues-picker' });
 
@@ -21,7 +22,7 @@ function SceneButton({ project, sceneId }) {
         <b>${info?.set || `Scene ${sceneId}`}</b>
         <small>${cues ? `${cues.lines.length} lines · ${cues.source}${cues.note ? ` · ${cues.note}` : ''}` : 'no dialogue'}</small>
       </span>
-      <span class="cue-scene__go">${cues ? '🎙' : ''}</span>
+      <span class="cue-scene__go">${cues && html`<${Icon} name="mic" />`}</span>
     </button>`;
 }
 

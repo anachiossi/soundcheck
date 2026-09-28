@@ -10,6 +10,7 @@ import { byId } from '../model.js';
 import { warnings } from '../preset-rules.js';
 import { openPicker, cycleSpeaker, addRow, deleteRow, moveRow, cancelEdit, saveEdit } from '../editing.js';
 import { CharacterPill, TxPill, LavPill, SpeakerBadge } from './pills.js';
+import { Icon } from './icons.js';
 
 export function SceneEditor({ project, edit }) {
   const [confirming, setConfirming] = useState(false);
@@ -40,8 +41,8 @@ export function SceneEditor({ project, edit }) {
             ${cell(i, 'lav_id', row.lav_id ? html`<${LavPill} lav=${lav} id=${row.lav_id} />` : empty('lav'))}
             <button class="edit-cell" onClick=${() => cycleSpeaker(i)}><${SpeakerBadge} speaker=${row.speaker} /></button>
             <span class="row-tools">
-              <button class="icon-btn" disabled=${i === 0} onClick=${() => moveRow(i, -1)} aria-label="Move up">↑</button>
-              <button class="icon-btn icon-btn--remove" onClick=${() => deleteRow(i)} aria-label="Delete row">✕</button>
+              <button class="icon-btn" disabled=${i === 0} onClick=${() => moveRow(i, -1)} aria-label="Move up"><${Icon} name="up" /></button>
+              <button class="icon-btn icon-btn--remove" onClick=${() => deleteRow(i)} aria-label="Delete row"><${Icon} name="close" /></button>
             </span>
           </div>`;
       })}

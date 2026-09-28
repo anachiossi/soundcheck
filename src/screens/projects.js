@@ -10,6 +10,7 @@ import { formatStamp } from '../model.js';
 import { openProject, importProjectFile, downloadProjectFile, saveConnection, forgetConnection, showMessage } from '../state.js';
 import { syncNow, downloadFilm, loadFilmList } from '../sync.js';
 import { checkConnection } from '../store/github.js';
+import { Icon } from '../parts/icons.js';
 
 export function ProjectsScreen({ state }) {
   const { project, projects, connection, films, online } = state;
@@ -40,7 +41,7 @@ export function ProjectsScreen({ state }) {
         as <b>${connection.device}</b>. <button class="link" onClick=${forgetConnection}>Disconnect</button></p>`}
 
     <details class="more"><summary>Backup files</summary>
-      ${project && html`<button class="btn" onClick=${downloadProjectFile}>⬇ Save backup file of ${project.name}</button>`}
+      ${project && html`<button class="btn" onClick=${downloadProjectFile}><${Icon} name="download" /> Save backup file of ${project.name}</button>`}
       <label class="btn file-btn">+ Add film from a backup file
         <input type="file" accept=".json,application/json" onChange=${e => { e.target.files[0] && importProjectFile(e.target.files[0]); e.target.value = ''; }} />
       </label>

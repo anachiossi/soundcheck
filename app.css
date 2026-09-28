@@ -80,6 +80,17 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .chip--static { padding: 2px 8px; font-size: 12px; min-width: 0; }
 .chips--big .chip { padding: 8px 14px; }
 
+/* Drawn icons (parts/icons.js): take the text colour, sized with the text */
+.icon { width: 1.2em; height: 1.2em; flex: none; vertical-align: -0.22em; }
+.btn .icon { margin-right: 2px; }
+.icon-btn { display: inline-flex; align-items: center; justify-content: center; color: #334155; }
+.icon-btn .icon { width: 24px; height: 24px; }
+.icon-btn--remove { color: var(--danger); }
+.with-icon { display: inline-flex; align-items: center; gap: 4px; }
+.cue-scene__go .icon { width: 30px; height: 30px; }
+.cues__close .icon, .sheet__head .icon { width: 20px; height: 20px; }
+.cues__close { display: inline-flex; align-items: center; justify-content: center; }
+
 /* ---- 4. Schedule ---------------------------------------------------------- */
 .day-strip { display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 10px; scroll-snap-type: x proximity; }
 .day-btn { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; border: 1px solid var(--line); background: var(--card); border-radius: 12px; padding: 6px 10px; scroll-snap-align: center; }

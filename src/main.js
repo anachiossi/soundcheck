@@ -21,6 +21,7 @@ import { IfbListScreen } from './screens/ifb-list.js';
 import { IfbCrewScreen } from './screens/ifb-crew.js';
 import { IfbKitScreen } from './screens/ifb-kit.js';
 import { IfbPicker } from './parts/ifb-picker.js';
+import { Icon } from './parts/icons.js';
 
 // Two departments, each with its own big tabs. Projects is shared.
 const TABS = {
@@ -43,8 +44,8 @@ function DepartmentSwitch({ department }) {
   const choose = next => next !== department && setState({ department: next, screen: TABS[next][0][0] });
   return html`
     <div class="segmented department">
-      <button class=${department === 'mics' ? 'on' : ''} onClick=${() => choose('mics')}>🎤 Mics</button>
-      <button class=${department === 'ifb' ? 'on' : ''} onClick=${() => choose('ifb')}>🎧 IFB</button>
+      <button class=${department === 'mics' ? 'on' : ''} onClick=${() => choose('mics')}><${Icon} name="mic" /> Mics</button>
+      <button class=${department === 'ifb' ? 'on' : ''} onClick=${() => choose('ifb')}><${Icon} name="headphones" /> IFB</button>
     </div>`;
 }
 

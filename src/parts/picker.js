@@ -10,6 +10,7 @@ import { naturalCompare, byId } from '../model.js';
 import { usedByOtherRows, sameDaySuggestions, preferredFor } from '../preset-rules.js';
 import { setCell, closePicker } from '../editing.js';
 import { CharacterPill, TxPill, LavPill } from './pills.js';
+import { Icon } from './icons.js';
 
 const TITLE = { char_id: 'Character', tx_id: 'TX', lav_id: 'Lav' };
 const LIST = { char_id: 'characters', tx_id: 'transmitters', lav_id: 'lavaliers' };
@@ -46,7 +47,7 @@ export function Picker({ state }) {
     <div class="sheet" role="dialog" aria-label=${'Choose ' + TITLE[field]}>
       <header class="sheet__head">
         <b>${TITLE[field]} · #${edit.sceneId}${character && field !== 'char_id' ? ` · ${character.name}` : ''}</b>
-        <button class="icon-btn" onClick=${close} aria-label="Close">✕</button>
+        <button class="icon-btn" onClick=${close} aria-label="Close"><${Icon} name="close" /></button>
       </header>
       <div class="sheet__tools">
         <input type="search" placeholder="Search number or name" value=${query} onInput=${e => setQuery(e.target.value)} />

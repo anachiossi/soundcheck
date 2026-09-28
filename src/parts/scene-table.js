@@ -15,6 +15,7 @@ import { resolveConflict } from '../sync.js';
 import { presetFile } from '../store/repo-files.js';
 import { CharacterPill, TxPill, LavPill, SpeakerBadge } from './pills.js';
 import { SceneEditor } from './scene-editor.js';
+import { Icon } from './icons.js';
 
 export function SceneTable({ project, sceneId, edit, showDay = false, onRemove, onExport }) {
   const when = scheduleFor(project, sceneId);
@@ -34,21 +35,21 @@ export function SceneTable({ project, sceneId, edit, showDay = false, onRemove, 
           <span class="slate__set">${info?.set || `Scene ${sceneId}`}</span>
           <span class="slate__actions">
             ${!editing && cueLines(project, sceneId) && html`<button class="icon-btn" title="Cues: learn the lines"
-              onClick=${() => setState({ screen: 'cues', cuesScene: sceneId, cuesFrom: getState().screen })}>🎙</button>`}
-            ${!editing && html`<button class="icon-btn" onClick=${() => startEdit(sceneId)} title="Edit">✎</button>`}
-            ${!editing && onExport && html`<button class="icon-btn" onClick=${() => onExport(sceneId)} title="Export image">📷</button>`}
-            ${!editing && onRemove && html`<button class="icon-btn icon-btn--remove" onClick=${() => onRemove(sceneId)} title="Remove">✕</button>`}
+              onClick=${() => setState({ screen: 'cues', cuesScene: sceneId, cuesFrom: getState().screen })}><${Icon} name="mic" /></button>`}
+            ${!editing && html`<button class="icon-btn" onClick=${() => startEdit(sceneId)} title="Edit"><${Icon} name="edit" /></button>`}
+            ${!editing && onExport && html`<button class="icon-btn" onClick=${() => onExport(sceneId)} title="Export image"><${Icon} name="image" /></button>`}
+            ${!editing && onRemove && html`<button class="icon-btn icon-btn--remove" onClick=${() => onRemove(sceneId)} title="Remove"><${Icon} name="close" /></button>`}
           </span>
         </div>
         ${(info || (showDay && when)) && html`
           <div class="slate__details">
             ${showDay && when && html`<b>Day ${when.day} · ${formatDate(when.date, { weekday: true })}</b>`}
-            ${info?.location && html`<span>📍 ${info.location}</span>`}
+            ${info?.location && html`<span class="with-icon"><${Icon} name="pin" /> ${info.location}</span>`}
             ${info?.pages && html`<span>${info.pages} pg</span>`}
             ${info?.story_day && html`<span>story day ${info.story_day}</span>`}
           </div>`}
         ${info?.synopsis && html`<p class="slate__synopsis">${info.synopsis}</p>`}
-        ${info?.notes && html`<p class="slate__notes">⚠ ${info.notes}</p>`}
+        ${info?.notes && html`<p class="slate__notes">${info.notes}</p>`}
       </header>
       ${waiting && !conflict && html`<p class="scene__waiting">● Saved on this device, not uploaded yet</p>`}
       ${conflict && html`
@@ -66,7 +67,7 @@ export function SceneTable({ project, sceneId, edit, showDay = false, onRemove, 
 
 function MicRows({ project, sceneId }) {
   const rows = sceneRows(project, sceneId);
-  if (!project.presets[sceneId]) return html`<p class="scene__empty">No preset yet. Tap ✎ to add mics.</p>`;
+  if (!project.presets[sceneId]) return html`<p class="scene__empty">No preset yet. Tap the pencil to add mics.</p>`;
   if (!rows.length) return html`<p class="scene__empty">No mics in this scene.</p>`;
   return html`
     <div class="mics">

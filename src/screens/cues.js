@@ -16,6 +16,7 @@ import { textColourFor, isNearWhite } from '../colour.js';
 import { cueLines } from '../cues-rules.js';
 import { scenePages } from '../cues-pages.js';
 import { setState } from '../state.js';
+import { Icon } from '../parts/icons.js';
 
 // A button's tap must not also reach the page behind it (which would turn the page).
 const only = action => event => { event.stopPropagation(); action(); };
@@ -93,7 +94,7 @@ export function CuesScreen({ state }) {
       <div class="cues__top">
         <span>${page.line + 1} / ${total}${page.parts > 1 ? ` · part ${page.part} of ${page.parts}` : ''}</span>
         <span class="cues__scene">#${cuesScene}</span>
-        <button class="cues__close" onClick=${only(close)} aria-label="Close">✕</button>
+        <button class="cues__close" onClick=${only(close)} aria-label="Close"><${Icon} name="close" /></button>
       </div>
       <div class="cues__name">${page.name}${page.part > 1 ? html` <small>… (continued)</small>` : ''}</div>
       <div class="cues__panel">

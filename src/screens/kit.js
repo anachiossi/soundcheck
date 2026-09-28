@@ -12,6 +12,7 @@ import { CharacterPill, TxPill, LavPill } from '../parts/pills.js';
 import { ItemForm } from '../parts/item-form.js';
 import { setState } from '../state.js';
 import { cuesSummary } from '../cues-rules.js';
+import { Icon } from '../parts/icons.js';
 
 const distinct = values => [...new Set(values.filter(Boolean))].sort(naturalCompare);
 
@@ -87,9 +88,9 @@ export function KitScreen({ state }) {
     <div class="toolbar">
       ${project.documents?.[scriptPath]
         ? html`<button class="btn btn--doc" onClick=${() => setState({ screen: 'document', documentPath: scriptPath,
-            documentTitle: `Script ${script.version}` })}>📄 Script</button>`
+            documentTitle: `Script ${script.version}` })}><${Icon} name="document" /> Script</button>`
         : html`<span class="muted">The script PDF downloads at the next sync with signal.</span>`}
-      <span class="muted">🎙 Cues for ${script.script} scenes${script.sides ? `, ${script.sides} updated from the sides` : ''}</span>
+      <span class="muted with-icon"><${Icon} name="mic" /> Cues for ${script.script} scenes${script.sides ? `, ${script.sides} updated from the sides` : ''}</span>
     </div>
     <p class="muted">Tap anything to change it.</p>
     <${Section} ...${shared} list="characters" title="Characters" wide
