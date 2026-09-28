@@ -5,7 +5,7 @@
 // Used by: index.html
 
 import { html, render, useState, useEffect } from '../vendor/preact-htm.js';
-import { useAppState, start, showScreen, clearMessage } from './state.js';
+import { useAppState, start, showScreen, clearMessage, setState } from './state.js';
 import { startAutoSync, syncNow } from './sync.js';
 import { formatStamp } from './model.js';
 import { ScheduleScreen } from './screens/schedule.js';
@@ -17,14 +17,36 @@ import { ProposalScreen, ProposalBanner } from './screens/proposal.js';
 import { DocumentScreen } from './screens/document.js';
 import { CuesScreen } from './screens/cues.js';
 import { CuesPickerScreen } from './screens/cues-picker.js';
+import { IfbListScreen } from './screens/ifb-list.js';
+import { IfbCrewScreen } from './screens/ifb-crew.js';
+import { IfbKitScreen } from './screens/ifb-kit.js';
+import { IfbPicker } from './parts/ifb-picker.js';
 
-const TABS = [
-  ['schedule', 'Schedule', ScheduleScreen],
-  ['scenes', 'Scenes', ScenesScreen],
-  ['cues-picker', 'Cues', CuesPickerScreen],
-  ['kit', 'Kit', KitScreen],
-  ['projects', 'Projects', ProjectsScreen],
-];
+// Two departments, each with its own big tabs. Projects is shared.
+const TABS = {
+  mics: [
+    ['schedule', 'Schedule', ScheduleScreen],
+    ['scenes', 'Scenes', ScenesScreen],
+    ['cues-picker', 'Cues', CuesPickerScreen],
+    ['kit', 'Kit', KitScreen],
+    ['projects', 'Projects', ProjectsScreen],
+  ],
+  ifb: [
+    ['ifb-list', 'IFB', IfbListScreen],
+    ['ifb-crew', 'Crew', IfbCrewScreen],
+    ['ifb-kit', 'Kit', IfbKitScreen],
+    ['projects', 'Projects', ProjectsScreen],
+  ],
+};
+
+function DepartmentSwitch({ department }) {
+  const choose = next => next !== department && setState({ department: next, screen: TABS[next][0][0] });
+  return html`
+    <div class="segmented department">
+      <button class=${department === 'mics' ? 'on' : ''} onClick=${() => choose('mics')}>🎤 Mics</button>
+      <button class=${department === 'ifb' ? 'on' : ''} onClick=${() => choose('ifb')}>🎧 IFB</button>
+    </div>`;
+}
 
 function SyncBadge({ state }) {
   const { project, online, connection, sync } = state;
@@ -56,9 +78,10 @@ function App() {
   const { project, screen, message, busyText } = state;
   const current = project ? screen : 'projects';
   if (current === 'cues') return html`<${CuesScreen} key=${state.cuesScene} state=${state} />`; // full screen
+  const tabs = TABS[state.department] || TABS.mics;
   const Screen = current === 'proposal' ? ProposalScreen
     : current === 'document' ? DocumentScreen
-    : (TABS.find(([id]) => id === current) || TABS[0])[2];
+    : (tabs.find(([id]) => id === current) || tabs[0])[2];
 
   return html`
     <header class="topbar">
@@ -67,9 +90,10 @@ function App() {
         ${project && html`<span class="topbar__film">${project.name}</span>`}
       </div>
       <div class="topbar__status"><${SyncBadge} state=${state} /></div>
+      ${project && html`<${DepartmentSwitch} department=${state.department} />`}
     </header>
     <nav class="tabs">
-      ${TABS.map(([id, label]) => html`
+      ${tabs.map(([id, label]) => html`
         <button key=${id} class=${id === current ? 'on' : ''} disabled=${!project && id !== 'projects'}
                 onClick=${() => showScreen(id)}>${label}</button>`)}
     </nav>
@@ -79,6 +103,7 @@ function App() {
     <main class="page"><${Screen} state=${state} /></main>
     <footer class="footer">© 2025–2026 Ana Chiossi · soundcheck<${AppVersion} /></footer>
     <${Picker} state=${state} />
+    <${IfbPicker} state=${state} />
     ${busyText && html`<div class="busy">${busyText}</div>`}`;
 }
 

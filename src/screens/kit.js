@@ -15,7 +15,16 @@ import { cuesSummary } from '../cues-rules.js';
 
 const distinct = values => [...new Set(values.filter(Boolean))].sort(naturalCompare);
 
-function fieldsFor(list, project) {
+export function fieldsFor(list, project) {
+  if (list === 'crew') return [
+    { key: 'id', label: 'Number' }, { key: 'name', label: 'Name' }, { key: 'job', label: 'Job' },
+    { key: 'color', label: 'Department colour', type: 'swatches', options: distinct((project.crew || []).map(c => c.color.toLowerCase())) },
+    { key: 'phone', label: 'Phone (with +39…)' },
+  ];
+  if (list === 'ifbReceivers') return [
+    { key: 'id', label: 'Number' }, { key: 'model', label: 'Model' }, { key: 'color', label: 'Colour', type: 'color' },
+    { key: 'connector', label: 'Connector' },
+  ];
   if (list === 'characters') return [
     { key: 'id', label: 'Number' }, { key: 'name', label: 'Name' }, { key: 'actor', label: 'Actor' },
     { key: 'color', label: 'Colour', type: 'color' },
@@ -35,10 +44,10 @@ function fieldsFor(list, project) {
   ];
 }
 
-function Section({ project, open, setOpen, list, title, wide, render, blank }) {
+export function Section({ project, open, setOpen, list, title, wide, render, blank, file = `${list}.json` }) {
   const close = () => setOpen(null);
-  const items = [...project[list]].sort((a, b) => naturalCompare(a.id, b.id));
-  const conflict = project.conflicts?.[`${list}.json`];
+  const items = [...(project[list] || [])].sort((a, b) => naturalCompare(a.id, b.id));
+  const conflict = project.conflicts?.[file];
   const form = (item, isNew) => html`
     <${ItemForm} fields=${fieldsFor(list, project)} item=${item} isNew=${isNew} onCancel=${close}
       onSave=${async values => (await saveItem(list, values, isNew)) && close()}
@@ -49,8 +58,8 @@ function Section({ project, open, setOpen, list, title, wide, render, blank }) {
       <div class="conflict">
         <p><b>${title} were changed on another device too.</b> Which list to keep?</p>
         <div class="toolbar">
-          <button class="btn btn--primary" onClick=${() => resolveConflict(`${list}.json`, 'mine')}>Keep mine</button>
-          <button class="btn" onClick=${() => resolveConflict(`${list}.json`, 'theirs')}>Use the other one</button>
+          <button class="btn btn--primary" onClick=${() => resolveConflict(file, 'mine')}>Keep mine</button>
+          <button class="btn" onClick=${() => resolveConflict(file, 'theirs')}>Use the other one</button>
         </div>
       </div>`}
     <div class=${'kit-grid' + (wide ? ' kit-grid--wide' : '')}>

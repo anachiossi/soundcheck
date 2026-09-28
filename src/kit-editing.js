@@ -1,9 +1,9 @@
 // kit-editing.js — changing the film's characters, transmitters and lavaliers
-// (Kit screen). Same rules as scene editing: the change is stored on the device
+// (Kit screen), and the IFB crew, receivers and headphones (IFB Kit). Same rules as scene editing: the change is stored on the device
 // at once, put in the outbox, and uploaded by sync.js when there is signal.
 // Numbers (ids) of existing items can't change, because presets point to them.
 // Something used in a preset can't be deleted.
-// Used by: screens/kit.js
+// Used by: screens/kit.js, screens/ifb-kit.js
 
 import { getState, saveAndShow, showMessage } from './state.js';
 import { naturalCompare } from './model.js';
@@ -14,11 +14,14 @@ const LISTS = {
   characters: { file: 'characters.json', one: 'character' },
   transmitters: { file: 'transmitters.json', one: 'TX' },
   lavaliers: { file: 'lavaliers.json', one: 'lav' },
+  crew: { file: 'ifb/crew.json', one: 'person', ifbField: 'crew_id' },            // IFB department
+  ifbReceivers: { file: 'ifb/receivers.json', one: 'receiver', ifbField: 'rx_id' },
+  ifbHeadphones: { file: 'ifb/headphones.json', one: 'headphones', ifbField: 'hp_id' },
 };
 
 async function saveList(list, items, message) {
   const project = getState().project;
-  const sorted = [...items].sort((a, b) => naturalCompare(a.id, b.id));
+  const sorted = [...items].sort((a, b) => naturalCompare(a.id, b.id));  // (ids are numbers as text)
   const outbox = { ...project.outbox, [LISTS[list].file]: { saved_at: new Date().toISOString() } };
   await saveAndShow({ ...project, [list]: sorted, outbox });
   showMessage('ok', message + (navigator.onLine ? '' : ' It will upload when there is signal.'));
@@ -42,7 +45,11 @@ export async function saveItem(list, item, isNew) {
 
 export async function deleteItem(list, id) {
   const project = getState().project;
-  const used = scenesUsing(project, list, id);
+  const { ifbField } = LISTS[list];
+  if (ifbField && (project.ifbList?.rows || []).some(row => String(row[ifbField]) === String(id))) {
+    return showMessage('error', `${LISTS[list].one} ${id} is on the IFB list. Take it off the list first.`);
+  }
+  const used = ifbField ? [] : scenesUsing(project, list, id);
   if (used.length) {
     return showMessage('error', `${LISTS[list].one} ${id} is used in scene ${used.slice(0, 6).map(s => '#' + s).join(', ')}${used.length > 6 ? '…' : ''}. Take it out of those scenes first.`);
   }

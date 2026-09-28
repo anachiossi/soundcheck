@@ -273,6 +273,37 @@ button.kit-item:hover { background: #f1f5f9; }
 .cue-scene__text small { color: #475569; font-size: 15px; }
 .cue-scene__go { font-size: 30px; }
 
+/* ---- 13. IFB department ------------------------------------------------------ */
+.department { margin: 0 0 0 auto; }
+.department button { padding: 8px 14px; font-size: 15px; }
+.ifb-summary { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 18px; }
+.ifb-summary .segmented { margin: 0; }
+.ifb-row { display: grid; grid-template-columns: minmax(0, 1fr) 64px 64px 96px; gap: 6px; align-items: center; padding: 3px 0; }
+.ifb-edit .ifb-row { grid-template-columns: minmax(0, 1fr) 64px 64px 36px; }
+.ifb-row--labels span { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); padding-left: 8px; }
+.ifb-out { min-height: var(--pill-h); border-radius: 999px; border: 0; font-weight: 800; font-size: 16px; }
+.ifb-out--out { background: #ffedd5; color: #c2410c; box-shadow: inset 0 0 0 2px #fb923c; }
+.ifb-out--back { background: var(--yes-bg); color: var(--yes); }
+.ifb-all-back { color: var(--yes); font-weight: 700; font-size: 18px; }
+.crew-list { display: flex; flex-direction: column; gap: 6px; }
+.crew-person__main { border: 0; background: none; padding: 0; width: 100%; text-align: left; }
+.crew-person__more { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 6px 4px 10px; font-size: 16px; }
+.crew-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.btn--call { background: #1d4ed8; border-color: #1d4ed8; color: #fff; text-decoration: none; }
+.btn--whatsapp { background: #16a34a; border-color: #16a34a; color: #fff; text-decoration: none; }
+.emergency-button { width: 100%; margin-bottom: 12px; padding: 14px; font-size: 20px; font-weight: 800;
+  background: #b91c1c; border-color: #b91c1c; color: #fff; }
+.emergency { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; gap: 12px; background: #7f1d1d; color: #fff;
+  padding: calc(12px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom)); }
+.emergency__top { display: flex; justify-content: space-between; align-items: center; font-size: 26px; }
+.emergency__search { font: inherit; font-size: 18px; padding: 12px 16px; border-radius: 999px; border: 0; }
+.emergency__list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+.emergency__person { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px;
+  background: rgba(255,255,255,.1); border-radius: 14px; padding: 12px 14px; }
+.emergency__person b { display: block; font-size: 20px; }
+.emergency__person small { display: block; font-size: 15px; opacity: .85; }
+.crew-actions--big .btn { font-size: 18px; padding: 12px 18px; }
+
 /* ---- Phones --------------------------------------------------------------- */
 @media (max-width: 600px) {
   #app { padding: 8px 6px 24px; }
@@ -295,5 +326,8 @@ button.kit-item:hover { background: #f1f5f9; }
   .speaker { font-size: 14px; }
   .banner { font-size: 13px; padding: 8px 10px; }
   .tabs { gap: 3px; }
+  .ifb-row { grid-template-columns: minmax(0, 1fr) 50px 50px 76px; gap: 4px; }
+  .ifb-edit .ifb-row { grid-template-columns: minmax(0, 1fr) 50px 50px 30px; }
+  .department button { padding: 6px 10px; font-size: 14px; }
   .tabs button { padding: 10px 4px; font-size: 15px; }
 }

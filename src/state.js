@@ -12,6 +12,7 @@ import { upgradeOutbox } from './store/repo-files.js';
 let state = {
   project: null,            // the open film (see model.js)
   projects: local.listProjects(),
+  department: 'mics',       // 'mics' | 'ifb' — which department's tabs are shown
   screen: 'schedule',       // 'schedule' | 'scenes' | 'cues-picker' | 'kit' | 'projects' | 'proposal' | 'document' | 'cues'
   proposalId: null,         // the proposal open in the 'proposal' screen
   documentPath: null,       // the PDF open in the 'document' screen, e.g. '…/docs/day-6/odg.pdf'
@@ -30,6 +31,8 @@ let state = {
   edit: null,               // scene being edited: { sceneId, rows }
   picker: null,             // open picker: { rowIndex, field }
   busyText: null,           // e.g. 'Making images…'
+  ifbEdit: null,            // IFB list being edited: draft rows
+  ifbPicker: null,          // open IFB picker: { index, field }
 };
 
 const listeners = new Set();
@@ -64,9 +67,9 @@ export async function saveAndShow(project, extra = {}) {
 // ---- remembered choices (per device) ------------------------------------------
 
 function savePreferences() {
-  const { screen, scheduleMode, day, week, lookup, project, edit } = state;
+  const { screen, scheduleMode, day, week, lookup, project, edit, department } = state;
   try {
-    localStorage.setItem('sc_prefs', JSON.stringify({ screen, scheduleMode, day, week, lookup, projectId: project?.id }));
+    localStorage.setItem('sc_prefs', JSON.stringify({ screen, scheduleMode, day, week, lookup, department, projectId: project?.id }));
     localStorage.setItem('sc_edit', JSON.stringify(edit && { ...edit, projectId: project?.id }));
   } catch { /* private mode: fine, just not remembered */ }
 }

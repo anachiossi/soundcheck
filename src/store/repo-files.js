@@ -13,6 +13,10 @@
 //     presets/12.json      { scene_id, updated_at, updated_by, rows: [{ char_id, tx_id, lav_id, speaker }] }
 //     proposals/odg-6.json changes suggested from a production email (see pipeline/), to accept or reject
 //     lines/sides/2.json   who says what in scene 2 (from the day's sides; lines/script/2.json from the script)
+//     ifb/crew.json        [{ id, name, job, color, phone }]          IFB department:
+//     ifb/receivers.json   [{ id, model, color, connector }]
+//     ifb/headphones.json  [{ id, model, color, connector, attenuated }]
+//     ifb/list.json        { updated_at, rows: [{ crew_id, rx_id, hp_id, out }] }  one list for the film
 //
 // One file per scene preset: saving scene 12 never touches scene 13.
 
@@ -20,6 +24,9 @@ import { PROJECT_FORMAT } from '../model.js';
 
 export const FILM_FORMAT = 'soundcheck-film';
 const LISTS = ['characters', 'transmitters', 'lavaliers', 'schedule'];
+// IFB files and the name each one has in the device's copy of the film
+export const IFB_FILES = { 'ifb/crew.json': 'crew', 'ifb/receivers.json': 'ifbReceivers',
+  'ifb/headphones.json': 'ifbHeadphones', 'ifb/list.json': 'ifbList' };
 
 export const presetFile = sceneId => `presets/${sceneId}.json`;
 
@@ -48,6 +55,7 @@ export function projectToFiles(project) {
   for (const [sceneId, preset] of Object.entries(project.presets)) files[presetFile(sceneId)] = preset;
   for (const [id, proposal] of Object.entries(project.proposals || {})) files[proposalFile(id)] = proposal;
   for (const [key, lines] of Object.entries(project.lines || {})) files[`lines/${key}.json`] = lines;
+  for (const [path, key] of Object.entries(IFB_FILES)) if (project[key]) files[path] = project[key];
   return files;
 }
 
@@ -56,6 +64,7 @@ export function emptyProject(film, folder) {
   return {
     format: PROJECT_FORMAT, version: 1, id: film.id, name: film.name, folder,
     characters: [], transmitters: [], lavaliers: [], schedule: [], scenes: {}, presets: {}, proposals: {}, lines: {},
+    crew: [], ifbReceivers: [], ifbHeadphones: [], ifbList: { rows: [] },
     shas: {}, outbox: {}, conflicts: {}, data_as_of: null,
   };
 }
@@ -73,6 +82,7 @@ export function fileContent(project, path) {
   if (proposalId) return project.proposals?.[proposalId];
   const linesKey = linesFromPath(path);
   if (linesKey) return project.lines?.[linesKey];
+  if (IFB_FILES[path]) return project[IFB_FILES[path]];
   const key = path.replace(/\.json$/, '');
   if (key === 'film') return { format: FILM_FORMAT, version: 1, id: project.id, name: project.name };
   return project[key];
@@ -86,6 +96,7 @@ export function setFileContent(project, path, content) {
   if (sceneId) project.presets = { ...project.presets, [sceneId]: content };
   else if (proposalId) project.proposals = { ...project.proposals, [proposalId]: content };
   else if (linesFromPath(path)) project.lines = { ...project.lines, [linesFromPath(path)]: content };
+  else if (IFB_FILES[path]) project[IFB_FILES[path]] = content;
   else if (key === 'film') project.name = content.name;
   else if (LISTS.includes(key) || key === 'scenes') project[key] = content;
 }
@@ -143,7 +154,7 @@ export function filesToDownload(project, remoteShas) {
 // The kinds of files the app uses (the folder also holds e.g. inbox.json for the pipeline).
 function isAppFile(path) {
   const key = path.replace(/\.json$/, '');
-  return Boolean(sceneFromPath(path) || proposalFromPath(path) || linesFromPath(path)
+  return Boolean(sceneFromPath(path) || proposalFromPath(path) || linesFromPath(path) || IFB_FILES[path]
     || key === 'film' || key === 'scenes' || LISTS.includes(key));
 }
 

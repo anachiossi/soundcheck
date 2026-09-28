@@ -76,3 +76,11 @@ Which emails belong to a film: `projects/<film>/inbox.json` in the data repo.
 | New script version (by hand) | `python pipeline/cue_lines.py <film folder> "<script.pdf>" "<version>"` |
 | Which lines a scene shows (sides → script → base scene for 7fin) | `src/cues-rules.js` |
 | The full-screen mode | `src/screens/cues.js` + section 11 of `app.css` |
+
+## 🎧 IFB department (Mics | IFB switch at the top)
+| What | File |
+|---|---|
+| Crew, receivers, headphones, the IFB list (one for the film) | `ifb/crew.json`, `ifb/receivers.json`, `ifb/headphones.json`, `ifb/list.json` in the data repo |
+| The list: OUT / ✓ back, still out, edit who has what | `src/screens/ifb-list.js`, actions in `src/ifb-editing.js`, picker `src/parts/ifb-picker.js` |
+| Crew lookup, Call / WhatsApp, 🚨 Emergency (who comes first) | `src/screens/ifb-crew.js`, rules in `src/ifb-rules.js` |
+| IFB Kit (same forms as the mic Kit) | `src/screens/ifb-kit.js` (uses `Section` from `src/screens/kit.js`) |

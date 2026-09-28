@@ -2,7 +2,7 @@
 // character, transmitter (TX), lavalier (lav) and the speaker badge.
 // Colour = identity: the TX pill takes the CHARACTER's colour, so a row reads
 // as one person. Red outline = attenuated lav. "!" = TX/lav connectors differ.
-// Used by: parts/scene-table.js, screens/kit.js
+// Used by: parts/scene-table.js, screens/kit.js, screens/ifb-*.js
 
 import { html } from '../../vendor/preact-htm.js';
 import { textColourFor, isNearWhite } from '../colour.js';
@@ -50,4 +50,22 @@ const SPEAKER_LABEL = { yes: 'YES', no: 'NO', maybe: '?' };
 
 export function SpeakerBadge({ speaker }) {
   return html`<span class=${'speaker speaker--' + speaker}>${SPEAKER_LABEL[speaker] || '?'}</span>`;
+}
+
+// ---- IFB ------------------------------------------------------------------------
+
+// A crew member: name big, job under it, in their department colour.
+export function CrewPill({ person, id }) {
+  if (!person) return html`<span class="pill pill--missing">${id ? `? ${id}` : '—'}</span>`;
+  return html`
+    <span class="pill pill--char" style=${coloured(person.color)}>
+      <span class="pill__lines"><b>${person.name}</b>${person.job && html`<small>${person.job}</small>`}</span>
+    </span>`;
+}
+
+// A receiver or a pair of headphones: its number big, in the person's colour if given.
+export function GearPill({ item, person, id }) {
+  if (!item) return html`<span class="pill pill--missing">${id ? `? ${id}` : '—'}</span>`;
+  const colour = person?.color && !isNearWhite(person.color) ? person.color : item.color;
+  return html`<span class="pill pill--tx" style=${coloured(colour)} title=${item.model}><b>${item.id}</b></span>`;
 }
