@@ -1,8 +1,8 @@
 // sync.js — keeps the device and the soundcheck-data repo in step.
 //   1. download: files that changed in the repo (by their sha fingerprint)
 //   2. upload:   files changed on this device (the outbox), all in ONE commit
-//   3. documents: the PDFs (ODG, sides) of yesterday, today and the coming days,
-//      kept on the device for reading offline
+//   3. documents: the PDFs (ODG, sides) of every day and the script, kept on the device
+//      for reading offline
 // Runs by itself when the app opens, when signal comes back, when you come
 // back to the app, and right after every Save. With no signal nothing happens:
 // changes wait safely in the outbox.
@@ -82,20 +82,20 @@ async function download(connection, tree) {
   await saveAndShow(merged);
 }
 
-// PDFs: 'docs/day-<n>/odg.pdf' and 'sides.pdf' from yesterday on, and 'docs/script.pdf',
-// when new or changed.
+// PDFs: every 'docs/day-<n>/odg.pdf' and 'sides.pdf', and 'docs/script.pdf', when new or
+// changed (a film's worth is ~25 MB). Yesterday on first: on weak signal those matter most.
 async function downloadDocuments(connection, tree) {
   const project = getState().project;
   const prefix = project.folder + '/docs/';
   const yesterday = localTodayIso(new Date(Date.now() - 24 * 3600 * 1000));
   const dates = Object.fromEntries(shootingDays(project).map(d => [d.day, d.date]));
   const documents = { ...project.documents };
+  const dateOf = path => dates[/day-(\d+)\//.exec(path)?.[1]] || '';
+  const wanted = Object.entries(tree.files)
+    .filter(([path, sha]) => path.startsWith(prefix) && path.endsWith('.pdf') && documents[path] !== sha)
+    .sort(([a], [b]) => (dateOf(a) < yesterday) - (dateOf(b) < yesterday));
   let fetched = 0;
-  for (const [path, sha] of Object.entries(tree.files)) {
-    if (!path.startsWith(prefix) || !path.endsWith('.pdf') || documents[path] === sha) continue;
-    const match = /day-(\d+)\/(odg|sides)\.pdf$/.exec(path);
-    const isScript = path === prefix + 'script.pdf'; // the full script: always kept (📄 in Kit)
-    if (!isScript && (!match || (dates[match[1]] || '') < yesterday)) continue;
+  for (const [path, sha] of wanted) {
     await saveDocument(project.id, path, await github.readFileBytes(connection, sha));
     documents[path] = sha;
     fetched++;

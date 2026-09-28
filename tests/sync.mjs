@@ -58,6 +58,15 @@ async function editScene(page, sceneId, txId) {
 const A = await device('A');
 check(true, 'A connected and downloaded the film');
 await A.page.screenshot({ path: '.shots/sync-A-day.png' });
+for (let i = 0; i < 60; i++) { // the PDFs come after the data: wait for them, up to a minute
+  const days = await A.page.evaluate(async () => {
+    const docs = Object.keys((await import('./src/state.js')).getState().project.documents || {});
+    return [...new Set(docs.map(p => /day-(\d+)\//.exec(p)?.[1]).filter(Boolean))].map(Number);
+  });
+  if (days.includes(1)) { check(days.includes(1) && days.includes(5), `ODG / sides of past days on the device too (days ${days.sort((a, b) => a - b).join(', ')})`); break; }
+  if (i === 59) check(false, 'ODG / sides of past days on the device too');
+  await A.page.waitForTimeout(1000);
+}
 
 // 2. offline edit
 await A.context.setOffline(true);
@@ -102,7 +111,7 @@ for (let i = 0; i < 30; i++) { // check once a second, up to 30 s
 check((await api('projects/la-buona-educazione/presets/11.json')).rows[0].tx_id === '19', '"Keep mine": A\'s version is in the repo');
 
 // 5. kit: change a character's actor + preferred TX; picker shows preferences
-await A.page.click('.tabs button:nth-child(3)');
+await A.page.click('.tabs button:has-text("Kit")');
 await A.page.click('button.kit-item:has-text("KLAUS")');
 await A.page.screenshot({ path: '.shots/kit-form.png', fullPage: true });
 await A.page.fill('.item-form label:has-text("Actor") input', 'Test Actor');
