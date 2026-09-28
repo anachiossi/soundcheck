@@ -77,7 +77,7 @@ Which emails belong to a film: `projects/<film>/inbox.json` in the data repo.
 | Which lines a scene shows (sides → script → base scene for 7fin) | `src/cues-rules.js` |
 | The full-screen mode (one speech per page, scrolls when long) | `src/screens/cues.js` + section 11 of `app.css` |
 | One phrase per line (after , ; : . ? ! …) | `src/cues-phrases.js` |
-| ✎ Changed on set (edit / delete / add a line, undo all) → `lines/set/<scene>.json`, wins over sides and script; the pipeline never writes it; newer paper is offered (Use it / Keep my changes) | `src/cues-editing.js`, panel `src/parts/cue-line-editor.js` |
+| ✎ Changed on set (edit / delete / + New line before or after, undo all) → `lines/set/<scene>.json`, wins over sides and script; the pipeline never writes it; newer paper is offered (Use it / Keep my changes) | `src/cues-editing.js`, panel `src/parts/cue-line-editor.js` |
 
 ## 🎧 IFB department (Mics | IFB switch at the top)
 | What | File |

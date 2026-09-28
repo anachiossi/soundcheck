@@ -300,7 +300,8 @@ button.kit-item:hover { background: #f1f5f9; }
 .cue-editor__text { width: 100%; box-sizing: border-box; font-family: var(--cue-font); font-size: 17px; line-height: 1.4;
   padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 12px; resize: vertical; }
 .cue-editor__other { font: inherit; font-size: 16px; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 999px; background: var(--card); }
-.cue-editor__add, .cue-editor__undo { display: block; width: 100%; margin-top: 10px; }
+.cue-editor .edit-actions { flex-wrap: wrap; }
+.cue-editor__undo { display: block; width: 100%; margin-top: 10px; }
 
 /* ---- 12. Cues tab: choosing a scene --------------------------------------- */
 .cue-day { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }

@@ -30,8 +30,9 @@ export const changeLine = (sceneId, index, line) =>
 export const deleteLine = (sceneId, index) =>
   saveLines(sceneId, lines => lines.filter((_, i) => i !== index));
 
-export const addLineAfter = (sceneId, index, line) =>
-  saveLines(sceneId, lines => { lines.splice(index + 1, 0, line); return lines; });
+// position: where the new line goes (0 = before the first line)
+export const addLineAt = (sceneId, position, line) =>
+  saveLines(sceneId, lines => { lines.splice(position, 0, line); return lines; });
 
 export const backToPaper = sceneId => saveLines(sceneId, () => []);
 
