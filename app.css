@@ -247,7 +247,7 @@ button.kit-item:hover { background: #f1f5f9; }
 
 /* ---- 11. Cues (full screen, learn the lines) -------------------------------- */
 /* Looks like a script page: the name centred in capitals, the words in a centred
-   column (left-aligned inside it, like dialogue), in Courier Prime — the screenplay
+   column, every line centred, in Courier Prime — the screenplay
    typewriter font, redrawn to be clearer. Easy reading: one size per screen, generous
    line and word spacing, one phrase per line, dark on a soft cream panel; a long
    speech scrolls inside the panel.
@@ -274,7 +274,7 @@ button.kit-item:hover { background: #f1f5f9; }
 .cues__text { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
   display: flex; flex-direction: column; }                                      /* a long speech scrolls */
 .cues__speech { margin: auto; width: 100%; max-width: 30ch; padding: 4px 0;     /* centred while it fits */
-  text-align: left; font-family: var(--cue-font); font-size: var(--cue-size); font-weight: 400;
+  text-align: center; font-family: var(--cue-font); font-size: var(--cue-size); font-weight: 400;
   -webkit-text-stroke: .35px currentColor;                                       /* a little thicker */
   line-height: 1.5; word-spacing: .08em; }
 .cues__phrase { margin: 0; }

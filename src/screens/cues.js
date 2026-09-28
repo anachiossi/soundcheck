@@ -4,7 +4,7 @@
 //   • one text size for the whole scene (set by the screen size)
 //   • every phrase on its own line (cues-phrases.js), a little space between phrases
 //   • a long monologue scrolls inside the cream panel; "scroll ▾" shows there is more
-//   • the character's colour frames the panel, with the name on it
+//   • the character's colour frames the panel (and the phone's top strip), with the name on it
 // Tap the LEFT side → back · anywhere else → forward (a swipe only scrolls).
 // After the last line: The end / Start again. The screen stays awake (where allowed).
 // Used by: main.js (opened from the Cues tab or the microphone on a scene)
@@ -19,6 +19,17 @@ import { Icon } from '../parts/icons.js';
 
 // A button's tap must not also reach the page behind it (which would turn the page).
 const only = action => event => { event.stopPropagation(); action(); };
+
+// The phone's top strip (clock, battery) takes the speaking character's colour
+// while Cues is open, and goes back to the app's colour when it closes.
+function useTopStripColour(colour) {
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="theme-color"]');
+    const before = meta?.getAttribute('content');
+    meta?.setAttribute('content', colour);
+    return () => meta?.setAttribute('content', before);
+  }, [colour]);
+}
 
 function useWakeLock() {
   useEffect(() => {
@@ -52,6 +63,10 @@ export function CuesScreen({ state }) {
   const textRef = useRef(null);
   const moreBelow = useMoreBelow(textRef, index);
   useWakeLock();
+  // (hooks run on every page, so the top strip colour is worked out here, before any return)
+  const speaking = cues?.lines[index];
+  const speakingColour = byId(project.characters).get(String(speaking?.char_id))?.color;
+  useTopStripColour(speaking ? (speakingColour && !isNearWhite(speakingColour) ? speakingColour : '#475569') : '#0f172a');
 
   const close = () => setState({ screen: state.cuesFrom || 'cues-picker', cuesScene: null });
   if (!cues) return html`<div class="cues cues--end"><p>No lines for scene ${cuesScene}.</p><button class="btn" onClick=${close}>Close</button></div>`;
