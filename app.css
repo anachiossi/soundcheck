@@ -246,23 +246,39 @@ button.kit-item:hover { background: #f1f5f9; }
 .pdf-page { width: 100%; height: auto; border: 1px solid var(--line); border-radius: 4px; background: #fff; }
 
 /* ---- 11. Cues (full screen, learn the lines) -------------------------------- */
-/* Easy reading: one text size per screen size, regular weight, generous line and word
-   spacing, left-aligned, short lines, dark text on a soft cream panel. */
-:root { --cue-size: clamp(24px, 3.2vw + 12px, 42px); --cue-paper: #fffbf0; --cue-ink: #1f2430; }
-.cues { position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column; gap: 12px;
-  padding: calc(12px + env(safe-area-inset-top)) 16px calc(14px + env(safe-area-inset-bottom));
+/* Looks like a script page: the name centred in capitals, the words in a centred
+   column (left-aligned inside it, like dialogue), in Courier Prime — the screenplay
+   typewriter font, redrawn to be clearer. Easy reading: one size per screen, generous
+   line and word spacing, dark on a soft cream panel, text centred in the panel.
+   The phone's safe margins keep text away from the camera cutout and the corners. */
+@font-face { font-family: 'Courier Prime'; font-weight: 400; src: url(vendor/fonts/courier-prime-400.woff2) format('woff2'); font-display: swap; }
+@font-face { font-family: 'Courier Prime'; font-weight: 700; src: url(vendor/fonts/courier-prime-700.woff2) format('woff2'); font-display: swap; }
+:root {
+  --cue-font: 'Courier Prime', 'Courier New', monospace;
+  --cue-size: clamp(22px, min(7vw, 7.5vh), 44px);   /* phone upright ≈ 27px, sideways ≈ 29px, laptop 44px */
+  --cue-paper: #fffbf0; --cue-ink: #1f2430;
+}
+.cues { position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column; gap: 10px;
+  padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+           max(14px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
   user-select: none; -webkit-user-select: none; cursor: pointer; touch-action: manipulation; }
 .cues__top, .cues__bottom { display: flex; justify-content: space-between; align-items: center; gap: 10px;
   font-size: 16px; font-weight: 700; }
 .cues__close { border: 0; background: rgba(0,0,0,.18); color: inherit; border-radius: 999px; width: 40px; height: 40px; font-size: 18px; }
-.cues__name { font-size: clamp(26px, 5vw, 44px); font-weight: 800; letter-spacing: .04em; line-height: 1.1; text-align: center; }
-.cues__name small { font-size: 18px; font-weight: 600; letter-spacing: 0; opacity: .85; }
+.cues__name { font-family: var(--cue-font); font-weight: 700; text-transform: uppercase; text-align: center;
+  font-size: clamp(24px, min(6.5vw, 7vh), 44px); letter-spacing: .06em; line-height: 1.1; }
+.cues__name small { font-size: .6em; letter-spacing: 0; text-transform: none; opacity: .85; }
 .cues__panel { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column;
-  background: var(--cue-paper); color: var(--cue-ink); border-radius: 18px; padding: 22px 22px 18px; }
-.cues__text { flex: 1; min-height: 0; overflow: hidden; width: 100%; max-width: 28em; margin: 0 auto; white-space: pre-line;
-  font-size: var(--cue-size); font-weight: 500; line-height: 1.55; letter-spacing: .02em; word-spacing: .12em; text-align: left; }
-.cues__measure { position: absolute; top: 22px; left: 0; right: 0; visibility: hidden; flex: none; height: auto; overflow: visible; pointer-events: none; }
-.cues__continues { align-self: flex-end; margin-top: 8px; font-size: 17px; font-weight: 700; color: #6b5a2e; }
+  background: var(--cue-paper); color: var(--cue-ink); border-radius: 18px; padding: 18px 20px 14px; }
+.cues__text { flex: 1; min-height: 0; overflow: hidden; width: 100%; max-width: 30ch; margin: 0 auto;
+  display: flex; flex-direction: column; justify-content: center;          /* centred in the panel */
+  white-space: pre-line; text-align: left;
+  font-family: var(--cue-font); font-size: var(--cue-size); font-weight: 400;
+  -webkit-text-stroke: .35px currentColor;                                    /* a little thicker */
+  line-height: 1.5; word-spacing: .08em; }
+.cues__measure { position: absolute; top: 18px; left: 0; right: 0; visibility: hidden; flex: none; height: auto;
+  overflow: visible; pointer-events: none; display: block; }
+.cues__continues { align-self: flex-end; margin-top: 6px; font-size: 16px; font-weight: 700; color: #6b5a2e; }
 .cues__continues--hidden { visibility: hidden; } /* keeps its space, so every page has the same room */
 .cues--end { background: var(--ink); color: #fff; align-items: center; justify-content: center; text-align: center; cursor: default; }
 .cues--end h1 { font-size: 56px; margin: 0; }

@@ -1,5 +1,6 @@
 // cues.js — 🎙 Cues: a full-screen mode to learn a scene's lines.
-// Made to be easy to read (ideas from dyslexia-friendly reading guides):
+// Looks like a script page (name centred, dialogue in a centred column, Courier Prime),
+// made to be easy to read (ideas from dyslexia-friendly reading guides):
 //   • ONE text size for the whole scene (set by the screen size, never page by page)
 //   • a long speech continues on the next page, cut at the end of a sentence,
 //     marked "continues ▸" and "… (continued)"
@@ -47,6 +48,10 @@ export function CuesScreen({ state }) {
   const textRef = useRef(null);
   const measureRef = useRef(null);
   const screenSize = useScreenSize();
+  const [fontReady, setFontReady] = useState(false);
+  useEffect(() => { // pages are measured with the script font, so wait for it
+    document.fonts?.load("400 20px 'Courier Prime'").finally(() => setFontReady(true));
+  }, []);
   useWakeLock();
 
   // Cut the speeches into pages that fit the text box (again when the screen turns).
@@ -63,7 +68,7 @@ export function CuesScreen({ state }) {
     const cut = scenePages(cues.lines, fits);
     setPages(cut);
     setIndex(Math.max(0, cut.findIndex(p => p.line === line)));
-  }, [cuesScene, screenSize]);
+  }, [cuesScene, screenSize, fontReady]);
 
   const close = () => setState({ screen: state.cuesFrom || 'cues-picker', cuesScene: null });
   if (!cues) return html`<div class="cues cues--end"><p>No lines for scene ${cuesScene}.</p><button class="btn" onClick=${close}>Close</button></div>`;

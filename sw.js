@@ -3,12 +3,13 @@
 // When you change any app file, bump VERSION so devices pick up the new files.
 // (Film data is NOT stored here; it lives in the per-film database.)
 
-const VERSION = 'soundcheck-v20';
+const VERSION = 'soundcheck-v21';
 const FILES = [
   './', 'index.html', 'app.css', 'manifest.webmanifest',
   'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png',
   'vendor/preact-htm.js', 'vendor/pdfjs/pdf.min.mjs', 'vendor/pdfjs/pdf.worker.min.mjs',
   'vendor/fonts/inter-400.woff2', 'vendor/fonts/inter-600.woff2', 'vendor/fonts/inter-800.woff2',
+  'vendor/fonts/courier-prime-400.woff2', 'vendor/fonts/courier-prime-700.woff2',
   'src/main.js', 'src/state.js', 'src/model.js', 'src/colour.js',
   'src/editing.js', 'src/kit-editing.js', 'src/sync.js', 'src/preset-rules.js',
   'src/proposals.js', 'src/proposal-rules.js', 'src/cues-rules.js', 'src/cues-pages.js',
