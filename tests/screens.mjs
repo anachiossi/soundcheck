@@ -30,8 +30,8 @@ for (const [name, [width, height]] of Object.entries(SIZES)) {
   const shot = async label => page.screenshot({ path: `.shots/${name}-${label}.png`, fullPage: label !== 'day' });
 
   await shot('day');
-  await page.click('.segmented button:nth-child(2)'); await shot('week');
-  await page.click('.segmented button:nth-child(3)'); await shot('all');
+  await page.click('.page .segmented button:nth-child(2)'); await shot('week');
+  await page.click('.page .segmented button:nth-child(3)'); await shot('all');
   await page.click('.tabs button:nth-child(2)');
   await page.fill('.search input', '15'); await page.press('.search input', 'Enter');
   await page.fill('.search input', '7A'); await page.press('.search input', 'Enter');
@@ -64,7 +64,7 @@ for (const [name, [width, height]] of Object.entries(SIZES)) {
     await context.setOffline(true);
     await page.reload();
     await page.click('.tabs button:nth-child(1)');
-    await page.click('.segmented button:nth-child(1)');
+    await page.click('.page .segmented button:nth-child(1)');
     await page.waitForSelector('.scene', { timeout: 5000 }).catch(() => problems.push('offline: app did not open'));
     await shot('offline');
   }
