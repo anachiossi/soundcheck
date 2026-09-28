@@ -44,14 +44,35 @@ def subject_date(subject, year):
     return f"{year[:2] + yy if len(yy) == 2 else yy}-{int(month):02d}-{int(day):02d}"
 
 
-def build_proposal(film_folder, email_folder):
+NO_SIDES = "No sides (STRALCI) for this day yet: speakers were not checked."
+
+
+def sides_by_day(inbox):
+    """{day number: sides PDF} from every email in the inbox — production sometimes sends the
+    sides in a separate email ("Re: LBE - ODG #7" with only STRALCI DAY #7.pdf).
+    The day comes from the file name ("DAY #7") or else the subject ("ODG #7"); a later email wins."""
+    found = {}
+    for email_folder in sorted(Path(inbox).iterdir()) if Path(inbox).exists() else []:
+        subject = json.loads((email_folder / "email.json").read_text(encoding="utf-8"))["subject"]
+        for pdf in email_folder.glob("*.pdf"):
+            if "STRALCI" not in pdf.name.upper():
+                continue
+            number = re.search(r"DAY\s*#?\s*(\d+)", pdf.name, re.I) or re.search(r"ODG\s*#?\s*(\d+)", subject, re.I)
+            if number:
+                found[int(number.group(1))] = pdf
+    return found
+
+
+def build_proposal(film_folder, email_folder, other_sides=None):
+    """other_sides = sides_by_day(): used when the ODG's own email has no sides."""
     film_folder, email_folder = Path(film_folder), Path(email_folder)
     film = load_film(film_folder)
     email = json.loads((email_folder / "email.json").read_text(encoding="utf-8"))
     odg_pdf = next(p for p in email_folder.glob("*.pdf") if "ODG" in p.name.upper())
-    sides_pdf = next((p for p in email_folder.glob("*.pdf") if "STRALCI" in p.name.upper()), None)
-
     odg = read_odg(odg_pdf)
+    sides_pdf = next((p for p in email_folder.glob("*.pdf") if "STRALCI" in p.name.upper()), None)
+    if sides_pdf is None:
+        sides_pdf = (other_sides or {}).get(odg["number"])
     date, warnings = check_date(odg, subject_date(email["subject"], odg["date"][:4] or "2026"))
     day_ids = [s["scene_id"] for s in odg["scenes"]]
     sides = read_sides(sides_pdf, day_ids) if sides_pdf else {}
@@ -87,7 +108,7 @@ def build_proposal(film_folder, email_folder):
             changes.append({"text": f"Scene {sid} notes from the ODG: {note}", "scene_id": sid,
                             "op": {"op": "add_note", "scene_id": sid, "note": note}})
     if sides_pdf is None:
-        warnings.append("No sides (STRALCI) in this email: speakers were not checked.")
+        warnings.append(NO_SIDES)
 
     # IFB: the crew printed on the call sheet against the IFB crew list
     ifb_today = []

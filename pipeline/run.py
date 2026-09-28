@@ -1,6 +1,8 @@
 """run.py — the whole morning check, in one go:
     1. download new production emails (fetch_mail.py)
-    2. for each new email: an ODG of today or later (+ its sides) → proposals/odg-<n>.json
+    2. for each new email: an ODG of today or later (+ its sides, from the same email or a later
+       one) → proposals/odg-<n>.json; an untouched proposal made without sides is made again
+       when its sides arrive
        (propose.py); a PDL (+ scaletta) → a whole review from today on → proposals/pdl-<date>.json
        (propose_pdl.py)
     3. file each ODG email's PDFs as projects/<film>/docs/day-<n>/odg.pdf and sides.pdf, so the
@@ -25,7 +27,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from fetch_mail import fetch  # noqa: E402
-from propose import build_proposal  # noqa: E402
+from propose import build_proposal, sides_by_day, NO_SIDES  # noqa: E402
 from propose_pdl import build_pdl_proposal  # noqa: E402
 
 
@@ -53,6 +55,7 @@ def run(film_folder, include_past=False):
         known.add(source.get("message_id") or source["subject"])
 
     written = []
+    other_sides = sides_by_day(film / "_inbox")
     for email_folder in sorted((film / "_inbox").iterdir()):
         info = json.loads((email_folder / "email.json").read_text(encoding="utf-8"))
         if info.get("message_id") in known or info["subject"] in known:
@@ -61,7 +64,7 @@ def run(film_folder, include_past=False):
         if "PDL" in names:
             proposal = build_pdl_proposal(film, email_folder)
         elif "ODG" in names:
-            proposal = build_proposal(film, email_folder)
+            proposal = build_proposal(film, email_folder, other_sides)
             if proposal["date"] < today and not include_past:
                 continue
         else:
@@ -76,7 +79,8 @@ def run(film_folder, include_past=False):
         print(f"proposal {name}: {len(proposal['changes'])} changes, {len(proposal['warnings'])} warnings, "
               f"{len(proposal['checks'])} checks OK")
 
-    documents = file_documents(film)
+    written += add_late_sides(film, other_sides)
+    documents = file_documents(film, other_sides)
     if documents:
         print(f"documents: {', '.join(documents)}")
     if written or documents:
@@ -93,7 +97,31 @@ def run(film_folder, include_past=False):
     return written
 
 
-def file_documents(film):
+def add_late_sides(film, other_sides):
+    """The sides came in a later email than the ODG: make the ODG's proposal again with them,
+    but only while Ana hasn't decided anything in it yet."""
+    remade = []
+    by_message = {}
+    for email_folder in sorted((film / "_inbox").iterdir()):
+        info = json.loads((email_folder / "email.json").read_text(encoding="utf-8"))
+        by_message[info.get("message_id")] = email_folder
+    for path in sorted((film / "proposals").glob("odg-*.json")):
+        old = json.loads(path.read_text(encoding="utf-8"))
+        email_folder = by_message.get(old["source"].get("message_id"))
+        untouched = old["status"] == "open" and not old["decisions"]
+        missing = any(w.startswith("No sides") for w in old["warnings"])
+        if not (untouched and missing and email_folder and old["day"] in other_sides):
+            continue
+        proposal = build_proposal(film, email_folder, other_sides)
+        proposal["id"], proposal["source"]["message_id"] = old["id"], old["source"]["message_id"]
+        proposal["title"] += " + sides"
+        write_json(path, proposal)
+        remade.append(proposal)
+        print(f"proposal {old['id']} made again with the sides: {len(proposal['changes'])} changes")
+    return remade
+
+
+def file_documents(film, other_sides):
     """Copy each ODG email's PDFs to docs/day-<n>/ and the sides' lines to lines/sides/
     (only when new or changed)."""
     import shutil
@@ -106,7 +134,8 @@ def file_documents(film):
             continue
         sheet = read_odg(odg)
         day = sheet["number"]
-        sides = next((p for p in email_folder.glob("*.pdf") if "STRALCI" in p.name.upper()), None)
+        sides = next((p for p in email_folder.glob("*.pdf") if "STRALCI" in p.name.upper()), None) \
+            or other_sides.get(day)
         if sides:  # the lines of the day's scenes, for 🎙 Cues
             scene_ids = [s["scene_id"] for s in sheet["scenes"]]
             changed += [f"Cues of scene {sid} (sides)" for sid in write_sides_lines(film, sides, day, scene_ids)]
