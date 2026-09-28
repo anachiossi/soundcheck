@@ -46,7 +46,7 @@ Devices pick it up at their next sync.
 existing film (the analyzer pipeline will write these). It appears in Projects on every device.
 
 ## Production emails → proposals (pipeline/)
-Runs on the laptop, in Python. Nothing in the film changes until you accept it in the app.
+Runs in the cloud (GitHub Actions), in Python; the laptop can run it too. Nothing in the film changes until you accept it in the app.
 
 | Step | File |
 |---|---|
@@ -58,7 +58,9 @@ Runs on the laptop, in Python. Nothing in the film changes until you accept it i
 | Read a PDL + scaletta (all days, scenes, cast) | `pipeline/read_pdl.py` |
 | PDL → a whole review from today on: `proposals/pdl-<date>.json` | `pipeline/propose_pdl.py` |
 | All of it, then commit + push | `python pipeline/run.py D:/sound_check_data/projects/<film>` |
-| In the cloud: every 30 min, 17:00–24:00 Rome | `.github/workflows/emails.yml` in soundcheck-data |
+| In the cloud: started minutes after an email arrives (Gmail trigger), and every 30 min 04–10 / 17–24 Rome as a backup; one run at a time | `.github/workflows/emails.yml` in soundcheck-data |
+| Gmail trigger: Google checks the mailbox every 10 min and starts the robot for a new ODG / sides / PDL | `pipeline/gmail-trigger.gs` (Apps Script in sound.chiossi@, see below) |
+| Sides in a separate email ("Re: … ODG #7") matched to their day | `sides_by_day` in `pipeline/propose.py` |
 | ODG + sides PDFs filed as `docs/day-N/odg.pdf`, `sides.pdf` | `file_documents` in `pipeline/run.py` |
 
 📄 ODG / 📄 Sides buttons on each day: the PDFs of yesterday on are downloaded at sync
@@ -68,6 +70,15 @@ Runs on the laptop, in Python. Nothing in the film changes until you accept it i
 In the app: the 📬 banner → accept or reject each change (`src/screens/proposal.js`,
 `src/proposals.js`, and `src/proposal-rules.js` which applies a change).
 Which emails belong to a film: `projects/<film>/inbox.json` in the data repo.
+
+### Email robot trigger (Apps Script) — setup once
+1. GitHub → Settings → Developer settings → Fine-grained tokens → Generate: repository access **only
+   soundcheck-data**, permission **Actions: Read and write**, expiry after the end of the shoot.
+2. script.google.com, logged in as sound.chiossi@ → New project → paste `pipeline/gmail-trigger.gs`.
+3. ⚙ Project settings → Script properties → add `GITHUB_TOKEN` = the token.
+4. Choose `setup` in the function menu → Run → allow access. This creates the 10-minute timer.
+5. ⏰ Triggers → the timer → ✎ → Failure notification: **Notify me immediately**.
+Check: Executions (☰ list icon) shows each check; GitHub → Actions shows the runs it started.
 
 ## 🎙 Cues (learn a scene's lines)
 | What | File |
