@@ -20,6 +20,13 @@ import { Icon } from '../parts/icons.js';
 // A button's tap must not also reach the page behind it (which would turn the page).
 const only = action => event => { event.stopPropagation(); action(); };
 
+// The ✕ closes as soon as the finger lifts (not on iOS's later "click", which is
+// sometimes lost, e.g. while the text is still gliding after a scroll).
+const closeProps = close => ({
+  onPointerUp: event => { event.stopPropagation(); event.preventDefault(); close(); },
+  onClick: event => event.stopPropagation(),
+});
+
 // The phone's top strip (clock, battery) takes the speaking character's colour
 // while Cues is open, and goes back to the app's colour when it closes.
 function useTopStripColour(colour) {
@@ -89,6 +96,7 @@ export function CuesScreen({ state }) {
   const colour = byId(project.characters).get(String(line.char_id))?.color;
   const background = colour && !isNearWhite(colour) ? colour : '#475569';
   const onTap = event => {
+    if (event.target.closest('.cues__top, .cues__bottom')) return; // the bars never turn the page
     const back = event.clientX < innerWidth * 0.3;
     setIndex(i => (back ? Math.max(0, i - 1) : Math.min(lines.length, i + 1)));
   };
@@ -98,7 +106,7 @@ export function CuesScreen({ state }) {
       <div class="cues__top">
         <span>${index + 1} / ${lines.length}</span>
         <span class="cues__scene">#${cuesScene}</span>
-        <button class="cues__close" onClick=${only(close)} aria-label="Close"><${Icon} name="close" /></button>
+        <button class="cues__close" ...${closeProps(close)} aria-label="Close"><${Icon} name="close" /></button>
       </div>
       <div class="cues__name">${line.name}</div>
       <div class="cues__panel">

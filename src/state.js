@@ -67,9 +67,12 @@ export async function saveAndShow(project, extra = {}) {
 // ---- remembered choices (per device) ------------------------------------------
 
 function savePreferences() {
-  const { screen, scheduleMode, day, week, lookup, project, edit, department } = state;
+  const { screen, scheduleMode, day, week, lookup, project, edit, department,
+    cuesScene, cuesFrom, documentPath, documentTitle, proposalId } = state;
   try {
-    localStorage.setItem('sc_prefs', JSON.stringify({ screen, scheduleMode, day, week, lookup, department, projectId: project?.id }));
+    // (the open Cues scene / document / proposal too, so reopening comes back to it)
+    localStorage.setItem('sc_prefs', JSON.stringify({ screen, scheduleMode, day, week, lookup, department, projectId: project?.id,
+      cuesScene, cuesFrom, documentPath, documentTitle, proposalId }));
     localStorage.setItem('sc_edit', JSON.stringify(edit && { ...edit, projectId: project?.id }));
   } catch { /* private mode: fine, just not remembered */ }
 }
@@ -102,6 +105,9 @@ export async function start() {
   const project = upgradeOutbox(saved);
 
   const { projectId: _, ...choices } = prefs;
+  // A screen that needs a scene / document / proposal it doesn't have → the Schedule.
+  const needs = { cues: choices.cuesScene, document: choices.documentPath, proposal: choices.proposalId };
+  if (choices.screen in needs && !needs[choices.screen]) Object.assign(choices, { screen: 'schedule', department: 'mics' });
   const draft = loadJson('sc_edit', null);
   const edit = draft?.projectId === project.id ? { sceneId: draft.sceneId, rows: draft.rows } : null;
   setState({ ...choices, project, edit });

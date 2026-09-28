@@ -265,7 +265,9 @@ button.kit-item:hover { background: #f1f5f9; }
   user-select: none; -webkit-user-select: none; cursor: pointer; touch-action: manipulation; }
 .cues__top, .cues__bottom { display: flex; justify-content: space-between; align-items: center; gap: 10px;
   font-size: 16px; font-weight: 700; }
-.cues__close { border: 0; background: rgba(0,0,0,.18); color: inherit; border-radius: 999px; width: 40px; height: 40px; font-size: 18px; }
+.cues__close { position: relative; border: 0; background: rgba(0,0,0,.18); color: inherit; border-radius: 999px;
+  width: 48px; height: 48px; font-size: 18px; touch-action: manipulation; }
+.cues__close::after { content: ''; position: absolute; inset: -12px; }   /* a bigger invisible target around the ✕ */
 .cues__name { font-family: var(--cue-font); font-weight: 700; text-transform: uppercase; text-align: center;
   font-size: clamp(24px, min(6.5vw, 7vh), 44px); letter-spacing: .06em; line-height: 1.1; }
 .cues__name small { font-size: .6em; letter-spacing: 0; text-transform: none; opacity: .85; }
