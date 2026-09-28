@@ -8,6 +8,8 @@
 import { html, useState } from '../../vendor/preact-htm.js';
 import { byId } from '../model.js';
 import { warnings } from '../preset-rules.js';
+import { lavProblems } from '../sound-rules.js';
+import { RowWarnings } from './sound-bar.js';
 import { openPicker, cycleSpeaker, addRow, deleteRow, moveRow, cancelEdit, saveEdit } from '../editing.js';
 import { CharacterPill, TxPill, LavPill, SpeakerBadge } from './pills.js';
 import { Icon } from './icons.js';
@@ -17,7 +19,7 @@ export function SceneEditor({ project, edit }) {
   const chars = byId(project.characters);
   const txs = byId(project.transmitters);
   const lavs = byId(project.lavaliers);
-  const problems = warnings(edit.rows);
+  const problems = [...warnings(edit.rows), ...lavProblems(project, edit.sceneId, edit.rows)];
 
   const cell = (rowIndex, field, content) => html`
     <button class="edit-cell" onClick=${() => openPicker(rowIndex, field)}>${content}</button>`;
@@ -44,6 +46,7 @@ export function SceneEditor({ project, edit }) {
               <button class="icon-btn" disabled=${i === 0} onClick=${() => moveRow(i, -1)} aria-label="Move up"><${Icon} name="up" /></button>
               <button class="icon-btn icon-btn--remove" onClick=${() => deleteRow(i)} aria-label="Delete row"><${Icon} name="close" /></button>
             </span>
+            <${RowWarnings} project=${project} sceneId=${edit.sceneId} charId=${row.char_id} />
           </div>`;
       })}
       <button class="btn btn--quiet add-row" onClick=${addRow}>+ Add row</button>

@@ -5,7 +5,7 @@
 // No screen code, no saving here.
 // Used by: proposals.js
 
-import { presetFile } from './store/repo-files.js';
+import { presetFile, soundFile } from './store/repo-files.js';
 
 const OPS = {
   // date / call / wrap of a shooting day
@@ -71,6 +71,13 @@ const OPS = {
     const rows = film.ifbList?.rows || [];
     film.ifbList = { ...film.ifbList, rows: rows.map(row => ({ ...row, crew_id: newNumber[row.crew_id] || row.crew_id })) };
     return ['ifb/crew.json', 'ifb/list.json'];
+  },
+
+  // the sound breakdown of a scene (level, reason, flags, warnings), e.g. from the AT
+  set_sound(film, { scene_id, fields }) {
+    const before = film.sound?.[scene_id] || { scene_id };
+    film.sound = { ...film.sound, [scene_id]: { ...before, ...fields, updated_at: new Date().toISOString() } };
+    return [soundFile(scene_id)];
   },
 
   set_character(film, { id, fields }) {

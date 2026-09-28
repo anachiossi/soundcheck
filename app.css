@@ -381,6 +381,33 @@ button.kit-item:hover { background: #f1f5f9; }
 .emergency__person small { display: block; font-size: 15px; opacity: .85; }
 .crew-actions--big .btn { font-size: 18px; padding: 12px 18px; }
 
+/* ---- 14. Sound breakdown (sound-bar.js): dificultômetro, flags, lav warnings ---- */
+.sound-bar { display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 4px; padding: 3px; border: 0;
+  border-radius: 8px; background: var(--slate); font: inherit; font-size: 14px; color: var(--ink); text-align: left; cursor: pointer; }
+.sound-bar__level { flex: none; padding: 3px 10px; border-radius: 6px; font-weight: 800; font-size: 13px; letter-spacing: .03em; }
+.sound-bar--unrated .sound-bar__level { background: transparent; color: #64748b; font-weight: 600; letter-spacing: 0; }
+.sound-bar__flags { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #334155; font-weight: 600; }
+.sound-bar__warn { flex: none; color: var(--warn); font-weight: 800; padding-right: 6px; }
+.sound-bar__waiting { flex: none; color: var(--warn); padding-right: 6px; }
+.row-warning { grid-column: 1 / -1; margin: 0 0 2px; color: #c2410c; font-weight: 700; font-size: 14px; }
+.picker-warning { margin: 4px 0 8px; padding: 8px 12px; border-radius: 10px; background: #fff7ed; color: #c2410c; font-weight: 700; }
+.sound-summary { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 6px 0; }
+.sound-summary__level { padding: 3px 10px; border-radius: 6px; font-weight: 800; font-size: 13px; }
+.sound-summary__warn { color: var(--warn); font-weight: 800; font-size: 14px; }
+.sound-levels { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 6px 0 4px; }
+.sound-level { display: flex; flex-direction: column; align-items: center; padding: 8px 2px; border: 3px solid transparent;
+  border-radius: 10px; opacity: .45; font: inherit; }
+.sound-level b { font-size: 20px; }
+.sound-level small { font-size: 11px; font-weight: 800; letter-spacing: .03em; }
+.sound-level--on { opacity: 1; border-color: var(--ink); }
+.sound-panel__reason { font-size: 14px; margin: 4px 0; }
+.sound-warnings { list-style: none; padding: 0; margin: 4px 0 8px; }
+.sound-warnings li { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 0;
+  border-bottom: 1px solid #e2e8f0; color: #9a3412; }
+.sound-add { display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 12px; background: var(--slate); }
+.sound-add select, .sound-add input, .sound-panel__notes { font: inherit; font-size: 16px; padding: 8px 12px;
+  border: 1px solid #cbd5e1; border-radius: 10px; background: var(--card); box-sizing: border-box; width: 100%; }
+
 /* ---- Phones --------------------------------------------------------------- */
 @media (max-width: 600px) {
   #app { padding: 8px 6px 24px; }

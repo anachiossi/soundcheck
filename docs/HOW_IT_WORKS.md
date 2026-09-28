@@ -98,6 +98,16 @@ The app's GitHub key needs **Actions: Read and write** and **Variables: Read-onl
 | Scene Map: colour strip, beats, each line's cue (Full = last sentence, Fast = last 4 words); made from the same lines, so ✎ edits show at once | `src/cues-map-rules.js`, `src/screens/cues-map.js` |
 | ✎ Changed on set (edit / delete / + New line before or after, undo all) → `lines/set/<scene>.json`, wins over sides and script; the pipeline never writes it; newer paper is offered (Use it / Keep my changes) | `src/cues-editing.js`, panel `src/parts/cue-line-editor.js` |
 
+## 🔊 Sound breakdown (dificultômetro + lav warnings)
+| What | File |
+|---|---|
+| One file per scene: `sound/<scene>.json` = level 1–5 (MOS · AMB · EASY · MEDIUM · HARD, Ana's colours), reason, flags, notes, warnings `[{ char_id, kind, text }]` | data repo |
+| Levels, flags, warning kinds, suggested level (Ana's rules), lav checks | `src/sound-rules.js` |
+| The thin bar under each slate + the 🔊 panel; the day summary; warnings under mic rows | `src/parts/sound-bar.js`, saved by `src/sound-editing.js` |
+| Lav picker shows the character's warning; "No lav" + a lav → Save asks "Save anyway" | `src/parts/picker.js`, `src/parts/scene-editor.js` |
+| Printed on the day / scene images | `drawSound` in `src/export/image.js` |
+| First fill from the AT: a proposal (`proposals/sound-at.json`, change type `set_sound`) | `projects/la-buona-educazione/work/build_sound_proposal.py` in script_read_claude |
+
 ## 🎧 IFB department (Mics | IFB switch at the top)
 | What | File |
 |---|---|

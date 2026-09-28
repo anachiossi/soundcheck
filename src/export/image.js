@@ -8,6 +8,7 @@
 
 import { sceneRows, scheduleFor, sceneInfo, timeClass, shootingDays, txPlanForDay, formatDate, formatStamp } from '../model.js';
 import { newCanvas, box, text, font, pill, tag, wrapLines } from './draw.js';
+import { LEVELS, FLAGS, WARNING_KINDS, soundOf } from '../sound-rules.js';
 
 export const WIDTH = 1080;
 export const PAD = 40;
@@ -50,7 +51,8 @@ export function footer(ctx, width, y, project) {
 export async function sceneSheet(project, sceneIds, title) {
   await fontsReady();
   // Draw on a tall canvas, then cut it to the height actually used.
-  const roughHeight = 400 + sceneIds.reduce((sum, id) => sum + 420 + sceneRows(project, id).length * ROW, 0);
+  const roughHeight = 400 + sceneIds.reduce((sum, id) => sum + 520 + sceneRows(project, id).length * ROW
+    + (soundOf(project, id)?.warnings?.length || 0) * 34, 0);
   const { canvas, ctx } = newCanvas(WIDTH, roughHeight);
 
   const first = scheduleFor(project, sceneIds[0]);
@@ -71,7 +73,8 @@ export function cropHeight(canvas, height) {
 }
 
 export function drawScene(ctx, project, sceneId, y) {
-  y = drawSlate(ctx, sceneId, sceneInfo(project, sceneId), y) + 20;
+  y = drawSlate(ctx, sceneId, sceneInfo(project, sceneId), y) + 12;
+  y = drawSound(ctx, project, sceneId, y);
 
   const rows = sceneRows(project, sceneId);
   if (!rows.length) {
@@ -99,6 +102,29 @@ export function drawScene(ctx, project, sceneId, y) {
     y += ROW;
   }
   return y + 14;
+}
+
+// Sound line under the slate: the level in its colour, the flags, then each lav warning
+// in orange ("⚠ OONA · No lav: jumps in the pool"). Nothing when the scene has no breakdown.
+function drawSound(ctx, project, sceneId, y) {
+  const sound = soundOf(project, sceneId);
+  if (!sound?.level && !sound?.warnings?.length && !sound?.flags?.length) return y + 8;
+  const names = new Map(project.characters.map(c => [String(c.id), c.name]));
+  let x = PAD;
+  if (sound.level) {
+    const { label, color } = LEVELS[sound.level];
+    x += tag(ctx, `${sound.level} ${label}`, x, y, color, '#0f172a') + 14;
+  }
+  font(ctx, 600, 24);
+  text(ctx, (sound.flags || []).map(f => FLAGS[f] || f).join(' · '), x, y + 22, WIDTH - PAD - x, '#334155');
+  y += 52;
+  font(ctx, 700, 24);
+  for (const w of sound.warnings || []) {
+    text(ctx, `⚠ ${names.get(String(w.char_id)) || w.char_id} · ${WARNING_KINDS[w.kind] || w.kind}${w.text ? `: ${w.text}` : ''}`,
+      PAD + 4, y + 14, WIDTH - 2 * PAD, '#c2410c');
+    y += 34;
+  }
+  return y + 10;
 }
 
 // Slate: grey box with a black stripe, "#12 INT Notte SET", then location ·

@@ -2,6 +2,8 @@
 // (Character · TX · Lav · Speaks). The slate shows #12, INT/EXT, time of day
 // and the set, then location · pages · story day, the synopsis and any
 // production note. 🎙 opens Cues (learn the lines), ✎ turns the table into the editor.
+// Under the slate: the sound bar (dificultômetro, flags, lav warnings — sound-bar.js); a
+// character's lav warning is also printed under their mic row.
 // "● not uploaded" = saved on this device, waiting for signal.
 // Column names are printed small above the first row, to save height on phones.
 // Used by: screens/schedule.js, screens/scenes.js
@@ -15,6 +17,7 @@ import { resolveConflict } from '../sync.js';
 import { presetFile } from '../store/repo-files.js';
 import { CharacterPill, TxPill, LavPill, SpeakerBadge } from './pills.js';
 import { SceneEditor } from './scene-editor.js';
+import { SoundBar, RowWarnings } from './sound-bar.js';
 import { Icon } from './icons.js';
 
 export function SceneTable({ project, sceneId, edit, showDay = false, onRemove, onExport }) {
@@ -51,6 +54,7 @@ export function SceneTable({ project, sceneId, edit, showDay = false, onRemove, 
         ${info?.synopsis && html`<p class="slate__synopsis">${info.synopsis}</p>`}
         ${info?.notes && html`<p class="slate__notes">${info.notes}</p>`}
       </header>
+      <${SoundBar} project=${project} sceneId=${sceneId} />
       ${waiting && !conflict && html`<p class="scene__waiting">● Saved on this device, not uploaded yet</p>`}
       ${conflict && html`
         <div class="conflict">
@@ -89,6 +93,7 @@ function MicRows({ project, sceneId }) {
             ${i === 0 && html`<span class="mics__label">Speaks</span>`}
             <${SpeakerBadge} speaker=${row.speaker} />
           </div>
+          <${RowWarnings} project=${project} sceneId=${sceneId} charId=${row.char_id} />
         </div>`)}
     </div>`;
 }

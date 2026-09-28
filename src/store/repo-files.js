@@ -14,6 +14,8 @@
 //     proposals/odg-6.json changes suggested from a production email (see pipeline/), to accept or reject
 //     lines/sides/2.json   who says what in scene 2 (from the day's sides; lines/script/2.json from the script;
 //                          lines/set/2.json = changed on set in 🎙 Cues, wins over both)
+//     sound/12.json        { scene_id, level 1–5, reason, flags, notes, warnings: [{ char_id, kind, text }] }
+//                          the sound breakdown (dificultômetro + lav warnings), see sound-rules.js
 //     ifb/crew.json        [{ id, name, job, color, phone }]          IFB department:
 //     ifb/receivers.json   [{ id, model, color, connector }]
 //     ifb/headphones.json  [{ id, model, color, connector, attenuated }]
@@ -37,6 +39,12 @@ function sceneFromPath(relativePath) {
 }
 
 export const proposalFile = id => `proposals/${id}.json`;
+export const soundFile = sceneId => `sound/${sceneId}.json`;
+
+function soundFromPath(relativePath) {
+  const match = /^sound\/(.+)\.json$/.exec(relativePath);
+  return match ? match[1] : null;
+}
 
 // 'lines/sides/2.json' → 'sides/2'
 function linesFromPath(relativePath) {
@@ -56,6 +64,7 @@ export function projectToFiles(project) {
   for (const [sceneId, preset] of Object.entries(project.presets)) files[presetFile(sceneId)] = preset;
   for (const [id, proposal] of Object.entries(project.proposals || {})) files[proposalFile(id)] = proposal;
   for (const [key, lines] of Object.entries(project.lines || {})) files[`lines/${key}.json`] = lines;
+  for (const [sceneId, sound] of Object.entries(project.sound || {})) files[soundFile(sceneId)] = sound;
   for (const [path, key] of Object.entries(IFB_FILES)) if (project[key]) files[path] = project[key];
   return files;
 }
@@ -64,7 +73,7 @@ export function projectToFiles(project) {
 export function emptyProject(film, folder) {
   return {
     format: PROJECT_FORMAT, version: 1, id: film.id, name: film.name, folder,
-    characters: [], transmitters: [], lavaliers: [], schedule: [], scenes: {}, presets: {}, proposals: {}, lines: {},
+    characters: [], transmitters: [], lavaliers: [], schedule: [], scenes: {}, presets: {}, proposals: {}, lines: {}, sound: {},
     crew: [], ifbReceivers: [], ifbHeadphones: [], ifbList: { rows: [] },
     shas: {}, outbox: {}, conflicts: {}, data_as_of: null,
   };
@@ -83,6 +92,7 @@ export function fileContent(project, path) {
   if (proposalId) return project.proposals?.[proposalId];
   const linesKey = linesFromPath(path);
   if (linesKey) return project.lines?.[linesKey];
+  if (soundFromPath(path)) return project.sound?.[soundFromPath(path)];
   if (IFB_FILES[path]) return project[IFB_FILES[path]];
   const key = path.replace(/\.json$/, '');
   if (key === 'film') return { format: FILM_FORMAT, version: 1, id: project.id, name: project.name };
@@ -97,6 +107,7 @@ export function setFileContent(project, path, content) {
   if (sceneId) project.presets = { ...project.presets, [sceneId]: content };
   else if (proposalId) project.proposals = { ...project.proposals, [proposalId]: content };
   else if (linesFromPath(path)) project.lines = { ...project.lines, [linesFromPath(path)]: content };
+  else if (soundFromPath(path)) project.sound = { ...project.sound, [soundFromPath(path)]: content };
   else if (IFB_FILES[path]) project[IFB_FILES[path]] = content;
   else if (key === 'film') project.name = content.name;
   else if (LISTS.includes(key) || key === 'scenes') project[key] = content;
@@ -155,7 +166,7 @@ export function filesToDownload(project, remoteShas) {
 // The kinds of files the app uses (the folder also holds e.g. inbox.json for the pipeline).
 function isAppFile(path) {
   const key = path.replace(/\.json$/, '');
-  return Boolean(sceneFromPath(path) || proposalFromPath(path) || linesFromPath(path) || IFB_FILES[path]
+  return Boolean(sceneFromPath(path) || proposalFromPath(path) || linesFromPath(path) || soundFromPath(path) || IFB_FILES[path]
     || key === 'film' || key === 'scenes' || LISTS.includes(key));
 }
 

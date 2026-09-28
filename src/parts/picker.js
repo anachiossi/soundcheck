@@ -8,6 +8,7 @@
 import { html, useState } from '../../vendor/preact-htm.js';
 import { naturalCompare, byId } from '../model.js';
 import { usedByOtherRows, sameDaySuggestions, preferredFor } from '../preset-rules.js';
+import { warningsFor, WARNING_KINDS } from '../sound-rules.js';
 import { setCell, closePicker } from '../editing.js';
 import { CharacterPill, TxPill, LavPill } from './pills.js';
 import { Icon } from './icons.js';
@@ -34,6 +35,7 @@ export function Picker({ state }) {
   const suggestions = field === 'char_id' ? [] : sameDaySuggestions(project, edit.sceneId, row.char_id)[field === 'tx_id' ? 'tx' : 'lav'];
   const items = [...project[LIST[field]]].sort((a, b) => naturalCompare(a.id, b.id)).filter(item => matches(item, query));
   const all = byId(project[LIST[field]]);
+  const soundWarnings = field === 'char_id' ? [] : warningsFor(project, edit.sceneId, row.char_id);
 
   const pick = id => { setCell(rowIndex, field, id); setQuery(''); };
   const close = () => { closePicker(); setQuery(''); };
@@ -49,6 +51,8 @@ export function Picker({ state }) {
         <b>${TITLE[field]} · #${edit.sceneId}${character && field !== 'char_id' ? ` · ${character.name}` : ''}</b>
         <button class="icon-btn" onClick=${close} aria-label="Close"><${Icon} name="close" /></button>
       </header>
+      ${soundWarnings.map((w, i) => html`
+        <p class="picker-warning" key=${'w' + i}>⚠ ${character?.name || ''}: ${WARNING_KINDS[w.kind] || w.kind}${w.text ? ` — ${w.text}` : ''}</p>`)}
       <div class="sheet__tools">
         <input type="search" placeholder="Search number or name" value=${query} onInput=${e => setQuery(e.target.value)} />
         ${row[field] && html`<button class="btn btn--quiet" onClick=${() => pick('')}>Empty</button>`}

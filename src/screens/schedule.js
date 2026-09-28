@@ -15,6 +15,7 @@ import { sceneSheet, txSheet } from '../export/image.js';
 import { scheduleImages } from '../export/schedule-images.js';
 import { shareCanvas, shareCanvases } from '../export/share.js';
 import { Icon } from '../parts/icons.js';
+import { SoundSummary } from '../parts/sound-bar.js';
 
 const MODES = [['day', 'Day'], ['week', 'Week'], ['all', 'All film']];
 
@@ -73,6 +74,7 @@ function DayView({ project, edit, dayNumber }) {
         </button>`)}
     </div>
     <${DayBanner} day=${day} />
+    <${SoundSummary} project=${project} sceneIds=${sceneIds} />
     <${SceneChips} sceneIds=${sceneIds} onPick=${scrollToScene} />
     <div class="toolbar">
       <${DocumentButtons} project=${project} day=${day.day} />
