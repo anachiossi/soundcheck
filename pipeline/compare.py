@@ -92,6 +92,7 @@ def check_scene_info(scene, info):
         "int_ext": lambda a, b: norm(a) == norm(b),
         "time_of_day": lambda a, b: norm(a)[:1] == norm(b)[:1],
         "set": lambda a, b: norm(a) == norm(b),
+        "location": lambda a, b: norm(a) == norm(b),  # "Piano Terra" = "PIANO TERRA"
         # a synopsis cut short (PDL, scaletta) never replaces the full one (ODG)
         "synopsis": lambda new, old: norm(old).startswith(norm(new)),
     }
