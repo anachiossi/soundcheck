@@ -42,8 +42,19 @@ unclear, and only then generate presets.
   "lav_rules": { "scream": "6061 or attenuated", "water": "no lav", "nude": "no lav" }
 }
 ```
-Ana's definitions:
-- "speaks most" = most **lines in that scene**; the protagonist (TX 3 in LBE) is the exception.
+Confirmed by Ana (2026-09-29), as built in `pipeline/presets.py`:
+- A character keeps the **same TX and lav all day**, so the rule is decided **per day**: if every scene
+  that day has ≤7 speakers who can wear a lav → odd TX order (3, 5, 7…) by who speaks most; if any
+  scene has more → the whole day uses preferred TX.
+- "Speaks most" = lines **added up over the day's scenes**. The protagonist is always TX 3.
+- Counts toward the 7: characters who **speak and can wear a lav** (not everyone in the scene; 7
+  speakers all in the pool count as 0). Silent characters still get a TX, after the speakers.
+- Small day with more than 7 people: after 15 the free even TX (4, 6, 8…), never TX 1–2 or booms.
+- Big day: no preferred TX → next free in the order; same preferred TX for two → more lines wins.
+- Screamers get a 6061; in the water / 🚫 → no lav; no lav in any scene of the day → no TX either.
+
+Earlier definitions:
+- "speaks most" = most **lines**; the protagonist (TX 3 in LBE) is the exception.
 - "speakers with a lav" = characters who speak **and have no warning that prevents a lav** (7 speakers
   all in the pool → no lavs possible).
 - Why odd TX numbers: Ana's choice — for the engine it is just the order in the settings.
