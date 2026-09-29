@@ -1,7 +1,7 @@
 // cues-picker.js — the Cues tab: choose a scene to learn.
 // Opens on the shooting day chosen in the Schedule (today / next day); ‹ › change day.
 // Each scene of the day is a big button (scene, set, how many lines); tapping one opens
-// 🎙 Cues full screen; the Map button next to it opens the Scene Map. Below: any scene by number.
+// 🎙 Cues full screen; the map icon inside the card opens the Scene Map. Below: any scene by number.
 // Used by: main.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
@@ -17,18 +17,21 @@ const openMap = sceneId => setState({ screen: 'cues-map', cuesScene: sceneId });
 function SceneButton({ project, sceneId }) {
   const cues = cueLines(project, sceneId);
   const info = sceneInfo(project, sceneId);
+  // one card: tap it (or the mic) → Cues; the map icon inside it → the Scene Map
   return html`
-    <div class="cue-scene-row">
-    <button class="cue-scene" disabled=${!cues} onClick=${() => openCues(sceneId)}>
+    <div class=${'cue-scene' + (cues ? '' : ' cue-scene--off')} role="button" onClick=${() => cues && openCues(sceneId)}>
       <${ScenePill} project=${project} sceneId=${sceneId} size="big" hash />
       <span class="cue-scene__text">
         <b>${info?.set || `Scene ${sceneId}`}</b>
         <small>${cues ? `${cues.lines.length} lines · ${cues.source}${cues.note ? ` · ${cues.note}` : ''}` : 'no dialogue'}</small>
       </span>
-      <span class="cue-scene__go">${cues && html`<${Icon} name="mic" />`}</span>
-    </button>
-    ${cues && html`<button class="cue-scene__map" onClick=${() => openMap(sceneId)} aria-label=${`Scene map of ${sceneId}`}>
-      <${Icon} name="map" /><small>Map</small></button>`}
+      ${cues && html`
+        <span class="cue-scene__icons">
+          <button class="icon-btn cue-scene__icon" aria-label=${`Learn scene ${sceneId}`}
+                  onClick=${event => { event.stopPropagation(); openCues(sceneId); }}><${Icon} name="mic" /></button>
+          <button class="icon-btn cue-scene__icon" aria-label=${`Scene map of ${sceneId}`}
+                  onClick=${event => { event.stopPropagation(); openMap(sceneId); }}><${Icon} name="map" /></button>
+        </span>`}
     </div>`;
 }
 

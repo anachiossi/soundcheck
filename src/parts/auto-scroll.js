@@ -1,10 +1,11 @@
 // auto-scroll.js — the page scrolls down by itself (like a teleprompter), for the Scene Map.
-//   ▶ / ❚❚ starts and stops; − / + change the speed (remembered on this device).
+//   ▶ / ■ starts and stops; − / + change the speed (remembered on this device).
 //   Touch sensitive: a finger on the screen (or the mouse wheel) pauses it — drag back or
 //   forward as usual — and it carries on from there a moment after you let go.
 //   It stops by itself at the end of the page. The screen stays awake while it runs.
-//   While it runs a touch never opens a line (pause with ❚❚ first, then tap the line).
-// Used by: screens/cues-map.js
+//   While it runs a touch never opens a line (stop with ■ first, then tap the line).
+//   Smooth: the position is kept in fractions of a pixel (phones draw 1/2 or 1/3 pixels).
+// Used by: screens/cues-map.js (in the bar pinned at the top)
 
 import { html, useEffect, useRef, useState } from '../../vendor/preact-htm.js';
 
@@ -27,17 +28,18 @@ export function AutoScroll() {
     return next;
   });
 
-  // the scrolling itself: a little every frame; fractions are saved up (phones only move whole pixels)
+  // the scrolling itself: every frame, the exact position moves on (not whole pixels)
   useEffect(() => {
     if (!playing) return;
-    let last = performance.now(), saved = 0, frame;
+    let last = performance.now(), position = window.scrollY, frame;
     const step = now => {
-      const seconds = Math.min(0.1, (now - last) / 1000);
+      const seconds = Math.min(0.05, (now - last) / 1000);
       last = now;
+      // the finger moved the page (or it is still gliding after a swipe): carry on from there
+      if (held.current || Math.abs(window.scrollY - position) > 3) position = window.scrollY;
       if (!held.current) {
-        saved += SPEEDS[speed] * seconds;
-        const whole = Math.floor(saved);
-        if (whole) { window.scrollBy(0, whole); saved -= whole; }
+        position += SPEEDS[speed] * seconds;
+        window.scrollTo(0, position);
         if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) return setPlaying(false);
       }
       frame = requestAnimationFrame(step);
@@ -67,7 +69,7 @@ export function AutoScroll() {
     addEventListener('wheel', wheel, { passive: true });
     let lock = null;
     navigator.wakeLock?.request('screen').then(l => { lock = l; }).catch(() => {});
-    document.body.classList.add('auto-scrolling'); // lines can't be opened while it runs (a touch only pauses)
+    document.body.classList.add('auto-scrolling');
     return () => {
       document.body.classList.remove('auto-scrolling');
       clearTimeout(resumeTimer.current);
@@ -85,7 +87,8 @@ export function AutoScroll() {
   return html`
     <div class="auto-scroll">
       <button class="btn btn--primary auto-scroll__play" onClick=${() => setPlaying(p => !p)}
-              aria-label=${playing ? 'Pause' : 'Scroll by itself'}>${playing ? '❚❚' : '▶'}</button>
+              aria-label=${playing ? 'Stop' : 'Scroll by itself'}>${playing ? '■' : '▶'}</button>
+      <span class="auto-scroll__label">${playing ? 'scrolling' : 'auto-scroll'}</span>
       <button class="btn auto-scroll__step" disabled=${speed === 0} onClick=${() => changeSpeed(-1)} aria-label="Slower">−</button>
       <span class="auto-scroll__speed">speed ${speed + 1}</span>
       <button class="btn auto-scroll__step" disabled=${speed === SPEEDS.length - 1} onClick=${() => changeSpeed(1)} aria-label="Faster">+</button>
