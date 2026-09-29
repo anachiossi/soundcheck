@@ -6,7 +6,9 @@
 //   • − / + speed (0.5× to 2×, remembered) to follow the actors as they run the scene
 //   • drag the track to scrub back or forward; tap a block to jump to it (a touch pauses, and it
 //     carries on when you let go); ⏮ back to the start
-//   • above the track: who speaks now, big, and the next two. No text — just the sequence.
+//   • above the track: who speaks now, big, and the next two
+//   • under the track: the words, in time with the cursor, like a transcription of a video (said ·
+//     now · still to come), and the start of the next line; "Aa" turns the words on / off (remembered)
 // Some day it could follow the actors by listening; for now the speed is by hand.
 // Used by: main.js (from the Cues tab card and the Scene Map)
 
@@ -33,6 +35,7 @@ export function CuesTimelineScreen({ state }) {
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(loadSpeed);
   const [width, setWidth] = useState(0);          // the track's width
+  const [showText, setShowText] = useState(() => { try { return localStorage.getItem('sc_timeline_text') !== 'off'; } catch { return true; } });
   const held = useRef(false);
   const drag = useRef(null);
   const track = useRef(null);
@@ -87,6 +90,14 @@ export function CuesTimelineScreen({ state }) {
   const now = blockAtTime(blocks, time);
   const upcoming = blocks.slice((now?.index ?? -1) + 1, (now?.index ?? -1) + 3);
   const position = pixelsAt(blocks, time);
+  // the words, in time with the cursor (said · now · still to come), like a transcription of a video
+  const words = now ? String(cues.lines[now.index].text).split(/\s+/).filter(Boolean) : [];
+  const saying = now ? Math.min(words.length - 1, Math.floor(((time - now.from) / now.seconds) * words.length)) : -1;
+  const nextLine = upcoming[0] ? cues.lines[upcoming[0].index] : null;
+  const toggleText = () => setShowText(on => {
+    try { localStorage.setItem('sc_timeline_text', on ? 'off' : 'on'); } catch { /* fine */ }
+    return !on;
+  });
   const info = sceneInfo(project, cuesScene);
   const changeSpeed = step => setSpeed(s => {
     const value = Math.min(SPEEDS.length - 1, Math.max(0, s + step));
@@ -145,10 +156,19 @@ export function CuesTimelineScreen({ state }) {
         <div class="timeline__cursor" style=${`left:${cursorX}px`}><span>▼</span></div>
       </div>
 
+      ${showText && now && html`
+        <div class="timeline__text">
+          <p class="timeline__line">${words.map((word, i) => html`
+            <span key=${i} class=${i < saying ? 'said' : i === saying ? 'saying' : 'coming'}>${word}</span>${' '}`)}</p>
+          ${nextLine && html`<p class="timeline__next"><b>${nextLine.name}:</b> ${nextLine.text}</p>`}
+        </div>`}
+
       <div class="auto-scroll timeline__controls">
         <button class="btn" onClick=${() => setTime(0)} aria-label="Back to the start">⏮</button>
         <button class="btn btn--primary auto-scroll__play" onClick=${() => { if (time >= duration) setTime(0); setPlaying(p => !p); }}
                 aria-label=${playing ? 'Pause' : 'Play'}>${playing ? '❚❚' : '▶'}</button>
+        <button class=${'btn timeline__aa' + (showText ? ' timeline__aa--on' : '')} onClick=${toggleText}
+                aria-label=${showText ? 'Hide the words' : 'Show the words'}>Aa</button>
         <span class="auto-scroll__label"></span>
         <button class="btn auto-scroll__step" disabled=${speed === 0} onClick=${() => changeSpeed(-1)} aria-label="Slower">−</button>
         <span class="auto-scroll__speed">${SPEEDS[speed]}×</span>
