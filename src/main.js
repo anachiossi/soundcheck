@@ -24,6 +24,7 @@ import { IfbKitScreen } from './screens/ifb-kit.js';
 import { IfbPicker } from './parts/ifb-picker.js';
 import { Icon } from './parts/icons.js';
 import { EmailBadge } from './parts/email-robot.js';
+import { ConflictBadge } from './parts/conflicts.js';
 
 // Two departments, each with its own big tabs. Projects is shared.
 const TABS = {
@@ -56,7 +57,7 @@ function SyncBadge({ state }) {
   if (!project) return null;
   const waiting = Object.keys(project.outbox || {}).length;
   const conflicts = Object.keys(project.conflicts || {}).length;
-  if (conflicts) return html`<span class="badge badge--warn">⚠ ${conflicts} to decide</span>`;
+  if (conflicts) return html`<${ConflictBadge} project=${project} />`;
   if (!online) return html`<span class="badge badge--offline">✈ Offline${waiting ? ` · ${waiting} waiting` : ''}</span>`;
   if (sync.running) return html`<span class="badge">↻ Syncing…</span>`;
   if (waiting) return html`<button class="badge badge--warn" onClick=${() => syncNow({ loud: true })}>● ${waiting} waiting</button>`;
