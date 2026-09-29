@@ -5,6 +5,7 @@
 // Used by: main.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
+import { ScenePill } from '../parts/scene-pill.js';
 import { shootingDays, allSceneIds, sceneInfo, formatDate } from '../model.js';
 import { pickDay, setState } from '../state.js';
 import { cueLines } from '../cues-rules.js';
@@ -19,7 +20,7 @@ function SceneButton({ project, sceneId }) {
   return html`
     <div class="cue-scene-row">
     <button class="cue-scene" disabled=${!cues} onClick=${() => openCues(sceneId)}>
-      <span class="cue-scene__id">#${sceneId}</span>
+      <${ScenePill} project=${project} sceneId=${sceneId} size="big" hash />
       <span class="cue-scene__text">
         <b>${info?.set || `Scene ${sceneId}`}</b>
         <small>${cues ? `${cues.lines.length} lines · ${cues.source}${cues.note ? ` · ${cues.note}` : ''}` : 'no dialogue'}</small>

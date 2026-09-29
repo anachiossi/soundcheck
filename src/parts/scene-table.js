@@ -9,6 +9,7 @@
 // Used by: screens/schedule.js, screens/scenes.js
 
 import { html } from '../../vendor/preact-htm.js';
+import { ScenePill } from './scene-pill.js';
 import { sceneRows, scheduleFor, sceneInfo, formatDate, formatStamp, timeClass } from '../model.js';
 import { startEdit } from '../editing.js';
 import { getState, setState } from '../state.js';
@@ -32,7 +33,7 @@ export function SceneTable({ project, sceneId, edit, showDay = false, onRemove, 
     <section class=${'scene' + (editing ? ' scene--editing' : '')} id=${'scene-' + sceneId}>
       <header class="slate">
         <div class="slate__top">
-          <span class="slate__badge">#${sceneId}</span>
+          <${ScenePill} project=${project} sceneId=${sceneId} size="title" hash />
           ${info?.int_ext && html`<span class="tag">${info.int_ext}</span>`}
           ${info?.time_of_day && html`<span class=${'tag tag--' + timeClass(info.time_of_day)}>${info.time_of_day}</span>`}
           <span class="slate__set">${info?.set || `Scene ${sceneId}`}</span>

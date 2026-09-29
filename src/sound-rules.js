@@ -5,7 +5,7 @@
 //             e.g. OONA · No lav · "jumps in the pool"
 // Stored as sound/<scene>.json (sound-editing.js saves it). Rules from
 // docs/2026-09-14_dificultometro_rules.md: the SUGGESTED level only — Ana's choice always wins.
-// Used by: parts/sound-bar.js, parts/scene-table.js, parts/scene-editor.js, parts/picker.js, export/image.js
+// Used by: parts/sound-bar.js, parts/scene-pill.js, parts/scene-table.js, parts/scene-editor.js, parts/picker.js, export/image.js
 
 export const LEVELS = {
   1: { label: 'MOS', color: '#57DBC2' },
@@ -53,16 +53,4 @@ export function suggestedLevel(project, sceneId) {
   const base = speakers <= 2 ? 3 : speakers <= 4 ? 4 : 5;
   const harder = (ext && speakers === 2) || ['scream', 'fx', 'crowd', 'kids', 'animal', 'water'].some(f => flags.has(f));
   return Math.min(5, base + (harder ? 1 : 0));
-}
-
-// For the day header: { levels: { 5: 1, 4: 2 }, warnings: 3, rated: 3 }
-export function soundSummary(project, sceneIds) {
-  const summary = { levels: {}, warnings: 0, rated: 0 };
-  for (const id of sceneIds) {
-    const sound = soundOf(project, id);
-    if (!sound) continue;
-    if (sound.level) { summary.levels[sound.level] = (summary.levels[sound.level] || 0) + 1; summary.rated++; }
-    summary.warnings += sound.warnings?.length || 0;
-  }
-  return summary;
 }

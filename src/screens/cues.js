@@ -11,6 +11,7 @@
 // Used by: main.js (opened from the Cues tab or the microphone on a scene)
 
 import { html, useEffect, useLayoutEffect, useRef, useState } from '../../vendor/preact-htm.js';
+import { ScenePill } from '../parts/scene-pill.js';
 import { byId } from '../model.js';
 import { textColourFor, isNearWhite } from '../colour.js';
 import { cueLines } from '../cues-rules.js';
@@ -110,7 +111,7 @@ export function CuesScreen({ state }) {
     <div class="cues" style=${`background:${background};color:${textColourFor(background)}`} onClick=${onTap}>
       <div class="cues__top">
         <span>${index + 1} / ${lines.length}</span>
-        <span class="cues__scene">#${cuesScene}</span>
+        <span class="cues__scene"><${ScenePill} project=${project} sceneId=${cuesScene} hash /></span>
         <button class="cues__close" onClick=${only(() => setState({ screen: 'cues-map', cuesLine: 0 }))} aria-label="Scene map">
           <${Icon} name="map" /></button>
         <button class="cues__close cues__edit" onClick=${only(() => setEditor({ index, adding: false }))} aria-label="Edit this line">

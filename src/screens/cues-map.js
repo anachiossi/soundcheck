@@ -7,6 +7,7 @@
 // Used by: main.js (from the Cues tab, or the map button in Cues)
 
 import { html, useState } from '../../vendor/preact-htm.js';
+import { ScenePill } from '../parts/scene-pill.js';
 import { byId, sceneInfo } from '../model.js';
 import { textColourFor, isNearWhite } from '../colour.js';
 import { cueLines } from '../cues-rules.js';
@@ -40,7 +41,7 @@ export function CuesMapScreen({ state }) {
     <div class="map-head">
       <button class="btn" onClick=${back}>‹ Cues</button>
       <div class="map-head__title">
-        <b>#${cuesScene} ${info?.set || ''}</b>
+        <b><${ScenePill} project=${project} sceneId=${cuesScene} hash /> ${info?.set || ''}</b>
         <small>${cues.lines.length} lines · ${beats.length} beats · ${cues.source}${cues.note ? ` · ${cues.note}` : ''}</small>
       </div>
       <button class="btn btn--primary" onClick=${() => learnFrom(0)}><${Icon} name="mic" /> Learn</button>

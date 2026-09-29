@@ -2,13 +2,13 @@
 // dificultômetro level: "▇ 4 MEDIUM │ water · scream │ ⚠ 1". Not rated yet: a grey bar with
 // the suggested level. Tap → the 🔊 panel: level, flags, notes, and the per-character
 // warnings used when choosing lavs (e.g. OONA · No lav · "jumps in the pool").
-// Also SoundSummary: the day's levels and warnings, under the day banner.
-// Used by: parts/scene-table.js, screens/schedule.js
+// The level also tints every scene number pill (scene-pill.js).
+// Used by: parts/scene-table.js, parts/scene-editor.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
 import { byId, naturalCompare } from '../model.js';
 import { textColourFor } from '../colour.js';
-import { LEVELS, FLAGS, WARNING_KINDS, soundOf, suggestedLevel, soundSummary } from '../sound-rules.js';
+import { LEVELS, FLAGS, WARNING_KINDS, soundOf, suggestedLevel } from '../sound-rules.js';
 import { saveSound } from '../sound-editing.js';
 import { resolveConflict } from '../sync.js';
 import { soundFile } from '../store/repo-files.js';
@@ -137,18 +137,6 @@ function SoundPanel({ project, sceneId, sound, suggested, close }) {
         <button class="btn" onClick=${close}>Cancel</button>
         <button class="btn btn--primary" onClick=${save}>Save</button>
       </div>
-    </div>`;
-}
-
-// Under the day banner: "▇ 1 HARD ▇ 2 MEDIUM · ⚠ 3" (only the rated scenes).
-export function SoundSummary({ project, sceneIds }) {
-  const { levels, warnings, rated } = soundSummary(project, sceneIds);
-  if (!rated && !warnings) return null;
-  return html`
-    <div class="sound-summary">
-      ${Object.keys(levels).sort((a, b) => b - a).map(level => html`
-        <span key=${level} class="sound-summary__level" style=${levelStyle(level)}>${levels[level]} × ${LEVELS[level].label}</span>`)}
-      ${warnings > 0 && html`<span class="sound-summary__warn">⚠ ${warnings} lav warning${warnings > 1 ? 's' : ''}</span>`}
     </div>`;
 }
 

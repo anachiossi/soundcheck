@@ -15,7 +15,7 @@ import { sceneSheet, txSheet } from '../export/image.js';
 import { scheduleImages } from '../export/schedule-images.js';
 import { shareCanvas, shareCanvases } from '../export/share.js';
 import { Icon } from '../parts/icons.js';
-import { SoundSummary } from '../parts/sound-bar.js';
+import { ScenePill } from '../parts/scene-pill.js';
 
 const MODES = [['day', 'Day'], ['week', 'Week'], ['all', 'All film']];
 
@@ -74,8 +74,7 @@ function DayView({ project, edit, dayNumber }) {
         </button>`)}
     </div>
     <${DayBanner} day=${day} />
-    <${SoundSummary} project=${project} sceneIds=${sceneIds} />
-    <${SceneChips} sceneIds=${sceneIds} onPick=${scrollToScene} />
+    <${SceneChips} project=${project} sceneIds=${sceneIds} onPick=${scrollToScene} />
     <div class="toolbar">
       <${DocumentButtons} project=${project} day=${day.day} />
       <button class="btn" onClick=${async () => shareCanvas(await sceneSheet(project, sceneIds, `Day ${day.day} · mic list`), `day-${day.day}.png`)}><${Icon} name="image" /> Day sheet</button>
@@ -120,10 +119,10 @@ function AllView({ project }) {
           <button key=${day.day} class="day-line" onClick=${() => pickDay(day.day)}>
             <span class="day-line__title"><b>Day ${day.day}</b> · ${formatDate(day.date, { weekday: true })}
               ${day.call && html`<small> · ${day.call}–${day.wrap}</small>`}</span>
-            <span class="day-line__scenes">${day.scenes.map(s => html`<span class="chip chip--static" key=${s.scene_id}>${s.scene_id}</span>`)}</span>
+            <span class="day-line__scenes">${day.scenes.map(s => html`<${ScenePill} key=${s.scene_id} project=${project} sceneId=${String(s.scene_id)} />`)}</span>
           </button>`)}
       </div>`)}
     ${unscheduled.length > 0 && html`
       <div class="banner banner--week"><span></span><b>Unscheduled</b><span>${unscheduled.length} scenes</span></div>
-      <div class="chips">${unscheduled.map(id => html`<span class="chip chip--static" key=${id}>${id}</span>`)}</div>`}`;
+      <div class="chips">${unscheduled.map(id => html`<${ScenePill} key=${id} project=${project} sceneId=${id} />`)}</div>`}`;
 }

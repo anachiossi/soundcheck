@@ -4,6 +4,7 @@
 // Used by: main.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
+import { ScenePill } from '../parts/scene-pill.js';
 import { allSceneIds } from '../model.js';
 import { addLookup, removeLookup, clearLookup } from '../state.js';
 import { SceneTable } from '../parts/scene-table.js';
@@ -32,7 +33,7 @@ export function ScenesScreen({ state }) {
     </form>
     <div class="chips">
       ${matches.map(id => html`
-        <button key=${id} class=${'chip' + (lookup.includes(id) ? ' chip--on' : '')} onClick=${() => choose(id)}>${id}</button>`)}
+        <${ScenePill} key=${id} project=${project} sceneId=${id} active=${lookup.includes(id)} onClick=${() => choose(id)} />`)}
       ${matches.length === 0 && html`<span class="empty">No scene "${query}".</span>`}
     </div>
     ${lookup.map(id => html`

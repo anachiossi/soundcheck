@@ -73,7 +73,7 @@ export function cropHeight(canvas, height) {
 }
 
 export function drawScene(ctx, project, sceneId, y) {
-  y = drawSlate(ctx, sceneId, sceneInfo(project, sceneId), y) + 12;
+  y = drawSlate(ctx, sceneId, sceneInfo(project, sceneId), y, LEVELS[soundOf(project, sceneId)?.level]?.color) + 12;
   y = drawSound(ctx, project, sceneId, y);
 
   const rows = sceneRows(project, sceneId);
@@ -129,7 +129,7 @@ function drawSound(ctx, project, sceneId, y) {
 
 // Slate: grey box with a black stripe, "#12 INT Notte SET", then location ·
 // pages · story day, the synopsis (up to 3 lines) and the production note.
-function drawSlate(ctx, sceneId, info, y) {
+function drawSlate(ctx, sceneId, info, y, levelColour) {
   const x = PAD + 36;
   const width = WIDTH - 2 * PAD - 56;
   font(ctx, 400, 26);
@@ -142,8 +142,11 @@ function drawSlate(ctx, sceneId, info, y) {
 
   box(ctx, PAD, y, WIDTH - 2 * PAD, height, 10, '#e5e7eb');
   box(ctx, PAD, y, 12, height, 0, '#0f172a');
-  font(ctx, 800, 40); text(ctx, `#${sceneId}`, x, y + 39);
-  let tagX = x + ctx.measureText(`#${sceneId}`).width + 20;
+  font(ctx, 800, 40);
+  const idWidth = ctx.measureText(`#${sceneId}`).width;
+  if (levelColour) box(ctx, x - 10, y + 12, idWidth + 20, 54, 10, levelColour); // tinted by the dificultômetro
+  text(ctx, `#${sceneId}`, x, y + 39);
+  let tagX = x + idWidth + 20 + (levelColour ? 10 : 0);
   if (info?.int_ext) tagX += tag(ctx, info.int_ext, tagX, y + 17, '#ffffff', '#0f172a') + 10;
   if (info?.time_of_day) {
     const [bg, fg] = TIME[timeClass(info.time_of_day)];
