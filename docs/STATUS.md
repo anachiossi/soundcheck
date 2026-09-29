@@ -57,6 +57,10 @@ The trigger reports each check to the GitHub variable `LAST_GMAIL_CHECK` (the �
 - A `cat >>` without a heredoc waits for input forever (a stuck command).
 - `gh` lives at `C:\Program Files\GitHub CLI\gh.exe` (not on the bash PATH).
 
+## Plan (agreed 2026-09-29) → `docs/DESIGN_new_film.md`
+Next: LBE `settings.json` → preset review (checker + generator, as a proposal) for the remaining
+days → kit import/export → new-film intake rehearsed on a mock film before November.
+
 ## Open / next (none started)
 - **Simon game** for Cues (quiz on the order of speakers): designed, waiting for Ana's go.
   Proposed defaults: each round replays from the start of the beat; cue words only on a mistake;
