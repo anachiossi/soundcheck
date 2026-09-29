@@ -1,7 +1,7 @@
 // cues-picker.js — the Cues tab: choose a scene to learn.
 // Opens on the shooting day chosen in the Schedule (today / next day); ‹ › change day.
 // Each scene of the day is a big button (scene, set, how many lines); tapping one opens
-// 🎙 Cues full screen; the map icon inside the card opens the Scene Map. Below: any scene by number.
+// 🎙 Cues full screen; the map and timeline icons inside the card open the Scene Map / Timeline. Below: any scene by number.
 // Used by: main.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
@@ -13,6 +13,7 @@ import { Icon } from '../parts/icons.js';
 
 const openCues = sceneId => setState({ screen: 'cues', cuesScene: sceneId, cuesFrom: 'cues-picker', cuesLine: 0 });
 const openMap = sceneId => setState({ screen: 'cues-map', cuesScene: sceneId });
+const openTimeline = sceneId => setState({ screen: 'cues-timeline', cuesScene: sceneId });
 
 function SceneButton({ project, sceneId }) {
   const cues = cueLines(project, sceneId);
@@ -31,6 +32,8 @@ function SceneButton({ project, sceneId }) {
                   onClick=${event => { event.stopPropagation(); openCues(sceneId); }}><${Icon} name="mic" /></button>
           <button class="icon-btn cue-scene__icon" aria-label=${`Scene map of ${sceneId}`}
                   onClick=${event => { event.stopPropagation(); openMap(sceneId); }}><${Icon} name="map" /></button>
+          <button class="icon-btn cue-scene__icon" aria-label=${`Timeline of ${sceneId}`}
+                  onClick=${event => { event.stopPropagation(); openTimeline(sceneId); }}><${Icon} name="timeline" /></button>
         </span>`}
     </div>`;
 }

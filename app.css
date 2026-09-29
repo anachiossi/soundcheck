@@ -350,6 +350,28 @@ button.kit-item:hover { background: var(--soft); }
 .cue-scene { cursor: pointer; }
 .cue-scene--off { opacity: .5; cursor: default; }
 /* Scene Map (cues-map.js) */
+/* Scene Timeline (cues-timeline.js): blocks on a track sliding under a fixed cursor */
+.timeline__now { display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 14px 0 10px; }
+.timeline__who { min-width: 60%; padding: 10px 18px; border-radius: 999px; text-align: center; font-size: 26px; font-weight: 800; }
+.timeline__now small { color: var(--muted); font-size: 15px; font-weight: 600; }
+.timeline__track { position: relative; height: 110px; overflow: hidden; border-radius: 12px; background: var(--soft);
+  touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab; }
+.timeline__blocks { position: absolute; inset: 0; will-change: transform; }
+.timeline__block { position: absolute; top: 28px; height: 64px; border-radius: 0; padding: 0 6px; box-sizing: border-box;
+  box-shadow: inset -1px 0 0 rgba(0,0,0,.35);   /* back to back: a thin divider, no gap */
+  display: flex; align-items: center; font-weight: 800; font-size: 13px; white-space: nowrap; overflow: hidden; opacity: .75; }
+.timeline__block--now { opacity: 1; box-shadow: inset 0 0 0 3px var(--ink); z-index: 1; }
+.timeline__cursor { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--ink); pointer-events: none; }
+.timeline__cursor span { position: absolute; top: -2px; left: 50%; transform: translateX(-50%); font-size: 18px; color: var(--ink); }
+.timeline__controls { margin-top: 12px; }
+.timeline__hint { text-align: center; font-size: 13px; }
+@media (orientation: landscape) and (max-height: 520px) {   /* phone sideways: everything on one screen */
+  .timeline__now { flex-direction: row; justify-content: center; margin: 6px 0; }
+  .timeline__who { min-width: 40%; padding: 6px 16px; font-size: 22px; }
+  .timeline__track { height: 96px; }
+  .timeline__controls { margin-top: 8px; }
+  .timeline__hint { display: none; }
+}
 /* Scene Map: the bar pinned at the top = colour strip + auto-scroll (parts/auto-scroll.js) */
 .map-top { position: sticky; top: 0; z-index: 3; background: var(--card); padding: 4px 0 6px; margin-bottom: 10px; }
 .auto-scroll { display: flex; align-items: center; gap: 8px; }

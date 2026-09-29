@@ -107,7 +107,7 @@ export async function start() {
 
   const { projectId: _, ...choices } = prefs;
   // A screen that needs a scene / document / proposal it doesn't have → the Schedule.
-  const needs = { cues: choices.cuesScene, 'cues-map': choices.cuesScene, document: choices.documentPath, proposal: choices.proposalId };
+  const needs = { cues: choices.cuesScene, 'cues-map': choices.cuesScene, 'cues-timeline': choices.cuesScene, document: choices.documentPath, proposal: choices.proposalId };
   if (choices.screen in needs && !needs[choices.screen]) Object.assign(choices, { screen: 'schedule', department: 'mics' });
   const draft = loadJson('sc_edit', null);
   const edit = draft?.projectId === project.id ? { sceneId: draft.sceneId, rows: draft.rows } : null;
