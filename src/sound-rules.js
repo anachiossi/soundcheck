@@ -24,6 +24,27 @@ export const WARNING_KINDS = {
   'no-lav': 'No lav', placement: 'Lav placement', water: 'Water', loud: 'Loud', other: 'Other',
 };
 
+export const FLAG_EMOJI = {
+  water: '💧', scream: '😱', eating: '🍝', fx: '💥', music: '🎵', car: '🚗', crowd: '👥', kids: '👶', animal: '🐾',
+};
+export const KIND_EMOJI = { 'no-lav': '🚫', placement: '📍', water: '💧', loud: '😱', other: '⚠️' };
+
+// '💧 water'
+export const flagText = flag => `${FLAG_EMOJI[flag] || ''} ${FLAGS[flag] || flag}`.trim();
+// '🚫 jumps in the pool' (the emoji says the kind; no text → the kind's name)
+export const warningText = w => `${KIND_EMOJI[w.kind] || '⚠️'} ${w.text || WARNING_KINDS[w.kind] || w.kind}`;
+
+// One entry per character, in the order they first appear: [{ char_id, items: [warning, …] }]
+export function warningsByCharacter(warnings = []) {
+  const groups = new Map();
+  for (const w of warnings) {
+    const id = String(w.char_id);
+    if (!groups.has(id)) groups.set(id, { char_id: id, items: [] });
+    groups.get(id).items.push(w);
+  }
+  return [...groups.values()];
+}
+
 export const soundOf = (project, sceneId) => project.sound?.[sceneId] || null;
 
 // This scene's warnings for one character.

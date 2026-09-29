@@ -39,3 +39,15 @@ test('set_sound (from a proposal) writes sound/<scene>.json, kept as its own fil
   setFileContent(copy, 'sound/30.json', { level: 2 });
   assert.equal(copy.sound[30].level, 2);
 });
+
+test('warnings are packed by character, each with its emoji', async () => {
+  const { warningsByCharacter, warningText, flagText } = await import('../src/sound-rules.js');
+  const groups = warningsByCharacter([
+    { char_id: '2', kind: 'water', text: 'in the water, speaks' }, { char_id: '3', kind: 'water', text: 'in the water' },
+    { char_id: '2', kind: 'loud', text: 'screams' }, { char_id: '5', kind: 'no-lav', text: '' },
+  ]);
+  assert.deepEqual(groups.map(g => [g.char_id, g.items.map(warningText)]), [
+    ['2', ['💧 in the water, speaks', '😱 screams']], ['3', ['💧 in the water']], ['5', ['🚫 No lav']],
+  ]);
+  assert.equal(flagText('water'), '💧 water');
+});

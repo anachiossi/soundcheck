@@ -8,7 +8,7 @@
 import { html, useState } from '../../vendor/preact-htm.js';
 import { byId, naturalCompare } from '../model.js';
 import { textColourFor } from '../colour.js';
-import { LEVELS, FLAGS, WARNING_KINDS, soundOf, suggestedLevel } from '../sound-rules.js';
+import { LEVELS, FLAGS, WARNING_KINDS, KIND_EMOJI, soundOf, suggestedLevel, flagText, warningText } from '../sound-rules.js';
 import { saveSound } from '../sound-editing.js';
 import { resolveConflict } from '../sync.js';
 import { soundFile } from '../store/repo-files.js';
@@ -26,7 +26,7 @@ export function SoundBar({ project, sceneId }) {
   const waiting = !!project.outbox?.[file];
   const conflict = project.conflicts?.[file];
   const suggested = suggestedLevel(project, sceneId);
-  const flags = (sound?.flags || []).map(f => FLAGS[f] || f);
+  const flags = (sound?.flags || []).map(flagText);
   // no flags: the first line of the notes, so the bar still says something (e.g. "Lobster in boiling water")
   const summary = flags.length ? flags.join(' · ') : (sound?.notes || '').split('\n')[0];
   const warnings = sound?.warnings?.length || 0;
@@ -94,8 +94,8 @@ function SoundPanel({ project, sceneId, sound, suggested, close }) {
 
       <p class="sheet__hint">What makes it hard</p>
       <div class="chips">
-        ${Object.entries(FLAGS).map(([flag, label]) => html`
-          <button key=${flag} class=${'chip' + (flags.has(flag) ? ' chip--on' : '')} onClick=${() => toggle(flag)}>${label}</button>`)}
+        ${Object.keys(FLAGS).map(flag => html`
+          <button key=${flag} class=${'chip' + (flags.has(flag) ? ' chip--on' : '')} onClick=${() => toggle(flag)}>${flagText(flag)}</button>`)}
       </div>
 
       <p class="sheet__hint">Warnings for the lavs</p>
@@ -103,7 +103,7 @@ function SoundPanel({ project, sceneId, sound, suggested, close }) {
       <ul class="sound-warnings">
         ${warnings.map((w, i) => html`
           <li key=${i}>
-            <span><b>${nameOf(w.char_id)}</b> · ${WARNING_KINDS[w.kind] || w.kind}${w.text ? `: ${w.text}` : ''}</span>
+            <span><b>${nameOf(w.char_id)}</b> ${warningText(w)}</span>
             <button class="icon-btn icon-btn--remove" aria-label="Remove warning"
                     onClick=${() => setWarnings(list => list.filter((_, j) => j !== i))}><${Icon} name="close" /></button>
           </li>`)}
@@ -119,7 +119,7 @@ function SoundPanel({ project, sceneId, sound, suggested, close }) {
           <div class="chips">
             ${Object.entries(WARNING_KINDS).map(([kind, label]) => html`
               <button key=${kind} class=${'chip' + (adding.kind === kind ? ' chip--on' : '')}
-                      onClick=${() => setAdding({ ...adding, kind })}>${label}</button>`)}
+                      onClick=${() => setAdding({ ...adding, kind })}>${KIND_EMOJI[kind]} ${label}</button>`)}
           </div>
           <input type="text" placeholder="e.g. jumps in the pool" value=${adding.text}
                  onInput=${e => setAdding({ ...adding, text: e.target.value })} />
@@ -140,9 +140,9 @@ function SoundPanel({ project, sceneId, sound, suggested, close }) {
     </div>`;
 }
 
-// Under a mic row: this scene's warnings for that character.
+// Under a mic row: this scene's warnings for that character, on one line
+// ("💧 in the water, speaks · 😱 screams").
 export function RowWarnings({ project, sceneId, charId }) {
   const list = (soundOf(project, sceneId)?.warnings || []).filter(w => String(w.char_id) === String(charId));
-  return list.map((w, i) => html`
-    <p class="row-warning" key=${i}><b>⚠</b> ${WARNING_KINDS[w.kind] || w.kind}${w.text ? `: ${w.text}` : ''}</p>`);
+  return list.length > 0 && html`<p class="row-warning">${list.map(warningText).join(' · ')}</p>`;
 }

@@ -8,7 +8,7 @@
 
 import { sceneRows, scheduleFor, sceneInfo, timeClass, shootingDays, txPlanForDay, formatDate, formatStamp } from '../model.js';
 import { newCanvas, box, text, font, pill, tag, wrapLines } from './draw.js';
-import { LEVELS, FLAGS, WARNING_KINDS, soundOf } from '../sound-rules.js';
+import { LEVELS, soundOf, flagText, warningText, warningsByCharacter } from '../sound-rules.js';
 
 export const WIDTH = 1080;
 export const PAD = 40;
@@ -52,7 +52,7 @@ export async function sceneSheet(project, sceneIds, title) {
   await fontsReady();
   // Draw on a tall canvas, then cut it to the height actually used.
   const roughHeight = 400 + sceneIds.reduce((sum, id) => sum + 520 + sceneRows(project, id).length * ROW
-    + (soundOf(project, id)?.warnings?.length || 0) * 34, 0);
+    + warningsByCharacter(soundOf(project, id)?.warnings).length * 34, 0);
   const { canvas, ctx } = newCanvas(WIDTH, roughHeight);
 
   const first = scheduleFor(project, sceneIds[0]);
@@ -105,8 +105,8 @@ export function drawScene(ctx, project, sceneId, y) {
 }
 
 // Sound line under the slate, sober (no dificultômetro colours on images): the level, the
-// flags, then each lav warning in grey ("⚠ OONA · No lav: jumps in the pool"). Nothing when
-// the scene has no breakdown.
+// flags with their emoji, then the lav warnings, one line per character in grey
+// ("LE FAVRE  💧 in the water, speaks · 😱 screams"). Nothing when the scene has no breakdown.
 function drawSound(ctx, project, sceneId, y) {
   const sound = soundOf(project, sceneId);
   if (!sound?.level && !sound?.warnings?.length && !sound?.flags?.length) return y + 8;
@@ -116,13 +116,14 @@ function drawSound(ctx, project, sceneId, y) {
     x += tag(ctx, `${sound.level} ${LEVELS[sound.level].label}`, x, y, '#ffffff', '#0f172a') + 14;
   }
   font(ctx, 600, 24);
-  text(ctx, (sound.flags || []).map(f => FLAGS[f] || f).join(' · '), x, y + 22, WIDTH - PAD - x, '#334155');
+  text(ctx, (sound.flags || []).map(flagText).join('   '), x, y + 22, WIDTH - PAD - x, '#334155');
   y += 52;
-  font(ctx, 600, 22);
-  for (const w of sound.warnings || []) {
-    text(ctx, `⚠ ${names.get(String(w.char_id)) || w.char_id} · ${WARNING_KINDS[w.kind] || w.kind}${w.text ? `: ${w.text}` : ''}`,
-      PAD + 4, y + 14, WIDTH - 2 * PAD, '#475569');
-    y += 32;
+  for (const { char_id, items } of warningsByCharacter(sound.warnings)) {
+    const name = names.get(char_id) || char_id;
+    font(ctx, 800, 22); text(ctx, name, PAD + 4, y + 14, 0, '#334155');
+    const after = PAD + 4 + ctx.measureText(name).width + 14;
+    font(ctx, 500, 22); text(ctx, items.map(warningText).join('  ·  '), after, y + 14, WIDTH - PAD - after, '#475569');
+    y += 34;
   }
   return y + 10;
 }
