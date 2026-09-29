@@ -31,7 +31,7 @@
 | Week / all-film images | `src/export/schedule-images.js` |
 
 ## Recipes
-**Change a colour:** edit its token in `app.css` (e.g. `--accent: #1e3a8a;`). Save, refresh.
+**Change a colour:** edit its token in `app.css` (e.g. `--accent: #111827;`). Save, refresh.
 
 **Try a change on the laptop:** in `D:\sound_check` run `npm run serve`, open
 http://localhost:8321, connect in Projects and download the film.

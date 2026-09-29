@@ -30,9 +30,9 @@ export async function fontsReady() {
 }
 
 export function header(ctx, width, title, subtitle) {
-  box(ctx, 0, 0, width, 150, 0, '#1e3a8a');
+  box(ctx, 0, 0, width, 150, 0, '#111827');
   font(ctx, 800, 44); text(ctx, title, PAD, 58, width - 2 * PAD, '#ffffff');
-  font(ctx, 400, 28); text(ctx, subtitle, PAD, 110, width - 2 * PAD, '#dbeafe');
+  font(ctx, 400, 28); text(ctx, subtitle, PAD, 110, width - 2 * PAD, '#d1d5db');
 }
 
 export const FOOTER_HEIGHT = 110;

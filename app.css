@@ -8,13 +8,13 @@
 @font-face { font-family: Inter; font-weight: 800; src: url(vendor/fonts/inter-800.woff2) format('woff2'); font-display: swap; }
 
 :root {
-  --sage: #c4d9c1;          /* page background */
+  --page: #f1f2f4;          /* page background: plain light grey (colour is kept for information) */
   --card: #ffffff;
   --ink: #0f172a;           /* main text, slate stripe */
   --muted: #64748b;
   --line: #e5e7eb;
-  --accent: #1e3a8a;        /* navy: tabs, buttons */
-  --accent-soft: #dbeafe;   /* week banner */
+  --accent: #111827;        /* selected tab, main buttons: black */
+  --accent-soft: #eef0f3;   /* week banner, 📬 banner: light grey */
   --day: #e2e8f0;           /* day banner */
   --slate: #e5e7eb;         /* scene title bar */
   --yes-bg: #dcfce7;  --yes: #047857;
@@ -33,7 +33,7 @@
 
 /* ---- 2. Layout ------------------------------------------------------------ */
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--sage); -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--page); -webkit-text-size-adjust: 100%; }
 #app { max-width: 960px; margin: 0 auto; padding: 12px 12px calc(24px + env(safe-area-inset-bottom)); }
 .topbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; padding: 4px 4px 10px; }
 .topbar__title { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
@@ -69,7 +69,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 14px; }
 .toolbar--column { flex-direction: column; align-items: flex-start; }
 .message { margin: 0 0 10px; padding: 10px 14px; border-radius: 10px; display: flex; justify-content: space-between; gap: 10px; cursor: pointer; }
-.message--ok { background: var(--yes-bg); color: var(--yes); }
+.message--ok { background: #e5e7eb; color: var(--ink); }   /* neutral: only errors are coloured */
 .message--error { background: var(--no-bg); color: var(--no); }
 .search { display: flex; gap: 8px; margin-bottom: 10px; }
 .search input { flex: 1; font: inherit; font-size: 17px; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 999px; }
@@ -383,8 +383,8 @@ button.kit-item:hover { background: #f1f5f9; }
 .crew-person__main { border: 0; background: none; padding: 0; width: 100%; text-align: left; }
 .crew-person__more { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 6px 4px 10px; font-size: 16px; }
 .crew-actions { display: flex; flex-wrap: wrap; gap: 6px; }
-.btn--call { background: #1d4ed8; border-color: #1d4ed8; color: #fff; text-decoration: none; }
-.btn--whatsapp { background: #16a34a; border-color: #16a34a; color: #fff; text-decoration: none; }
+.btn--call { background: var(--accent); border-color: var(--accent); color: #fff; text-decoration: none; }
+.btn--whatsapp { background: var(--card); border-color: var(--accent); color: var(--accent); text-decoration: none; }
 .emergency-button { width: 100%; margin-bottom: 12px; padding: 14px; font-size: 20px; font-weight: 800;
   background: #b91c1c; border-color: #b91c1c; color: #fff; }
 .emergency { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; gap: 12px; background: #7f1d1d; color: #fff;
