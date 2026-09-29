@@ -8,7 +8,7 @@ import { parseCsv } from '../tools/csv.js';
 import { convertSheets, scheduleFromCsv } from '../tools/sheets.js';
 import { textColourFor, isNearWhite } from '../src/colour.js';
 import {
-  naturalCompare, toSpeaker, shootingDays, weeks, defaultDay, sceneRows,
+  naturalCompare, toSpeaker, shootingDays, weeks, defaultDay, dayIsDone, sceneRows,
   unscheduledScenes, txPlanForDay, formatDate, allSceneIds, sceneInfo, timeClass,
 } from '../src/model.js';
 
@@ -117,4 +117,20 @@ test('email robot: checked recently = ok, 30+ min = late, failed run = failed', 
   assert.equal(robotHealth({ noAccess: true }, now), 'unknown');
   assert.equal(ago('2026-09-28T19:52:00Z', now), '8 min ago');
   assert.equal(ago('2026-09-28T17:00:00Z', now), '3 h ago');
+});
+
+test('a day is over after its wrap time; Schedule then opens on the next day', () => {
+  const day = { day: 7, date: '2026-09-29', call: '09:00', wrap: '17:00' };
+  const at = (date, h, m = 0) => { const [y, mo, d] = date.split('-').map(Number); return new Date(y, mo - 1, d, h, m); };
+  assert.equal(dayIsDone(day, at('2026-09-29', 16, 59)), false);
+  assert.equal(dayIsDone(day, at('2026-09-29', 17, 0)), true);
+  assert.equal(dayIsDone(day, at('2026-09-30', 8)), true);
+  const night = { day: 8, date: '2026-09-30', call: '18:00', wrap: '02:00' };
+  assert.equal(dayIsDone(night, at('2026-10-01', 1)), false, 'a night shoot is not over at 1 am');
+  assert.equal(dayIsDone(night, at('2026-10-01', 2)), true);
+  const film = { schedule: [
+    { scene_id: '11', day: 7, order: 1, date: '2026-09-29', call: '09:00', wrap: '17:00' },
+    { scene_id: '12', day: 8, order: 1, date: '2026-09-30', call: '09:00', wrap: '17:00' }] };
+  assert.equal(defaultDay(film, at('2026-09-29', 10)), 7);
+  assert.equal(defaultDay(film, at('2026-09-29', 18)), 8);
 });

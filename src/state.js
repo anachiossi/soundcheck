@@ -6,7 +6,7 @@
 
 import { useEffect, useState } from '../vendor/preact-htm.js';
 import * as local from './store/local.js';
-import { defaultDay, localTodayIso } from './model.js';
+import { defaultDay } from './model.js';
 import { upgradeOutbox } from './store/repo-files.js';
 
 let state = {
@@ -112,10 +112,12 @@ export async function start() {
   const draft = loadJson('sc_edit', null);
   const edit = draft?.projectId === project.id ? { sceneId: draft.sceneId, rows: draft.rows } : null;
   setState({ ...choices, project, edit });
-  if (state.day === null) setState({ day: defaultDay(project, localTodayIso()) });
+  setState({ day: defaultDay(project) }); // always open on the day we are in (not the last one looked at)
 }
 
-export const showScreen = screen => setState({ screen, message: null });
+// Tapping Schedule always brings back the day we are in (today until wrap, then the next day).
+export const showScreen = screen => setState({ screen, message: null,
+  ...(screen === 'schedule' && state.project ? { day: defaultDay(state.project), scheduleMode: 'day' } : {}) });
 export const setScheduleMode = scheduleMode => setState({ scheduleMode });
 export const pickDay = day => setState({ day, scheduleMode: 'day' });
 export const pickWeek = week => setState({ week, scheduleMode: 'week' });
@@ -134,7 +136,7 @@ export async function openProject(projectId) {
   if (!saved) return showMessage('error', 'That film is not on this device.');
   const project = upgradeOutbox(saved);
   setState({ project, screen: 'schedule', lookup: [], edit: null, picker: null,
-    day: defaultDay(project, localTodayIso()), week: null });
+    day: defaultDay(project), week: null });
 }
 
 // Backup file → device. Unsent changes already on the device are kept.

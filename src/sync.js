@@ -152,7 +152,7 @@ export async function resolveConflict(path, keep) {
 export async function downloadFilm(film) {
   await saveAndShow(emptyProject(film, film.folder), { screen: 'schedule', lookup: [], edit: null });
   await syncNow({ loud: true });
-  setState({ day: defaultDay(getState().project, localTodayIso()) });
+  setState({ day: defaultDay(getState().project) });
 }
 
 export async function loadFilmList() {

@@ -4,10 +4,12 @@
 // Week: every day of the week, one after the other, + 📷 Week image.
 // All:  an overview of every week and day; tap a day to open it. + 📷 All film.
 // Every scene can be edited right here (✎ on its title bar).
+// Day pills turn green when the day is over (date past, or today after the ODG's wrap time);
+// tapping the Schedule tab opens the day we are in.
 // Used by: main.js
 
-import { html } from '../../vendor/preact-htm.js';
-import { shootingDays, weeks, unscheduledScenes, formatDate } from '../model.js';
+import { html, useEffect, useRef } from '../../vendor/preact-htm.js';
+import { shootingDays, weeks, unscheduledScenes, formatDate, dayIsDone } from '../model.js';
 import { setScheduleMode, pickDay, pickWeek, setState } from '../state.js';
 import { WeekBanner, DayBanner, SceneChips } from '../parts/banners.js';
 import { SceneTable } from '../parts/scene-table.js';
@@ -61,14 +63,20 @@ function DocumentButtons({ project, day }) {
 function DayView({ project, edit, dayNumber }) {
   const days = shootingDays(project);
   const day = days.find(d => d.day === dayNumber) || days[0];
+  const strip = useRef(null);
+  // the chosen day's pill in the middle of the row, once the row is on screen
+  useEffect(() => {
+    const row = strip.current;
+    const pill = row?.querySelector('.day-btn--on');
+    if (row && pill) row.scrollLeft = pill.offsetLeft - row.offsetLeft - (row.clientWidth - pill.offsetWidth) / 2;
+  }, [day?.day]);
   if (!day) return html`<p class="empty">No schedule in this project.</p>`;
   const sceneIds = day.scenes.map(s => String(s.scene_id));
 
   return html`
-    <div class="day-strip">
+    <div class="day-strip" ref=${strip}>
       ${days.map(d => html`
-        <button key=${d.day} class=${'day-btn' + (d.day === day.day ? ' day-btn--on' : '')}
-                ref=${el => d.day === day.day && el?.scrollIntoView({ block: 'nearest', inline: 'center' })}
+        <button key=${d.day} class=${'day-btn' + (d.day === day.day ? ' day-btn--on' : '') + (dayIsDone(d) ? ' day-btn--done' : '')}
                 onClick=${() => pickDay(d.day)}>
           <b>D${d.day}</b><small>${formatDate(d.date, { weekday: true })}</small>
         </button>`)}

@@ -89,10 +89,29 @@ export function scheduleFor(project, sceneId) {
   return project.schedule.find(s => String(s.scene_id) === String(sceneId)) || null;
 }
 
-// The day to open first: today if we shoot today, else the next shooting day, else the last one.
-export function defaultDay(project, todayIso) {
+// Is a shooting day over? Its date is past, or it is today and the wrap time (from the ODG) has
+// passed. A night shoot that wraps after midnight (wrap earlier than call) ends the next morning.
+// `now` is a Date, or a 'YYYY-MM-DD' meaning the start of that day.
+export function dayIsDone(day, now = new Date()) {
+  const at = typeof now === 'string' ? new Date(`${now}T00:00`) : now;
+  const minutes = time => { const [h, m] = String(time).split(':').map(Number); return h * 60 + (m || 0); };
+  const nowMinutes = at.getHours() * 60 + at.getMinutes();
+  const today = localTodayIso(at);
+  const yesterday = localTodayIso(new Date(at.getFullYear(), at.getMonth(), at.getDate() - 1));
+  const overnight = day.wrap && day.call && minutes(day.wrap) < minutes(day.call);
+  if (overnight) {
+    if (day.date === yesterday) return nowMinutes >= minutes(day.wrap);
+    return day.date < yesterday;
+  }
+  if (day.date < today) return true;
+  return day.date === today && Boolean(day.wrap) && nowMinutes >= minutes(day.wrap);
+}
+
+// The day to open first: the first shooting day that isn't over (today until wrap, then the next
+// one), else the last day.
+export function defaultDay(project, now = new Date()) {
   const days = shootingDays(project);
-  return (days.find(d => d.date >= todayIso) || days[days.length - 1] || null)?.day ?? null;
+  return (days.find(d => !dayIsDone(d, now)) || days[days.length - 1] || null)?.day ?? null;
 }
 
 // ---- presets ----------------------------------------------------------------
