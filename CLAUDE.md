@@ -35,7 +35,9 @@ the same folder; the "Suggested" column is the default decision unless Ana marke
 
 ## Logging
 Log decisions dated in `D:\script_read_claude\docs\` (current: `2026-09-29_soundcheck_log.md`) and in
-mempalace (wing `soundcheck`, room `decisions`). Update `docs/STATUS.md` when something ships.
+mempalace (wing `soundcheck`, room `decisions`). Update `docs/STATUS.md` when something ships, then run
+`python D:\script_read_claude\tools\publish_docs.py`: it copies every doc to Google Drive
+(`MY_APP/soundcheck/docs/`, incl. `SOUNDCHECK_ALL_DOCS.md`) so Ana can discuss ideas in Claude chat.
 
 ## Editing safely
 Write JS/CSS with the Write/Edit tools, never inline in a bash heredoc or a python one-liner:
