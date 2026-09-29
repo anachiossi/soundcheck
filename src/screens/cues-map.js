@@ -42,7 +42,7 @@ export function CuesMapScreen({ state }) {
         <small>${cues.lines.length} lines · ${beats.length} beats · ${cues.source}${cues.note ? ` · ${cues.note}` : ''}</small>
       </div>
       <button class="icon-btn" onClick=${() => setState({ screen: 'cues-timeline' })} aria-label="Timeline"><${Icon} name="timeline" /></button>
-      <button class="icon-btn" onClick=${() => learnFrom(0)} aria-label="Cues from the start"><${Icon} name="mic" /></button>
+      <button class="icon-btn" onClick=${() => learnFrom(0)} aria-label="Cues from the start"><${Icon} name="cues" /></button>
     </div>
     <div class="map-top">
       <div class="map-strip" aria-label="The order of speakers">
@@ -68,7 +68,7 @@ export function CuesMapScreen({ state }) {
                 ${isOpen ? cues.lines[row.index].text : row.cue.fast}
                 ${notes.length > 0 && html`<small>${notes.join(' · ')}</small>`}
                 ${isOpen && html`<button class="icon-btn map-line__learn" aria-label="Cues from this line"
-                  onClick=${event => { event.stopPropagation(); learnFrom(row.index); }}><${Icon} name="mic" /></button>`}
+                  onClick=${event => { event.stopPropagation(); learnFrom(row.index); }}><${Icon} name="cues" /></button>`}
               </span>
             </div>`;
         })}

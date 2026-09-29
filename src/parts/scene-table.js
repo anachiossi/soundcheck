@@ -48,7 +48,7 @@ export function SceneTable({ project, sceneId, edit, showDay = false, onRemove, 
           <span class="slate__set">${info?.set || `Scene ${sceneId}`}</span>
           <span class="slate__actions">
             ${!editing && cueLines(project, sceneId) && html`<button class="icon-btn" title="Cues: learn the lines"
-              onClick=${() => setState({ screen: 'cues', cuesScene: sceneId, cuesFrom: getState().screen })}><${Icon} name="mic" /></button>`}
+              onClick=${() => setState({ screen: 'cues', cuesScene: sceneId, cuesFrom: getState().screen })}><${Icon} name="cues" /></button>`}
             ${!editing && html`<button class="icon-btn" onClick=${() => startEdit(sceneId)} title="Edit"><${Icon} name="edit" /></button>`}
             ${!editing && onExport && html`<button class="icon-btn" onClick=${() => onExport(sceneId)} title="Export image"><${Icon} name="image" /></button>`}
             ${!editing && onRemove && html`<button class="icon-btn icon-btn--remove" onClick=${() => onRemove(sceneId)} title="Remove"><${Icon} name="close" /></button>`}

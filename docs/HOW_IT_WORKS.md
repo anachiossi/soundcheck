@@ -17,6 +17,8 @@
 | How a pill (character / TX / lav / speaker) looks | `src/parts/pills.js` + section 5 of `app.css` |
 | The scene table (#12 bar and its rows) | `src/parts/scene-table.js` |
 | Week / day banners, scene chips | `src/parts/banners.js` |
+| The day pills (Schedule and Cues: green = finished, chosen day centred) | `src/parts/day-strip.js` |
+| Icons (Cues = speech bubble; the mic = the Mics department only) | `src/parts/icons.js` |
 | The Schedule screen (Day / Week / All film) | `src/screens/schedule.js` |
 | Scene lookup | `src/screens/scenes.js` |
 | Kit (characters, TX, lavs) | `src/screens/kit.js`; its form `src/parts/item-form.js`; saving `src/kit-editing.js` |

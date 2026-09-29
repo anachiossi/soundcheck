@@ -90,7 +90,7 @@ export function KitScreen({ state }) {
         ? html`<button class="btn btn--doc" onClick=${() => setState({ screen: 'document', documentPath: scriptPath,
             documentTitle: `Script ${script.version}` })}><${Icon} name="document" /> Script</button>`
         : html`<span class="muted">The script PDF downloads at the next sync with signal.</span>`}
-      <span class="muted with-icon"><${Icon} name="mic" /> Cues for ${script.script} scenes${script.sides ? `, ${script.sides} updated from the sides` : ''}</span>
+      <span class="muted with-icon"><${Icon} name="cues" /> Cues for ${script.script} scenes${script.sides ? `, ${script.sides} updated from the sides` : ''}</span>
     </div>
     <p class="muted">Tap anything to change it.</p>
     <${Section} ...${shared} list="characters" title="Characters" wide

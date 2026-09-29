@@ -115,9 +115,10 @@ export async function start() {
   setState({ day: defaultDay(project) }); // always open on the day we are in (not the last one looked at)
 }
 
-// Tapping Schedule always brings back the day we are in (today until wrap, then the next day).
+// Tapping Schedule or Cues always brings back the day we are in (today until wrap, then the next day).
 export const showScreen = screen => setState({ screen, message: null,
-  ...(screen === 'schedule' && state.project ? { day: defaultDay(state.project), scheduleMode: 'day' } : {}) });
+  ...(screen === 'schedule' && state.project ? { day: defaultDay(state.project), scheduleMode: 'day' } : {}),
+  ...(screen === 'cues-picker' && state.project ? { day: defaultDay(state.project) } : {}) });
 export const setScheduleMode = scheduleMode => setState({ scheduleMode });
 export const pickDay = day => setState({ day, scheduleMode: 'day' });
 export const pickWeek = week => setState({ week, scheduleMode: 'week' });
