@@ -4,6 +4,7 @@ accepts or rejects scene by scene (op set_preset), plus the checker's findings a
 Shot days are never touched. Scenes Ana edited by hand are marked in the text.
 
     python pipeline/propose_presets.py <film folder> --from-day 8        writes proposals/presets-<date>.json
+    python pipeline/propose_presets.py <film folder> --days 9,10,15   only these days (a follow-up)
     python pipeline/propose_presets.py <film folder> --compare 1-7       how the rule differs from the
                                                                          presets really used (prints only)
 """
@@ -26,7 +27,23 @@ def load_film(folder):
     film["sound"] = {p.stem: read(p) for p in (folder / "sound").glob("*.json")} if (folder / "sound").exists() else {}
     film["lines"] = {f"{p.parent.name}/{p.stem}": read(p) for p in (folder / "lines").glob("*/*.json")}
     film["settings"] = read(folder / "settings.json")
+    # rows Ana accepted from earlier preset reviews (newest wins): a scene that still matches them was
+    # not edited by hand, even though her phone's name is on the file
+    film["accepted"] = {}
+    for path in sorted((folder / "proposals").glob("presets-*.json"), key=lambda p: read(p)["created_at"]):
+        review = read(path)
+        for change in review["changes"]:
+            if review["decisions"].get(change["id"]) == "accepted":
+                film["accepted"][change["scene_id"]] = change["op"]["rows"]
     return film
+
+
+def hand_edited(film, scene_id):
+    preset = film["presets"][scene_id]
+    if preset.get("updated_by", "").startswith(GENERATED_BY):
+        return False
+    plain = lambda rows: [(str(r["char_id"]), str(r.get("tx_id", "")), str(r.get("lav_id", ""))) for r in rows]
+    return plain(preset["rows"]) != plain(film["accepted"].get(scene_id, []))
 
 
 def days_of(film):
@@ -50,10 +67,10 @@ def describe(film, before, after):
     return parts
 
 
-def review(film, first_day):
+def review(film, first_day, only=None):
     changes, warnings = [], []
     for day, info in days_of(film).items():
-        if day < first_day:
+        if day < first_day or (only and day not in only):
             continue
         scene_ids = [sid for sid in info["scenes"]]
         plan, kind, notes = day_plan(film, film["settings"], [s for s in scene_ids if s in film["presets"]])
@@ -68,7 +85,7 @@ def review(film, first_day):
             if not parts:
                 continue
             by = film["presets"][sid].get("updated_by", "")
-            edited = "" if by.startswith(GENERATED_BY) else f" ⚠ you edited this scene ({by})"
+            edited = f" ⚠ you edited this scene ({by})" if hand_edited(film, sid) else ""
             changes.append({
                 "id": f"c{len(changes) + 1}", "scene_id": sid,
                 "text": f"Day {day} · scene {sid} ({kind} day): " + "; ".join(parts) + edited,
@@ -101,12 +118,20 @@ def main():
     if "--compare" in sys.argv:
         first, last = map(int, sys.argv[sys.argv.index("--compare") + 1].split("-"))
         return compare(film, first, last)
-    first_day = int(sys.argv[sys.argv.index("--from-day") + 1])
-    changes, warnings = review(film, first_day)
+    only = None  # --days 9,10,15 : only these days (a follow-up review after a rule change)
+    if "--days" in sys.argv:
+        only = [int(d) for d in sys.argv[sys.argv.index("--days") + 1].split(",")]
+    first_day = min(only) if only else int(sys.argv[sys.argv.index("--from-day") + 1])
+    changes, warnings = review(film, first_day, only)
     today = datetime.date.today().isoformat()
     last_day = max(days_of(film))
+    days_text = f"days {', '.join(map(str, only))}" if only else f"days {first_day}–{last_day}"
+    name, number = f"presets-{today}", 1
+    while (folder / "proposals" / f"{name}.json").exists():  # never overwrite a review Ana decided on
+        number += 1
+        name = f"presets-{today}-{number}"
     proposal = {
-        "id": f"presets-{today}", "kind": "presets", "title": f"Preset review · days {first_day}–{last_day}",
+        "id": name, "kind": "presets", "title": f"Preset review · {days_text}",
         "day": first_day, "date": today,
         "source": {"subject": "the preset generator (settings.json)", "received": today, "files": []},
         "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),

@@ -53,6 +53,8 @@ Confirmed by Ana (2026-09-29), as built in `pipeline/presets.py`:
 - Big day: no preferred TX → next free in the order; same preferred TX for two → more lines wins.
 - A row gets TX + lav only where the character speaks (YES or ?) and nothing blocks a lav. Silent
   characters and people in the pool keep their row (they are in the scene) with no TX and no lav.
+- The protagonist is ALWAYS wired when in the scene, even silent ("batman privileges"), unless a
+  warning blocks the lav (pool).
 - Screamers get a 6061.
 
 Earlier definitions:
