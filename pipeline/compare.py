@@ -24,8 +24,8 @@ def norm(name):
 def find_character(name, characters):
     """(character id, exact?) for a name as written in an ODG or a script cue."""
     wanted = norm(name)
-    for c in characters:
-        if norm(c["name"]) == wanted:
+    for c in characters:  # the name, or one of the film's aliases ('FATTORINO' = CORRIERE 1)
+        if wanted in [norm(c["name"])] + [norm(alias) for alias in c.get("aliases", [])]:
             return c["id"], True
     for c in characters:  # 'LE FAVRE' ↔ 'EMANUELA LE FAVRE'
         own = norm(c["name"])
