@@ -17,7 +17,7 @@ const DRAWINGS = {
   download: html`<path d="M12 4v11M7 10l5 5 5-5" /><path d="M5 20h14" />`,
   inbox: html`<rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 7l9 6 9-6" />`,
   map: html`<path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z" /><path d="M9 4v14M15 6v14" />`,
-  timeline: html`<path d="M3 9h7v6H3zM12 9h9v6h-9z" /><path d="M8 4l2 3 2-3M10 7v14" />`,
+  timeline: html`<path d="M2 11h5v6H2zM9 11h6v6H9zM17 11h5v6h-5z" /><path d="M4 3h4l-2 3z" /><path d="M6 6v15" />`,
   headphones: html`<path d="M4 14v-2a8 8 0 0 1 16 0v2" /><rect x="3" y="13" width="5" height="8" rx="2" /><rect x="16" y="13" width="5" height="8" rx="2" />`,
 };
 

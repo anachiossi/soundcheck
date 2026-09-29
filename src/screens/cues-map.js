@@ -2,7 +2,7 @@
 //   • pinned at the top: a colour strip, one piece per line (the "shape" of the scene; tap = jump
 //     there) and ▶ / ■ auto-scroll with its speed (parts/auto-scroll.js)
 //   • then the beats: each line is the speaker's pill + its last words (the cue)
-//   • tap a line → it opens to the whole line, with "Learn from here" (🎙 Cues on that line)
+//   • tap a line → it opens to the whole line, with the mic (🎙 Cues from that line) — the same mic as everywhere
 //   • the timeline icon opens the Scene Timeline (cues-timeline.js)
 // Changes made in Cues (✎) show here at once, because the map is made from the same lines (cueLines).
 // Used by: main.js (from the Cues tab, or the map button in Cues)
@@ -42,7 +42,7 @@ export function CuesMapScreen({ state }) {
         <small>${cues.lines.length} lines · ${beats.length} beats · ${cues.source}${cues.note ? ` · ${cues.note}` : ''}</small>
       </div>
       <button class="icon-btn" onClick=${() => setState({ screen: 'cues-timeline' })} aria-label="Timeline"><${Icon} name="timeline" /></button>
-      <button class="btn btn--primary" onClick=${() => learnFrom(0)}><${Icon} name="mic" /> Learn</button>
+      <button class="icon-btn" onClick=${() => learnFrom(0)} aria-label="Cues from the start"><${Icon} name="mic" /></button>
     </div>
     <div class="map-top">
       <div class="map-strip" aria-label="The order of speakers">
@@ -67,8 +67,8 @@ export function CuesMapScreen({ state }) {
               <span class="map-line__cue">
                 ${isOpen ? cues.lines[row.index].text : row.cue.fast}
                 ${notes.length > 0 && html`<small>${notes.join(' · ')}</small>`}
-                ${isOpen && html`<button class="btn map-line__learn" onClick=${event => { event.stopPropagation(); learnFrom(row.index); }}>
-                  <${Icon} name="mic" /> Learn from here</button>`}
+                ${isOpen && html`<button class="icon-btn map-line__learn" aria-label="Cues from this line"
+                  onClick=${event => { event.stopPropagation(); learnFrom(row.index); }}><${Icon} name="mic" /></button>`}
               </span>
             </div>`;
         })}
