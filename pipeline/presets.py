@@ -5,16 +5,16 @@ Mandatory data: each scene's rows (who is in the scene, who speaks). Optional hi
 a character's preferred TX, lav model, lav colour.
 
 For every shooting day (a character keeps the SAME TX and lav all day):
-  1. who is in the day's scenes, ranked: the protagonist first, then most lines that day, then
-     speakers before silent characters
+  0. a row gets TX + lav only where the character speaks (YES or ?) and nothing blocks a lav;
+     silent characters and people in the pool keep their row with no TX and no lav
+  1. who is in the day's scenes, ranked: the protagonist first, then most lines that day
   2. TX — "small day" (every scene has at most `small_day_max_speakers` speakers who can wear a
      lav): the protagonist keeps her TX, the others take `tx_order` (3, 5, 7…) by rank.
      Otherwise ("big day"): each character's preferred TX if free, else the next free in tx_order.
      After tx_order, any other TX of the kit that isn't in `not_for_actors` (the booms).
   3. lav — the lav the character already has that day stays if it fits; a screamer (warning "loud") gets the model in `lav_rules.loud` (6061); others their
      preferred model + colour if free; else a free lav of the same model; else any free lav.
-     Where a warning blocks a lav in a scene ("no-lav", "water"), that scene's row has no lav; who
-     can't wear a lav in any scene that day gets no TX either.
+     Who doesn't get a mic in any scene that day gets no TX and no lav at all.
 Used by: propose_presets.py
 """
 import re
@@ -43,6 +43,12 @@ def lines_of(film, scene_id):
 def lav_blocked(film, scene_id, char_id):
     warnings = film["sound"].get(scene_id, {}).get("warnings", [])
     return any(str(w["char_id"]) == str(char_id) and w["kind"] in BLOCKS_LAV for w in warnings)
+
+
+def gets_mic(film, scene_id, row):
+    """In this scene the character wears TX + lav: they speak (YES or ?) and nothing blocks a lav.
+    Otherwise the row stays (they are in the scene) with no TX and no lav — silent, or in the pool."""
+    return row.get("speaker") != "no" and not lav_blocked(film, scene_id, row["char_id"])
 
 
 def day_plan(film, settings, scene_ids):
@@ -82,8 +88,7 @@ def day_plan(film, settings, scene_ids):
         tx[cid] = choice
 
     # someone who can't wear a lav in any of their scenes today (all in the pool) needs no TX either
-    wears = {cid for cid in people if any(not lav_blocked(film, sid, cid) for sid, p in presets.items()
-                                          if any(str(r["char_id"]) == cid for r in p["rows"]))}
+    wears = {str(r["char_id"]) for sid, p in presets.items() for r in p["rows"] if gets_mic(film, sid, r)}
     tx.update({cid: "" for cid in people if cid not in wears})
     hint = lambda cid: str(characters.get(cid, {}).get("pref_tx") or "")
     if protagonist in wears:
@@ -131,8 +136,8 @@ def new_rows(film, scene_id, plan):
     for row in film["presets"][scene_id]["rows"]:
         cid = str(row["char_id"])
         tx_id, lav_id = plan.get(cid, (row.get("tx_id", ""), row.get("lav_id", "")))
-        if lav_blocked(film, scene_id, cid):
-            lav_id = ""
+        if not gets_mic(film, scene_id, row):
+            tx_id, lav_id = "", ""
         rows.append({**row, "tx_id": tx_id, "lav_id": lav_id})
     return rows
 
