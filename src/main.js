@@ -92,8 +92,7 @@ function App() {
   return html`
     <header class="topbar">
       <div class="topbar__title">
-        <span class="logo">soundcheck</span>
-        ${project && html`<span class="topbar__film">${project.name}</span>`}
+        <span class="topbar__film">${project ? project.name : 'soundcheck'}</span>
       </div>
       <div class="topbar__status"><${SyncBadge} state=${state} /> <${EmailBadge} state=${state} /></div>
       ${project && html`<${DepartmentSwitch} department=${state.department} />`}
