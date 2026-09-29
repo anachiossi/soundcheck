@@ -57,6 +57,11 @@ async function editScene(page, sceneId, txId) {
 
 const A = await device('A');
 check(true, 'A connected and downloaded the film');
+const sound = await A.page.evaluate(async () => {
+  const p = (await import('./src/state.js')).getState().project;
+  return { scenes: Object.keys(p.sound || {}).length, bar: document.querySelector('.sound-bar')?.textContent.trim() };
+});
+check(sound.scenes > 0 && sound.bar && !sound.bar.includes('suggested'), `sound breakdown downloaded (${sound.scenes} scenes; bar: "${sound.bar}")`);
 await A.page.screenshot({ path: '.shots/sync-A-day.png' });
 for (let i = 0; i < 60; i++) { // the PDFs come after the data: wait for them, up to a minute
   const days = await A.page.evaluate(async () => {

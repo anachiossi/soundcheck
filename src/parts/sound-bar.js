@@ -27,6 +27,8 @@ export function SoundBar({ project, sceneId }) {
   const conflict = project.conflicts?.[file];
   const suggested = suggestedLevel(project, sceneId);
   const flags = (sound?.flags || []).map(f => FLAGS[f] || f);
+  // no flags: the first line of the notes, so the bar still says something (e.g. "Lobster in boiling water")
+  const summary = flags.length ? flags.join(' · ') : (sound?.notes || '').split('\n')[0];
   const warnings = sound?.warnings?.length || 0;
 
   return html`
@@ -35,7 +37,7 @@ export function SoundBar({ project, sceneId }) {
       ${sound?.level
         ? html`<span class="sound-bar__level" style=${levelStyle(sound.level)}>${sound.level} ${LEVELS[sound.level].label}</span>`
         : html`<span class="sound-bar__level">sound · suggested ${suggested} ${LEVELS[suggested].label}</span>`}
-      <span class="sound-bar__flags">${flags.join(' · ')}</span>
+      <span class="sound-bar__flags">${summary}</span>
       ${warnings > 0 && html`<span class="sound-bar__warn">⚠ ${warnings}</span>`}
       ${waiting && html`<span class="sound-bar__waiting" title="Saved on this device, not uploaded yet">●</span>`}
     </button>
