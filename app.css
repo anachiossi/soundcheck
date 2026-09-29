@@ -112,7 +112,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .scene-pill { display: inline-flex; align-items: center; justify-content: center; font: inherit; font-weight: 800;
   border: 1px solid #cbd5e1; border-radius: 999px; background: var(--card); color: var(--ink); white-space: nowrap; }
 .scene-pill--chip { min-width: 40px; padding: 6px 12px; font-size: 14px; }
-.scene-pill--title { padding: 0 10px; font-size: 24px; line-height: 1.35; }
+.scene-pill--title { padding: 0; border: 0; background: none; font-size: 30px; line-height: 1.2; }   /* the slate's #11: sober */
 .scene-pill--big { padding: 2px 12px; font-size: 26px; }
 .scene-pill--on { box-shadow: 0 0 0 3px var(--ink); }
 button.scene-pill { cursor: pointer; }
@@ -393,9 +393,10 @@ button.kit-item:hover { background: #f1f5f9; }
 .sound-bar__level { flex: none; padding: 3px 10px; border-radius: 6px; font-weight: 800; font-size: 13px; letter-spacing: .03em; }
 .sound-bar--unrated .sound-bar__level { background: transparent; color: #64748b; font-weight: 600; letter-spacing: 0; }
 .sound-bar__flags { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #334155; font-weight: 600; }
-.sound-bar__warn { flex: none; color: var(--warn); font-weight: 800; padding-right: 6px; }
+.sound-bar__warn { flex: none; color: #64748b; font-weight: 600; padding-right: 6px; }
 .sound-bar__waiting { flex: none; color: var(--warn); padding-right: 6px; }
-.row-warning { grid-column: 1 / -1; margin: 0 0 2px; color: #c2410c; font-weight: 700; font-size: 14px; }
+.row-warning { grid-column: 1 / -1; margin: 0 0 2px 6px; color: #64748b; font-weight: 600; font-size: 12.5px; }
+.row-warning b { color: var(--warn); }
 .picker-warning { margin: 4px 0 8px; padding: 8px 12px; border-radius: 10px; background: #fff7ed; color: #c2410c; font-weight: 700; }
 .sound-summary { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 6px 0; }
 .sound-summary__level { padding: 3px 10px; border-radius: 6px; font-weight: 800; font-size: 13px; }
@@ -432,7 +433,7 @@ button.kit-item:hover { background: #f1f5f9; }
   .pill--lav .pill__id { font-size: 15px; font-weight: 800; }
   .slate__top { flex-wrap: wrap; row-gap: 2px; }
   .slate__set { order: 5; flex-basis: 100%; font-size: 16px; }
-  .scene-pill--title { font-size: 22px; }
+  .scene-pill--title { font-size: 27px; }
   .speaker { font-size: 14px; }
   .banner { font-size: 13px; padding: 8px 10px; }
   .tabs { gap: 3px; }

@@ -73,7 +73,7 @@ export function cropHeight(canvas, height) {
 }
 
 export function drawScene(ctx, project, sceneId, y) {
-  y = drawSlate(ctx, sceneId, sceneInfo(project, sceneId), y, LEVELS[soundOf(project, sceneId)?.level]?.color) + 12;
+  y = drawSlate(ctx, sceneId, sceneInfo(project, sceneId), y) + 12;
   y = drawSound(ctx, project, sceneId, y);
 
   const rows = sceneRows(project, sceneId);
@@ -104,32 +104,32 @@ export function drawScene(ctx, project, sceneId, y) {
   return y + 14;
 }
 
-// Sound line under the slate: the level in its colour, the flags, then each lav warning
-// in orange ("⚠ OONA · No lav: jumps in the pool"). Nothing when the scene has no breakdown.
+// Sound line under the slate, sober (no dificultômetro colours on images): the level, the
+// flags, then each lav warning in grey ("⚠ OONA · No lav: jumps in the pool"). Nothing when
+// the scene has no breakdown.
 function drawSound(ctx, project, sceneId, y) {
   const sound = soundOf(project, sceneId);
   if (!sound?.level && !sound?.warnings?.length && !sound?.flags?.length) return y + 8;
   const names = new Map(project.characters.map(c => [String(c.id), c.name]));
   let x = PAD;
   if (sound.level) {
-    const { label, color } = LEVELS[sound.level];
-    x += tag(ctx, `${sound.level} ${label}`, x, y, color, '#0f172a') + 14;
+    x += tag(ctx, `${sound.level} ${LEVELS[sound.level].label}`, x, y, '#ffffff', '#0f172a') + 14;
   }
   font(ctx, 600, 24);
   text(ctx, (sound.flags || []).map(f => FLAGS[f] || f).join(' · '), x, y + 22, WIDTH - PAD - x, '#334155');
   y += 52;
-  font(ctx, 700, 24);
+  font(ctx, 600, 22);
   for (const w of sound.warnings || []) {
     text(ctx, `⚠ ${names.get(String(w.char_id)) || w.char_id} · ${WARNING_KINDS[w.kind] || w.kind}${w.text ? `: ${w.text}` : ''}`,
-      PAD + 4, y + 14, WIDTH - 2 * PAD, '#c2410c');
-    y += 34;
+      PAD + 4, y + 14, WIDTH - 2 * PAD, '#475569');
+    y += 32;
   }
   return y + 10;
 }
 
 // Slate: grey box with a black stripe, "#12 INT Notte SET", then location ·
 // pages · story day, the synopsis (up to 3 lines) and the production note.
-function drawSlate(ctx, sceneId, info, y, levelColour) {
+function drawSlate(ctx, sceneId, info, y) {
   const x = PAD + 36;
   const width = WIDTH - 2 * PAD - 56;
   font(ctx, 400, 26);
@@ -142,11 +142,8 @@ function drawSlate(ctx, sceneId, info, y, levelColour) {
 
   box(ctx, PAD, y, WIDTH - 2 * PAD, height, 10, '#e5e7eb');
   box(ctx, PAD, y, 12, height, 0, '#0f172a');
-  font(ctx, 800, 40);
-  const idWidth = ctx.measureText(`#${sceneId}`).width;
-  if (levelColour) box(ctx, x - 10, y + 12, idWidth + 20, 54, 10, levelColour); // tinted by the dificultômetro
-  text(ctx, `#${sceneId}`, x, y + 39);
-  let tagX = x + idWidth + 20 + (levelColour ? 10 : 0);
+  font(ctx, 800, 40); text(ctx, `#${sceneId}`, x, y + 39);
+  let tagX = x + ctx.measureText(`#${sceneId}`).width + 20;
   if (info?.int_ext) tagX += tag(ctx, info.int_ext, tagX, y + 17, '#ffffff', '#0f172a') + 10;
   if (info?.time_of_day) {
     const [bg, fg] = TIME[timeClass(info.time_of_day)];

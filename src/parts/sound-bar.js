@@ -144,5 +144,5 @@ function SoundPanel({ project, sceneId, sound, suggested, close }) {
 export function RowWarnings({ project, sceneId, charId }) {
   const list = (soundOf(project, sceneId)?.warnings || []).filter(w => String(w.char_id) === String(charId));
   return list.map((w, i) => html`
-    <p class="row-warning" key=${i}>⚠ ${WARNING_KINDS[w.kind] || w.kind}${w.text ? `: ${w.text}` : ''}</p>`);
+    <p class="row-warning" key=${i}><b>⚠</b> ${WARNING_KINDS[w.kind] || w.kind}${w.text ? `: ${w.text}` : ''}</p>`);
 }
