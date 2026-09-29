@@ -39,13 +39,14 @@ export function ProposalScreen({ state }) {
     <button class="link back" onClick=${() => showScreen('schedule')}>‹ Back to schedule</button>
     <h2 class="section-title">${proposal.title}</h2>
     <p class="muted">${proposal.kind === 'sound' ? `From ${proposal.source.subject} · the sound breakdown, scene by scene`
+      : proposal.kind === 'presets' ? `From ${proposal.source.subject} · same TX and lav all day, one scene at a time`
       : `From the email "${proposal.source.subject}" · ${proposal.kind === 'pdl'
         ? 'the whole schedule, from today on'
         : `Day ${proposal.day}, ${formatDate(proposal.date, { weekday: true })}`}`}</p>
 
     ${proposal.warnings.length > 0 && html`
       <div class="proposal-warnings">
-        <b>⚠ Possible mistakes on the sheet (nothing to change)</b>
+        <b>⚠ ${proposal.kind === 'presets' ? 'To look at (nothing is changed)' : 'Possible mistakes on the sheet (nothing to change)'}</b>
         <ul>${proposal.warnings.map(w => html`<li key=${w}>${w}</li>`)}</ul>
       </div>`}
 

@@ -13,7 +13,8 @@ For every shooting day (a character keeps the SAME TX and lav all day):
      After tx_order, any other TX of the kit that isn't in `not_for_actors` (the booms).
   3. lav — the lav the character already has that day stays if it fits; a screamer (warning "loud") gets the model in `lav_rules.loud` (6061); others their
      preferred model + colour if free; else a free lav of the same model; else any free lav.
-     Where a warning blocks a lav in a scene ("no-lav", "water"), that scene's row has no lav.
+     Where a warning blocks a lav in a scene ("no-lav", "water"), that scene's row has no lav; who
+     can't wear a lav in any scene that day gets no TX either.
 Used by: propose_presets.py
 """
 import re
@@ -80,14 +81,18 @@ def day_plan(film, settings, scene_ids):
         used.add(choice)
         tx[cid] = choice
 
-    for cid in people:
-        hint = str(characters.get(cid, {}).get("pref_tx") or "")
-        if cid == protagonist:
-            take(cid, hint or order[0])
-        elif small:
-            take(cid)
-        else:
-            take(cid, hint or None)
+    # someone who can't wear a lav in any of their scenes today (all in the pool) needs no TX either
+    wears = {cid for cid in people if any(not lav_blocked(film, sid, cid) for sid, p in presets.items()
+                                          if any(str(r["char_id"]) == cid for r in p["rows"]))}
+    tx.update({cid: "" for cid in people if cid not in wears})
+    hint = lambda cid: str(characters.get(cid, {}).get("pref_tx") or "")
+    if protagonist in wears:
+        take(protagonist, hint(protagonist) or order[0])
+    others = [cid for cid in people if cid != protagonist and cid in wears]
+    if not small:  # big day: those with a preferred TX first, so nobody without one takes it
+        others = [cid for cid in others if hint(cid)] + [cid for cid in others if not hint(cid)]
+    for cid in others:
+        take(cid, None if small else hint(cid) or None)
 
     # 3. lav
     loud_model = rules.get("lav_rules", {}).get("loud")
@@ -95,9 +100,7 @@ def day_plan(film, settings, scene_ids):
     lav, taken = {}, set()
     for cid in people:
         character = characters.get(cid, {})
-        needs_lav = any(not lav_blocked(film, sid, cid) for sid, p in presets.items()
-                        if any(str(r["char_id"]) == cid for r in p["rows"]))
-        if not needs_lav:
+        if cid not in wears:
             lav[cid] = ""
             continue
         loud = loud_model and any(str(w["char_id"]) == cid and w["kind"] == "loud"

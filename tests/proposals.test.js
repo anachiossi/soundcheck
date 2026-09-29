@@ -86,3 +86,12 @@ test('a new crew member goes after the same role; numbers shift and the IFB list
   assert.deepEqual(files, ['ifb/crew.json', 'ifb/list.json']);
   assert.equal(applyChange(f, { op: 'add_crew_member', person: { name: 'Dora' }, after_name: 'Anna' }).film.crew.length, 4, 'never twice');
 });
+
+test('set_preset (preset review) replaces a scene\'s rows and says who changed them', () => {
+  const film = { presets: { 12: { scene_id: '12', rows: [{ char_id: '1', tx_id: '4', lav_id: '1', speaker: 'yes' }] } } };
+  const rows = [{ char_id: '1', tx_id: '3', lav_id: '17', speaker: 'yes' }];
+  const { film: after, files } = applyChange(film, { op: 'set_preset', scene_id: '12', rows });
+  assert.deepEqual(files, ['presets/12.json']);
+  assert.equal(after.presets[12].rows[0].tx_id, '3');
+  assert.equal(after.presets[12].updated_by, 'preset review');
+});

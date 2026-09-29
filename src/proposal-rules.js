@@ -38,6 +38,14 @@ const OPS = {
     return ['scenes.json'];
   },
 
+  // a whole scene's rows from the preset generator (pipeline/presets.py, a preset review)
+  set_preset(film, { scene_id, rows }) {
+    const preset = film.presets[scene_id] || { scene_id };
+    film.presets = { ...film.presets, [scene_id]: {
+      ...preset, rows, updated_at: new Date().toISOString(), updated_by: 'preset review' } };
+    return [presetFile(scene_id)];
+  },
+
   add_row(film, { scene_id, row }) {
     return changeRows(film, scene_id, rows => (rows.some(r => r.char_id === row.char_id) ? rows : [...rows, row]));
   },
