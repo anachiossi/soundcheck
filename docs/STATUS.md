@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-09-29 · live version **v37** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-09-29 · live version **v40** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
@@ -25,7 +25,8 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
 - 📬 Proposals from production emails (ODG, sides, PDL, crew): accept / reject each change.
 - ✉ badge: when Gmail was last checked; "Check emails now" starts the robot from the phone.
 - 🎙 **Cues**: learn a scene's lines full screen (phrases, speaker colours, scroll); ✎ edit / delete /
-  add lines on set (`lines/set/`); **Scene Map** (colour strip, beats, last words Full/Fast).
+  add lines on set (`lines/set/`); **Scene Map** (colour strip, beats, last words Full/Fast,
+  ▶ auto-scroll with speed, touch to pause).
 - 🔊 **Sound breakdown** per scene (`sound/<scene>.json`): dificultômetro level MOS · AMB · EASY ·
   MEDIUM · HARD (Ana's colours), flags with emojis (💧 😱 🍝 💥 🎵 🚗 👥 👶 🐾), notes, lav warnings per
   character (🚫 no lav, 📍 placement, 💧 water, 😱 loud). Every scene-number pill (`ScenePill`) is

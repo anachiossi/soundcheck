@@ -2,6 +2,7 @@
 //   • top: a colour strip, one piece per line (the "shape" of the scene); tap = jump there
 //   • then the beats: each line is the speaker's pill + its cue (how the line ends)
 //   • Full / Fast: the last sentence, or just the last 4 words (emergency mode)
+//   • ▶ auto-scroll with a speed control, touch sensitive (parts/auto-scroll.js)
 // Tap a line → 🎙 Cues opens on that line. Changes made in Cues (✎) show here at once,
 // because the map is made from the same lines (cueLines).
 // Used by: main.js (from the Cues tab, or the map button in Cues)
@@ -14,6 +15,7 @@ import { cueLines } from '../cues-rules.js';
 import { sceneMap } from '../cues-map-rules.js';
 import { setState } from '../state.js';
 import { Icon } from '../parts/icons.js';
+import { AutoScroll } from '../parts/auto-scroll.js';
 
 function loadMode() {
   try { return localStorage.getItem('sc_map_mode') || 'full'; } catch { return 'full'; }
@@ -71,5 +73,6 @@ export function CuesMapScreen({ state }) {
               </span>
             </button>`;
         })}
-      </section>`)}`;
+      </section>`)}
+    <${AutoScroll} />`;
 }

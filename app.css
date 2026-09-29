@@ -335,6 +335,14 @@ button.kit-item:hover { background: #f1f5f9; }
   border: 0; border-radius: 12px; background: var(--slate); color: var(--ink); font-weight: 700; }
 .cue-scene__map .icon { width: 26px; height: 26px; }
 /* Scene Map (cues-map.js) */
+/* auto-scroll bar at the bottom of the Scene Map (parts/auto-scroll.js) */
+.auto-scroll { position: sticky; bottom: max(10px, env(safe-area-inset-bottom)); z-index: 3; display: flex; align-items: center;
+  justify-content: center; gap: 10px; width: max-content; margin: 16px auto 0; padding: 6px 10px; border-radius: 999px;
+  background: var(--card); box-shadow: 0 4px 16px rgba(15, 23, 42, .18); }
+.auto-scroll__play { min-width: 64px; font-size: 20px; }
+.auto-scroll__step { min-width: 48px; font-size: 22px; padding: 6px 0; }
+.auto-scrolling .map-line { pointer-events: none; }   /* a touch pauses, never opens Cues */
+.auto-scroll__speed { min-width: 72px; text-align: center; font-weight: 700; font-size: 15px; }
 .map-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
 .map-head__title { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .map-head__title b { font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
