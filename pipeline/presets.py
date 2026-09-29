@@ -147,7 +147,8 @@ def check_scene(film, scene_id):
     rows = {str(r["char_id"]): r for r in preset["rows"]}
     lines = lines_of(film, scene_id)
     with_lines = {str(l.get("char_id")) for l in lines if l.get("char_id")}
-    if lines:
+    own_lines = any(f"{kind}/{scene_id}" in film["lines"] for kind in ("set", "sides", "script"))
+    if lines and own_lines:  # 48A borrows 48's lines: not a fair comparison
         for cid in with_lines - set(rows):
             problems.append(f"Scene {scene_id}: {names.get(cid, cid)} has lines but no row")
         for cid, row in rows.items():
