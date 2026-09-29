@@ -101,7 +101,7 @@ The app's GitHub key needs **Actions: Read and write** and **Variables: Read-onl
 | One phrase per line (after , ; : . ? ! …) | `src/cues-phrases.js` |
 | Scene Map: colour strip, beats, each line's last words (tap a line → the whole line + Learn from here); made from the same lines, so ✎ edits show at once | `src/cues-map-rules.js`, `src/screens/cues-map.js` |
 | Scene Map auto-scroll (pinned at the top with the colour strip): ▶/■, speed − / + (remembered), a touch pauses, carries on after you let go | `src/parts/auto-scroll.js` |
-| Scene Timeline (Pro Tools-style): blocks back to back in the speakers' colours, width ∝ words (long speeches capped "⋯" so the next lines stay in view), fixed ▼ cursor, ▶ / speed 0.5–2× / drag to scrub / tap to jump; now + next two above; the words in time with the cursor below (Aa on/off) | `src/cues-timeline-rules.js`, `src/screens/cues-timeline.js` |
+| Scene Timeline (Pro Tools-style): blocks back to back in the speakers' colours, width ∝ speaking time (syllables at ~5.5/s at 1×, pauses after , . ? ! … and a breath when the speaker changes) (long speeches capped "⋯" so the next lines stay in view), fixed ▼ cursor, ▶ / speed 0.5–2× / drag to scrub / tap to jump; now + next two above; the words in time with the cursor below (Aa on/off) | `src/cues-timeline-rules.js`, `src/screens/cues-timeline.js` |
 | ✎ Changed on set (edit / delete / + New line before or after, undo all) → `lines/set/<scene>.json`, wins over sides and script; the pipeline never writes it; newer paper is offered (Use it / Keep my changes) | `src/cues-editing.js`, panel `src/parts/cue-line-editor.js` |
 
 ## 🔊 Sound breakdown (dificultômetro + lav warnings)

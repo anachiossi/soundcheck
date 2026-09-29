@@ -2,7 +2,7 @@
 // session. Each line is a block in the character's colour, with their name, back to back, as long as
 // the line — long speeches are capped ("⋯") so the next line, and the start of the one after, are
 // always in view: the point is to see who comes next. A fixed cursor (▼) near the left shows where we
-// are; ▶ makes the track slide under it at speech pace (by speaking time, true to the words).
+// are; ▶ makes the track slide under it paced like a person saying the lines (cues-timeline-rules.js).
 //   • − / + speed (0.5× to 2×, remembered) to follow the actors as they run the scene
 //   • drag the track to scrub back or forward; tap a block to jump to it (a touch pauses, and it
 //     carries on when you let go); ⏮ back to the start
@@ -17,7 +17,7 @@ import { ScenePill } from '../parts/scene-pill.js';
 import { byId, sceneInfo } from '../model.js';
 import { textColourFor, isNearWhite } from '../colour.js';
 import { cueLines } from '../cues-rules.js';
-import { timelineBlocks, blockAtTime, pixelsAt, timeAt } from '../cues-timeline-rules.js';
+import { timelineBlocks, blockAtTime, wordAtTime, pixelsAt, timeAt } from '../cues-timeline-rules.js';
 import { setState } from '../state.js';
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
@@ -39,6 +39,15 @@ export function CuesTimelineScreen({ state }) {
   const held = useRef(false);
   const drag = useRef(null);
   const track = useRef(null);
+  const lineBox = useRef(null);
+
+  // the words sit in a fixed 3-line window (so the buttons never move): keep the word being said on
+  // its second line, like subtitles, however long the speech
+  useEffect(() => {
+    const box = lineBox.current;
+    const word = box?.querySelector('.saying');
+    if (box && word) box.scrollTop = Math.max(0, word.offsetTop - word.offsetHeight * 1.45);
+  });
   // a block is never wider than ~40% of what's ahead of the cursor: the current line + the next fit
   const ahead = width * (1 - CURSOR);
   const { blocks, duration } = timelineBlocks(cues?.lines || [], width ? ahead / 2.4 : Infinity);
@@ -91,8 +100,9 @@ export function CuesTimelineScreen({ state }) {
   const upcoming = blocks.slice((now?.index ?? -1) + 1, (now?.index ?? -1) + 3);
   const position = pixelsAt(blocks, time);
   // the words, in time with the cursor (said · now · still to come), like a transcription of a video
-  const words = now ? String(cues.lines[now.index].text).split(/\s+/).filter(Boolean) : [];
-  const saying = now ? Math.min(words.length - 1, Math.floor(((time - now.from) / now.seconds) * words.length)) : -1;
+  // (each word has its own time: long words and pauses after punctuation last longer)
+  const words = now ? now.words.map(w => w.word) : [];
+  const saying = now ? wordAtTime(now, time) : -1;
   const nextLine = upcoming[0] ? cues.lines[upcoming[0].index] : null;
   const toggleText = () => setShowText(on => {
     try { localStorage.setItem('sc_timeline_text', on ? 'off' : 'on'); } catch { /* fine */ }
@@ -109,7 +119,7 @@ export function CuesTimelineScreen({ state }) {
   const down = event => {
     held.current = true;
     drag.current = { x: event.clientX, from: position, moved: false };
-    event.currentTarget.setPointerCapture?.(event.pointerId);
+    try { event.currentTarget.setPointerCapture(event.pointerId); } catch { /* not a real finger: fine */ }
   };
   const move = event => {
     if (!drag.current) return;
@@ -158,9 +168,9 @@ export function CuesTimelineScreen({ state }) {
 
       ${showText && now && html`
         <div class="timeline__text">
-          <p class="timeline__line">${words.map((word, i) => html`
+          <p class="timeline__line" ref=${lineBox}>${words.map((word, i) => html`
             <span key=${i} class=${i < saying ? 'said' : i === saying ? 'saying' : 'coming'}>${word}</span>${' '}`)}</p>
-          ${nextLine && html`<p class="timeline__next"><b>${nextLine.name}:</b> ${nextLine.text}</p>`}
+          <p class="timeline__next">${nextLine ? html`<b>${nextLine.name}:</b> ${nextLine.text}` : '— end of the scene —'}</p>
         </div>`}
 
       <div class="auto-scroll timeline__controls">
