@@ -31,10 +31,13 @@ const OPS = {
   },
 
   // ODG notes (sound, director, costumes) are added after the scene's own notes
-  add_note(film, { scene_id, note }) {
+  // kind 'info' → "ⓘ more info" (director / costume notes), otherwise a visible sound note
+  add_note(film, { scene_id, note, kind }) {
     const info = film.scenes[scene_id] || {};
-    const notes = info.notes ? `${info.notes} · ${note}` : note;
-    film.scenes = { ...film.scenes, [scene_id]: { ...info, notes } };
+    const changed = kind === 'info'
+      ? { info: [...(info.info || []), note] }
+      : { notes: info.notes ? `${info.notes} · ${note}` : note };
+    film.scenes = { ...film.scenes, [scene_id]: { ...info, ...changed } };
     return ['scenes.json'];
   },
 

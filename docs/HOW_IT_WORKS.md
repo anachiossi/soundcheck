@@ -63,6 +63,7 @@ Runs in the cloud (GitHub Actions), in Python; the laptop can run it too. Nothin
 | Gmail trigger: Google checks the mailbox every 10 min and starts the robot for a new ODG / sides / PDL | `pipeline/gmail-trigger.gs` (Apps Script in sound.chiossi@, see below) |
 | Sides in a separate email ("Re: … ODG #7") matched to their day | `sides_by_day` in `pipeline/propose.py` |
 | ODG + sides PDFs filed as `docs/day-N/odg.pdf`, `sides.pdf` | `file_documents` in `pipeline/run.py` |
+| ODG notes: visible on the slate only what can impact sound (🔊 notes, and the sound fragments of other departments: shots, engines, generators, water, screams…); 🎬 director / 👗 costume notes → "ⓘ more info"; the rest skipped. "STAND BY:" heading → the scenes under it get "⏸ stand-by on day N" | `note_kind` / `AUDIBLE` in `pipeline/compare.py`, `read_scene_table` in `pipeline/read_odg.py`; scenes.json `notes` (visible) + `info` (more info) |
 
 📄 ODG / 📄 Sides buttons on each day: the PDFs of every day (yesterday on first) are downloaded at sync
 (`downloadDocuments` in `src/sync.js`), kept on the device (`src/store/local.js`) and shown by

@@ -95,3 +95,11 @@ test('set_preset (preset review) replaces a scene\'s rows and says who changed t
   assert.equal(after.presets[12].rows[0].tx_id, '3');
   assert.equal(after.presets[12].updated_by, 'preset review');
 });
+
+test('an ODG note goes to the visible notes, or to "more info" when it is kind info', () => {
+  const film = { scenes: { 2: { notes: '' } } };
+  let { film: after } = applyChange(film, { op: 'add_note', scene_id: '2', note: '🔊 Rumore auto', kind: 'sound' });
+  ({ film: after } = applyChange(after, { op: 'add_note', scene_id: '2', note: '🎬 Mario non mangia la lasagna', kind: 'info' }));
+  assert.equal(after.scenes[2].notes, '🔊 Rumore auto');
+  assert.deepEqual(after.scenes[2].info, ['🎬 Mario non mangia la lasagna']);
+});

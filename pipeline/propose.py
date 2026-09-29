@@ -18,7 +18,7 @@ import re
 import sys
 from pathlib import Path
 
-from compare import SOUND_NOTES, check_cast_list, check_date, check_day, check_scene_info, nice_date
+from compare import NOTE_ICONS, note_kind, check_cast_list, check_date, check_day, check_scene_info, nice_date
 from compare_mics import check_scene_mics
 from compare_crew import check_crew
 from read_crew import read_crew
@@ -97,19 +97,23 @@ def build_proposal(film_folder, email_folder, other_sides=None):
             add(check_scene_info(scene, film["scenes"].get(sid)))
             speaker_names = sides[sid]["speakers"] if today and sid in sides else None
             add(check_scene_mics(sid, scene["cast"], speaker_names, film["presets"].get(sid), film["characters"]))
-            for department in SOUND_NOTES:
-                text = scene_notes.get(sid, {}).get(department)
-                if text:
-                    notes.setdefault(sid, {})[department] = text
+            for department, text in scene_notes.get(sid, {}).items():
+                kind, text = note_kind(department, text)  # 'sound' (visible), 'info' (more info) or None
+                seen = [t.lower() for _, t in notes.get(sid, [])]
+                if kind and not any(text.lower()[:40] in t for t in seen):  # the same fact from two departments: once
+                    notes.setdefault(sid, []).append((kind, f"{NOTE_ICONS.get(department, '⚠')} {text}"
+                                                            + ("" if department == "Suono" else f" (ODG, {department.lower()})")))
             if scene.get("standby"):  # listed under "STAND BY:" in the ODG: shot only if there is time
                 day_number = odg["number"] if today else advance.get("day")
-                notes.setdefault(sid, {})["Stand-by"] = f"stand-by on day {day_number}"
-    icons = {"Suono": "🔊", "Regia": "🎬", "Costumi": "👗", "Stand-by": "⏸"}
-    for sid, by_department in notes.items():
-        note = " · ".join(f"{icons[d]} {t}" for d, t in by_department.items())
-        if note and note not in (film["scenes"].get(sid) or {}).get("notes", ""):
-            changes.append({"text": f"Scene {sid} notes from the ODG: {note}", "scene_id": sid,
-                            "op": {"op": "add_note", "scene_id": sid, "note": note}})
+                notes.setdefault(sid, []).append(("sound", f"⏸ stand-by on day {day_number}"))
+    for sid, found in notes.items():
+        known = film["scenes"].get(sid) or {}
+        for kind, note in found:
+            if note in known.get("notes", "") or note in known.get("info", []):
+                continue
+            where = "more info" if kind == "info" else "notes"
+            changes.append({"text": f"Scene {sid} {where}: {note}", "scene_id": sid,
+                            "op": {"op": "add_note", "scene_id": sid, "note": note, "kind": kind}})
     if sides_pdf is None:
         warnings.append(NO_SIDES)
 

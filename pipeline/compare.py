@@ -12,8 +12,27 @@ import re
 TIME_OF_DAY = {"G": "Giorno", "N": "Notte", "T": "Tramonto", "M": "Mattina", "S": "Sera", "A": "Alba"}
 WEEKDAYS = ["lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato", "domenica"]
 ENGLISH_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-SOUND_NOTES = ["Suono"]  # only the sound department's notes reach the app (Ana, 29 Sep: director and
-                         # costume notes like "Mario doesn't eat the lasagna" are noise for sound)
+# The ODG's department notes (Ana, 29 Sep): visible on the slate only what can impact sound;
+# director and costume notes go to "more info"; other departments only when they are about sound.
+NOTE_ICONS = {"Suono": "🔊", "Regia": "🎬", "Costumi": "👗"}
+AUDIBLE = re.compile(r"\bspar(a|ano|ante|o|i)\b|\bcolpo\b|esplo|rumor|\burl(a|o|i)\b|\bgrid|music|canzon|\bcanta|"
+                     r"motore|\b(auto|macchina|forno|lavello)\b[^,;]*\bfa azione\b|gruppett|gruppo elettrogeno|generator|"
+                     r"\btuff|bagnat|pioggia|acqua bollente|\bvento\b|elicott|\bdrone\b|stunt|clacson|campanell|"
+                     r"squill|abbai", re.I)
+
+
+def note_kind(department, text):
+    """('sound' | 'info' | None, text): 'sound' = visible on the slate — only the fragments of a list
+    that are about sound ("Laudomia spara con il fucile…", not the whole props list); 'info' = under
+    "ⓘ more info" (director / costume notes); None = not for sound."""
+    if department == "Suono":
+        return "sound", text
+    fragments = [part for part in re.split(r",\s*|\s+-+\s+|;\s*", text) if AUDIBLE.search(part)]
+    if fragments:
+        return "sound", ", ".join(fragments)
+    if department in ("Regia", "Costumi"):
+        return "info", text
+    return None, text
 
 
 def norm(name):

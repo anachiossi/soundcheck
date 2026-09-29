@@ -1,14 +1,15 @@
 // scene-table.js — one scene: the grey "slate" title bar and its mic table
 // (Character · TX · Lav · Speaks). The slate shows #12, INT/EXT, time of day
-// and the set, then location · pages · story day, the synopsis and any
-// production note. 🎙 opens Cues (learn the lines), ✎ turns the table into the editor.
+// and the set, then location · pages · story day, the synopsis, the notes that can impact sound
+// (orange) and "ⓘ more info" (director / costume / production notes, closed until tapped).
+// 🎙 opens Cues (learn the lines), ✎ turns the table into the editor.
 // Under the slate: the sound bar (dificultômetro, flags, lav warnings — sound-bar.js); a
 // character's lav warning is also printed under their mic row.
 // "● not uploaded" = saved on this device, waiting for signal.
 // Column names are printed small above the first row, to save height on phones.
 // Used by: screens/schedule.js, screens/scenes.js
 
-import { html } from '../../vendor/preact-htm.js';
+import { html, useState } from '../../vendor/preact-htm.js';
 import { ScenePill } from './scene-pill.js';
 import { sceneRows, scheduleFor, sceneInfo, formatDate, formatStamp, timeClass } from '../model.js';
 import { startEdit } from '../editing.js';
@@ -20,6 +21,14 @@ import { CharacterPill, TxPill, LavPill, SpeakerBadge } from './pills.js';
 import { SceneEditor } from './scene-editor.js';
 import { SoundBar, RowWarnings } from './sound-bar.js';
 import { Icon } from './icons.js';
+
+// "ⓘ more info (3)": director / costume notes from the ODGs and production notes, closed until tapped
+function MoreInfo({ items }) {
+  const [open, setOpen] = useState(false);
+  return html`
+    <button class="slate__more" onClick=${() => setOpen(!open)} aria-expanded=${open}>ⓘ more info (${items.length}) ${open ? '▴' : '▾'}</button>
+    ${open && html`<ul class="slate__info">${items.map(item => html`<li key=${item}>${item}</li>`)}</ul>`}`;
+}
 
 export function SceneTable({ project, sceneId, edit, showDay = false, onRemove, onExport }) {
   const when = scheduleFor(project, sceneId);
@@ -53,7 +62,8 @@ export function SceneTable({ project, sceneId, edit, showDay = false, onRemove, 
             ${info?.story_day && html`<span>story day ${info.story_day}</span>`}
           </div>`}
         ${info?.synopsis && html`<p class="slate__synopsis">${info.synopsis}</p>`}
-        ${info?.notes && html`<p class="slate__notes">${info.notes}</p>`}
+        ${info?.notes && info.notes.split(' · ').map(note => html`<p class="slate__notes" key=${note}>${note}</p>`)}
+        ${info?.info?.length > 0 && html`<${MoreInfo} items=${info.info} />`}
       </header>
       <${SoundBar} project=${project} sceneId=${sceneId} />
       ${waiting && !conflict && html`<p class="scene__waiting">● Saved on this device, not uploaded yet</p>`}

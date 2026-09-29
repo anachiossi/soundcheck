@@ -138,7 +138,10 @@ button.scene-pill { cursor: pointer; }
 .slate__actions { display: flex; margin-left: auto; }
 .slate__details { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 15px; color: var(--ink-soft); margin-top: 2px; }
 .slate__synopsis { margin: 4px 0 0; font-size: 16px; line-height: 1.35; color: var(--ink-soft); }
-.slate__notes { margin: 4px 0 0; font-size: 15px; color: var(--warn); font-weight: 600; }
+.slate__notes { margin: 4px 0 0; font-size: 15px; color: var(--warn); font-weight: 600; }   /* only what can impact sound */
+.slate__more { border: 0; background: none; padding: 4px 0 0; font: inherit; font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer; }
+.slate__info { margin: 4px 0 0; padding-left: 18px; font-size: 14px; color: var(--ink-soft); }
+.slate__info li + li { margin-top: 2px; }
 .tag { flex: 0 0 auto; font-size: 11px; font-weight: 800; letter-spacing: .3px; text-transform: uppercase; border-radius: 6px; padding: 3px 7px; background: var(--card); }
 .tag--day { background: var(--t-day); color: var(--t-day-ink); }
 .tag--night { background: var(--t-night); color: var(--t-night-ink); }
