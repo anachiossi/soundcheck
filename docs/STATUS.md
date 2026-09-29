@@ -1,0 +1,70 @@
+# soundcheck — where things stand (start here)
+
+Last updated: 2026-09-29 · live version **v36** · https://anachiossi.github.io/soundcheck/
+Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
+The film-specific diary (decisions, dates, what Ana said) is private:
+`D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
+`2026-09-29_soundcheck_handoff.md`.
+
+## The two repos
+| | Where | What |
+|---|---|---|
+| App (this repo, **public**) | `D:\sound_check` · github.com/anachiossi/soundcheck | PWA on GitHub Pages, no build step; `pipeline/` = Python email robot + script readers |
+| Data (**private**) | `D:\sound_check_data` · github.com/anachiossi/soundcheck-data | one folder per film (`projects/<film>/`), JSON = the master copy; `.github/workflows/emails.yml` = the email robot |
+
+Phones/laptop keep their own copy per film (IndexedDB) and sync with GitHub using a per-device
+fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only).
+
+## What the app does today
+**Mics department** (tabs Schedule · Scenes · Cues · Kit · Projects)
+- Schedule Day / Week / All film; every scene = slate (#, INT/EXT, time, set, location, pages,
+  story day, synopsis, notes) + 🔊 sound bar + mic table (character · TX · lav · speaks).
+- Edit presets anywhere, offline (✎ → picker → Save; warnings: TX/lav twice, "No lav" + lav).
+- Kit: characters (preferred TX / lavs), TX, lavs. Images: scene, day sheet, TX sheet, week, all film.
+- 📄 ODG / Sides PDFs of every day on the device (read offline).
+- 📬 Proposals from production emails (ODG, sides, PDL, crew): accept / reject each change.
+- ✉ badge: when Gmail was last checked; "Check emails now" starts the robot from the phone.
+- 🎙 **Cues**: learn a scene's lines full screen (phrases, speaker colours, scroll); ✎ edit / delete /
+  add lines on set (`lines/set/`); **Scene Map** (colour strip, beats, last words Full/Fast).
+- 🔊 **Sound breakdown** per scene (`sound/<scene>.json`): dificultômetro level MOS · AMB · EASY ·
+  MEDIUM · HARD (Ana's colours), flags with emojis (💧 😱 🍝 💥 🎵 🚗 👥 👶 🐾), notes, lav warnings per
+  character (🚫 no lav, 📍 placement, 💧 water, 😱 loud). Every scene-number pill (`ScenePill`) is
+  tinted by the level — except the slate's #number and the images, which stay plain black.
+
+**IFB department** (switch Mics | IFB): one IFB list for the film (OUT / ✓ back), crew with
+Call / WhatsApp / 🚨 emergency order, IFB kit; new crew from each ODG proposed next to their role.
+
+## Email robot (runs in the cloud, no laptop needed)
+Gmail (sound.chiossi@) ← production forwards → **Apps Script trigger every 10 min**
+(`pipeline/gmail-trigger.gs`, installed in that Google account) → starts GitHub Actions
+`emails.yml` in soundcheck-data → `pipeline/run.py`: downloads ODG/sides/PDL by IMAP, writes
+proposals + PDFs + Cues lines, commits. Backup: GitHub cron every 30 min (unreliable on its own).
+The trigger reports each check to the GitHub variable `LAST_GMAIL_CHECK` (the ✉ badge).
+
+## Checks before every release
+1. `npm test` (logic + `syntax.test.js`: every app file must parse — a broken file = blank app).
+2. `npm run serve` + `node tests/screens.mjs .shots/<film>.soundcheck.json` (phone/iPad/laptop + offline).
+3. For sync changes: reset branch `sync-test` to main, then
+   `GH_TOKEN=$(gh auth token) SC_BRANCH=sync-test node tests/sync.mjs` (real GitHub, two devices).
+4. Bump `VERSION` in `sw.js` (and add new files to `FILES`); push; wait until
+   `https://anachiossi.github.io/soundcheck/sw.js` shows the new version.
+
+## Gotchas learned the hard way
+- Editing JS from a bash heredoc turns `'\n'` into a real line break → write files with the Write/Edit
+  tools or a `.py` file, never inline escapes in a heredoc.
+- GitHub's scheduled workflows start late or not at all → the Gmail trigger is the real clock.
+- Production sometimes sends the sides in a separate reply email → `sides_by_day` matches them by day.
+- A `cat >>` without a heredoc waits for input forever (a stuck command).
+- `gh` lives at `C:\Program Files\GitHub CLI\gh.exe` (not on the bash PATH).
+
+## Open / next (none started)
+- **Simon game** for Cues (quiz on the order of speakers): designed, waiting for Ana's go.
+  Proposed defaults: each round replays from the start of the beat; cue words only on a mistake;
+  silent by default.
+- Questions left to Ana: should the sound bar's level chip also be plain? should the lav-picker
+  warning be quieter too?
+- TX preset generator inside the app (old Colab notebook) — milestone E, not started.
+- Analyzer for a NEW film writing schedule.json / scenes.json / sound/ directly (today: one-off
+  scripts in `D:\script_read_claude\projects\<film>\work\`).
+- ODG reader: a location can swallow the next column ("PIANO NOBILE (2°) STAND BY:").
+- GitHub Actions: checkout@v4 / setup-python@v5 warn about Node 20 (harmless for now).
