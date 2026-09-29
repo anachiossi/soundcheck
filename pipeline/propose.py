@@ -101,7 +101,10 @@ def build_proposal(film_folder, email_folder, other_sides=None):
                 text = scene_notes.get(sid, {}).get(department)
                 if text:
                     notes.setdefault(sid, {})[department] = text
-    icons = {"Suono": "🔊", "Regia": "🎬", "Costumi": "👗"}
+            if scene.get("standby"):  # listed under "STAND BY:" in the ODG: shot only if there is time
+                day_number = odg["number"] if today else advance.get("day")
+                notes.setdefault(sid, {})["Stand-by"] = f"stand-by on day {day_number}"
+    icons = {"Suono": "🔊", "Regia": "🎬", "Costumi": "👗", "Stand-by": "⏸"}
     for sid, by_department in notes.items():
         note = " · ".join(f"{icons[d]} {t}" for d, t in by_department.items())
         if note and note not in (film["scenes"].get(sid) or {}).get("notes", ""):

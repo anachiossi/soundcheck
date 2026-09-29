@@ -26,6 +26,7 @@ INT_EXT_RE = re.compile(r"^([IE](?:\s*[-/]\s*[IE])?)\s*/\s*([A-Z]+)$")  # I / G 
 CAST_RE = re.compile(r"^\d+(\s*,\s*\d+)*$")
 PAGES_RE = re.compile(r"^(\d+\s+)?\d/8$|^\d+$")
 TIME_RE = re.compile(r"^(\d{1,2})[.:](\d{2})$")
+STANDBY_RE = re.compile(r"^STAND[\s-]*BY:?$", re.I)  # table heading before the stand-by scenes
 DEPARTMENTS = ["Camera", "Scenografia", "Props", "Costumi", "Trucco/Capelli", "Suono", "Veicoli",
                "Animali", "Stunt", "VFX/AI", "SFX/Armi", "Regia", "Produzione"]
 
@@ -73,6 +74,7 @@ def read_scene_table(lines):
     starts = [i for i in range(len(lines) - 3)
               if SCENE_ID_RE.match(lines[i]) and INT_EXT_RE.match(lines[i + 2])]
     scenes = []
+    standby = False  # a "STAND BY:" heading in the table: the scenes after it are stand-by scenes
     for n, start in enumerate(starts):
         end = starts[n + 1] if n + 1 < len(starts) else len(lines)
         block = lines[start:end]
@@ -93,12 +95,16 @@ def read_scene_table(lines):
             synopsis.append(line)
         else:
             location = []
+        heading = next((k for k, line in enumerate(location) if STANDBY_RE.match(line)), None)
         scenes.append({
             "scene_id": block[0], "story_day": block[1],
             "int_ext": {"I": "INT", "E": "EXT"}.get(re.sub(r"[\s/-]", "", int_ext), "INT/EXT"),
             "day_night": day_night, "set": clean(block[3]), "synopsis": clean(" ".join(synopsis)),
-            "cast": cast, "pages": pages, "location": clean(" ".join(location)),
+            "cast": cast, "pages": pages, "location": clean(" ".join(location[:heading])),
+            "standby": standby,
         })
+        if heading is not None:  # the heading was read with this scene's location: it belongs to the next ones
+            standby = True
     return scenes
 
 

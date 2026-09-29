@@ -12,7 +12,8 @@ import re
 TIME_OF_DAY = {"G": "Giorno", "N": "Notte", "T": "Tramonto", "M": "Mattina", "S": "Sera", "A": "Alba"}
 WEEKDAYS = ["lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato", "domenica"]
 ENGLISH_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-SOUND_NOTES = ["Suono", "Regia", "Costumi"]  # the department notes that matter for mics
+SOUND_NOTES = ["Suono"]  # only the sound department's notes reach the app (Ana, 29 Sep: director and
+                         # costume notes like "Mario doesn't eat the lasagna" are noise for sound)
 
 
 def norm(name):
