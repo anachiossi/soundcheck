@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-09-29 · live version **v40** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-09-29 · live version **v43** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
@@ -20,7 +20,7 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
 - Schedule Day / Week / All film; every scene = slate (#, INT/EXT, time, set, location, pages,
   story day, synopsis, notes) + 🔊 sound bar + mic table (character · TX · lav · speaks).
 - Edit presets anywhere, offline (✎ → picker → Save; warnings: TX/lav twice, "No lav" + lav).
-- Kit: characters (preferred TX / lavs), TX, lavs. Images: scene, day sheet, TX sheet, week, all film.
+- Kit: characters (preferred TX / lavs), TX, lavs. Images (Export): scene, day, week, all film.
 - 📄 ODG / Sides PDFs of every day on the device (read offline).
 - 📬 Proposals from production emails (ODG, sides, PDL, crew): accept / reject each change.
 - ✉ badge: when Gmail was last checked; "Check emails now" starts the robot from the phone.
@@ -31,6 +31,10 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   MEDIUM · HARD (Ana's colours), flags with emojis (💧 😱 🍝 💥 🎵 🚗 👥 👶 🐾), notes, lav warnings per
   character (🚫 no lav, 📍 placement, 💧 water, 😱 loud). Every scene-number pill (`ScenePill`) is
   tinted by the level — except the slate's #number and the images, which stay plain black.
+
+Look: neutral (black selected, grey page; colour only for information). Dark screen:
+Projects → Screen: Auto / Light / Dark (`src/theme.js`); Cues at night = dark with the speaker's
+colour as a frame.
 
 **IFB department** (switch Mics | IFB): one IFB list for the film (OUT / ✓ back), crew with
 Call / WhatsApp / 🚨 emergency order, IFB kit; new crew from each ODG proposed next to their role.

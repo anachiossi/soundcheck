@@ -1,6 +1,6 @@
 // schedule.js — the Schedule screen: the film by Day, by Week or All film.
 // Day:  pick a shooting day → its banner, scene chips, every scene's mic table,
-//       📄 ODG / 📄 Sides (when that day's PDFs are on the device), 📷 Day and TX sheets.
+//       📄 ODG / 📄 Sides (when that day's PDFs are on the device), 📷 Export (the day's image).
 // Week: every day of the week, one after the other, + 📷 Week image.
 // All:  an overview of every week and day; tap a day to open it. + 📷 All film.
 // Every scene can be edited right here (✎ on its title bar).
@@ -13,7 +13,7 @@ import { shootingDays, weeks, unscheduledScenes, formatDate, dayIsDone } from '.
 import { setScheduleMode, pickDay, pickWeek, setState } from '../state.js';
 import { WeekBanner, DayBanner, SceneChips } from '../parts/banners.js';
 import { SceneTable } from '../parts/scene-table.js';
-import { sceneSheet, txSheet } from '../export/image.js';
+import { sceneSheet } from '../export/image.js';
 import { scheduleImages } from '../export/schedule-images.js';
 import { shareCanvas, shareCanvases } from '../export/share.js';
 import { Icon } from '../parts/icons.js';
@@ -85,8 +85,7 @@ function DayView({ project, edit, dayNumber }) {
     <${SceneChips} project=${project} sceneIds=${sceneIds} onPick=${scrollToScene} />
     <div class="toolbar">
       <${DocumentButtons} project=${project} day=${day.day} />
-      <button class="btn" onClick=${async () => shareCanvas(await sceneSheet(project, sceneIds, `Day ${day.day} · mic list`), `day-${day.day}.png`)}><${Icon} name="image" /> Day sheet</button>
-      <button class="btn" onClick=${async () => shareCanvas(await txSheet(project, day.day), `tx-day-${day.day}.png`)}><${Icon} name="image" /> TX sheet</button>
+      <button class="btn" onClick=${async () => shareCanvas(await sceneSheet(project, sceneIds, `Day ${day.day} · mic list`), `day-${day.day}.png`)}><${Icon} name="image" /> Export</button>
     </div>
     ${sceneIds.map(id => html`<${SceneTable} key=${id} project=${project} edit=${edit} sceneId=${id} onExport=${id => exportScene(project, id)} />`)}`;
 }

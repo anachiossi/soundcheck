@@ -137,23 +137,6 @@ export function sceneRows(project, sceneId) {
   });
 }
 
-// For the TX cheat sheet: every TX used on a day → who wears it in each scene.
-export function txPlanForDay(project, day) {
-  const d = shootingDays(project).find(x => x.day === day);
-  if (!d) return { scenes: [], transmitters: [] };
-  const scenes = d.scenes.map(s => String(s.scene_id));
-  const used = new Map();
-  for (const sceneId of scenes) {
-    for (const row of sceneRows(project, sceneId)) {
-      if (!row.tx) continue;
-      if (!used.has(row.tx.id)) used.set(row.tx.id, { tx: row.tx, byScene: {} });
-      used.get(row.tx.id).byScene[sceneId] = row;
-    }
-  }
-  const transmitters = [...used.values()].sort((a, b) => naturalCompare(a.tx.id, b.tx.id));
-  return { scenes, transmitters };
-}
-
 // ---- dates (never through Date(), so time zones can't shift a day) ------------
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

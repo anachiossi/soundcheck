@@ -13,6 +13,7 @@
 | I want to change… | Open this file |
 |---|---|
 | A colour, a size, the font | `app.css`, the `:root` block at the top |
+| Dark screen (Projects → Screen) | dark colours at the end of `app.css` (`:root[data-theme="dark"]`); switch `src/theme.js`, `src/parts/theme-switch.js` |
 | How a pill (character / TX / lav / speaker) looks | `src/parts/pills.js` + section 5 of `app.css` |
 | The scene table (#12 bar and its rows) | `src/parts/scene-table.js` |
 | Week / day banners, scene chips | `src/parts/banners.js` |

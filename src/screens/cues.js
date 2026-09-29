@@ -78,7 +78,8 @@ export function CuesScreen({ state }) {
   // (hooks run on every page, so the top strip colour is worked out here, before any return)
   const speaking = cues?.lines[index];
   const speakingColour = byId(project.characters).get(String(speaking?.char_id))?.color;
-  useTopStripColour(speaking ? (speakingColour && !isNearWhite(speakingColour) ? speakingColour : '#475569') : '#0f172a');
+  const night = document.documentElement.dataset.theme === 'dark'; // dark screen: the top strip stays dark too
+  useTopStripColour(night ? '#0b0d10' : speaking ? (speakingColour && !isNearWhite(speakingColour) ? speakingColour : '#475569') : '#0f172a');
 
   // back to where Cues was opened from (the Scene Map keeps the scene)
   const close = () => setState({ screen: state.cuesFrom || 'cues-picker', cuesScene: state.cuesFrom === 'cues-map' ? cuesScene : null, cuesLine: 0 });
@@ -108,7 +109,7 @@ export function CuesScreen({ state }) {
   };
 
   return html`
-    <div class="cues" style=${`background:${background};color:${textColourFor(background)}`} onClick=${onTap}>
+    <div class="cues" style=${`background:${background};color:${textColourFor(background)};--speaker:${background}`} onClick=${onTap}>
       <div class="cues__top">
         <span>${index + 1} / ${lines.length}</span>
         <span class="cues__scene"><${ScenePill} project=${project} sceneId=${cuesScene} hash /></span>

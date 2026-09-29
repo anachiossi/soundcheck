@@ -25,6 +25,7 @@ import { IfbPicker } from './parts/ifb-picker.js';
 import { Icon } from './parts/icons.js';
 import { EmailBadge } from './parts/email-robot.js';
 import { ConflictBadge } from './parts/conflicts.js';
+import { applyTheme, followPhone } from './theme.js';
 
 // Two departments, each with its own big tabs. Projects is shared.
 const TABS = {
@@ -112,6 +113,8 @@ function App() {
     ${busyText && html`<div class="busy">${busyText}</div>`}`;
 }
 
+applyTheme();   // light / dark (Projects → Screen)
+followPhone();
 render(html`<${App} />`, document.getElementById('app'));
 start().then(startAutoSync);
 

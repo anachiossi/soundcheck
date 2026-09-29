@@ -9,7 +9,7 @@ import { convertSheets, scheduleFromCsv } from '../tools/sheets.js';
 import { textColourFor, isNearWhite } from '../src/colour.js';
 import {
   naturalCompare, toSpeaker, shootingDays, weeks, defaultDay, dayIsDone, sceneRows,
-  unscheduledScenes, txPlanForDay, formatDate, allSceneIds, sceneInfo, timeClass,
+  unscheduledScenes, formatDate, allSceneIds, sceneInfo, timeClass,
 } from '../src/model.js';
 
 const raw = {
@@ -72,12 +72,6 @@ test('scene rows carry character, TX, lav and a connector warning', () => {
 test('scenes with a preset but no shooting day are listed as unscheduled', () => {
   assert.deepEqual(unscheduledScenes(project), ['99']);
   assert.deepEqual(allSceneIds(project), ['2', '5', '10A', '99']);
-});
-
-test('TX sheet: each TX of the day with who wears it per scene', () => {
-  const plan = txPlanForDay(project, 1);
-  assert.deepEqual(plan.scenes, ['2', '10A']);
-  assert.equal(plan.transmitters[0].byScene['10A'].character.name, 'BRUNO');
 });
 
 test('dates never shift with the time zone', () => {

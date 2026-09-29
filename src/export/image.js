@@ -1,12 +1,11 @@
 // image.js — makes shareable PNG images from the local data (works offline):
 //   sceneSheet(project, sceneIds, title)  one or more scenes (scene card / day sheet)
-//   txSheet(project, day)                 each TX × each scene of the day
 // (Week / all-film images: schedule-images.js, built from the same pieces.)
 // Every image carries the film name and "data as of …" so an old screenshot
 // is never mistaken for the current plan.
 // Used by: screens/schedule.js, screens/scenes.js (through share.js)
 
-import { sceneRows, scheduleFor, sceneInfo, timeClass, shootingDays, txPlanForDay, formatDate, formatStamp } from '../model.js';
+import { sceneRows, scheduleFor, sceneInfo, timeClass, formatDate, formatStamp } from '../model.js';
 import { newCanvas, box, text, font, pill, tag, wrapLines } from './draw.js';
 import { LEVELS, soundOf, flagText, warningText, warningsByCharacter } from '../sound-rules.js';
 
@@ -159,39 +158,4 @@ function drawSlate(ctx, sceneId, info, y) {
   font(ctx, 600, 24);
   notes.forEach(line => { text(ctx, line, x, lineY + 14, 0, '#ea580c'); lineY += 32; });
   return y + height;
-}
-
-export async function txSheet(project, dayNumber) {
-  await fontsReady();
-  const day = shootingDays(project).find(d => d.day === dayNumber);
-  const plan = txPlanForDay(project, dayNumber);
-  const colWidth = 200;
-  const width = Math.max(WIDTH, PAD * 2 + 130 + plan.scenes.length * colWidth);
-  const height = 150 + 40 + 70 + plan.transmitters.length * ROW + FOOTER_HEIGHT;
-  const { canvas, ctx } = newCanvas(width, height);
-
-  header(ctx, width, `TX sheet · Day ${dayNumber}`, day ? `${formatDate(day.date, { weekday: true })} · ${day.call}–${day.wrap}` : '');
-
-  let y = 190;
-  font(ctx, 800, 30);
-  text(ctx, 'TX', PAD + 10, y + 30);
-  plan.scenes.forEach((id, i) => {
-    box(ctx, PAD + 130 + i * colWidth + 6, y, colWidth - 12, 60, 10, '#e5e7eb');
-    text(ctx, `#${id}`, PAD + 130 + i * colWidth + colWidth / 2, y + 30, colWidth - 20, '#0f172a', 'center');
-  });
-  y += 70;
-
-  for (const { tx, byScene } of plan.transmitters) {
-    const h = ROW - 16;
-    pill(ctx, PAD, y, 110, h, tx.color, tx.id);
-    plan.scenes.forEach((id, i) => {
-      const row = byScene[id];
-      if (!row) return;
-      pill(ctx, PAD + 130 + i * colWidth + 6, y, colWidth - 12, h, row.character?.color,
-        row.character?.name || `? ${row.char_id}`, row.lav ? `${row.lav.model} · ${row.lav.id}` : '');
-    });
-    y += ROW;
-  }
-  footer(ctx, width, y, project);
-  return cropHeight(canvas, y + FOOTER_HEIGHT);
 }

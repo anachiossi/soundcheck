@@ -2,6 +2,7 @@
 // • Connect this device to the data (the private soundcheck-data repo), once.
 // • Films: the ones in the repo (tap to download) and the ones on this device.
 // • The open film: sync status, "Sync now", backup file.
+// • Screen: Auto / Light / Dark (parts/theme-switch.js).
 // Each film has its own database on the device; old films are kept.
 // Used by: main.js
 
@@ -11,6 +12,7 @@ import { openProject, importProjectFile, downloadProjectFile, saveConnection, fo
 import { syncNow, downloadFilm, loadFilmList } from '../sync.js';
 import { checkConnection } from '../store/github.js';
 import { Icon } from '../parts/icons.js';
+import { ThemeSwitch } from '../parts/theme-switch.js';
 
 export function ProjectsScreen({ state }) {
   const { project, projects, connection, films, online } = state;
@@ -46,6 +48,8 @@ export function ProjectsScreen({ state }) {
         <input type="file" accept=".json,application/json" onChange=${e => { e.target.files[0] && importProjectFile(e.target.files[0]); e.target.value = ''; }} />
       </label>
     </details>
+
+    <${ThemeSwitch} />
 
     <h2 class="section-title">Use it offline</h2>
     <ol class="help">

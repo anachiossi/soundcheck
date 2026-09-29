@@ -43,7 +43,7 @@ for (const [name, [width, height]] of Object.entries(SIZES)) {
   if (name === 'laptop') {
     // Exported images, drawn in the page exactly as the 📷 buttons do.
     const images = await page.evaluate(async () => {
-      const { sceneSheet, txSheet } = await import('./src/export/image.js');
+      const { sceneSheet } = await import('./src/export/image.js');
       const { getState } = await import('./src/state.js');
       const { shootingDays } = await import('./src/model.js');
       const project = getState().project;
@@ -52,7 +52,6 @@ for (const [name, [width, height]] of Object.entries(SIZES)) {
       return {
         scene: (await sceneSheet(project, [ids[0]], `Scene ${ids[0]}`)).toDataURL(),
         day: (await sceneSheet(project, ids, `Day ${day.day} · mic list`)).toDataURL(),
-        tx: (await txSheet(project, day.day)).toDataURL(),
       };
     });
     for (const [label, dataUrl] of Object.entries(images)) {

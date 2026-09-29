@@ -11,6 +11,10 @@
   <link rel="apple-touch-icon" href="icons/icon-180.png" />
   <link rel="icon" href="icons/icon-192.png" />
   <link rel="stylesheet" href="app.css" />
+  <script>/* light or dark before anything shows (full version: src/theme.js) */
+    try { const c = localStorage.getItem('sc_theme') || 'auto';
+      const dark = c === 'dark' || (c === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+      document.documentElement.dataset.theme = dark ? 'dark' : 'light'; } catch (e) {}</script>
 </head>
 <body>
   <div id="app"></div>
