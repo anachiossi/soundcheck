@@ -51,7 +51,9 @@ Confirmed by Ana (2026-09-29), as built in `pipeline/presets.py`:
   speakers all in the pool count as 0). Silent characters still get a TX, after the speakers.
 - Small day with more than 7 people: after 15 the free even TX (4, 6, 8…), never TX 1–2 or booms.
 - Big day: no preferred TX → next free in the order; same preferred TX for two → more lines wins.
-- Screamers get a 6061; in the water / 🚫 → no lav; no lav in any scene of the day → no TX either.
+- A row gets TX + lav only where the character speaks (YES or ?) and nothing blocks a lav. Silent
+  characters and people in the pool keep their row (they are in the scene) with no TX and no lav.
+- Screamers get a 6061.
 
 Earlier definitions:
 - "speaks most" = most **lines**; the protagonist (TX 3 in LBE) is the exception.
