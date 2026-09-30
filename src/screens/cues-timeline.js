@@ -23,7 +23,7 @@ import { timelineBlocks, blockAtTime, wordAtTime, pixelsAt, timeAt } from '../cu
 import { setState } from '../state.js';
 import { Icon } from '../parts/icons.js';
 import { SceneScript } from '../parts/scene-script.js';
-import { voicesReady, filmVoices, pickVoice, voiceKindOf, speak, unlockSpeech } from '../read-aloud.js';
+import { voicesReady, phoneVoices, filmVoices, pickVoice, voiceKindOf, speak, unlockSpeech } from '../read-aloud.js';
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 const CURSOR = 0.15;      // the cursor sits at 15% of the track: the rest shows what's coming
@@ -45,13 +45,12 @@ export function CuesTimelineScreen({ state }) {
   const drag = useRef(null);
   const track = useRef(null);
   const [aloud, setAloud] = useState(() => { try { return localStorage.getItem('sc_timeline_voice') === 'on'; } catch { return false; } });
-  const [voices, setVoices] = useState([]);
   const [restart, setRestart] = useState(0);     // +1 = the voice starts again from the cursor (after a jump)
   const timeNow = useRef(0);                     // the cursor's time, for the voice (without re-running it)
-  const voiceAt = useRef(null);                  // how far the voice is: the cursor never runs ahead of it
+  const voiceAt = useRef(null);                  // the end of the line being read: the cursor waits there for the voice
   const stopVoice = useRef(() => {});
   timeNow.current = time;
-  useEffect(() => { voicesReady().then(setVoices); }, []);
+  useEffect(() => { voicesReady(); }, []); // asks the phone to load its voices
 
   // a block is never wider than ~40% of what's ahead of the cursor: the current line + the next fit
   const ahead = width * (1 - CURSOR);
@@ -100,14 +99,12 @@ export function CuesTimelineScreen({ state }) {
     const settings = filmVoices(project);
     const say = (block, fromWord) => {
       if (!block) { setPlaying(false); voiceAt.current = null; return; }
-      const voice = pickVoice(voices, settings, voiceKindOf(project, block.char_id));
+      const voice = pickVoice(phoneVoices(), settings, voiceKindOf(project, block.char_id));
       stop = speak({
         text: cues.lines[block.index].text, voice, language: settings.language, rate: SPEEDS[speed], fromWord,
         onWord: i => {
-          const word = block.words[i];
-          const nextWord = block.words[i + 1];
-          voiceAt.current = block.from + (nextWord ? nextWord.start : block.seconds * 0.98);
-          setTime(t => Math.max(t, block.from + word.start));
+          voiceAt.current = block.from + block.seconds * 0.98;          // may run to the line's end, not past
+          setTime(t => Math.max(t, block.from + block.words[i].start)); // and catches up with the voice's word
         },
         onEnd: () => {
           const next = blocks[block.index + 1];
@@ -120,7 +117,7 @@ export function CuesTimelineScreen({ state }) {
     const block = blockAtTime(blocks, timeNow.current);
     say(block, Math.max(0, wordAtTime(block, timeNow.current)));
     return () => { stop(); voiceAt.current = null; };
-  }, [playing, aloud, speed, restart, voices.length]);
+  }, [playing, aloud, speed, restart]);
 
   if (!cues) return html`<p class="empty">No lines for scene ${cuesScene}.</p>`;
 

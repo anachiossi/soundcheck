@@ -22,6 +22,10 @@ export function voicesReady() {
   });
 }
 
+// the phone's voices right now: asked at each line, because on iOS the list is often still empty when
+// the screen opens (then every line fell back to the phone's default voice — a female one)
+export const phoneVoices = () => synth()?.getVoices() || [];
+
 export const filmVoices = project => ({ language: 'it-IT', female: '', male: '', ...project.settings?.voices });
 
 // the voices of the film's language, the best first (Premium, then Enhanced)
@@ -58,6 +62,11 @@ export function wordAtChar(starts, charIndex) {
 
 // say one line, from word `fromWord` on; onWord(index of the word being said), onEnd() when done.
 // Returns stop(). (iOS only starts speaking after a tap: the first call must come from a button.)
+// iOS sends extra signals: cancelling (to start the next line) can fire a second "end" or an
+// "interrupted" error for a line that already ended — which made every sentence start twice.
+// So: only the latest line's signals count, each line ends once, and a cancelled line never "ends".
+let latest = 0;
+
 export function speak({ text, voice, language, rate = 1, fromWord = 0, onWord = () => {}, onEnd = () => {} }) {
   if (!synth()) { onEnd(); return () => {}; }
   const words = String(text || '').split(/\s+/).filter(Boolean);
@@ -67,14 +76,17 @@ export function speak({ text, voice, language, rate = 1, fromWord = 0, onWord = 
   if (voice) utterance.voice = voice;
   utterance.lang = voice?.lang || language;
   utterance.rate = rate;
-  let stopped = false;
-  utterance.onboundary = event => { if (!stopped && event.name !== 'sentence') onWord(fromWord + wordAtChar(starts, event.charIndex)); };
-  utterance.onend = () => { if (!stopped) onEnd(); };
-  utterance.onerror = () => { if (!stopped) onEnd(); };
-  synth().cancel();
+  const mine = ++latest;
+  let finished = false;
+  const current = () => mine === latest && !finished;
+  const finish = () => { if (current()) { finished = true; onEnd(); } };
+  utterance.onboundary = event => { if (current() && event.name !== 'sentence') onWord(fromWord + wordAtChar(starts, event.charIndex)); };
+  utterance.onend = finish;
+  utterance.onerror = event => { if (!['interrupted', 'canceled'].includes(event?.error)) finish(); };
+  if (synth().speaking || synth().pending) synth().cancel();
   onWord(fromWord);
   synth().speak(utterance);
-  return () => { stopped = true; synth().cancel(); };
+  return () => { if (mine === latest) { latest++; synth().cancel(); } };
 }
 
 export const stopSpeaking = () => synth()?.cancel();

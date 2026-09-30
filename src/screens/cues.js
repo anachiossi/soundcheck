@@ -20,7 +20,7 @@ import { setState } from '../state.js';
 import { backToPaper, keepEdits } from '../cues-editing.js';
 import { CueLineEditor } from '../parts/cue-line-editor.js';
 import { Icon } from '../parts/icons.js';
-import { voicesReady, filmVoices, pickVoice, voiceKindOf, speak, unlockSpeech } from '../read-aloud.js';
+import { voicesReady, phoneVoices, filmVoices, pickVoice, voiceKindOf, speak, unlockSpeech } from '../read-aloud.js';
 
 // A button's tap must not also reach the page behind it (which would turn the page).
 const only = action => event => { event.stopPropagation(); action(); };
@@ -78,16 +78,15 @@ export function CuesScreen({ state }) {
   useWakeLock();
   // 🔊 read aloud: each line with the film's female or male voice, then on to the next page by itself
   const [reading, setReading] = useState(false);
-  const [voices, setVoices] = useState([]);
-  useEffect(() => { voicesReady().then(setVoices); }, []);
+  useEffect(() => { voicesReady(); }, []); // asks the phone to load its voices
   useEffect(() => {
     const line = cues?.lines[index];
     if (!reading || !line) { if (reading && cues && index >= cues.lines.length) setReading(false); return; }
     const settings = filmVoices(project);
     return speak({ text: line.text, language: settings.language,
-      voice: pickVoice(voices, settings, voiceKindOf(project, line.char_id)),
+      voice: pickVoice(phoneVoices(), settings, voiceKindOf(project, line.char_id)),
       onEnd: () => setIndex(i => i + 1) });
-  }, [reading, index, voices.length]);
+  }, [reading, index]);
   // (hooks run on every page, so the top strip colour is worked out here, before any return)
   const speaking = cues?.lines[index];
   const speakingColour = byId(project.characters).get(String(speaking?.char_id))?.color;
