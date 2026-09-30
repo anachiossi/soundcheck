@@ -12,14 +12,31 @@ const FEMALE = /\b(alice|federica|emma|paola|elsa|isabella|chiara|flo|sandy|shel
 
 const synth = () => globalThis.speechSynthesis;
 
-// the phone's voices come a moment after the page opens
+// the phone's voices come a moment after the page opens (on the iPhone sometimes several seconds,
+// and without telling): ask again every half second, for up to 8 s
 export function voicesReady() {
   return new Promise(resolve => {
-    const now = synth()?.getVoices() || [];
-    if (now.length || !synth()) return resolve(now);
-    synth().addEventListener('voiceschanged', () => resolve(synth().getVoices()), { once: true });
-    setTimeout(() => resolve(synth().getVoices()), 1500);
+    if (!synth()) return resolve([]);
+    let tries = 0;
+    const look = () => {
+      const now = synth().getVoices();
+      if (now.length || ++tries > 16) resolve(now);
+      else setTimeout(look, 500);
+    };
+    look();
   });
+}
+
+// Kit: follow the list while it is on screen (voices downloaded meanwhile, or loaded late).
+// Returns stop().
+export function watchVoices(onChange) {
+  if (!synth()) return () => {};
+  let last = -1;
+  const check = () => { const now = synth().getVoices(); if (now.length !== last) { last = now.length; onChange(now); } };
+  check();
+  const timer = setInterval(check, 1000);
+  synth().addEventListener?.('voiceschanged', check);
+  return () => { clearInterval(timer); synth().removeEventListener?.('voiceschanged', check); };
 }
 
 // the phone's voices right now: asked at each line, because on iOS the list is often still empty when
