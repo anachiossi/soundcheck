@@ -8,7 +8,8 @@
 //     carries on when you let go); ⏮ back to the start
 //   • above the track: the words of the line under the cursor, turning from grey to black as they
 //     are said — like a transcript following a video, no other animation; "Aa" turns them on / off
-//   Nothing else on screen (Ana: no name pill, no next line, no scene bar — the tabs lead back)
+//   Full screen, nothing else (Ana: no name pill, no next line, no scene bar): a slim row with
+//   Cues (from this line) · Map … ✕
 // Some day it could follow the actors by listening; for now the speed is by hand.
 // Used by: main.js (from the Cues tab card and the Scene Map)
 
@@ -17,6 +18,8 @@ import { byId } from '../model.js';
 import { textColourFor, isNearWhite } from '../colour.js';
 import { cueLines } from '../cues-rules.js';
 import { timelineBlocks, blockAtTime, wordAtTime, pixelsAt, timeAt } from '../cues-timeline-rules.js';
+import { setState } from '../state.js';
+import { Icon } from '../parts/icons.js';
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 const CURSOR = 0.15;      // the cursor sits at 15% of the track: the rest shows what's coming
@@ -136,6 +139,13 @@ export function CuesTimelineScreen({ state }) {
   const cursorX = width * CURSOR;
   return html`
     <div class="timeline">
+      <div class="focus-bar">
+        <button class="icon-btn" onClick=${() => setState({ screen: 'cues', cuesLine: now?.index || 0, cuesFrom: 'cues-timeline' })}
+                aria-label="Cues from this line"><${Icon} name="cues" /></button>
+        <button class="icon-btn" onClick=${() => setState({ screen: 'cues-map' })} aria-label="Scene map"><${Icon} name="map" /></button>
+        <span class="focus-bar__space"></span>
+        <button class="icon-btn" onClick=${() => setState({ screen: 'cues-picker' })} aria-label="Close"><${Icon} name="close" /></button>
+      </div>
       ${showText && html`
         <p class="timeline__line" ref=${lineBox}>${words.map((word, i) => html`
           <span key=${i} class=${i <= saying ? 'said' : 'coming'}>${word}</span>${' '}`)}</p>`}
@@ -161,6 +171,5 @@ export function CuesTimelineScreen({ state }) {
         <span class="auto-scroll__speed">${SPEEDS[speed]}×</span>
         <button class="btn auto-scroll__step" disabled=${speed === SPEEDS.length - 1} onClick=${() => changeSpeed(1)} aria-label="Faster">+</button>
       </div>
-      <p class="muted timeline__hint">Drag the track to go back or forward · tap a block to jump there</p>
     </div>`;
 }

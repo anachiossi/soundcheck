@@ -84,6 +84,9 @@ function App() {
   const { project, screen, message, busyText } = state;
   const current = project ? screen : 'projects';
   if (current === 'cues') return html`<${CuesScreen} key=${state.cuesScene} state=${state} />`; // full screen
+  // the Scene Map and Timeline are moments to focus: full screen too, no title, badges or tabs
+  if (current === 'cues-map') return html`<main class="focus"><${CuesMapScreen} state=${state} /></main>`;
+  if (current === 'cues-timeline') return html`<main class="focus"><${CuesTimelineScreen} state=${state} /></main>`;
   const tabs = TABS[state.department] || TABS.mics;
   const Screen = current === 'proposal' ? ProposalScreen
     : current === 'document' ? DocumentScreen

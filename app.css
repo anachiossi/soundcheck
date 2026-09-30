@@ -48,7 +48,8 @@
 /* ---- 2. Layout ------------------------------------------------------------ */
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--page); -webkit-text-size-adjust: 100%; }
-#app { max-width: 960px; margin: 0 auto; padding: calc(44px + env(safe-area-inset-top)) 12px calc(24px + env(safe-area-inset-bottom)); }   /* room under the phone's clock strip: iOS softens what sits right under it */
+#app { max-width: 960px; margin: 0 auto; padding: calc(44px + env(safe-area-inset-top)) max(12px, env(safe-area-inset-right))
+  calc(24px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); }   /* room under the phone's clock strip: iOS softens what sits right under it */
 .topbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; padding: 4px 4px 10px; }
 .topbar__title { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
 .topbar__film { font-weight: 800; font-size: 22px; letter-spacing: -0.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }   /* the film's name only */
@@ -367,15 +368,24 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
 .timeline__aa { min-width: 48px; font-weight: 800; }
 .timeline__aa--on { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
 .timeline__controls { margin-top: 12px; }
-.timeline__hint { text-align: center; font-size: 13px; }
+/* full screen: the words, the track and the controls sit in the middle of the screen */
+.focus .timeline { display: flex; flex-direction: column; min-height: calc(100vh - 40px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+.focus .timeline .timeline__line { margin-top: auto; }
+.focus .timeline .timeline__controls { margin-bottom: auto; }
 @media (orientation: landscape) and (max-height: 520px) {   /* phone sideways: everything on one screen */
   .timeline__line { font-size: 17px; height: 2.9em; margin: 2px 2px 8px; }
   .timeline__track { height: 96px; }
   .timeline__controls { margin-top: 8px; }
-  .timeline__hint { display: none; }
 }
 /* Scene Map: the bar pinned at the top = colour strip + auto-scroll (parts/auto-scroll.js) */
-.map-top { position: sticky; top: 0; z-index: 3; background: var(--card); padding: 4px 0 6px; margin-bottom: 10px; }
+/* Full screen for the Map and the Timeline (main.js): no title, badges or tabs; clear of the camera
+   and the rounded corners (the iPhone's safe areas), also sideways */
+#app:has(> .focus) { padding: 0; max-width: none; }
+.focus { display: block; min-height: 100vh; box-sizing: border-box; background: var(--card); max-width: 960px; margin: 0 auto;
+  padding: calc(18px + env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+.focus-bar { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.focus-bar__space { flex: 1; }
+.map-top { position: sticky; top: 0; z-index: 3; background: var(--card); padding: 12px 0 6px; margin-bottom: 10px; }
 .auto-scroll { display: flex; align-items: center; gap: 8px; }
 .auto-scroll__play { min-width: 52px; font-size: 18px; padding: 6px 0; }
 .auto-scroll__label { flex: 1; font-weight: 700; font-size: 14px; color: var(--ink-soft); }
@@ -464,7 +474,7 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
 
 /* ---- Phones --------------------------------------------------------------- */
 @media (max-width: 600px) {
-  #app { padding: calc(44px + env(safe-area-inset-top)) 6px calc(24px + env(safe-area-inset-bottom)); }   /* keeps the room under the clock strip */
+  #app { padding: calc(44px + env(safe-area-inset-top)) max(6px, env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left)); }   /* keeps the room under the clock strip */
   .page { padding: 10px 8px; }
   .mics__row { grid-template-columns: minmax(0, 1fr) 54px 84px 52px; gap: 4px; }
   .mics__row--edit { grid-template-columns: minmax(0, 1fr) 50px 76px 48px 30px; }

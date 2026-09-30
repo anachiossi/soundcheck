@@ -3,13 +3,12 @@
 //     there) and ▶ / ■ auto-scroll with its speed (parts/auto-scroll.js)
 //   • then the beats: each line is the speaker's pill + its last words (the cue)
 //   • tap a line → it opens to the whole line, with the mic (🎙 Cues from that line) — the same mic as everywhere
-//   • the timeline icon opens the Scene Timeline (cues-timeline.js)
+//   • full screen (a moment to focus): a slim row with Cues · Timeline … ✕ instead of a header
 // Changes made in Cues (✎) show here at once, because the map is made from the same lines (cueLines).
 // Used by: main.js (from the Cues tab, or the map button in Cues)
 
 import { html, useState } from '../../vendor/preact-htm.js';
-import { ScenePill } from '../parts/scene-pill.js';
-import { byId, sceneInfo } from '../model.js';
+import { byId } from '../model.js';
 import { textColourFor, isNearWhite } from '../colour.js';
 import { cueLines } from '../cues-rules.js';
 import { sceneMap } from '../cues-map-rules.js';
@@ -30,21 +29,17 @@ export function CuesMapScreen({ state }) {
     return colour && !isNearWhite(colour) ? colour : '#475569';
   };
   const beats = sceneMap(cues.lines);
-  const info = sceneInfo(project, cuesScene);
   const learnFrom = index => setState({ screen: 'cues', cuesLine: index, cuesFrom: 'cues-map' });
   const jump = index => document.getElementById(`map-line-${index}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
   return html`
-    <div class="map-head">
-      <button class="btn" onClick=${back}>‹ Cues</button>
-      <div class="map-head__title">
-        <b><${ScenePill} project=${project} sceneId=${cuesScene} hash /> ${info?.set || ''}</b>
-        <small>${cues.lines.length} lines · ${beats.length} beats · ${cues.source}${cues.note ? ` · ${cues.note}` : ''}</small>
-      </div>
-      <button class="icon-btn" onClick=${() => setState({ screen: 'cues-timeline' })} aria-label="Timeline"><${Icon} name="timeline" /></button>
-      <button class="icon-btn" onClick=${() => learnFrom(0)} aria-label="Cues from the start"><${Icon} name="cues" /></button>
-    </div>
     <div class="map-top">
+      <div class="focus-bar">
+        <button class="icon-btn" onClick=${() => learnFrom(0)} aria-label="Cues from the start"><${Icon} name="cues" /></button>
+        <button class="icon-btn" onClick=${() => setState({ screen: 'cues-timeline' })} aria-label="Timeline"><${Icon} name="timeline" /></button>
+        <span class="focus-bar__space"></span>
+        <button class="icon-btn" onClick=${back} aria-label="Close"><${Icon} name="close" /></button>
+      </div>
       <div class="map-strip" aria-label="The order of speakers">
         ${cues.lines.map((line, i) => html`
           <button key=${i} class="map-strip__piece" style=${`background:${colourOf(line)}`}
