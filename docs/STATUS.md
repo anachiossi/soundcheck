@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-09-30 · live version **v59** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-09-30 · live version **v60** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
@@ -33,7 +33,8 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
 - 🔊 **Read aloud** (Timeline and Cues): the phone's own voices (`src/read-aloud.js`); two per film,
   female + male, in `settings.json` → `voices` (Kit → Read aloud); each character's `voice` in
   characters.json. iOS quirks handled in v58: extra end/interrupted events, voices list empty at
-  start (asked at each line), no word positions (cursor paced by itself, waits at the line end).
+  start (asked at each line), no word positions (cursor paced by itself, waits at the line end);
+  v60: a listed-but-silent voice falls back to the default one, Kit ▶ shows what the voice did. No Siri voices (not given to web pages).
   Test with a fake iPhone voice: `.shots/voice-ios.mjs`.
 - Cues text priority (`cues-rules.js`): on-set edit (`lines/set/`) → newest sides → script;
   a newer paper after an edit is flagged, never overwrites it.
