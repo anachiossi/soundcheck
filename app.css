@@ -304,6 +304,7 @@ button.kit-item:hover { background: var(--soft); }
   font-size: 16px; font-weight: 700; }
 .cues__close { position: relative; border: 0; background: rgba(0,0,0,.18); color: inherit; border-radius: 999px;
   width: 48px; height: 48px; font-size: 18px; touch-action: manipulation; }
+.cues__close--on { background: rgba(0,0,0,.55); color: #fff; }   /* 🔊 reading aloud */
 .cues__close::after { content: ''; position: absolute; inset: -12px; }   /* a bigger invisible target around the ✕ */
 .cues__name { font-family: var(--cue-font); font-weight: 700; text-transform: uppercase; text-align: center;
   font-size: clamp(24px, min(6.5vw, 7vh), 44px); letter-spacing: .06em; line-height: 1.1; }
@@ -366,6 +367,12 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
 .timeline__line .said { color: var(--ink); }
 .timeline__line .coming { color: var(--muted-2); }
 .timeline__aa { min-width: 48px; font-weight: 800; }
+/* Kit → Read aloud (parts/voice-settings.js) */
+.voices { display: flex; flex-direction: column; gap: 8px; margin: 6px 0; }
+.voice-row { display: flex; align-items: center; gap: 10px; }
+.voice-row > span { width: 64px; font-weight: 700; }
+.voice-row select { flex: 1; min-width: 0; font: inherit; font-size: 16px; padding: 8px 12px; border: 1px solid var(--line-strong);
+  border-radius: 999px; background: var(--card); color: var(--ink); }
 .timeline__aa--on { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
 .timeline__controls { margin-top: 12px; }
 /* full screen: the words, the track and the controls sit in the middle of the screen */

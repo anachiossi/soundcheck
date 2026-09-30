@@ -11,6 +11,8 @@
 //   Full screen, nothing else (Ana: no name pill, no next line, no scene bar): a slim row with
 //   Cues (from this line) · Map … ✕
 // Some day it could follow the actors by listening; for now the speed is by hand.
+//   • 🔊 read aloud: ▶ then reads the scene with the film's two voices (a female and a male, Kit →
+//     Read aloud), and the cursor and the words follow the real voice (read-aloud.js)
 // Used by: main.js (from the Cues tab card and the Scene Map)
 
 import { html, useEffect, useRef, useState } from '../../vendor/preact-htm.js';
@@ -20,6 +22,7 @@ import { cueLines } from '../cues-rules.js';
 import { timelineBlocks, blockAtTime, wordAtTime, pixelsAt, timeAt } from '../cues-timeline-rules.js';
 import { setState } from '../state.js';
 import { Icon } from '../parts/icons.js';
+import { voicesReady, filmVoices, pickVoice, voiceKindOf, speak, unlockSpeech } from '../read-aloud.js';
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 const CURSOR = 0.15;      // the cursor sits at 15% of the track: the rest shows what's coming
@@ -41,6 +44,14 @@ export function CuesTimelineScreen({ state }) {
   const drag = useRef(null);
   const track = useRef(null);
   const lineBox = useRef(null);
+  const [aloud, setAloud] = useState(() => { try { return localStorage.getItem('sc_timeline_voice') === 'on'; } catch { return false; } });
+  const [voices, setVoices] = useState([]);
+  const [restart, setRestart] = useState(0);     // +1 = the voice starts again from the cursor (after a jump)
+  const timeNow = useRef(0);                     // the cursor's time, for the voice (without re-running it)
+  const voiceAt = useRef(null);                  // how far the voice is: the cursor never runs ahead of it
+  const stopVoice = useRef(() => {});
+  timeNow.current = time;
+  useEffect(() => { voicesReady().then(setVoices); }, []);
 
   // the words sit in a fixed 3-line window (so nothing below moves): keep the word being said on
   // its second line, like subtitles, however long the speech
@@ -78,6 +89,7 @@ export function CuesTimelineScreen({ state }) {
       if (!held.current) {
         setTime(t => {
           const next = t + seconds * SPEEDS[speed];
+          if (aloud) return Math.min(next, voiceAt.current ?? t); // the voice leads, the cursor follows
           if (next >= duration) { setPlaying(false); return duration; }
           return next;
         });
@@ -88,7 +100,36 @@ export function CuesTimelineScreen({ state }) {
     let lock = null;
     navigator.wakeLock?.request('screen').then(l => { lock = l; }).catch(() => {});
     return () => { cancelAnimationFrame(frame); lock?.release?.(); };
-  }, [playing, speed, duration]);
+  }, [playing, speed, duration, aloud]);
+
+  // read aloud: say the line under the cursor, from the word under the cursor, then the next lines
+  useEffect(() => {
+    if (!playing || !aloud || !cues) return;
+    let stop = () => {};
+    const settings = filmVoices(project);
+    const say = (block, fromWord) => {
+      if (!block) { setPlaying(false); voiceAt.current = null; return; }
+      const voice = pickVoice(voices, settings, voiceKindOf(project, block.char_id));
+      stop = speak({
+        text: cues.lines[block.index].text, voice, language: settings.language, rate: SPEEDS[speed], fromWord,
+        onWord: i => {
+          const word = block.words[i];
+          const nextWord = block.words[i + 1];
+          voiceAt.current = block.from + (nextWord ? nextWord.start : block.seconds * 0.98);
+          setTime(t => Math.max(t, block.from + word.start));
+        },
+        onEnd: () => {
+          const next = blocks[block.index + 1];
+          if (next) { setTime(next.from); voiceAt.current = next.from; }
+          say(next, 0);
+        },
+      });
+      stopVoice.current = stop;
+    };
+    const block = blockAtTime(blocks, timeNow.current);
+    say(block, Math.max(0, wordAtTime(block, timeNow.current)));
+    return () => { stop(); voiceAt.current = null; };
+  }, [playing, aloud, speed, restart, voices.length]);
 
   if (!cues) return html`<p class="empty">No lines for scene ${cuesScene}.</p>`;
 
@@ -116,6 +157,7 @@ export function CuesTimelineScreen({ state }) {
   // touch: drag = scrub (pauses while the finger is down), a tap without moving = jump to that block
   const down = event => {
     held.current = true;
+    stopVoice.current();
     drag.current = { x: event.clientX, from: position, moved: false };
     try { event.currentTarget.setPointerCapture(event.pointerId); } catch { /* not a real finger: fine */ }
   };
@@ -133,8 +175,13 @@ export function CuesTimelineScreen({ state }) {
       if (hit) setTime(hit.from);
     }
     drag.current = null;
-    setTimeout(() => { held.current = false; }, RESUME_AFTER);
+    setTimeout(() => { held.current = false; setRestart(r => r + 1); }, RESUME_AFTER);
   };
+  const toggleAloud = () => setAloud(on => {
+    try { localStorage.setItem('sc_timeline_voice', on ? 'off' : 'on'); } catch { /* fine */ }
+    if (!on) unlockSpeech(); // iOS: the first word must come from a tap
+    return !on;
+  });
 
   const cursorX = width * CURSOR;
   return html`
@@ -161,11 +208,13 @@ export function CuesTimelineScreen({ state }) {
       </div>
 
       <div class="auto-scroll timeline__controls">
-        <button class="btn" onClick=${() => setTime(0)} aria-label="Back to the start">⏮</button>
-        <button class="btn btn--primary auto-scroll__play" onClick=${() => { if (time >= duration) setTime(0); setPlaying(p => !p); }}
-                aria-label=${playing ? 'Pause' : 'Play'}>${playing ? '❚❚' : '▶'}</button>
+        <button class="btn" onClick=${() => { stopVoice.current(); setTime(0); setRestart(r => r + 1); }} aria-label="Back to the start">⏮</button>
+        <button class="btn btn--primary auto-scroll__play" aria-label=${playing ? 'Pause' : 'Play'}
+                onClick=${() => { if (aloud && !playing) unlockSpeech(); if (time >= duration) setTime(0); setPlaying(p => !p); }}>${playing ? '❚❚' : '▶'}</button>
         <button class=${'btn timeline__aa' + (showText ? ' timeline__aa--on' : '')} onClick=${toggleText}
                 aria-label=${showText ? 'Hide the words' : 'Show the words'}>Aa</button>
+        <button class=${'btn timeline__aa' + (aloud ? ' timeline__aa--on' : '')} onClick=${toggleAloud}
+                aria-label=${aloud ? 'Stop reading aloud' : 'Read aloud'}><${Icon} name="voice" /></button>
         <span class="auto-scroll__label"></span>
         <button class="btn auto-scroll__step" disabled=${speed === 0} onClick=${() => changeSpeed(-1)} aria-label="Slower">−</button>
         <span class="auto-scroll__speed">${SPEEDS[speed]}×</span>

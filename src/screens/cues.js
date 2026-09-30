@@ -20,6 +20,7 @@ import { setState } from '../state.js';
 import { backToPaper, keepEdits } from '../cues-editing.js';
 import { CueLineEditor } from '../parts/cue-line-editor.js';
 import { Icon } from '../parts/icons.js';
+import { voicesReady, filmVoices, pickVoice, voiceKindOf, speak, unlockSpeech } from '../read-aloud.js';
 
 // A button's tap must not also reach the page behind it (which would turn the page).
 const only = action => event => { event.stopPropagation(); action(); };
@@ -75,6 +76,18 @@ export function CuesScreen({ state }) {
   const textRef = useRef(null);
   const moreBelow = useMoreBelow(textRef, index);
   useWakeLock();
+  // 🔊 read aloud: each line with the film's female or male voice, then on to the next page by itself
+  const [reading, setReading] = useState(false);
+  const [voices, setVoices] = useState([]);
+  useEffect(() => { voicesReady().then(setVoices); }, []);
+  useEffect(() => {
+    const line = cues?.lines[index];
+    if (!reading || !line) { if (reading && cues && index >= cues.lines.length) setReading(false); return; }
+    const settings = filmVoices(project);
+    return speak({ text: line.text, language: settings.language,
+      voice: pickVoice(voices, settings, voiceKindOf(project, line.char_id)),
+      onEnd: () => setIndex(i => i + 1) });
+  }, [reading, index, voices.length]);
   // (hooks run on every page, so the top strip colour is worked out here, before any return)
   const speaking = cues?.lines[index];
   const speakingColour = byId(project.characters).get(String(speaking?.char_id))?.color;
@@ -114,6 +127,8 @@ export function CuesScreen({ state }) {
       <div class="cues__top">
         <span>${index + 1} / ${lines.length}</span>
         <span class="cues__scene"><${ScenePill} project=${project} sceneId=${cuesScene} hash /></span>
+        <button class=${'cues__close' + (reading ? ' cues__close--on' : '')} aria-label=${reading ? 'Stop reading aloud' : 'Read aloud'}
+                onClick=${only(() => { if (!reading) unlockSpeech(); setReading(!reading); })}><${Icon} name="voice" /></button>
         <button class="cues__close" onClick=${only(() => setState({ screen: 'cues-map', cuesLine: 0 }))} aria-label="Scene map">
           <${Icon} name="map" /></button>
         <button class="cues__close cues__edit" onClick=${only(() => setEditor({ index, adding: false }))} aria-label="Edit this line">

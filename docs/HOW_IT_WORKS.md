@@ -99,6 +99,7 @@ The app's GitHub key needs **Actions: Read and write** and **Variables: Read-onl
 | Which lines a scene shows (sides → script → base scene for 7fin) | `src/cues-rules.js` |
 | The full-screen mode (one speech per page, scrolls when long) | `src/screens/cues.js` + section 11 of `app.css` |
 | One phrase per line (after , ; : . ? ! …) | `src/cues-phrases.js` |
+| 🔊 Read aloud with the phone's voices: two per film (female / male, film's language) in `settings.json` → `voices`; each character's `voice` in characters.json; Kit → Read aloud to choose; Timeline follows the real voice, Cues turns pages by itself | `src/read-aloud.js`, `src/parts/voice-settings.js` |
 | Scene Map: colour strip, beats, each line's last words (tap a line → the whole line + Learn from here); made from the same lines, so ✎ edits show at once | `src/cues-map-rules.js`, `src/screens/cues-map.js` |
 | Scene Map auto-scroll (pinned at the top with the colour strip): ▶/■, speed − / + (remembered), a touch pauses, carries on after you let go | `src/parts/auto-scroll.js` |
 | Scene Timeline (Pro Tools-style): blocks back to back in the speakers' colours, width ∝ speaking time (syllables at ~5.5/s at 1×, pauses after , . ? ! … and a breath when the speaker changes) (long speeches capped "⋯" so the next lines stay in view), fixed ▼ cursor, ▶ / speed 0.5–2× / drag to scrub / tap to jump; above the track only the words of the current line, grey → black as they are said (Aa on/off); no header, name pill or next line | `src/cues-timeline-rules.js`, `src/screens/cues-timeline.js` |

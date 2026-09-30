@@ -16,6 +16,7 @@
 //                          lines/set/2.json = changed on set in 🎙 Cues, wins over both)
 //     sound/12.json        { scene_id, level 1–5, reason, flags, notes, warnings: [{ char_id, kind, text }] }
 //                          the sound breakdown (dificultômetro + lav warnings), see sound-rules.js
+//     settings.json        this film's own rules: presets (the generator), voices (read aloud)
 //     ifb/crew.json        [{ id, name, job, color, phone }]          IFB department:
 //     ifb/receivers.json   [{ id, model, color, connector }]
 //     ifb/headphones.json  [{ id, model, color, connector, attenuated }]
@@ -61,6 +62,7 @@ export function projectToFiles(project) {
   const files = { 'film.json': { format: FILM_FORMAT, version: 1, id: project.id, name: project.name } };
   for (const key of LISTS) files[`${key}.json`] = project[key];
   files['scenes.json'] = project.scenes || {};
+  if (project.settings) files['settings.json'] = project.settings;
   for (const [sceneId, preset] of Object.entries(project.presets)) files[presetFile(sceneId)] = preset;
   for (const [id, proposal] of Object.entries(project.proposals || {})) files[proposalFile(id)] = proposal;
   for (const [key, lines] of Object.entries(project.lines || {})) files[`lines/${key}.json`] = lines;
@@ -73,7 +75,7 @@ export function projectToFiles(project) {
 export function emptyProject(film, folder) {
   return {
     format: PROJECT_FORMAT, version: 1, id: film.id, name: film.name, folder,
-    characters: [], transmitters: [], lavaliers: [], schedule: [], scenes: {}, presets: {}, proposals: {}, lines: {}, sound: {},
+    characters: [], transmitters: [], lavaliers: [], schedule: [], scenes: {}, presets: {}, proposals: {}, lines: {}, sound: {}, settings: {},
     crew: [], ifbReceivers: [], ifbHeadphones: [], ifbList: { rows: [] },
     shas: {}, outbox: {}, conflicts: {}, data_as_of: null,
   };
@@ -110,7 +112,7 @@ export function setFileContent(project, path, content) {
   else if (soundFromPath(path)) project.sound = { ...project.sound, [soundFromPath(path)]: content };
   else if (IFB_FILES[path]) project[IFB_FILES[path]] = content;
   else if (key === 'film') project.name = content.name;
-  else if (LISTS.includes(key) || key === 'scenes') project[key] = content;
+  else if (LISTS.includes(key) || key === 'scenes' || key === 'settings') project[key] = content;
 }
 
 function sameContent(path, a, b) {
@@ -167,7 +169,7 @@ export function filesToDownload(project, remoteShas) {
 function isAppFile(path) {
   const key = path.replace(/\.json$/, '');
   return Boolean(sceneFromPath(path) || proposalFromPath(path) || linesFromPath(path) || soundFromPath(path) || IFB_FILES[path]
-    || key === 'film' || key === 'scenes' || LISTS.includes(key));
+    || key === 'film' || key === 'scenes' || key === 'settings' || LISTS.includes(key));
 }
 
 // JSON text for the repo: readable, with each small record on one line, e.g.
