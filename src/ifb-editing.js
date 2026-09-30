@@ -53,6 +53,12 @@ export function setIfbCell(index, field, id) {
 }
 
 export const addIfbRow = () => changeDraft(rows => [...rows, emptyIfbRow()]);
+export const moveIfbRow = index => changeDraft(rows => {
+  if (index < 1) return rows;
+  const moved = [...rows];
+  [moved[index - 1], moved[index]] = [moved[index], moved[index - 1]];
+  return moved;
+});
 export const deleteIfbRow = index => changeDraft(rows => rows.filter((_, i) => i !== index));
 export const cancelIfbEdit = () => setState({ ifbEdit: null, ifbPicker: null });
 

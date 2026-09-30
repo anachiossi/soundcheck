@@ -3,14 +3,15 @@
 //   • big button per person, yellow 🎧 out / green ✓ back: tap when you hand the set
 //     out or get it back (handing out is routine, so no alarm colours)
 //   • "3 of 5 out", a "still out" filter for wrap, All handed out / All back
-//   • ✎ Edit list: change who has what (draft → Save), with a warning for doubles
+//   • ✎ Edit list: change who has what (draft → Save), with a warning for doubles; ↑ moves a row up
 // Used by: main.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
 import { byId } from '../model.js';
-import { toggleOut, setAllOut, startIfbEdit, openIfbPicker, addIfbRow, deleteIfbRow, cancelIfbEdit, saveIfbEdit } from '../ifb-editing.js';
+import { toggleOut, setAllOut, startIfbEdit, openIfbPicker, addIfbRow, moveIfbRow, deleteIfbRow, cancelIfbEdit, saveIfbEdit } from '../ifb-editing.js';
 import { ifbWarnings } from '../ifb-rules.js';
 import { CrewPill, GearPill } from '../parts/pills.js';
+import { Icon } from '../parts/icons.js';
 
 // A small headphones drawing (not an emoji), in the button's text colour.
 const HeadphonesIcon = () => html`
@@ -43,7 +44,10 @@ function Editor({ project, rows }) {
             ${cell(i, 'crew_id', row.crew_id ? html`<${CrewPill} person=${person} id=${row.crew_id} />` : empty('person'))}
             ${cell(i, 'rx_id', row.rx_id ? html`<${GearPill} item=${rx.get(String(row.rx_id))} person=${person} id=${row.rx_id} />` : empty('RX'))}
             ${cell(i, 'hp_id', row.hp_id ? html`<${GearPill} item=${hp.get(String(row.hp_id))} person=${person} id=${row.hp_id} />` : empty('HP'))}
-            <button class="icon-btn icon-btn--remove" onClick=${() => deleteIfbRow(i)} aria-label="Delete row">✕</button>
+            <span class="row-tools">
+              <button class="icon-btn" disabled=${i === 0} onClick=${() => moveIfbRow(i)} aria-label="Move up"><${Icon} name="up" /></button>
+              <button class="icon-btn icon-btn--remove" onClick=${() => deleteIfbRow(i)} aria-label="Delete row"><${Icon} name="close" /></button>
+            </span>
           </div>`;
       })}
       <button class="btn btn--quiet add-row" onClick=${addIfbRow}>+ Add person</button>
