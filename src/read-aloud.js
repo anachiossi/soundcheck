@@ -48,14 +48,24 @@ export const filmVoices = project => ({ language: 'it-IT', female: '', male: '',
 // the voices of the film's language, the best first (Premium, then Enhanced)
 export function voicesFor(voices, language) {
   const prefix = String(language || 'it').slice(0, 2).toLowerCase();
-  const rank = v => (/premium/i.test(v.name) ? 0 : /enhanced|avanzat|migliorat/i.test(v.name) ? 1 : 2);
+  const rank = v => (/premium/i.test(v.name + v.voiceURI) ? 0 : /enhanced|avanzat|migliorat/i.test(v.name + v.voiceURI) ? 1 : 2);
   return voices.filter(v => String(v.lang).toLowerCase().startsWith(prefix)).sort((a, b) => rank(a) - rank(b));
+}
+
+// a voice's id: two voices can share a name (the iPhone lists "Alice" and its Enhanced version)
+export const voiceId = voice => voice?.voiceURI || voice?.name || '';
+
+// "Alice · Enhanced": the name, and the quality when the id tells it
+export function voiceLabel(voice) {
+  const quality = /premium/i.test(voice.voiceURI) ? 'Premium' : /enhanced/i.test(voice.voiceURI) ? 'Enhanced'
+    : /compact/i.test(voice.voiceURI) ? 'Standard' : '';
+  return quality && !voice.name.includes(quality) ? `${voice.name} · ${quality}` : voice.name;
 }
 
 // the voice for 'female' or 'male': the film's choice if this phone has it, else a good guess
 export function pickVoice(voices, filmSettings, kind) {
   const mine = voicesFor(voices, filmSettings.language);
-  return mine.find(v => v.name === filmSettings[kind])
+  return mine.find(v => voiceId(v) === filmSettings[kind]) || mine.find(v => v.name === filmSettings[kind])
     || mine.find(v => (kind === 'male' ? MALE : FEMALE).test(v.name))
     || mine.find(v => !(kind === 'male' ? FEMALE : MALE).test(v.name))
     || mine[0] || null;
@@ -95,7 +105,7 @@ export function speak({ text, voice, language, rate = 1, fromWord = 0, onWord = 
   const rest = words.slice(fromWord).join(' ');
   const starts = wordStarts(rest);
   const utterance = new SpeechSynthesisUtterance(rest);
-  if (voice && silentVoices.has(voice.name)) voice = null;
+  if (voice && silentVoices.has(voiceId(voice))) voice = null;
   if (voice) utterance.voice = voice;
   utterance.lang = voice?.lang || language;
   utterance.rate = rate;
@@ -109,7 +119,7 @@ export function speak({ text, voice, language, rate = 1, fromWord = 0, onWord = 
   if (voice) {
     setTimeout(() => {
       if (started || !current()) return;
-      silentVoices.add(voice.name);
+      silentVoices.add(voiceId(voice));
       const why = `${voice.name} made no sound (not downloaded?): the phone's default voice instead`;
       onStatus(why);
       retry = speak({ text, voice: null, language, rate, fromWord, onWord, onEnd, onStatus: s => onStatus(s === 'Done' ? `Done · ${why}` : s) });

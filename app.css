@@ -543,3 +543,6 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
 :root[data-theme="dark"] .cues__name { color: var(--speaker); }
 :root[data-theme="dark"] .cues__panel { box-shadow: 0 0 0 4px var(--speaker); }
 :root[data-theme="dark"] .cues__close { background: var(--soft); }
+
+/* read by the iPhone (Speak Screen), not shown */
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }

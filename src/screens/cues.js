@@ -8,6 +8,8 @@
 // Tap the LEFT side → back · anywhere else → forward (a swipe only scrolls).
 // After the last line: The end / Start again. The screen stays awake (where allowed).
 // iPhone Speak Screen (swipe down with two fingers) reads only the dialogue: everything else is aria-hidden.
+// It stops when the page turns, so the lines after this one are there too, invisible: it reads from
+// this line to the end of the scene in one go (don't tap while it reads).
 // The map button opens the Scene Map (cues-map.js). ✎ changes, deletes or adds lines when the director changes them (cue-line-editor.js).
 // Used by: main.js (opened from the Cues tab or the microphone on a scene)
 
@@ -150,6 +152,7 @@ export function CuesScreen({ state }) {
         </div>
         <div class=${'cues__more' + (moreBelow ? '' : ' cues__more--hidden')} aria-hidden="true">scroll ▾</div>
       </div>
+      <div class="sr-only">${lines.slice(index + 1).map((later, i) => html`<p key=${i}>${later.text}</p>`)}</div>
       <div class="cues__bottom" aria-hidden="true">
         <span>${cues.source}${cues.note ? ` · ${cues.note}` : ''}</span>
         <span>${next ? `next: ${next.name}` : 'last line'}</span>
