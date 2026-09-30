@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-09-29 · live version **v46** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-09-30 · live version **v59** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
@@ -26,8 +26,18 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
 - ✉ badge: when Gmail was last checked; "Check emails now" starts the robot from the phone.
 - 🎙 **Cues**: learn a scene's lines full screen (phrases, speaker colours, scroll); ✎ edit / delete /
   add lines on set (`lines/set/`); **Scene Map** (colour strip, beats, last words Full/Fast,
-  ▶ auto-scroll with speed, touch to pause); **Scene Timeline** (Pro Tools-style track of speakers with a
-  cursor, speed, scrub — see who comes next).
+  ▶ auto-scroll with speed, touch to pause); **Scene Timeline** = a player, full screen: the scene's
+  script scrolls like Spotify lyrics (`parts/scene-script.js`, names on a highlight of the character's
+  colour), the Pro Tools-style track of speakers is the play bar (cursor, speed, scrub, paced like a
+  person speaking — `cues-timeline-rules.js`). Map and Timeline open full screen (`main.js` focus).
+- 🔊 **Read aloud** (Timeline and Cues): the phone's own voices (`src/read-aloud.js`); two per film,
+  female + male, in `settings.json` → `voices` (Kit → Read aloud); each character's `voice` in
+  characters.json. iOS quirks handled in v58: extra end/interrupted events, voices list empty at
+  start (asked at each line), no word positions (cursor paced by itself, waits at the line end).
+  Test with a fake iPhone voice: `.shots/voice-ios.mjs`.
+- Cues text priority (`cues-rules.js`): on-set edit (`lines/set/`) → newest sides → script;
+  a newer paper after an edit is flagged, never overwrites it.
+- Schedule: finished days green, opens on today; conflicts badge opens a Keep mine / Use the other list.
 - 🔊 **Sound breakdown** per scene (`sound/<scene>.json`): dificultômetro level MOS · AMB · EASY ·
   MEDIUM · HARD (Ana's colours), flags with emojis (💧 😱 🍝 💥 🎵 🚗 👥 👶 🐾), notes, lav warnings per
   character (🚫 no lav, 📍 placement, 💧 water, 😱 loud). Every scene-number pill (`ScenePill`) is
@@ -39,6 +49,7 @@ colour as a frame.
 
 **IFB department** (switch Mics | IFB): one IFB list for the film (OUT / ✓ back), crew with
 Call / WhatsApp / 🚨 emergency order, IFB kit; new crew from each ODG proposed next to their role.
+IFB list editor: ↑ moves a row up (v59), like the mics editor.
 
 ## Email robot (runs in the cloud, no laptop needed)
 Gmail (sound.chiossi@) ← production forwards → **Apps Script trigger every 10 min**
@@ -77,5 +88,8 @@ film before November.
 - TX preset generator inside the app (old Colab notebook) — milestone E, not started.
 - Analyzer for a NEW film writing schedule.json / scenes.json / sound/ directly (today: one-off
   scripts in `D:\script_read_claude\projects\<film>\work\`).
+- Read aloud on the Scene Map (mentioned, not started). Verify v58 read-aloud on the real iPhone.
+- Scene order comes from the ODG only (sides are used for speakers). Day 5 ODG said 23·4, sides and
+  app 4·23 — asked Ana which wins when they differ; no answer yet.
 - ODG reader: a location can swallow the next column ("PIANO NOBILE (2°) STAND BY:").
 - GitHub Actions: checkout@v4 / setup-python@v5 warn about Node 20 (harmless for now).
