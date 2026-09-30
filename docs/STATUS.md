@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-09-30 · live version **v63** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-09-30 · live version **v64** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
@@ -31,7 +31,7 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   colour), the Pro Tools-style track of speakers is the play bar (cursor, speed, scrub, paced like a
   person speaking — `cues-timeline-rules.js`). Map and Timeline open full screen (`main.js` focus).
 - 🔊 **Read aloud** (Timeline and Cues): the phone's own voices (`src/read-aloud.js`); two per film,
-  female + male, in `settings.json` → `voices` (Kit → Read aloud); each character's `voice` in
+  female + male, in `settings.json` → `voices`; each character's `voice` in
   characters.json. iOS quirks handled in v58: extra end/interrupted events, voices list empty at
   start (asked at each line), no word positions (cursor paced by itself, waits at the line end);
   v60: a listed-but-silent voice falls back to the default one, Kit ▶ shows what the voice did. No Siri voices (not given to web pages).
@@ -41,6 +41,7 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
 - iPhone gives web pages only ONE Italian voice (Alice · Standard, in Safari, Chrome and the home-screen app)
   although Emma Premium + Luca are downloaded: no male voice in-app on iOS. Options: Speak Screen (Siri),
   or cloud voices recorded per scene (offered to Ana, not decided).
+  v64: Kit voice menu and the character voice field removed (Ana: one voice, no choices, no warnings).
 - Cues text priority (`cues-rules.js`): on-set edit (`lines/set/`) → newest sides → script;
   a newer paper after an edit is flagged, never overwrites it.
 - Schedule: finished days green, opens on today; conflicts badge opens a Keep mine / Use the other list.
