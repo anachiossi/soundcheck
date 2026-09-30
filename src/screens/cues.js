@@ -7,6 +7,7 @@
 //   • the character's colour frames the panel (and the phone's top strip), with the name on it
 // Tap the LEFT side → back · anywhere else → forward (a swipe only scrolls).
 // After the last line: The end / Start again. The screen stays awake (where allowed).
+// iPhone Speak Screen (swipe down with two fingers) reads only the dialogue: everything else is aria-hidden.
 // The map button opens the Scene Map (cues-map.js). ✎ changes, deletes or adds lines when the director changes them (cue-line-editor.js).
 // Used by: main.js (opened from the Cues tab or the microphone on a scene)
 
@@ -123,7 +124,7 @@ export function CuesScreen({ state }) {
 
   return html`
     <div class="cues" style=${`background:${background};color:${textColourFor(background)};--speaker:${background}`} onClick=${onTap}>
-      <div class="cues__top">
+      <div class="cues__top" aria-hidden="true">
         <span>${index + 1} / ${lines.length}</span>
         <span class="cues__scene"><${ScenePill} project=${project} sceneId=${cuesScene} hash /></span>
         <button class=${'cues__close' + (reading ? ' cues__close--on' : '')} aria-label=${reading ? 'Stop reading aloud' : 'Read aloud'}
@@ -135,21 +136,21 @@ export function CuesScreen({ state }) {
         <button class="cues__close" ...${closeProps(close)} aria-label="Close"><${Icon} name="close" /></button>
       </div>
       ${cues.newer && html`
-        <div class="cues__newer">
+        <div class="cues__newer" aria-hidden="true">
           <span>New text arrived: ${cues.newer}</span>
           <button class="btn" onClick=${only(() => { backToPaper(cuesScene); setIndex(0); })}>Use it</button>
           <button class="btn" onClick=${only(() => keepEdits(cuesScene))}>Keep my changes</button>
         </div>`}
-      <div class="cues__name">${line.name}</div>
+      <div class="cues__name" aria-hidden="true">${line.name}</div>
       <div class="cues__panel">
         <div class="cues__text" ref=${textRef}>
           <div class="cues__speech">
             ${phraseLines(line.text).split('\n').map((phrase, i) => html`<p class="cues__phrase" key=${i}>${phrase}</p>`)}
           </div>
         </div>
-        <div class=${'cues__more' + (moreBelow ? '' : ' cues__more--hidden')}>scroll ▾</div>
+        <div class=${'cues__more' + (moreBelow ? '' : ' cues__more--hidden')} aria-hidden="true">scroll ▾</div>
       </div>
-      <div class="cues__bottom">
+      <div class="cues__bottom" aria-hidden="true">
         <span>${cues.source}${cues.note ? ` · ${cues.note}` : ''}</span>
         <span>${next ? `next: ${next.name}` : 'last line'}</span>
       </div>
