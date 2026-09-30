@@ -6,10 +6,10 @@
 //   • − / + speed (0.5× to 2×, remembered) to follow the actors as they run the scene
 //   • drag the track to scrub back or forward; tap a block to jump to it (a touch pauses, and it
 //     carries on when you let go); ⏮ back to the start
-//   • above the track: the words of the line under the cursor, turning from grey to black as they
-//     are said — like a transcript following a video, no other animation; "Aa" turns them on / off
-//   Full screen, nothing else (Ana: no name pill, no next line, no scene bar): a slim row with
-//   Cues (from this line) · Map … ✕
+//   • above the track, filling the screen: the whole scene as a script that scrolls by itself, like
+//     the lyrics in Spotify (parts/scene-script.js) — the track below is the play bar; "Aa" hides it
+//   Full screen, nothing else (Ana: no name pill, no scene bar): a slim row with Cues (from this
+//   line) · Map … ✕
 // Some day it could follow the actors by listening; for now the speed is by hand.
 //   • 🔊 read aloud: ▶ then reads the scene with the film's two voices (a female and a male, Kit →
 //     Read aloud), and the cursor and the words follow the real voice (read-aloud.js)
@@ -22,6 +22,7 @@ import { cueLines } from '../cues-rules.js';
 import { timelineBlocks, blockAtTime, wordAtTime, pixelsAt, timeAt } from '../cues-timeline-rules.js';
 import { setState } from '../state.js';
 import { Icon } from '../parts/icons.js';
+import { SceneScript } from '../parts/scene-script.js';
 import { voicesReady, filmVoices, pickVoice, voiceKindOf, speak, unlockSpeech } from '../read-aloud.js';
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
@@ -43,7 +44,6 @@ export function CuesTimelineScreen({ state }) {
   const held = useRef(false);
   const drag = useRef(null);
   const track = useRef(null);
-  const lineBox = useRef(null);
   const [aloud, setAloud] = useState(() => { try { return localStorage.getItem('sc_timeline_voice') === 'on'; } catch { return false; } });
   const [voices, setVoices] = useState([]);
   const [restart, setRestart] = useState(0);     // +1 = the voice starts again from the cursor (after a jump)
@@ -53,13 +53,6 @@ export function CuesTimelineScreen({ state }) {
   timeNow.current = time;
   useEffect(() => { voicesReady().then(setVoices); }, []);
 
-  // the words sit in a fixed 3-line window (so nothing below moves): keep the word being said on
-  // its second line, like subtitles, however long the speech
-  useEffect(() => {
-    const box = lineBox.current;
-    const word = [...(box?.querySelectorAll('.said') || [])].pop();
-    if (box && word) box.scrollTop = Math.max(0, word.offsetTop - word.offsetHeight * 1.45);
-  });
   // a block is never wider than ~40% of what's ahead of the cursor: the current line + the next fit
   const ahead = width * (1 - CURSOR);
   const { blocks, duration } = timelineBlocks(cues?.lines || [], width ? ahead / 2.4 : Infinity);
@@ -70,8 +63,6 @@ export function CuesTimelineScreen({ state }) {
     if (!box) return;
     const measure = () => {
       setWidth(box.clientWidth);
-      // phone sideways: bring the words + the track + the controls into view (the header is above)
-      if (innerWidth > innerHeight && innerHeight < 520) document.querySelector('.timeline')?.scrollIntoView({ block: 'start' });
     };
     measure();
     const watcher = new ResizeObserver(measure);
@@ -134,16 +125,15 @@ export function CuesTimelineScreen({ state }) {
   if (!cues) return html`<p class="empty">No lines for scene ${cuesScene}.</p>`;
 
   const chars = byId(project.characters);
-  const colourOf = block => {
-    const colour = chars.get(String(block.char_id))?.color;
+  const colourOf = line => {
+    const colour = chars.get(String(line.char_id))?.color;
     return colour && !isNearWhite(colour) ? colour : '#475569';
   };
   const now = blockAtTime(blocks, time);
   const position = pixelsAt(blocks, time);
-  // the words, in time with the cursor (said · now · still to come), like a transcription of a video
-  // (each word has its own time: long words and pauses after punctuation last longer)
-  const words = now ? now.words.map(w => w.word) : [];
+  // the word being said (each word has its own time: long words and pauses last longer)
   const saying = now ? wordAtTime(now, time) : -1;
+  const jumpTo = index => { stopVoice.current(); setTime(blocks[index].from); setRestart(r => r + 1); };
   const toggleText = () => setShowText(on => {
     try { localStorage.setItem('sc_timeline_text', on ? 'off' : 'on'); } catch { /* fine */ }
     return !on;
@@ -191,11 +181,15 @@ export function CuesTimelineScreen({ state }) {
                 aria-label="Cues from this line"><${Icon} name="cues" /></button>
         <button class="icon-btn" onClick=${() => setState({ screen: 'cues-map' })} aria-label="Scene map"><${Icon} name="map" /></button>
         <span class="focus-bar__space"></span>
+        <button class=${'icon-btn focus-bar__toggle' + (showText ? ' focus-bar__toggle--on' : '')} onClick=${toggleText}
+                aria-label=${showText ? 'Hide the words' : 'Show the words'}>Aa</button>
+        <button class=${'icon-btn focus-bar__toggle' + (aloud ? ' focus-bar__toggle--on' : '')} onClick=${toggleAloud}
+                aria-label=${aloud ? 'Stop reading aloud' : 'Read aloud'}><${Icon} name="voice" /></button>
         <button class="icon-btn" onClick=${() => setState({ screen: 'cues-picker' })} aria-label="Close"><${Icon} name="close" /></button>
       </div>
-      ${showText && html`
-        <p class="timeline__line" ref=${lineBox}>${words.map((word, i) => html`
-          <span key=${i} class=${i <= saying ? 'said' : 'coming'}>${word}</span>${' '}`)}</p>`}
+      ${showText ? html`<${SceneScript} lines=${cues.lines} current=${now?.index ?? 0} saying=${saying} colourOf=${colourOf} onJump=${jumpTo} />`
+        : html`<div class="script"></div>`}
+      <div class="timeline__player">
 
       <div class="timeline__track" ref=${track} onPointerDown=${down} onPointerMove=${move} onPointerUp=${up} onPointerCancel=${up}>
         <div class="timeline__blocks" style=${`transform: translateX(${cursorX - position}px)`}>
@@ -211,14 +205,11 @@ export function CuesTimelineScreen({ state }) {
         <button class="btn" onClick=${() => { stopVoice.current(); setTime(0); setRestart(r => r + 1); }} aria-label="Back to the start">⏮</button>
         <button class="btn btn--primary auto-scroll__play" aria-label=${playing ? 'Pause' : 'Play'}
                 onClick=${() => { if (aloud && !playing) unlockSpeech(); if (time >= duration) setTime(0); setPlaying(p => !p); }}>${playing ? '❚❚' : '▶'}</button>
-        <button class=${'btn timeline__aa' + (showText ? ' timeline__aa--on' : '')} onClick=${toggleText}
-                aria-label=${showText ? 'Hide the words' : 'Show the words'}>Aa</button>
-        <button class=${'btn timeline__aa' + (aloud ? ' timeline__aa--on' : '')} onClick=${toggleAloud}
-                aria-label=${aloud ? 'Stop reading aloud' : 'Read aloud'}><${Icon} name="voice" /></button>
         <span class="auto-scroll__label"></span>
         <button class="btn auto-scroll__step" disabled=${speed === 0} onClick=${() => changeSpeed(-1)} aria-label="Slower">−</button>
         <span class="auto-scroll__speed">${SPEEDS[speed]}×</span>
         <button class="btn auto-scroll__step" disabled=${speed === SPEEDS.length - 1} onClick=${() => changeSpeed(1)} aria-label="Faster">+</button>
+      </div>
       </div>
     </div>`;
 }

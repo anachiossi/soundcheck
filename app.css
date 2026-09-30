@@ -362,26 +362,39 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
 .timeline__block--now { opacity: 1; box-shadow: inset 0 0 0 3px var(--ink); z-index: 1; }
 .timeline__cursor { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--ink); pointer-events: none; }
 .timeline__cursor span { position: absolute; top: -2px; left: 50%; transform: translateX(-50%); font-size: 18px; color: var(--ink); }
-.timeline__line { position: relative; margin: 6px 2px 12px; font-family: var(--cue-font); font-size: 24px; line-height: 1.45;
-  height: 4.35em; overflow: hidden; }   /* the words: a fixed 3-line window, grey → black as they are said */
-.timeline__line .said { color: var(--ink); }
-.timeline__line .coming { color: var(--muted-2); }
-.timeline__aa { min-width: 48px; font-weight: 800; }
+.focus-bar__toggle { width: 44px; height: 40px; border-radius: 999px; font-weight: 800; font-size: 16px; }   /* Aa · 🔊: on = black */
+.focus-bar__toggle--on { background: var(--accent); color: var(--on-accent); }
 /* Kit → Read aloud (parts/voice-settings.js) */
 .voices { display: flex; flex-direction: column; gap: 8px; margin: 6px 0; }
 .voice-row { display: flex; align-items: center; gap: 10px; }
 .voice-row > span { width: 64px; font-weight: 700; }
 .voice-row select { flex: 1; min-width: 0; font: inherit; font-size: 16px; padding: 8px 12px; border: 1px solid var(--line-strong);
   border-radius: 999px; background: var(--card); color: var(--ink); }
-.timeline__aa--on { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
 .timeline__controls { margin-top: 12px; }
-/* full screen: the words, the track and the controls sit in the middle of the screen */
-.focus .timeline { display: flex; flex-direction: column; min-height: calc(100vh - 40px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
-.focus .timeline .timeline__line { margin-top: auto; }
-.focus .timeline .timeline__controls { margin-bottom: auto; }
+/* full screen, like a music player: the script scrolls above, the track + controls are the play bar */
+.focus .timeline { display: flex; flex-direction: column;
+  height: calc(100dvh - 38px - env(safe-area-inset-top) - max(20px, env(safe-area-inset-bottom))); }
+.timeline__player { flex: none; padding-top: 10px; }
+/* the scene's script (parts/scene-script.js) */
+.script { position: relative; flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+  mask-image: linear-gradient(transparent, #000 6%, #000 90%, transparent); }
+.script__space { height: 30%; }
+.script-line { max-width: 32ch; margin: 0 auto 22px; font-family: var(--cue-font); color: var(--muted-2); cursor: pointer; }
+.script-line__name { margin: 0 0 4px; text-align: center; font-weight: 700; font-size: 17px; letter-spacing: .08em; text-transform: uppercase; }
+.script-line__dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 8px; vertical-align: middle; }
+.script-line__text { margin: 0; text-align: left; text-indent: 2ch; font-size: 22px; line-height: 1.45; }   /* script-like: a tab first */
+.script-line--said { color: var(--ink); opacity: .35; }
+.script-line--now .script-line__name { color: var(--ink); }
+.script-line--now .said { color: var(--ink); }
+.script-line--now .coming { color: var(--muted-2); }
 @media (orientation: landscape) and (max-height: 520px) {   /* phone sideways: everything on one screen */
-  .timeline__line { font-size: 20px; height: 2.9em; margin: 2px 2px 8px; }
-  .timeline__track { height: 96px; }
+  .script-line__text { font-size: 19px; }
+  .script-line { max-width: 60ch; }
+  .timeline__player { padding-top: 4px; }
+  .timeline__track { height: 64px; }
+  .timeline__block { top: 14px; height: 40px; }
+  .script-line { margin-bottom: 14px; }
+  .script-line__name { font-size: 15px; }
   .timeline__controls { margin-top: 8px; }
 }
 /* Scene Map: the bar pinned at the top = colour strip + auto-scroll (parts/auto-scroll.js) */
