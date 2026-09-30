@@ -13,7 +13,6 @@ import { ItemForm } from '../parts/item-form.js';
 import { setState } from '../state.js';
 import { cuesSummary } from '../cues-rules.js';
 import { Icon } from '../parts/icons.js';
-import { VoiceSettings } from '../parts/voice-settings.js';
 
 const distinct = values => [...new Set(values.filter(Boolean))].sort(naturalCompare);
 
@@ -34,7 +33,6 @@ export function fieldsFor(list, project) {
     { key: 'pref_lav_model', label: 'Preferred lav model', type: 'choice', options: distinct(project.lavaliers.map(l => l.model)) },
     { key: 'pref_lav_model_2', label: 'Second choice lav model', type: 'choice', options: distinct(project.lavaliers.map(l => l.model)) },
     { key: 'pref_lav_color', label: 'Preferred lav colour', type: 'swatches', options: distinct(project.lavaliers.map(l => l.color.toLowerCase())) },
-    { key: 'voice', label: 'Voice (read aloud)', type: 'choice', options: ['female', 'male'] },
   ];
   if (list === 'transmitters') return [
     { key: 'id', label: 'Number' }, { key: 'model', label: 'Model' }, { key: 'color', label: 'Colour', type: 'color' },
@@ -109,6 +107,5 @@ export function KitScreen({ state }) {
       render=${tx => html`<${TxPill} tx=${tx} /><small>${tx.model}<br />${tx.connector}</small>`} />
     <${Section} ...${shared} list="lavaliers" title="Lavaliers"
       blank=${{ id: nextId('lavaliers'), color: '#000000', attenuated: false }}
-      render=${lav => html`<${LavPill} lav=${lav} /><small>${lav.brand} · ${lav.connector}${lav.attenuated ? html`<br /><b class="text-danger">attenuated</b>` : ''}</small>`} />
-    <${VoiceSettings} project=${project} />`;
+      render=${lav => html`<${LavPill} lav=${lav} /><small>${lav.brand} · ${lav.connector}${lav.attenuated ? html`<br /><b class="text-danger">attenuated</b>` : ''}</small>`} />`;
 }

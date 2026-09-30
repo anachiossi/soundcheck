@@ -5,7 +5,10 @@
 //   • each character says their lines with one of the two: characters.json → "voice": "female" | "male"
 //   • a voice chosen on one phone may not exist on another: then the best voice of that language
 //     (Premium / Enhanced first) is used instead
-// Used by: screens/cues-timeline.js, screens/cues.js, parts/voice-settings.js
+//   • the iPhone gives web pages ONE voice per language (Italian: Alice), whatever is downloaded, so
+//     there is no voice menu in the app (removed 30 Sep, Ana): the settings above only matter on a
+//     computer with more voices; on the iPhone every line is read by Alice
+// Used by: screens/cues-timeline.js, screens/cues.js
 
 const MALE = /\b(luca|marco|paolo|diego|giorgio|pietro|cosimo|eddy|reed|rocko|grandpa|daniel|thomas|jorge|juan|alex|aaron|fred|ralph)\b/i;
 const FEMALE = /\b(alice|federica|emma|paola|elsa|isabella|chiara|flo|sandy|shelley|grandma|samantha|karen|amelie|monica|paulina)\b/i;
@@ -27,18 +30,6 @@ export function voicesReady() {
   });
 }
 
-// Kit: follow the list while it is on screen (voices downloaded meanwhile, or loaded late).
-// Returns stop().
-export function watchVoices(onChange) {
-  if (!synth()) return () => {};
-  let last = -1;
-  const check = () => { const now = synth().getVoices(); if (now.length !== last) { last = now.length; onChange(now); } };
-  check();
-  const timer = setInterval(check, 1000);
-  synth().addEventListener?.('voiceschanged', check);
-  return () => { clearInterval(timer); synth().removeEventListener?.('voiceschanged', check); };
-}
-
 // the phone's voices right now: asked at each line, because on iOS the list is often still empty when
 // the screen opens (then every line fell back to the phone's default voice — a female one)
 export const phoneVoices = () => synth()?.getVoices() || [];
@@ -54,13 +45,6 @@ export function voicesFor(voices, language) {
 
 // a voice's id: two voices can share a name (the iPhone lists "Alice" and its Enhanced version)
 export const voiceId = voice => voice?.voiceURI || voice?.name || '';
-
-// "Alice · Enhanced": the name, and the quality when the id tells it
-export function voiceLabel(voice) {
-  const quality = /premium/i.test(voice.voiceURI) ? 'Premium' : /enhanced/i.test(voice.voiceURI) ? 'Enhanced'
-    : /compact/i.test(voice.voiceURI) ? 'Standard' : '';
-  return quality && !voice.name.includes(quality) ? `${voice.name} · ${quality}` : voice.name;
-}
 
 // the voice for 'female' or 'male': the film's choice if this phone has it, else a good guess
 export function pickVoice(voices, filmSettings, kind) {
@@ -99,7 +83,7 @@ let latest = 0;
 const silentVoices = new Set();
 const START_WITHIN = 1500; // ms
 
-export function speak({ text, voice, language, rate = 1, fromWord = 0, onWord = () => {}, onEnd = () => {}, onStatus = () => {} }) {
+export function speak({ text, voice, language, rate = 1, fromWord = 0, onWord = () => {}, onEnd = () => {} }) {
   if (!synth()) { onEnd(); return () => {}; }
   const words = String(text || '').split(/\s+/).filter(Boolean);
   const rest = words.slice(fromWord).join(' ');
@@ -115,23 +99,17 @@ export function speak({ text, voice, language, rate = 1, fromWord = 0, onWord = 
   const finish = () => { if (current()) { finished = true; onEnd(); } };
   let started = false;
   let retry = null; // stop() of the same line said again with the default voice
-  utterance.onstart = () => { started = true; if (current()) onStatus(`Speaking · ${voice?.name || 'default voice'}`); };
+  utterance.onstart = () => { started = true; };
   if (voice) {
     setTimeout(() => {
       if (started || !current()) return;
       silentVoices.add(voiceId(voice));
-      const why = `${voice.name} made no sound (not downloaded?): the phone's default voice instead`;
-      onStatus(why);
-      retry = speak({ text, voice: null, language, rate, fromWord, onWord, onEnd, onStatus: s => onStatus(s === 'Done' ? `Done · ${why}` : s) });
+      retry = speak({ text, voice: null, language, rate, fromWord, onWord, onEnd });
     }, START_WITHIN / rate);
   }
   utterance.onboundary = event => { started = true; if (current() && event.name !== 'sentence') onWord(fromWord + wordAtChar(starts, event.charIndex)); };
-  utterance.onend = () => { started = true; if (current()) onStatus('Done'); finish(); };
-  utterance.onerror = event => {
-    if (['interrupted', 'canceled'].includes(event?.error)) return;
-    if (current()) onStatus(`No sound: ${event?.error || 'error'}`);
-    finish();
-  };
+  utterance.onend = () => { started = true; finish(); };
+  utterance.onerror = event => { if (!['interrupted', 'canceled'].includes(event?.error)) finish(); };
   if (synth().speaking || synth().pending) synth().cancel();
   onWord(fromWord);
   synth().speak(utterance);
