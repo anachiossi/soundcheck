@@ -66,13 +66,19 @@ export function wordAtChar(starts, charIndex) {
 // "interrupted" error for a line that already ended — which made every sentence start twice.
 // So: only the latest line's signals count, each line ends once, and a cancelled line never "ends".
 let latest = 0;
+// A voice the phone lists but can't use (e.g. an Enhanced voice not downloaded) stays silent: if it
+// hasn't started after a moment, the line is said again with the phone's default voice, and that
+// voice is skipped from then on.
+const silentVoices = new Set();
+const START_WITHIN = 1500; // ms
 
-export function speak({ text, voice, language, rate = 1, fromWord = 0, onWord = () => {}, onEnd = () => {} }) {
+export function speak({ text, voice, language, rate = 1, fromWord = 0, onWord = () => {}, onEnd = () => {}, onStatus = () => {} }) {
   if (!synth()) { onEnd(); return () => {}; }
   const words = String(text || '').split(/\s+/).filter(Boolean);
   const rest = words.slice(fromWord).join(' ');
   const starts = wordStarts(rest);
   const utterance = new SpeechSynthesisUtterance(rest);
+  if (voice && silentVoices.has(voice.name)) voice = null;
   if (voice) utterance.voice = voice;
   utterance.lang = voice?.lang || language;
   utterance.rate = rate;
@@ -80,13 +86,29 @@ export function speak({ text, voice, language, rate = 1, fromWord = 0, onWord = 
   let finished = false;
   const current = () => mine === latest && !finished;
   const finish = () => { if (current()) { finished = true; onEnd(); } };
-  utterance.onboundary = event => { if (current() && event.name !== 'sentence') onWord(fromWord + wordAtChar(starts, event.charIndex)); };
-  utterance.onend = finish;
-  utterance.onerror = event => { if (!['interrupted', 'canceled'].includes(event?.error)) finish(); };
+  let started = false;
+  let retry = null; // stop() of the same line said again with the default voice
+  utterance.onstart = () => { started = true; if (current()) onStatus(`Speaking · ${voice?.name || 'default voice'}`); };
+  if (voice) {
+    setTimeout(() => {
+      if (started || !current()) return;
+      silentVoices.add(voice.name);
+      const why = `${voice.name} made no sound (not downloaded?): the phone's default voice instead`;
+      onStatus(why);
+      retry = speak({ text, voice: null, language, rate, fromWord, onWord, onEnd, onStatus: s => onStatus(s === 'Done' ? `Done · ${why}` : s) });
+    }, START_WITHIN / rate);
+  }
+  utterance.onboundary = event => { started = true; if (current() && event.name !== 'sentence') onWord(fromWord + wordAtChar(starts, event.charIndex)); };
+  utterance.onend = () => { started = true; if (current()) onStatus('Done'); finish(); };
+  utterance.onerror = event => {
+    if (['interrupted', 'canceled'].includes(event?.error)) return;
+    if (current()) onStatus(`No sound: ${event?.error || 'error'}`);
+    finish();
+  };
   if (synth().speaking || synth().pending) synth().cancel();
   onWord(fromWord);
   synth().speak(utterance);
-  return () => { if (mine === latest) { latest++; synth().cancel(); } };
+  return () => { if (retry) retry(); else if (mine === latest) { latest++; synth().cancel(); } };
 }
 
 export const stopSpeaking = () => synth()?.cancel();

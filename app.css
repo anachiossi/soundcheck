@@ -78,7 +78,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .btn--primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .btn--quiet { border-color: transparent; color: var(--muted); }
 .icon-btn { border: 0; background: none; font-size: 20px; padding: 6px 8px; border-radius: 8px; }
-.icon-btn:hover { background: rgba(0,0,0,.06); }
+@media (hover: hover) { .icon-btn:hover { background: rgba(0,0,0,.06); } }   /* not on phones: a tap left it grey, like a 3rd state */
 .icon-btn--remove { color: var(--danger); }
 .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 14px; }
 .toolbar--column { flex-direction: column; align-items: flex-start; }
@@ -237,7 +237,7 @@ button.badge { border: 0; font: inherit; font-size: 12px; cursor: pointer; }
 
 /* ---- 8. Kit editing ------------------------------------------------------ */
 button.kit-item { border: 0; background: none; padding: 4px; border-radius: 12px; text-align: left; font: inherit; }
-button.kit-item:hover { background: var(--soft); }
+@media (hover: hover) { button.kit-item:hover { background: var(--soft); } }
 .kit-grid--wide button.kit-item { flex-direction: column; align-items: stretch; }
 .kit-form { grid-column: 1 / -1; border: 2px solid var(--accent); border-radius: 12px; padding: 12px; }
 .item-form { display: flex; flex-direction: column; gap: 10px; }
@@ -367,6 +367,7 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
 /* Kit → Read aloud (parts/voice-settings.js) */
 .voices { display: flex; flex-direction: column; gap: 8px; margin: 6px 0; }
 .voice-row { display: flex; align-items: center; gap: 10px; }
+.voice-status { margin: 8px 0 0; font-weight: 600; }
 .voice-row > span { width: 64px; font-weight: 700; }
 .voice-row select { flex: 1; min-width: 0; font: inherit; font-size: 16px; padding: 8px 12px; border: 1px solid var(--line-strong);
   border-radius: 999px; background: var(--card); color: var(--ink); }

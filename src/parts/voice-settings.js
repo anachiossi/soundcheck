@@ -11,6 +11,7 @@ const SAMPLE = { it: 'Dai Maura, servila.', en: 'Come on, serve it.', fr: 'Allez
 
 export function VoiceSettings({ project }) {
   const [voices, setVoices] = useState([]);
+  const [status, setStatus] = useState(''); // what the voice did: speaking · done · no sound (why)
   useEffect(() => { voicesReady().then(setVoices); }, []);
   const chosen = filmVoices(project);
   const mine = voicesFor(voices, chosen.language);
@@ -26,7 +27,7 @@ export function VoiceSettings({ project }) {
           ${mine.map(v => html`<option key=${v.name} value=${v.name}>${v.name}</option>`)}
         </select>
         <button class="btn" type="button" disabled=${!current} aria-label=${`Hear the ${kind} voice`}
-                onClick=${() => speak({ text: sample, voice: current, language: chosen.language })}>▶</button>
+                onClick=${() => { setStatus('Starting…'); speak({ text: sample, voice: current, language: chosen.language, onStatus: setStatus }); }}>▶</button>
       </label>`;
   };
 
@@ -36,6 +37,8 @@ export function VoiceSettings({ project }) {
       : mine.length === 0 ? html`<p class="muted">No ${chosen.language} voices on this phone: add one in Settings → Accessibility → Spoken Content → Voices.</p>`
       : html`
         <div class="voices">${row('female', 'Female')}${row('male', 'Male')}</div>
+        ${status && html`<p class="voice-status">${status}</p>`}
         <p class="muted">For the most natural sound, download the Enhanced or Premium ${chosen.language} voices in
-          Settings → Accessibility → Spoken Content → Voices. Each character's voice: tap the character above.</p>`}`;
+          Settings → Accessibility → Spoken Content → Voices. Each character's voice: tap the character above.
+          No sound? Check the iPhone's silent switch and the volume.</p>`}`;
 }
