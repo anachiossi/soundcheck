@@ -38,7 +38,9 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   Test with a fake iPhone voice: `.shots/voice-ios.mjs`.
 - Cues is Speak Screen friendly (v62–63): only the dialogue is readable (the rest aria-hidden), and the
   following lines are there invisibly (.sr-only) so Speak Screen reads to the end of the scene.
-- iPhone gives web pages few voices (Ana: only Alice x2 while Emma Premium + Luca are downloaded).
+- iPhone gives web pages only ONE Italian voice (Alice · Standard, in Safari, Chrome and the home-screen app)
+  although Emma Premium + Luca are downloaded: no male voice in-app on iOS. Options: Speak Screen (Siri),
+  or cloud voices recorded per scene (offered to Ana, not decided).
 - Cues text priority (`cues-rules.js`): on-set edit (`lines/set/`) → newest sides → script;
   a newer paper after an edit is flagged, never overwrites it.
 - Schedule: finished days green, opens on today; conflicts badge opens a Keep mine / Use the other list.
