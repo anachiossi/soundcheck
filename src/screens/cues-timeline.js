@@ -191,16 +191,6 @@ export function CuesTimelineScreen({ state }) {
         : html`<div class="script"></div>`}
       <div class="timeline__player">
 
-      <div class="timeline__track" ref=${track} onPointerDown=${down} onPointerMove=${move} onPointerUp=${up} onPointerCancel=${up}>
-        <div class="timeline__blocks" style=${`transform: translateX(${cursorX - position}px)`}>
-          ${blocks.map(block => html`
-            <div key=${block.index} class=${'timeline__block' + (block === now ? ' timeline__block--now' : '')}
-                 style=${`left:${block.start}px;width:${block.width}px;background:${colourOf(block)};color:${textColourFor(colourOf(block))}`}>
-              ${block.name}${block.capped ? ' ⋯' : ''}</div>`)}
-        </div>
-        <div class="timeline__cursor" style=${`left:${cursorX}px`}><span>▼</span></div>
-      </div>
-
       <div class="auto-scroll timeline__controls">
         <button class="btn" onClick=${() => { stopVoice.current(); setTime(0); setRestart(r => r + 1); }} aria-label="Back to the start">⏮</button>
         <button class="btn btn--primary auto-scroll__play" aria-label=${playing ? 'Pause' : 'Play'}
@@ -209,6 +199,16 @@ export function CuesTimelineScreen({ state }) {
         <button class="btn auto-scroll__step" disabled=${speed === 0} onClick=${() => changeSpeed(-1)} aria-label="Slower">−</button>
         <span class="auto-scroll__speed">${SPEEDS[speed]}×</span>
         <button class="btn auto-scroll__step" disabled=${speed === SPEEDS.length - 1} onClick=${() => changeSpeed(1)} aria-label="Faster">+</button>
+      </div>
+
+      <div class="timeline__track" ref=${track} onPointerDown=${down} onPointerMove=${move} onPointerUp=${up} onPointerCancel=${up}>
+        <div class="timeline__blocks" style=${`transform: translateX(${cursorX - position}px)`}>
+          ${blocks.map(block => html`
+            <div key=${block.index} class=${'timeline__block' + (block === now ? ' timeline__block--now' : '')}
+                 style=${`left:${block.start}px;width:${block.width}px;background:${colourOf(block)};color:${textColourFor(colourOf(block))}`}>
+              ${block.name}${block.capped ? ' ⋯' : ''}</div>`)}
+        </div>
+        <div class="timeline__cursor" style=${`left:${cursorX}px`}><span>▼</span></div>
       </div>
       </div>
     </div>`;

@@ -1,11 +1,12 @@
 // scene-script.js — the whole scene as a script that scrolls by itself, like the lyrics in Spotify:
-// each line is a card (the name centred in capitals, the dialogue in the script font, left-aligned with
+// each line is a card (the name centred in capitals on a highlight of the character's colour, the dialogue in the script font, left-aligned with
 // an indent, in a centred column). Lines already said fade, the line being said turns black word by
 // word, the lines still to come are grey. It keeps the line being said near the top third; scroll it by
 // hand to look ahead or back (it waits a few seconds, then catches up); tap a line to jump there.
 // Used by: screens/cues-timeline.js (above the track, which is the play bar)
 
 import { html, useEffect, useRef } from '../../vendor/preact-htm.js';
+import { textColourFor } from '../colour.js';
 
 const WAIT_AFTER_TOUCH = 3000; // ms the script stays where the finger left it
 
@@ -34,7 +35,8 @@ export function SceneScript({ lines, current, saying, colourOf, onJump }) {
       ${lines.map((line, i) => html`
         <div key=${i} class=${'script-line' + (i < current ? ' script-line--said' : i === current ? ' script-line--now' : '')}
              role="button" onClick=${() => jump(i)}>
-          <p class="script-line__name"><span class="script-line__dot" style=${`background:${colourOf(line)}`}></span>${line.name}</p>
+          <p class="script-line__name"><span class="script-line__mark"
+             style=${`background:${colourOf(line)};color:${textColourFor(colourOf(line))}`}>${line.name}</span></p>
           <p class="script-line__text">${i === current
             ? String(line.text).split(/\s+/).filter(Boolean).map((word, w) => html`<span key=${w} class=${w <= saying ? 'said' : 'coming'}>${word}</span>${' '}`)
             : line.text}</p>
