@@ -5,7 +5,7 @@
 // and the PDFs of each day (ODG, sides) for reading offline.
 // Used by: state.js
 
-import { PROJECT_FORMAT } from '../model.js';
+import { PROJECT_FORMAT, exportName, localTodayIso } from '../model.js';
 
 const PREFIX = 'soundcheck:';
 const STORE = 'project';
@@ -94,5 +94,5 @@ export async function readProjectFile(file) {
 }
 
 export function projectFileName(project) {
-  return `${project.id}.soundcheck.json`;
+  return exportName(project, `backup_${localTodayIso()}.soundcheck.json`);
 }

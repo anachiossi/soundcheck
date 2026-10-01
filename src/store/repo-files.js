@@ -4,7 +4,7 @@
 // Used by: sync.js, tools/import-from-sheets.mjs
 //
 //   projects/<film-id>/
-//     film.json            { format, version, id, name }
+//     film.json            { format, version, id, name, tag }   tag: 'LBE', starts exported files' names
 //     characters.json      [{ id, name, actor, color, pref_tx, pref_lav_model, pref_lav_color, … }]
 //     transmitters.json    [{ id, model, color, connector, order }]
 //     lavaliers.json       [{ id, model, color, connector, attenuated, brand }]
@@ -45,6 +45,8 @@ export const IFB_FILES = { 'ifb/crew.json': 'crew', 'ifb/receivers.json': 'ifbRe
 // files kept under a name in the device's copy of the film (IFB and Gear lists)
 const NAMED_FILES = { ...IFB_FILES, ...GEAR_FILES };
 
+const filmFile = project => ({ format: FILM_FORMAT, version: 1, id: project.id, name: project.name, ...(project.tag ? { tag: project.tag } : {}) });
+
 export const presetFile = sceneId => `presets/${sceneId}.json`;
 
 function sceneFromPath(relativePath) {
@@ -84,7 +86,7 @@ function proposalFromPath(relativePath) {
 }
 
 export function projectToFiles(project) {
-  const files = { 'film.json': { format: FILM_FORMAT, version: 1, id: project.id, name: project.name } };
+  const files = { 'film.json': filmFile(project) };
   for (const key of LISTS) files[`${key}.json`] = project[key];
   files['scenes.json'] = project.scenes || {};
   if (project.settings) files['settings.json'] = project.settings;
@@ -126,7 +128,7 @@ export function fileContent(project, path) {
   if (pushFromPath(path)) return project.push?.[pushFromPath(path)];
   if (NAMED_FILES[path]) return project[NAMED_FILES[path]];
   const key = path.replace(/\.json$/, '');
-  if (key === 'film') return { format: FILM_FORMAT, version: 1, id: project.id, name: project.name };
+  if (key === 'film') return filmFile(project);
   return project[key];
 }
 
@@ -142,7 +144,7 @@ export function setFileContent(project, path, content) {
   else if (hoursFromPath(path)) project.hours = { ...project.hours, [hoursFromPath(path)]: content };
   else if (pushFromPath(path)) project.push = { ...project.push, [pushFromPath(path)]: content };
   else if (NAMED_FILES[path]) project[NAMED_FILES[path]] = content;
-  else if (key === 'film') project.name = content.name;
+  else if (key === 'film') Object.assign(project, { name: content.name, tag: content.tag || '' });
   else if (LISTS.includes(key) || key === 'scenes' || key === 'settings') project[key] = content;
 }
 

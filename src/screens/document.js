@@ -5,7 +5,8 @@
 // Used by: main.js (opened from the 📄 buttons in the Schedule)
 
 import { html, useEffect, useRef, useState } from '../../vendor/preact-htm.js';
-import { showScreen } from '../state.js';
+import { showScreen, getState } from '../state.js';
+import { exportName } from '../model.js';
 import { loadDocument } from '../store/local.js';
 import { shareFile } from '../export/share.js';
 
@@ -44,7 +45,7 @@ export function DocumentScreen({ state }) {
     return () => { cancelled = true; };
   }, [documentPath]);
 
-  const fileName = `${documentTitle}.pdf`.replace(/[^\w .#-]+/g, '_');
+  const fileName = exportName(getState().project, `${documentTitle}.pdf`);
   return html`
     <div class="document-bar">
       <button class="link back" onClick=${() => showScreen('schedule')}>‹ Back</button>

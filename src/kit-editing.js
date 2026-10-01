@@ -28,6 +28,17 @@ async function saveList(list, items, message) {
   syncNow();
 }
 
+// the film's tag (film.json): 'LBE' — capitals and digits, up to 6; it starts every exported file's name
+export async function saveTag(tag) {
+  const clean = String(tag || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+  if (!clean) return showMessage('error', 'The tag needs letters, e.g. LBE.');
+  const project = getState().project;
+  const outbox = { ...project.outbox, 'film.json': { saved_at: new Date().toISOString() } };
+  await saveAndShow({ ...project, tag: clean, outbox });
+  showMessage('ok', `Tag: ${clean}. Exported files now start with ${clean}_.`);
+  syncNow();
+}
+
 // the film's settings.json (e.g. the working day): only the given parts change
 export async function saveSettings(changes, message) {
   const project = getState().project;

@@ -5,7 +5,7 @@
 
 import { html, useState } from '../../vendor/preact-htm.js';
 import { ScenePill } from '../parts/scene-pill.js';
-import { allSceneIds } from '../model.js';
+import { allSceneIds, exportName } from '../model.js';
 import { addLookup, removeLookup, clearLookup } from '../state.js';
 import { SceneTable } from '../parts/scene-table.js';
 import { sceneSheet } from '../export/image.js';
@@ -39,5 +39,5 @@ export function ScenesScreen({ state }) {
     ${lookup.map(id => html`
       <${SceneTable} key=${id} project=${project} edit=${state.edit} sceneId=${id} showDay
         onRemove=${removeLookup}
-        onExport=${async sceneId => shareCanvas(await sceneSheet(project, [sceneId], `Scene ${sceneId}`), `scene-${sceneId}.png`)} />`)}`;
+        onExport=${async sceneId => shareCanvas(await sceneSheet(project, [sceneId], `Scene ${sceneId}`), exportName(project, `scene-${sceneId}.png`))} />`)}`;
 }

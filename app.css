@@ -596,3 +596,7 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
 .gear__cat small, .gear__title small { margin-left: 6px; }
 .export-choices { display: grid; gap: 8px; padding: 6px 0 4px; }
 .export-choices .btn { justify-content: flex-start; font-size: 17px; }
+.film-tag { font: inherit; font-size: 13px; font-weight: 800; letter-spacing: .06em; padding: 2px 8px; margin: 0 4px;
+  border: 1px dashed var(--line-strong); border-radius: 6px; background: var(--card); color: var(--ink); vertical-align: middle; }
+.film-tag-form { display: inline-flex; gap: 6px; vertical-align: middle; }
+.film-tag-form input { width: 6.5em; font: inherit; font-size: 15px; text-transform: uppercase; padding: 2px 8px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--card); color: var(--ink); }

@@ -7,7 +7,7 @@
 // Used by: main.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
-import { formatDate } from '../model.js';
+import { formatDate, exportName } from '../model.js';
 import { WORKDAYS, workdayOf, weekOf, filmWeeks, mondayOf, hm } from '../hours-rules.js';
 import { wrappedAt, setWorkday } from '../hours-editing.js';
 import { hoursImage } from '../export/hours-image.js';
@@ -41,9 +41,9 @@ export function HoursScreen({ state }) {
         </select>
       </label>
       <div class="hours__export">
-        <button class="btn" disabled=${days.length === 0} onClick=${async () => shareCanvas(await hoursImage(project, [{ monday, days }], title), `hours-${iso(monday)}.png`)}>
+        <button class="btn" disabled=${days.length === 0} onClick=${async () => shareCanvas(await hoursImage(project, [{ monday, days }], title), exportName(project, `hours_${iso(monday)}.png`))}>
           <${Icon} name="image" /> Week</button>
-        <button class="btn" onClick=${async () => shareCanvas(await hoursImage(project, filmWeeks(project), project.name), 'hours-film.png')}>
+        <button class="btn" onClick=${async () => shareCanvas(await hoursImage(project, filmWeeks(project), project.name), exportName(project, 'hours_whole-film.png'))}>
           <${Icon} name="image" /> Whole film</button>
       </div>
       ${days.length === 0 ? html`<p class="empty">No shooting this week.</p>` : html`

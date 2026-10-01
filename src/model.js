@@ -24,6 +24,18 @@
 export const PROJECT_FORMAT = 'soundcheck-project';
 
 // "2" < "10" < "10A" < "10B" < "11"  (the order a human expects)
+// The film's tag (film.json "tag", editable in Projects), e.g. 'LBE': it starts every exported file's
+// name. Without one: the initials ('La buona educazione' → 'LBE') or the first 3 letters ('Vigília' → 'VIG').
+export function tagOf(project) {
+  if (project?.tag) return project.tag;
+  const words = String(project?.name || 'soundcheck').normalize('NFD').replace(/[̀-ͯ]/g, '').split(/[^A-Za-z0-9]+/).filter(Boolean);
+  return (words.length > 1 ? words.map(w => w[0]).join('') : (words[0] || 'SC').slice(0, 3)).toUpperCase().slice(0, 5);
+}
+
+// 'day-10.png' → 'LBE_day-10.png'
+export const exportName = (project, name) => `${tagOf(project)}_${name}`
+  .replace(/\s*·\s*/g, '_').replace(/\s+/g, '-').replace(/[^\w.#()-]+/g, '_'); // 'Day 9 · ODG.pdf' → 'LBE_Day-9_ODG.pdf'
+
 export function naturalCompare(a, b) {
   return String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: 'base' });
 }

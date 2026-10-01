@@ -16,6 +16,8 @@ import { checkConnection } from '../store/github.js';
 import { Icon } from '../parts/icons.js';
 import { ThemeSwitch } from '../parts/theme-switch.js';
 import { cuesSummary } from '../cues-rules.js';
+import { tagOf } from '../model.js';
+import { saveTag } from '../kit-editing.js';
 
 export function ProjectsScreen({ state }) {
   const { project, projects, connection, films, online } = state;
@@ -67,12 +69,23 @@ function OpenFilm({ state }) {
     : sync.error ? `Last sync failed: ${sync.error}`
     : `✓ Up to date · data as of ${formatStamp(project.data_as_of)}`;
   return html`
-    <h2 class="section-title">${project.name} <small>open</small></h2>
+    <h2 class="section-title">${project.name} <${FilmTag} project=${project} /> <small>open</small></h2>
     <p class=${waiting || conflicts || sync.error ? 'warn-text' : 'muted'}>${status}</p>
     ${connection && html`
       <button class="btn" disabled=${!online || sync.running} onClick=${() => syncNow({ loud: true })}>↻ Sync now</button>
       ${!online && html`<small class="muted"> No signal: changes wait on this device.</small>`}`}
     <${FilmDocuments} project=${project} />`;
+}
+
+// the film's tag ('LBE'): tap to change it — every exported file starts with it
+function FilmTag({ project }) {
+  const [typing, setTyping] = useState(null);
+  if (typing !== null) {
+    return html`<form class="film-tag-form" onSubmit=${e => { e.preventDefault(); saveTag(typing); setTyping(null); }}>
+      <input value=${typing} onInput=${e => setTyping(e.target.value)} maxlength="6" aria-label="Film tag" autofocus />
+      <button class="btn btn--small btn--primary">Save</button></form>`;
+  }
+  return html`<button class="film-tag" onClick=${() => setTyping(tagOf(project))} title="The film's tag: exported files start with it">${tagOf(project)}</button>`;
 }
 
 // 📄 Script · 📄 PDL (when they are on the device) · ⏱ Hours

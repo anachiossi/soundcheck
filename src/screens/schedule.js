@@ -9,7 +9,7 @@
 // Used by: main.js
 
 import { html } from '../../vendor/preact-htm.js';
-import { shootingDays, weeks, unscheduledScenes, formatDate } from '../model.js';
+import { shootingDays, weeks, unscheduledScenes, formatDate, exportName } from '../model.js';
 import { setScheduleMode, pickDay, pickWeek, setState } from '../state.js';
 import { WeekBanner, DayBanner, SceneChips } from '../parts/banners.js';
 import { SceneTable } from '../parts/scene-table.js';
@@ -38,7 +38,7 @@ export function ScheduleScreen({ state }) {
 async function exportDays(project, dayNumbers, title, fileName) {
   setState({ busyText: 'Making images…' });
   try {
-    await shareCanvases(await scheduleImages(project, dayNumbers, title), fileName);
+    await shareCanvases(await scheduleImages(project, dayNumbers, title), exportName(project, fileName));
   } finally {
     setState({ busyText: null });
   }
@@ -47,7 +47,7 @@ async function exportDays(project, dayNumbers, title, fileName) {
 const scrollToScene = id => document.getElementById('scene-' + id)?.scrollIntoView({ behavior: 'smooth' });
 
 async function exportScene(project, sceneId) {
-  await shareCanvas(await sceneSheet(project, [sceneId], `Scene ${sceneId}`), `scene-${sceneId}.png`);
+  await shareCanvas(await sceneSheet(project, [sceneId], `Scene ${sceneId}`), exportName(project, `scene-${sceneId}.png`));
 }
 
 // 📄 ODG / 📄 Sides: only shown once that day's PDF is on this device.
@@ -73,7 +73,7 @@ function DayView({ project, edit, dayNumber }) {
     <${SceneChips} project=${project} sceneIds=${sceneIds} onPick=${scrollToScene} />
     <div class="toolbar">
       <${DocumentButtons} project=${project} day=${day.day} />
-      <button class="btn" onClick=${async () => shareCanvas(await sceneSheet(project, sceneIds, `Day ${day.day} · mic list`), `day-${day.day}.png`)}><${Icon} name="image" /> Export</button>
+      <button class="btn" onClick=${async () => shareCanvas(await sceneSheet(project, sceneIds, `Day ${day.day} · mic list`), exportName(project, `day-${day.day}.png`))}><${Icon} name="image" /> Export</button>
     </div>
     ${sceneIds.map(id => html`<${SceneTable} key=${id} project=${project} edit=${edit} sceneId=${id} onExport=${id => exportScene(project, id)} />`)}`;
 }
