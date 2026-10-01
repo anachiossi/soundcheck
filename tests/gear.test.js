@@ -2,7 +2,7 @@
 // and which edits go in the history (not moves, not ticks). Run: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { STARTING_CATEGORIES, topOf, contentsOf, truckOf, allInCategory, historyOf, tickCount } from '../src/gear-rules.js';
+import { STARTING_CATEGORIES, topOf, contentsOf, truckOf, allInCategory, historyOf, tickCount, containersOf } from '../src/gear-rules.js';
 import { fileContent, setFileContent } from '../src/store/repo-files.js';
 
 const film = {
@@ -45,4 +45,16 @@ test('gear files travel with the film', () => {
   const project = {};
   setFileContent(project, 'gear/items.json', film.gearItems);
   assert.equal(fileContent(project, 'gear/items.json').length, 5);
+});
+
+test('a case in a cart: its own volume or fixed to the cart; no loops', () => {
+  const carts = { ...film, gearItems: [
+    { id: 'k1', name: 'Main Karl', category: 'carts', volume: true },
+    { id: 'c1', name: 'Slate 1', category: 'cases', volume: true, inside: 'k1' },   // rides in the cart, own volume
+    { id: 'c2', name: 'Drawer', category: 'cases', volume: false, inside: 'k1' },   // fixed to the cart
+  ] };
+  assert.deepEqual(truckOf(carts).flatMap(g => g.items.map(i => i.id)), ['k1', 'c1']);
+  assert.deepEqual(contentsOf(carts, 'k1')[0].items.map(i => i.id), ['c1', 'c2']);
+  assert.deepEqual(allInCategory(carts, 'cases').map(i => i.id), ['c1', 'c2'], 'the Cases tab shows them too');
+  assert.deepEqual(containersOf(carts, 'k1').map(i => i.id), [], 'the cart cannot go into a case that is in it');
 });

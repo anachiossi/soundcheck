@@ -1,9 +1,10 @@
 // gear-image.js — the Gear lists as images, to confirm the equipment with the rental or production:
 //   'truck'       every volume by category, with its tick
-//   a category    its objects; each cart / case followed by what it holds, by sub-category
+//   a category    all its objects (wherever they are); each cart / case followed by what it holds,
+//                 by sub-category (a case in a cart: its contents one step further in)
 // Used by: screens/gear.js
 
-import { categoryById, truckOf, inCategory, allInCategory, contentsOf, colourOf, ticked, holds, itemById } from '../gear-rules.js';
+import { categoryById, truckOf, allInCategory, contentsOf, colourOf, ticked, holds, itemById } from '../gear-rules.js';
 import { newCanvas, box, text, font } from './draw.js';
 import { WIDTH, PAD, fontsReady, header, footer, FOOTER_HEIGHT, cropHeight } from './image.js';
 
@@ -47,12 +48,14 @@ function truckLines(project) {
 }
 
 function categoryLines(project, id) {
-  if (id === 'cables') return allInCategory(project, id).map(item => ({ item, level: 0, showInside: true }));
-  return inCategory(project, id).flatMap(item => [
-    { item, level: 0 },
-    ...(holds(project, item.id) ? contentsOf(project, item.id).flatMap(({ category, items }) => [
-      ...(category ? [{ heading: category.name, color: category.color, level: 1 }] : []),
-      ...items.map(inner => ({ item: inner, level: 1 })),
-    ]) : []),
+  return allInCategory(project, id).flatMap(item => [{ item, level: 0, showInside: true }, ...insideLines(project, item, 1)]);
+}
+
+// what a cart / case holds, by sub-category, and what those hold, one level further in each time
+function insideLines(project, item, level) {
+  if (!holds(project, item.id) || level > 3) return [];
+  return contentsOf(project, item.id).flatMap(({ category, items }) => [
+    ...(category ? [{ heading: category.name, color: category.color, level }] : []),
+    ...items.flatMap(inner => [{ item: inner, level }, ...insideLines(project, inner, level + 1)]),
   ]);
 }

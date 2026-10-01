@@ -3,7 +3,9 @@
 //     Other, + any new one); a category can have SUB-categories (e.g. Cases → Batteries) that group
 //     things inside a cart or a case. Each has a colour.
 //   • OBJECTS: { id, name, category, qty, inside (the cart / case it's in), volume (a piece that goes
-//     on the truck), note }. A cart or a case HOLDS the objects whose `inside` is its id.
+//     on the truck), note }. A cart or a case HOLDS the objects whose `inside` is its id. The two are
+//     separate: a case riding in a cart can still be its own volume; one fixed to the cart is not.
+//   • a tab lists all its objects, wherever they are ("in Main Karl")
 //   • the TRUCK is every volume, by category; TICKS (gear/checks.json) are day-to-day help only
 //   • HISTORY (gear/history.json): what entered, left (with why), or changed — not ticks, not moves
 // Files: gear/categories.json, items.json, history.json, checks.json (store/repo-files.js).
@@ -40,11 +42,6 @@ export const colourOf = (project, categoryId) => categoryById(project, categoryI
 export const activeItems = project => (project.gearItems || []).filter(item => !item.removed);
 export const itemById = (project, id) => activeItems(project).find(item => item.id === id) || null;
 
-// objects directly in a category tab: its own and its sub-categories', not inside anything
-export function inCategory(project, topId) {
-  return activeItems(project).filter(item => topOf(project, item.category)?.id === topId && !item.inside);
-}
-
 // what a cart / case holds, grouped by category: [{ category, items }]
 export function contentsOf(project, containerId) {
   const groups = new Map();
@@ -57,6 +54,9 @@ export function contentsOf(project, containerId) {
 }
 
 export const holds = (project, id) => activeItems(project).some(item => item.inside === id);
+
+// a cart or a case (or anything holding things): it opens to show its contents
+export const isContainer = (project, item) => holds(project, item.id) || ['carts', 'cases'].includes(topOf(project, item.category)?.id);
 
 // every object in a category tab, wherever it is (e.g. all the cables, also those in cases)
 export function allInCategory(project, topId) {
@@ -79,10 +79,16 @@ export function tickCount(project, items) {
   return { done: items.filter(item => ticked(project, item.id)).length, all: items.length };
 }
 
-// the containers an object can go into (carts and cases, and anything that holds things already)
+// the containers an object can go into (carts and cases, and anything that holds things already) —
+// never itself or something inside it (a cart can't go into a case that rides in that cart)
 export function containersOf(project, exceptId) {
-  return activeItems(project).filter(item => item.id !== exceptId
-    && (['carts', 'cases'].includes(topOf(project, item.category)?.id) || holds(project, item.id)));
+  const within = id => { // is `id` (somewhere) inside exceptId?
+    for (let item = itemById(project, id), steps = 0; item?.inside && steps < 20; item = itemById(project, item.inside), steps++) {
+      if (item.inside === exceptId) return true;
+    }
+    return false;
+  };
+  return activeItems(project).filter(item => item.id !== exceptId && !within(item.id) && isContainer(project, item));
 }
 
 // What a change to an object means for the history (moves and ticks: nothing).

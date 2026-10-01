@@ -10,8 +10,8 @@
 import { html, useState } from '../../vendor/preact-htm.js';
 import { formatStamp } from '../model.js';
 import {
-  topCategories, categoryById, subCategories, inCategory, allInCategory, contentsOf, truckOf, colourOf,
-  ticked, tickCount, holds, itemById, startsAsVolume,
+  topCategories, categoryById, subCategories, allInCategory, contentsOf, truckOf, colourOf,
+  ticked, tickCount, isContainer, itemById, startsAsVolume,
 } from '../gear-rules.js';
 import { toggleTick, clearTicks } from '../gear-editing.js';
 import { ObjectSheet, CategorySheet } from '../parts/gear-form.js';
@@ -27,14 +27,17 @@ function Tick({ project, item }) {
                       aria-label=${on ? `Untick ${item.name}` : `Tick ${item.name}`}>${on ? '✓' : ''}</button>`;
 }
 
+// "in Main Karl" (where an object is), when it is inside something and that isn't already clear
+const whereOf = (project, item, showInside) => (showInside && item.inside ? itemById(project, item.inside)?.name : '');
+
 // one object: tick · colour · name ×qty · where it is · ✎
 function Row({ project, item, edit, showInside }) {
-  const inside = showInside && item.inside && itemById(project, item.inside);
+  const inside = whereOf(project, item, showInside);
   return html`
     <div class="gear-row" style=${`--cat:${colourOf(project, item.category)}`}>
       <${Tick} project=${project} item=${item} />
       <span class="gear-row__name">${item.name}${qty(item)}
-        ${(inside || item.note) && html`<small class="muted">${inside ? `in ${inside.name}` : ''}${inside && item.note ? ' · ' : ''}${item.note || ''}</small>`}</span>
+        ${(inside || item.note) && html`<small class="muted">${inside ? `in ${inside}` : ''}${inside && item.note ? ' · ' : ''}${item.note || ''}</small>`}</span>
       <button class="icon-btn" onClick=${() => edit(item)} aria-label=${`Change ${item.name}`}><${Icon} name="edit" /></button>
     </div>`;
 }
@@ -75,8 +78,9 @@ function History({ project }) {
     </details>`;
 }
 
-// a cart / case: its header, and what it holds by sub-category, tickable
-function Container({ project, item, edit, addInside }) {
+// a cart / case: its header, and what it holds by sub-category, tickable (a case in a cart opens too)
+function Container({ project, item, edit, addInside, showInside }) {
+  const where = whereOf(project, item, showInside);
   const [open, setOpen] = useState(false);
   const groups = contentsOf(project, item.id);
   const inside = groups.flatMap(g => g.items);
@@ -86,14 +90,16 @@ function Container({ project, item, edit, addInside }) {
       <div class="gear-row gear-row--box">
         <${Tick} project=${project} item=${item} />
         <button class="gear-row__name gear-row__open" onClick=${() => setOpen(o => !o)}>
-          ${open ? '▾' : '▸'} ${item.name}${qty(item)} <small class="muted">${inside.length ? `${count.done}/${inside.length} checked` : 'empty'}</small></button>
+          ${open ? '▾' : '▸'} ${item.name}${qty(item)} <small class="muted">${where ? `in ${where} · ` : ''}${inside.length ? `${count.done}/${inside.length} checked` : 'empty'}</small></button>
         <button class="icon-btn" onClick=${() => edit(item)} aria-label=${`Change ${item.name}`}><${Icon} name="edit" /></button>
       </div>
       ${open && html`
         <div class="gear-box__inside">
           ${groups.map(({ category, items }) => html`
             ${category && html`<p class="gear__sub" style=${`--cat:${category.color}`}>${category.name}</p>`}
-            ${items.map(i => html`<${Row} key=${i.id} project=${project} item=${i} edit=${edit} />`)}`)}
+            ${items.map(i => (isContainer(project, i)
+              ? html`<${Container} key=${i.id} project=${project} item=${i} edit=${edit} addInside=${addInside} />`
+              : html`<${Row} key=${i.id} project=${project} item=${i} edit=${edit} />`))}`)}
           <div class="toolbar">
             <button class="btn btn--quiet" onClick=${() => addInside(item)}>+ Add inside</button>
             ${count.done > 0 && html`<button class="btn btn--quiet" onClick=${() => clearTicks(inside.map(i => i.id))}>Clear ticks</button>`}
@@ -109,8 +115,8 @@ export function GearCategoryScreen({ state }) {
   const [editingCat, setEditingCat] = useState(null); // a category (or a new sub-category)
   if (!category) return null;
   const subs = subCategories(project, category.id);
-  const isList = category.id === 'cables'; // cables: every one, wherever it is, with its quantity
-  const items = isList ? allInCategory(project, category.id) : inCategory(project, category.id);
+  const isList = category.id === 'cables'; // cables: the pieces are counted too
+  const items = allInCategory(project, category.id); // all of them, also those in a cart or case
   const newObject = extra => ({ category: category.id, volume: startsAsVolume(project, category.id), ...extra });
   const addInside = box => setEditing({ category: subs[0]?.id || category.id, inside: box.id, volume: false });
   const total = items.reduce((n, i) => n + (Number(i.qty) || 1), 0);
@@ -122,9 +128,9 @@ export function GearCategoryScreen({ state }) {
         <button class="icon-btn" onClick=${() => setEditingCat(category)} aria-label="Change the category"><${Icon} name="edit" /></button>
       </div>
       ${items.length === 0 && html`<p class="empty">Nothing in ${category.name} yet.</p>`}
-      ${items.map(item => (holds(project, item.id) || ['carts', 'cases'].includes(category.id)
-        ? html`<${Container} key=${item.id} project=${project} item=${item} edit=${setEditing} addInside=${addInside} />`
-        : html`<${Row} key=${item.id} project=${project} item=${item} edit=${setEditing} showInside=${isList} />`))}
+      ${items.map(item => (isContainer(project, item)
+        ? html`<${Container} key=${item.id} project=${project} item=${item} edit=${setEditing} addInside=${addInside} showInside />`
+        : html`<${Row} key=${item.id} project=${project} item=${item} edit=${setEditing} showInside />`))}
       <div class="toolbar">
         <button class="btn btn--primary" onClick=${() => setEditing(newObject())}>+ Add</button>
         <button class="btn" onClick=${() => setEditingCat({ parent: category.id, color: category.color })}>+ Sub-category</button>
