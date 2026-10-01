@@ -1,5 +1,6 @@
 // auto-scroll.js — the page scrolls down by itself (like a teleprompter), for the Scene Map.
-//   ▶ / ■ starts and stops; − / + change the speed (remembered on this device).
+//   ▶ / ■ starts and stops; − / + change the speed (remembered on this device): 0.25× steps up to 2×
+//   (1× = the old slowest speed, still too fast for Ana, 1 Oct), bigger steps above.
 //   Touch sensitive: a finger on the screen (or the mouse wheel) pauses it — drag back or
 //   forward as usual — and it carries on from there a moment after you let go.
 //   It stops by itself at the end of the page. The screen stays awake while it runs.
@@ -9,11 +10,13 @@
 
 import { html, useEffect, useRef, useState } from '../../vendor/preact-htm.js';
 
-const SPEEDS = [10, 15, 20, 30, 40, 55, 70, 90, 120]; // pixels per second
+const ONE_X = 10; // pixels per second at 1×
+const SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 3, 4, 5.5, 7, 9, 12]; // × ONE_X
+const START = 2; // 0.75×
 const RESUME_AFTER = 900; // ms after the finger lifts
 
 function loadSpeed() {
-  try { return Math.min(SPEEDS.length - 1, Math.max(0, Number(localStorage.getItem('sc_scroll_speed') ?? 3))); } catch { return 3; }
+  try { return Math.min(SPEEDS.length - 1, Math.max(0, Number(localStorage.getItem('sc_scroll_x') ?? START))); } catch { return START; }
 }
 
 export function AutoScroll() {
@@ -24,7 +27,7 @@ export function AutoScroll() {
 
   const changeSpeed = step => setSpeed(now => {
     const next = Math.min(SPEEDS.length - 1, Math.max(0, now + step));
-    try { localStorage.setItem('sc_scroll_speed', String(next)); } catch { /* fine */ }
+    try { localStorage.setItem('sc_scroll_x', String(next)); } catch { /* fine */ }
     return next;
   });
 
@@ -38,7 +41,7 @@ export function AutoScroll() {
       // the finger moved the page (or it is still gliding after a swipe): carry on from there
       if (held.current || Math.abs(window.scrollY - position) > 3) position = window.scrollY;
       if (!held.current) {
-        position += SPEEDS[speed] * seconds;
+        position += SPEEDS[speed] * ONE_X * seconds;
         window.scrollTo(0, position);
         if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) return setPlaying(false);
       }
@@ -90,7 +93,7 @@ export function AutoScroll() {
               aria-label=${playing ? 'Stop' : 'Scroll by itself'}>${playing ? '■' : '▶'}</button>
       <span class="auto-scroll__label">${playing ? 'scrolling' : 'auto-scroll'}</span>
       <button class="btn auto-scroll__step" disabled=${speed === 0} onClick=${() => changeSpeed(-1)} aria-label="Slower">−</button>
-      <span class="auto-scroll__speed">speed ${speed + 1}</span>
+      <span class="auto-scroll__speed">${SPEEDS[speed]}×</span>
       <button class="btn auto-scroll__step" disabled=${speed === SPEEDS.length - 1} onClick=${() => changeSpeed(1)} aria-label="Faster">+</button>
     </div>`;
 }
