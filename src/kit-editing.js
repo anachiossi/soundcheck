@@ -28,9 +28,7 @@ async function saveList(list, items, message) {
   syncNow();
 }
 
-// isNew: adding (the id must be new); otherwise replaces the item with the same id.
-// Empty fields are left out, so the files stay short.
-// the film's settings.json (e.g. the read-aloud voices): only the given parts change
+// the film's settings.json (e.g. the working day): only the given parts change
 export async function saveSettings(changes, message) {
   const project = getState().project;
   const outbox = { ...project.outbox, 'settings.json': { saved_at: new Date().toISOString() } };
@@ -39,6 +37,8 @@ export async function saveSettings(changes, message) {
   syncNow();
 }
 
+// isNew: adding (the id must be new); otherwise replaces the item with the same id.
+// Empty fields are left out, so the files stay short.
 export async function saveItem(list, item, isNew) {
   const project = getState().project;
   const clean = Object.fromEntries(Object.entries(item)

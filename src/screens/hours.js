@@ -1,0 +1,67 @@
+// hours.js — the Hours screen (tap the ⏱ in the top bar): one week of shooting days, Monday to Sunday,
+// for production: call and wrap of the ODG, the REAL wrap, hours worked and overtime, and the total.
+//   • ‹ › other weeks · tap a day's real wrap to type it (also for days already gone)
+//   • the film's working day (8h continuate…) decides where overtime starts (hours-rules.js)
+//   • Export → the week as an image, to send to production
+// Used by: main.js
+
+import { html, useState } from '../../vendor/preact-htm.js';
+import { formatDate } from '../model.js';
+import { WORKDAYS, workdayOf, weekOf, mondayOf, span } from '../hours-rules.js';
+import { wrappedAt, setWorkday } from '../hours-editing.js';
+import { hoursImage } from '../export/hours-image.js';
+import { shareCanvas } from '../export/share.js';
+import { Icon } from '../parts/icons.js';
+
+// 480 → '8h' · 95 → '1h 35m'
+export const hm = minutes => (minutes === null || minutes === undefined ? '' : span(minutes).replace(' 00m', ''));
+
+export function HoursScreen({ state }) {
+  const { project } = state;
+  const [monday, setMonday] = useState(() => mondayOf(new Date()));
+  const [editing, setEditing] = useState(null); // { day, time }
+  const days = weekOf(project, monday);
+  const kind = workdayOf(project);
+  const total = days.reduce((sum, d) => sum + (d.extra || 0), 0);
+  const move = weeks => setMonday(m => { const next = new Date(m); next.setDate(next.getDate() + 7 * weeks); return next; });
+  const sunday = new Date(monday); sunday.setDate(sunday.getDate() + 6);
+  const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const title = `${formatDate(iso(monday))} – ${formatDate(iso(sunday))}`;
+
+  return html`
+    <div class="hours">
+      <div class="hours__week">
+        <button class="btn" onClick=${() => move(-1)} aria-label="Week before">‹</button>
+        <b>${title}</b>
+        <button class="btn" onClick=${() => move(1)} aria-label="Week after">›</button>
+      </div>
+      <label class="hours__kind">Working day
+        <select value=${kind || ''} onChange=${e => setWorkday(e.target.value)}>
+          ${!kind && html`<option value="">choose…</option>`}
+          ${Object.entries(WORKDAYS).map(([id, w]) => html`<option key=${id} value=${id}>${w.label}</option>`)}
+        </select>
+      </label>
+      ${days.length === 0 ? html`<p class="empty">No shooting this week.</p>` : html`
+        <table class="hours__table">
+          <thead><tr><th>Day</th><th>Call</th><th>ODG wrap</th><th>Wrap</th><th>Worked</th><th>Extra</th></tr></thead>
+          <tbody>
+            ${days.map(d => html`
+              <tr key=${d.day}>
+                <td><b>D${d.day}</b> <small>${formatDate(d.date, { weekday: true })}</small></td>
+                <td>${d.call || '—'}</td>
+                <td>${d.wrap || '—'}</td>
+                <td>${editing?.day === d.day ? html`
+                  <input type="time" value=${editing.time} onInput=${e => setEditing({ day: d.day, time: e.target.value })}
+                         onBlur=${() => { if (editing.time) wrappedAt(d.day, editing.time); setEditing(null); }} aria-label="Real wrap" autofocus />`
+                  : html`<button class="hours__wrap" onClick=${() => setEditing({ day: d.day, time: d.real_wrap || d.wrap || '' })}>
+                      ${d.real_wrap || (d.late ? 'still on' : '?')}</button>`}</td>
+                <td>${hm(d.worked)}</td>
+                <td class=${d.extra ? 'hours__extra' : ''}>${d.extra ? `+${hm(d.extra)}` : d.extra === 0 ? '—' : ''}</td>
+              </tr>`)}
+          </tbody>
+          <tfoot><tr><td colspan="5">Overtime this week</td><td class=${total ? 'hours__extra' : ''}>${total ? `+${hm(total)}` : '—'}</td></tr></tfoot>
+        </table>
+        <button class="btn" onClick=${async () => shareCanvas(await hoursImage(project, days, title), `hours-${iso(monday)}.png`)}>
+          <${Icon} name="image" /> Export</button>`}
+    </div>`;
+}

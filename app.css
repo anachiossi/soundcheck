@@ -539,3 +539,25 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
 
 /* read by the iPhone (Speak Screen), not shown */
 .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* the end of the shooting day (parts/wrap-clock.js, screens/hours.js) */
+.wrap-question { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 0 0 10px; padding: 12px 14px;
+  border-radius: 14px; background: var(--card); border: 2px solid var(--ink); }
+.wrap-question b { font-size: 17px; }
+.wrap-question span { color: var(--muted); flex: 1; }
+.wrap-question input { font: inherit; font-size: 18px; padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: 10px;
+  background: var(--card); color: var(--ink); }
+.hours__week { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.hours__week b { font-size: 18px; }
+.hours__kind { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; font-weight: 600; }
+.hours__kind select { font: inherit; padding: 6px 12px; border: 1px solid var(--line-strong); border-radius: 999px; background: var(--card); color: var(--ink); }
+.hours__table { width: 100%; border-collapse: collapse; margin-bottom: 14px; font-variant-numeric: tabular-nums; }
+.hours__table th { font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--muted); text-align: center; padding: 6px 2px; }
+.hours__table th:first-child, .hours__table td:first-child { text-align: left; }
+.hours__table td { text-align: center; padding: 8px 2px; border-top: 1px solid var(--line); }
+.hours__table td small { color: var(--muted); display: block; }
+.hours__table tfoot td { font-weight: 800; }
+.hours__extra { color: #c2410c; font-weight: 800; }
+.hours__wrap { font: inherit; font-weight: 700; background: none; border: 1px dashed var(--line-strong); border-radius: 8px; padding: 4px 8px; color: var(--ink); }
+.hours__table input { font: inherit; width: 100%; max-width: 110px; }
+

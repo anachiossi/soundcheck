@@ -23,6 +23,8 @@ import { IfbListScreen } from './screens/ifb-list.js';
 import { IfbCrewScreen } from './screens/ifb-crew.js';
 import { IfbKitScreen } from './screens/ifb-kit.js';
 import { IfbPicker } from './parts/ifb-picker.js';
+import { HoursScreen } from './screens/hours.js';
+import { WrapBadge, WrapQuestion } from './parts/wrap-clock.js';
 import { Icon } from './parts/icons.js';
 import { EmailBadge } from './parts/email-robot.js';
 import { ConflictBadge } from './parts/conflicts.js';
@@ -90,6 +92,7 @@ function App() {
   const tabs = TABS[state.department] || TABS.mics;
   const Screen = current === 'proposal' ? ProposalScreen
     : current === 'document' ? DocumentScreen
+    : current === 'hours' ? HoursScreen
     : current === 'cues-map' ? CuesMapScreen
     : current === 'cues-timeline' ? CuesTimelineScreen
     : (tabs.find(([id]) => id === current) || tabs[0])[2];
@@ -99,7 +102,7 @@ function App() {
       <div class="topbar__title">
         <span class="topbar__film">${project ? project.name : 'soundcheck'}</span>
       </div>
-      <div class="topbar__status"><${SyncBadge} state=${state} /> <${EmailBadge} state=${state} /></div>
+      <div class="topbar__status"><${SyncBadge} state=${state} /> <${EmailBadge} state=${state} /> <${WrapBadge} project=${project} /></div>
       ${project && html`<${DepartmentSwitch} department=${state.department} />`}
     </header>
     <nav class="tabs">
@@ -109,6 +112,7 @@ function App() {
     </nav>
     ${message && html`
       <div class=${'message message--' + message.kind} onClick=${clearMessage}>${message.text} <span>✕</span></div>`}
+    ${project && html`<${WrapQuestion} project=${project} />`}
     ${project && !['proposal', 'document'].includes(current) && html`<${ProposalBanner} project=${project} />`}
     <main class="page"><${Screen} state=${state} /></main>
     <footer class="footer">© 2025–2026 Ana Chiossi · soundcheck<${AppVersion} /></footer>
