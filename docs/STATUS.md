@@ -1,10 +1,18 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-09-30 · live version **v64** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-09-30 · live version **v65** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
 `2026-09-29_soundcheck_handoff.md`.
+
+## Films
+- **La buona educazione** (LBE) — the main film, 30 days, email robot on. Always comes first.
+- **Vigília** — short, Italian weekend 3–4 Oct 2026, built by hand (no PDL/ODG):
+  `D:\script_read_claude\projectsigilia\workuild_vigilia.py`. No email robot (no inbox.json).
+  Its script reader options are in its own settings.json (`script_reader`: watermarks, unnumbered_scenes).
+- Rule (Ana): reader/parser configuration lives in the film's data; never change another film's results.
+  Before touching a reader, save LBE's readings and compare after (script + every sides PDF).
 
 ## The two repos
 | | Where | What |

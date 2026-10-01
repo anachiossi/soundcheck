@@ -68,6 +68,9 @@ Earlier definitions:
   lav marked attenuated?
 
 ### Reader profiles (the scrapers' "adaptation" as data)
+First real case (Vigília, Oct 2026): `settings.json` → `"script_reader": { "watermarks": true,
+"unnumbered_scenes": true }`, read by `pipeline/cue_lines.py` and passed to `read_lines.py`; off by
+default, so LBE reads exactly as before.
 Per film: language (`it`), document words ("STRALCI" = sides, "SCALETTA", "PERSONALE AGGIUNTO" =
 daily hires), ODG layout (where cast and crew are), date formats, email search / subject tag.
 Today these are hard-coded for LBE in `pipeline/` and in one-off `work/` scripts → they become the
