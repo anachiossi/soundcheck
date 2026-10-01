@@ -24,6 +24,7 @@ import { IfbCrewScreen } from './screens/ifb-crew.js';
 import { IfbKitScreen } from './screens/ifb-kit.js';
 import { IfbPicker } from './parts/ifb-picker.js';
 import { HoursScreen } from './screens/hours.js';
+import { HelpScreen } from './screens/help.js';
 import { WrapBadge, WrapQuestion } from './parts/wrap-clock.js';
 import { Icon } from './parts/icons.js';
 import { EmailBadge } from './parts/email-robot.js';
@@ -93,6 +94,7 @@ function App() {
   const Screen = current === 'proposal' ? ProposalScreen
     : current === 'document' ? DocumentScreen
     : current === 'hours' ? HoursScreen
+    : current === 'help' ? HelpScreen
     : current === 'cues-map' ? CuesMapScreen
     : current === 'cues-timeline' ? CuesTimelineScreen
     : (tabs.find(([id]) => id === current) || tabs[0])[2];

@@ -3,12 +3,13 @@
 // • Films: the ones in the repo (tap to download) and the ones on this device.
 // • The open film: sync status, "Sync now", backup file.
 // • Screen: Auto / Light / Dark (parts/theme-switch.js).
+// • ? Help → the Help page (screens/help.js): offline use, wrap alerts, hearing the lines…
 // Each film has its own database on the device; old films are kept.
 // Used by: main.js
 
 import { html, useState, useEffect } from '../../vendor/preact-htm.js';
 import { formatStamp } from '../model.js';
-import { openProject, importProjectFile, downloadProjectFile, saveConnection, forgetConnection, showMessage } from '../state.js';
+import { openProject, importProjectFile, downloadProjectFile, saveConnection, forgetConnection, showMessage, setState } from '../state.js';
 import { syncNow, downloadFilm, loadFilmList } from '../sync.js';
 import { checkConnection } from '../store/github.js';
 import { Icon } from '../parts/icons.js';
@@ -40,7 +41,7 @@ export function ProjectsScreen({ state }) {
 
     ${connection && html`
       <p class="muted connection">Connected to ${connection.owner}/${connection.repo}${connection.branch !== 'main' ? ` (${connection.branch})` : ''}
-        as <b>${connection.device}</b>. <button class="link" onClick=${forgetConnection}>Disconnect</button></p>`}
+        ${' '}as <b>${connection.device}</b>. <button class="link" onClick=${forgetConnection}>Disconnect</button></p>`}
 
     <details class="more"><summary>Backup files</summary>
       ${project && html`<button class="btn" onClick=${downloadProjectFile}><${Icon} name="download" /> Save backup file of ${project.name}</button>`}
@@ -51,12 +52,7 @@ export function ProjectsScreen({ state }) {
 
     <${ThemeSwitch} />
 
-    <h2 class="section-title">Use it offline</h2>
-    <ol class="help">
-      <li>iPhone/iPad: open this page in Safari → Share → <b>Add to Home Screen</b>, and use the icon from then on.</li>
-      <li>Inside the Home Screen app, connect and download the film (it keeps its own storage, separate from Safari).</li>
-      <li>Check it opens in flight mode ✈. Changes made offline upload by themselves when signal returns.</li>
-    </ol>`;
+    <button class="btn help-link" onClick=${() => setState({ screen: 'help' })}>? Help</button>`;
 }
 
 function OpenFilm({ state }) {

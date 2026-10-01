@@ -14,6 +14,5 @@ export function ThemeSwitch() {
     <div class="segmented">
       ${CHOICES.map(([value, label]) => html`
         <button key=${value} class=${choice === value ? 'on' : ''} onClick=${() => choose(value)}>${label}</button>`)}
-    </div>
-    <p class="muted">Auto follows the phone's own light / dark setting. Dark is easier on the eyes on night sets.</p>`;
+    </div>`;
 }

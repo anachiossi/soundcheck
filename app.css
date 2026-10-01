@@ -543,7 +543,7 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
 /* the end of the shooting day (parts/wrap-clock.js, screens/hours.js) */
 .wrap-question { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 0 0 10px; padding: 12px 14px;
   border-radius: 14px; background: var(--card); border: 2px solid var(--ink); }
-.wrap-question b { font-size: 17px; }
+.wrap-question b { font-size: 17px; flex: 1 1 100%; }   /* the question on its own line, then detail + buttons */
 .wrap-question span { color: var(--muted); flex: 1; }
 .wrap-question input { font: inherit; font-size: 18px; padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: 10px;
   background: var(--card); color: var(--ink); }
@@ -562,3 +562,5 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
 .hours__table input { font: inherit; width: 100%; max-width: 110px; }
 .hours__alerts { margin-top: 18px; }
 .hours__export { display: flex; gap: 8px; }
+.help-link { display: block; margin-top: 18px; }
+.help-page .section-title { margin-top: 22px; }
