@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-09-30 · live version **v65** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-09-30 · live version **v66** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
@@ -44,6 +44,7 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   start (asked at each line), no word positions (cursor paced by itself, waits at the line end);
   v60: a listed-but-silent voice falls back to the default one, Kit ▶ shows what the voice did. No Siri voices (not given to web pages).
   Test with a fake iPhone voice: `.shots/voice-ios.mjs`.
+- v66: 0.8 s silence between lines in 🔊 (LINE_PAUSE); Speak Screen hears "Prince John." before each line.
 - Cues is Speak Screen friendly (v62–63): only the dialogue is readable (the rest aria-hidden), and the
   following lines are there invisibly (.sr-only) so Speak Screen reads to the end of the scene.
 - iPhone gives web pages only ONE Italian voice (Alice · Standard, in Safari, Chrome and the home-screen app)
