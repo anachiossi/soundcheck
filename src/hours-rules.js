@@ -144,8 +144,10 @@ export function wakePlan(project, day) {
     leaveTo: clock(meet - commute.travel_min), wake: clock(wake), sleep: clock(wake - commute.sleep_hours * 60) };
 }
 
-// the next shooting day after today (tomorrow, or Monday after a weekend)
+// the next shooting day whose call is still ahead: later today (after midnight, the day you are about
+// to wake up for — Ana, 00:15), tomorrow, or Monday after a weekend
 export function nextShootingDay(project, now = new Date()) {
-  const today = clockOf(now).date;
-  return shootingDays(project).filter(d => d.date > today).sort((a, b) => a.date.localeCompare(b.date))[0] || null;
+  const { date: today, minute } = clockOf(now);
+  const ahead = d => d.date > today || (d.date === today && (minutesOf(d.call) ?? 0) > minute);
+  return shootingDays(project).filter(ahead).sort((a, b) => a.date.localeCompare(b.date))[0] || null;
 }

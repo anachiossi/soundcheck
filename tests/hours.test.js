@@ -73,4 +73,6 @@ test('the night before: meeting, leave window, wake, sleep (Ana\'s calculator)',
   assert.equal(wakePlan(project, { day: 1, call: '03:00' }).wake, '00:00');
   assert.equal(wakePlan({ settings: {} }, { call: '09:00' }), null, 'no commute settings: no plan');
   assert.equal(nextShootingDay(project, at('2026-09-30', '20:00')).day, 9);
+  assert.equal(nextShootingDay(project, at('2026-10-01', '00:15')).day, 9, 'after midnight: the day you wake up for');
+  assert.equal(nextShootingDay(project, at('2026-10-01', '12:00')), null, 'after its call: the next one');
 });
