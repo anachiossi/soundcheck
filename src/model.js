@@ -33,10 +33,10 @@ export function tagOf(project) {
 }
 
 // 'day-10.png' → 'LBE_day-10.png'
-// pieces of exported files' names, the way production writes them (ODG #6, STRALCI DAY #7, 28.09.26),
-// numbers with two digits so the files sort in order: 'DAY09', 'WEEK02', '02.10.26'
-export const dayTag = day => `DAY${String(day).padStart(2, '0')}`;
-export const weekTag = week => `WEEK${String(week).padStart(2, '0')}`;
+// Exported files are named TAG_what_when (Ana): LBE_mics_D10_02.10.26.png. The pieces: 'D09', 'W02'
+// (two digits, so the files sort in order) and dates the way production writes them, '02.10.26'.
+export const dayTag = day => `D${String(day).padStart(2, '0')}`;
+export const weekTag = week => `W${String(week).padStart(2, '0')}`;
 export const shortDate = iso => (iso ? `${iso.slice(8, 10)}.${iso.slice(5, 7)}.${iso.slice(2, 4)}` : '');
 
 export const exportName = (project, name) => `${tagOf(project)}_${name}`

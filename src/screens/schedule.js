@@ -35,10 +35,10 @@ export function ScheduleScreen({ state }) {
 }
 
 // Long images can take a few seconds: show "Making images…" meanwhile.
-// 'DAY10_sc14fin_mics.png' (the scene's shooting day, when it has one)
+// 'mics-sc14fin_D10_02.10.26.png' (with the scene's shooting day, when it has one)
 export const sceneFileName = (project, sceneId) => {
-  const day = scheduleFor(project, sceneId)?.day;
-  return `${day ? `${dayTag(day)}_` : ''}sc${sceneId}_mics.png`;
+  const row = scheduleFor(project, sceneId);
+  return `mics-sc${sceneId}${row ? `_${dayTag(row.day)}_${shortDate(row.date)}` : ''}.png`;
 };
 
 async function exportDays(project, dayNumbers, title, fileName) {
@@ -63,7 +63,7 @@ function DocumentButtons({ project, day }) {
     const path = `${project.folder}/docs/day-${day}/${file}.pdf`;
     if (!project.documents?.[path]) return null;
     return html`<button class="btn btn--doc" key=${file}
-      onClick=${() => setState({ screen: 'document', documentPath: path, documentTitle: `${label} · Day ${day}`, documentFile: `${dayTag(day)}_${label}.pdf` })}><${Icon} name="document" /> ${label}</button>`;
+      onClick=${() => setState({ screen: 'document', documentPath: path, documentTitle: `${label} · Day ${day}`, documentFile: `${label === 'Sides' ? 'sides' : label}_${dayTag(day)}_${shortDate(shootingDays(project).find(d => d.day === day)?.date)}.pdf` })}><${Icon} name="document" /> ${label}</button>`;
   });
 }
 
@@ -79,7 +79,7 @@ function DayView({ project, edit, dayNumber }) {
     <${SceneChips} project=${project} sceneIds=${sceneIds} onPick=${scrollToScene} />
     <div class="toolbar">
       <${DocumentButtons} project=${project} day=${day.day} />
-      <button class="btn" onClick=${async () => shareCanvas(await sceneSheet(project, sceneIds, `Day ${day.day} · mic list`), exportName(project, `${dayTag(day.day)}_${shortDate(day.date)}_sc${sceneIds.join('-')}_mics.png`))}><${Icon} name="image" /> Export</button>
+      <button class="btn" onClick=${async () => shareCanvas(await sceneSheet(project, sceneIds, `Day ${day.day} · mic list`), exportName(project, `mics_${dayTag(day.day)}_${shortDate(day.date)}.png`))}><${Icon} name="image" /> Export</button>
     </div>
     ${sceneIds.map(id => html`<${SceneTable} key=${id} project=${project} edit=${edit} sceneId=${id} onExport=${id => exportScene(project, id)} />`)}`;
 }
@@ -94,7 +94,7 @@ function WeekView({ project, edit, weekNumber }) {
         <button key=${w.week} class=${'chip' + (w.week === week.week ? ' chip--on' : '')} onClick=${() => pickWeek(w.week)}>Week ${w.week}</button>`)}
     </div>
     <div class="toolbar">
-      <button class="btn" onClick=${() => exportDays(project, week.days.map(d => d.day), `Week ${week.week} · mic list`, `${weekTag(week.week)}_${shortDate(week.days[0]?.date)}_mics.png`)}><${Icon} name="image" /> Week image</button>
+      <button class="btn" onClick=${() => exportDays(project, week.days.map(d => d.day), `Week ${week.week} · mic list`, `mics_${weekTag(week.week)}_${shortDate(week.days[0]?.date)}.png`)}><${Icon} name="image" /> Week image</button>
     </div>
     <${WeekBanner} week=${week} />
     ${week.days.map(day => html`
@@ -111,7 +111,7 @@ function AllView({ project }) {
   return html`
     <p class="summary"><b>${days} shooting days</b> · ${all.length} weeks · ${Object.keys(project.presets).length} presets</p>
     <div class="toolbar">
-      <button class="btn" onClick=${() => exportDays(project, shootingDays(project).map(d => d.day), `${project.name} · all film`, 'all-film_mics.png')}><${Icon} name="image" /> All film image</button>
+      <button class="btn" onClick=${() => exportDays(project, shootingDays(project).map(d => d.day), `${project.name} · all film`, 'mics_all-film.png')}><${Icon} name="image" /> All film image</button>
     </div>
     ${all.map(week => html`
       <div key=${week.week}>

@@ -155,7 +155,7 @@ function ExportButton({ project, what, title, disabled }) {
   const copy = async () => {
     const text = gearText(project, what);
     try { await navigator.clipboard.writeText(text); showMessage('ok', `${title} copied as text: paste it anywhere.`); }
-    catch { await shareFile(new Blob([text], { type: 'text/plain' }), exportName(project, `gear_${name}_${shortDate(localTodayIso())}.txt`)); }
+    catch { await shareFile(new Blob([text], { type: 'text/plain' }), exportName(project, `gear-${name}_${shortDate(localTodayIso())}.txt`)); }
     setOpen(false);
   };
   return html`
@@ -166,7 +166,7 @@ function ExportButton({ project, what, title, disabled }) {
         <header class="sheet__head"><b>Export ${title}</b>
           <button class="icon-btn" onClick=${() => setOpen(false)} aria-label="Close"><${Icon} name="close" /></button></header>
         <div class="export-choices">
-          <button class="btn" onClick=${async () => { setOpen(false); shareCanvas(await gearImage(project, what), exportName(project, `gear_${name}_${shortDate(localTodayIso())}.png`)); }}>🖼 Image</button>
+          <button class="btn" onClick=${async () => { setOpen(false); shareCanvas(await gearImage(project, what), exportName(project, `gear-${name}_${shortDate(localTodayIso())}.png`)); }}>🖼 Image</button>
           <button class="btn" onClick=${copy}>📋 Copy as text</button>
           <button class="btn" onClick=${() => { setOpen(false); shareFile(xlsxBlob(gearSheets(project)), exportName(project, `gear_${shortDate(localTodayIso())}.xlsx`)); }}>📊 Excel · all the gear</button>
         </div>
