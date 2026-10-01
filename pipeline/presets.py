@@ -133,8 +133,13 @@ def day_plan(film, settings, scene_ids):
     return {cid: (tx[cid], lav[cid]) for cid in people}, ("small" if small else "big"), notes
 
 
+def by_tx(rows):
+    """Rows in TX order, smallest first (Ana, 1 Oct); the people with no TX after, as they were."""
+    return sorted(rows, key=lambda r: (not r.get("tx_id"), natural(r.get("tx_id") or "")))
+
+
 def new_rows(film, scene_id, plan):
-    """The scene's rows with the day's TX and lav (same people, same order, same speaks)."""
+    """The scene's rows with the day's TX and lav (same people, same speaks), in TX order."""
     rows = []
     for row in film["presets"][scene_id]["rows"]:
         cid = str(row["char_id"])
@@ -142,7 +147,7 @@ def new_rows(film, scene_id, plan):
         if not gets_mic(film, scene_id, row):
             tx_id, lav_id = "", ""
         rows.append({**row, "tx_id": tx_id, "lav_id": lav_id})
-    return rows
+    return by_tx(rows)
 
 
 def check_scene(film, scene_id):
