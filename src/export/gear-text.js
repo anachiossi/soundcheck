@@ -65,18 +65,22 @@ function pathOf(project, item) {
   return names.join(' / ');
 }
 
+const COLOUR_NAMES = { '#111827': 'black', '#6b7280': 'grey', '#cbd5e1': 'silver', '#ffffff': 'white', '#facc15': 'yellow',
+  '#f97316': 'orange', '#dc2626': 'red', '#2563eb': 'blue', '#16a34a': 'green' };
+const colourName = hex => (hex ? COLOUR_NAMES[String(hex).toLowerCase()] || hex : '');
+
 export function gearSheets(project) {
   const categories = new Map(categoriesOf(project).map(c => [c.id, c]));
   const topName = id => { let c = categories.get(id); while (c?.parent) c = categories.get(c.parent); return c?.name || id || ''; };
   const subName = id => (categories.get(id)?.parent ? categories.get(id).name : '');
   const day = iso => (iso ? String(iso).slice(0, 10) : '');
   const items = (project.gearItems || []).filter(i => !i.removed);
-  const rows = items.map(item => [topName(item.category), subName(item.category), pathOf(project, item), item.name, Number(item.qty) || 1,
-    item.volume ? 'yes' : '', ticked(project, item.id) ? '✓' : '', item.note || '', day(item.added)])
+  const rows = items.map(item => [topName(item.category), subName(item.category), pathOf(project, item), item.name, colourName(item.color),
+    Number(item.qty) || 1, item.volume ? 'yes' : '', ticked(project, item.id) ? '✓' : '', item.note || '', day(item.added)])
     .sort((a, b) => `${a[0]}|${a[2]}|${a[3]}`.localeCompare(`${b[0]}|${b[2]}|${b[3]}`));
   const history = [...(project.gearHistory || [])].map(e => [day(e.at), { added: 'in', removed: 'out', changed: 'changed' }[e.what] || e.what, e.name, e.note || '']);
   return [
-    { name: 'Gear', rows: [['Category', 'Sub-category', 'Inside', 'Name', 'Qty', 'Truck volume', 'Ticked', 'Note', 'Added'], ...rows] },
+    { name: 'Gear', rows: [['Category', 'Sub-category', 'Inside', 'Name', 'Colour', 'Qty', 'Truck volume', 'Ticked', 'Note', 'Added'], ...rows] },
     { name: 'History', rows: [['Date', 'What', 'Name', 'Why / what changed'], ...history] },
   ];
 }

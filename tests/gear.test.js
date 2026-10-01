@@ -2,7 +2,7 @@
 // and which edits go in the history (not moves, not ticks). Run: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { STARTING_CATEGORIES, topOf, contentsOf, truckOf, allInCategory, historyOf, tickCount, containersOf } from '../src/gear-rules.js';
+import { STARTING_CATEGORIES, topOf, contentsOf, truckOf, allInCategory, historyOf, tickCount, containersOf, isContainer } from '../src/gear-rules.js';
 import { fileContent, setFileContent } from '../src/store/repo-files.js';
 
 const film = {
@@ -57,4 +57,10 @@ test('a case in a cart: its own volume or fixed to the cart; no loops', () => {
   assert.deepEqual(contentsOf(carts, 'k1')[0].items.map(i => i.id), ['c1', 'c2']);
   assert.deepEqual(allInCategory(carts, 'cases').map(i => i.id), ['c1', 'c2'], 'the Cases tab shows them too');
   assert.deepEqual(containersOf(carts, 'k1').map(i => i.id), [], 'the cart cannot go into a case that is in it');
+});
+
+test('batteries in a case are contents, not a container', () => {
+  assert.equal(isContainer(film, film.gearItems[0]), true, 'the Pelican');
+  assert.equal(isContainer(film, film.gearItems[1]), false, 'AA (Cases → Batteries)');
+  assert.deepEqual(containersOf(film, 'g4').map(i => i.id), ['g1'], 'XLR 30m can go into the Pelican, not into the AA');
 });

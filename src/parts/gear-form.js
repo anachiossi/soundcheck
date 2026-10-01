@@ -1,11 +1,12 @@
 // gear-form.js — the sheets to add or change an object or a category of the Gear department.
-//   Object: name · quantity · category (or one of its sub-categories) · inside which cart / case ·
+//   Object: name · its real colour · quantity · category (or one of its sub-categories) · inside which cart / case ·
 //   goes on the truck as a volume · note. "Remove" asks why (optional) — it goes in the history.
 //   Category: name · colour (a sub-category belongs to a tab's category).
 // Used by: screens/gear.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
-import { categoriesOf, topOf, containersOf } from '../gear-rules.js';
+import { categoriesOf, topOf, containersOf, CASE_COLOURS } from '../gear-rules.js';
+import { textColourFor } from '../colour.js';
 import { saveObject, removeObject, saveCategory } from '../gear-editing.js';
 import { Icon } from './icons.js';
 
@@ -43,6 +44,12 @@ export function ObjectSheet({ project, object, close }) {
   return html`<${Sheet} title=${values.id ? values.name : `New in ${top?.name || 'Gear'}`} close=${close}>
     <form class="item-form" onSubmit=${submit}>
       <label><span>Name</span><input value=${values.name || ''} onInput=${e => set('name', e.target.value)} required autofocus /></label>
+      <label><span>Colour (the case's real colour)</span><span class="choices">
+        <button type="button" class=${'choice' + (!values.color ? ' choice--on' : '')} onClick=${() => set('color', '')}>none</button>
+        ${CASE_COLOURS.map(c => html`<button type="button" key=${c} title=${c} onClick=${() => set('color', c)}
+          class=${'choice choice--swatch' + (values.color === c ? ' choice--on' : '')} style=${`background:${c};color:${textColourFor(c)}`}></button>`)}
+        <input type="color" value=${/^#[0-9a-f]{6}$/i.test(values.color || '') ? values.color : '#888888'} onInput=${e => set('color', e.target.value)} aria-label="Another colour" />
+      </span></label>
       <label><span>Quantity</span><input type="number" min="1" value=${values.qty} onInput=${e => set('qty', e.target.value)} /></label>
       ${categories.length > 1 && html`<label><span>Category</span><span class="choices">
         ${categories.map(c => html`<button type="button" key=${c.id} class=${'choice' + (values.category === c.id ? ' choice--on' : '')}

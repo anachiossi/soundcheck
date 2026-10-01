@@ -3,7 +3,7 @@
 //     Other, + any new one); a category can have SUB-categories (e.g. Cases → Batteries) that group
 //     things inside a cart or a case. Each has a colour.
 //   • OBJECTS: { id, name, category, qty, inside (the cart / case it's in), volume (a piece that goes
-//     on the truck), note }. A cart or a case HOLDS the objects whose `inside` is its id. The two are
+//     on the truck), color (its real colour — "the yellow Pelican" — shown as a pill), note }. A cart or a case HOLDS the objects whose `inside` is its id. The two are
 //     separate: a case riding in a cart can still be its own volume; one fixed to the cart is not.
 //   • a tab lists all its objects, wherever they are ("in Main Karl")
 //   • the TRUCK is every volume, by category; TICKS (gear/checks.json) are day-to-day help only
@@ -36,6 +36,9 @@ export function topOf(project, categoryId) {
   return category;
 }
 
+// the colours cases come in (the colour field also takes any other)
+export const CASE_COLOURS = ['#111827', '#6b7280', '#cbd5e1', '#ffffff', '#facc15', '#f97316', '#dc2626', '#2563eb', '#16a34a'];
+
 export const colourOf = (project, categoryId) => categoryById(project, categoryId)?.color || topOf(project, categoryId)?.color || '#64748b';
 
 // the objects still in the list (removed ones live on in the history)
@@ -55,8 +58,9 @@ export function contentsOf(project, containerId) {
 
 export const holds = (project, id) => activeItems(project).some(item => item.inside === id);
 
-// a cart or a case (or anything holding things): it opens to show its contents
-export const isContainer = (project, item) => holds(project, item.id) || ['carts', 'cases'].includes(topOf(project, item.category)?.id);
+// a cart or a case (or anything holding things): it opens to show its contents. Things in a
+// sub-category (Cases → Batteries) are contents, not containers.
+export const isContainer = (project, item) => holds(project, item.id) || ['carts', 'cases'].includes(item.category);
 
 // every object in a category tab, wherever it is (e.g. all the cables, also those in cases)
 export function allInCategory(project, topId) {

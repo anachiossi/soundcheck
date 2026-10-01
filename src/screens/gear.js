@@ -20,9 +20,14 @@ import { gearText, gearSheets } from '../export/gear-text.js';
 import { xlsxBlob } from '../export/xlsx.js';
 import { shareCanvas, shareFile } from '../export/share.js';
 import { showMessage } from '../state.js';
+import { textColourFor } from '../colour.js';
 import { Icon } from '../parts/icons.js';
 
 const qty = item => (item.qty > 1 ? html` <small>×${item.qty}</small>` : '');
+
+// the object's name as a pill in its real colour (neutral when it has none)
+const NamePill = ({ item }) => html`<span class=${'gear-pill' + (item.color ? '' : ' gear-pill--plain')}
+  style=${item.color ? `background:${item.color};color:${textColourFor(item.color)}` : ''}>${item.name}${qty(item)}</span>`;
 
 function Tick({ project, item }) {
   const on = ticked(project, item.id);
@@ -39,7 +44,7 @@ function Row({ project, item, edit, showInside }) {
   return html`
     <div class="gear-row" style=${`--cat:${colourOf(project, item.category)}`}>
       <${Tick} project=${project} item=${item} />
-      <span class="gear-row__name">${item.name}${qty(item)}
+      <span class="gear-row__name"><${NamePill} item=${item} />
         ${(inside || item.note) && html`<small class="muted">${inside ? `in ${inside}` : ''}${inside && item.note ? ' · ' : ''}${item.note || ''}</small>`}</span>
       <button class="icon-btn" onClick=${() => edit(item)} aria-label=${`Change ${item.name}`}><${Icon} name="edit" /></button>
     </div>`;
@@ -94,7 +99,7 @@ function Container({ project, item, edit, addInside, showInside }) {
       <div class="gear-row gear-row--box">
         <${Tick} project=${project} item=${item} />
         <button class="gear-row__name gear-row__open" onClick=${() => setOpen(o => !o)}>
-          ${open ? '▾' : '▸'} ${item.name}${qty(item)} <small class="muted">${where ? `in ${where} · ` : ''}${inside.length ? `${count.done}/${inside.length} checked` : 'empty'}</small></button>
+          ${open ? '▾' : '▸'} <${NamePill} item=${item} /> <small class="muted">${where ? `in ${where} · ` : ''}${inside.length ? `${count.done}/${inside.length} checked` : 'empty'}</small></button>
         <button class="icon-btn" onClick=${() => edit(item)} aria-label=${`Change ${item.name}`}><${Icon} name="edit" /></button>
       </div>
       ${open && html`

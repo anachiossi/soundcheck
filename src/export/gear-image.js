@@ -6,6 +6,7 @@
 
 import { categoryById, truckOf, tabItems, contentsOf, colourOf, ticked, holds, itemById } from '../gear-rules.js';
 import { newCanvas, box, text, font } from './draw.js';
+import { textColourFor } from '../colour.js';
 import { WIDTH, PAD, fontsReady, header, footer, FOOTER_HEIGHT, cropHeight } from './image.js';
 
 const ROW = 58;
@@ -29,7 +30,11 @@ export async function gearImage(project, what) {
       box(ctx, x, y + 6, 10, ROW - 10, 4, colourOf(project, item.category));
       box(ctx, x + 24, y + 16, 28, 28, 6, ticked(project, item.id) ? '#16a34a' : '#ffffff', '#94a3b8', 2);
       if (ticked(project, item.id)) { font(ctx, 800, 22); text(ctx, '✓', x + 38, y + 31, 0, '#ffffff', 'center'); }
-      font(ctx, 600, 26); text(ctx, item.name, x + 66, y + 31, WIDTH - PAD - x - 260, '#0f172a');
+      font(ctx, 700, 26);
+      const name = item.name.length > 40 ? `${item.name.slice(0, 39)}…` : item.name;
+      const pillWidth = Math.min(WIDTH - PAD - x - 300, ctx.measureText(name).width + 32);
+      box(ctx, x + 62, y + 12, pillWidth, ROW - 22, (ROW - 22) / 2, item.color || '#e2e8f0', item.color ? null : '#cbd5e1', 2);
+      text(ctx, name, x + 78, y + 31, pillWidth - 28, item.color ? textColourFor(item.color) : '#0f172a');
       font(ctx, 400, 22);
       const where = line.showInside && item.inside ? `in ${itemById(project, item.inside)?.name || '?'}` : '';
       text(ctx, [item.qty > 1 ? `×${item.qty}` : '', where].filter(Boolean).join(' · '), WIDTH - PAD - 16, y + 31, 220, '#475569', 'right');

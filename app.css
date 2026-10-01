@@ -604,3 +604,10 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
 .pill--tx-freq { flex-direction: column; gap: 0; line-height: 1; }
 .pill--tx-freq small { font-size: 12px; font-weight: 700; margin-top: 3px; letter-spacing: -.01em; }
 .pill--lav-model { justify-content: center; }   /* the model alone, centred (no lav number) */
+/* a gear object's name in its real colour (the yellow Pelican) */
+.gear-pill { display: inline-block; padding: 5px 12px; border-radius: 999px; font-weight: 700; max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
+.gear-pill small { font-size: 13px; opacity: .85; }
+.gear-pill--plain { background: var(--tab-bg); color: var(--ink); border: 1px solid var(--line-strong); }
+.gear-row__name > small:first-child { display: inline; }
+.gear-row__name .gear-pill + small { display: block; margin: 3px 0 0 4px; }
