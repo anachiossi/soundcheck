@@ -111,7 +111,7 @@ function AllView({ project }) {
   return html`
     <p class="summary"><b>${days} shooting days</b> · ${all.length} weeks · ${Object.keys(project.presets).length} presets</p>
     <div class="toolbar">
-      <button class="btn" onClick=${() => exportDays(project, shootingDays(project).map(d => d.day), `${project.name} · all film`, 'mics_all-film.png')}><${Icon} name="image" /> All film image</button>
+      <button class="btn" onClick=${() => exportDays(project, shootingDays(project).map(d => d.day), `${project.name} · all film`, 'mics_ALL-FILM.png')}><${Icon} name="image" /> All film image</button>
     </div>
     ${all.map(week => html`
       <div key=${week.week}>

@@ -33,14 +33,20 @@ export function tagOf(project) {
 }
 
 // 'day-10.png' → 'LBE_day-10.png'
-// Exported files are named TAG_what_when (Ana): LBE_mics_D10_02.10.26.png. The pieces: 'D09', 'W02'
+// Exported files are named TAG_WHAT_when (Ana): LBE_MICS_D10_02.10.26.png. The pieces: 'D09', 'W02'
 // (two digits, so the files sort in order) and dates the way production writes them, '02.10.26'.
 export const dayTag = day => `D${String(day).padStart(2, '0')}`;
 export const weekTag = week => `W${String(week).padStart(2, '0')}`;
 export const shortDate = iso => (iso ? `${iso.slice(8, 10)}.${iso.slice(5, 7)}.${iso.slice(2, 4)}` : '');
 
-export const exportName = (project, name) => `${tagOf(project)}_${name}`
-  .replace(/\s*·\s*/g, '_').replace(/\s+/g, '-').replace(/[^\w.#()-]+/g, '_'); // 'Day 9 · ODG.pdf' → 'LBE_Day-9_ODG.pdf'
+// 'mics_D10_02.10.26.png' → 'LBE_MICS_D10_02.10.26.png': the tag and the WHAT in capitals, then the when
+export function exportName(project, name) {
+  const clean = String(name).replace(/\s*·\s*/g, '_').replace(/\s+/g, '-').replace(/[^\w.#()-]+/g, '_');
+  const dot = clean.lastIndexOf('.');
+  const [base, extension] = dot > 0 ? [clean.slice(0, dot), clean.slice(dot)] : [clean, ''];
+  const [what, ...when] = base.split('_');
+  return [tagOf(project).toUpperCase(), what.toUpperCase(), ...when].join('_') + extension.toLowerCase();
+}
 
 export function naturalCompare(a, b) {
   return String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: 'base' });

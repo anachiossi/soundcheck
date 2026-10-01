@@ -43,7 +43,7 @@ export function HoursScreen({ state }) {
       <div class="hours__export">
         <button class="btn" disabled=${days.length === 0} onClick=${async () => shareCanvas(await hoursImage(project, [{ monday, days }], title), exportName(project, `hours_${days[0]?.week ? `${weekTag(days[0].week)}_` : ''}${shortDate(iso(monday))}.png`))}>
           <${Icon} name="image" /> Week</button>
-        <button class="btn" onClick=${async () => shareCanvas(await hoursImage(project, filmWeeks(project), project.name), exportName(project, 'hours_all-film.png'))}>
+        <button class="btn" onClick=${async () => shareCanvas(await hoursImage(project, filmWeeks(project), project.name), exportName(project, 'hours_ALL-FILM.png'))}>
           <${Icon} name="image" /> Whole film</button>
       </div>
       ${days.length === 0 ? html`<p class="empty">No shooting this week.</p>` : html`
