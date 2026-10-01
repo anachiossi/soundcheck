@@ -23,7 +23,7 @@ import { timelineBlocks, blockAtTime, wordAtTime, pixelsAt, timeAt } from '../cu
 import { setState } from '../state.js';
 import { Icon } from '../parts/icons.js';
 import { SceneScript } from '../parts/scene-script.js';
-import { voicesReady, phoneVoices, filmVoices, pickVoice, voiceKindOf, speak, unlockSpeech } from '../read-aloud.js';
+import { voicesReady, phoneVoices, filmVoices, pickVoice, voiceKindOf, speak, unlockSpeech, LINE_PAUSE } from '../read-aloud.js';
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 const CURSOR = 0.15;      // the cursor sits at 15% of the track: the rest shows what's coming
@@ -107,9 +107,14 @@ export function CuesTimelineScreen({ state }) {
           setTime(t => Math.max(t, block.from + block.words[i].start)); // and catches up with the voice's word
         },
         onEnd: () => {
-          const next = blocks[block.index + 1];
-          if (next) { setTime(next.from); voiceAt.current = next.from; }
-          say(next, 0);
+          // a silence first (the cursor waits at the end of the line), then the next line
+          const pause = setTimeout(() => {
+            const next = blocks[block.index + 1];
+            if (next) { setTime(next.from); voiceAt.current = next.from; }
+            say(next, 0);
+          }, LINE_PAUSE / SPEEDS[speed]);
+          stop = () => clearTimeout(pause);
+          stopVoice.current = stop;
         },
       });
       stopVoice.current = stop;

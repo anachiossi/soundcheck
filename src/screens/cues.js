@@ -7,7 +7,9 @@
 //   • the character's colour frames the panel (and the phone's top strip), with the name on it
 // Tap the LEFT side → back · anywhere else → forward (a swipe only scrolls).
 // After the last line: The end / Start again. The screen stays awake (where allowed).
-// iPhone Speak Screen (swipe down with two fingers) reads only the dialogue: everything else is aria-hidden.
+// iPhone Speak Screen (swipe down with two fingers) reads only the names and the dialogue: everything
+// else is aria-hidden. Each line starts with the speaker's name, as a separator (one Siri voice for
+// everybody; Ana, 1 Oct), written "Prince John." so the iPhone doesn't spell out capitals.
 // It stops when the page turns, so the lines after this one are there too, invisible: it reads from
 // this line to the end of the scene in one go (don't tap while it reads).
 // The map button opens the Scene Map (cues-map.js). ✎ changes, deletes or adds lines when the director changes them (cue-line-editor.js).
@@ -23,7 +25,10 @@ import { setState } from '../state.js';
 import { backToPaper, keepEdits } from '../cues-editing.js';
 import { CueLineEditor } from '../parts/cue-line-editor.js';
 import { Icon } from '../parts/icons.js';
-import { voicesReady, phoneVoices, filmVoices, pickVoice, voiceKindOf, speak, unlockSpeech } from '../read-aloud.js';
+import { voicesReady, phoneVoices, filmVoices, pickVoice, voiceKindOf, speak, unlockSpeech, LINE_PAUSE } from '../read-aloud.js';
+
+// 'PRINCE JOHN' → 'Prince John.' (said as a name, with a stop after it)
+const spokenName = name => String(name || '').toLowerCase().replace(/(^|[\s'’-])(\p{L})/gu, (m, sep, letter) => sep + letter.toUpperCase()) + '.';
 
 // A button's tap must not also reach the page behind it (which would turn the page).
 const only = action => event => { event.stopPropagation(); action(); };
@@ -86,9 +91,11 @@ export function CuesScreen({ state }) {
     const line = cues?.lines[index];
     if (!reading || !line) { if (reading && cues && index >= cues.lines.length) setReading(false); return; }
     const settings = filmVoices(project);
-    return speak({ text: line.text, language: settings.language,
+    let pause = null; // the silence after the line, then the page turns
+    const stop = speak({ text: line.text, language: settings.language,
       voice: pickVoice(phoneVoices(), settings, voiceKindOf(project, line.char_id)),
-      onEnd: () => setIndex(i => i + 1) });
+      onEnd: () => { pause = setTimeout(() => setIndex(i => i + 1), LINE_PAUSE); } });
+    return () => { stop(); clearTimeout(pause); };
   }, [reading, index]);
   // (hooks run on every page, so the top strip colour is worked out here, before any return)
   const speaking = cues?.lines[index];
@@ -144,6 +151,7 @@ export function CuesScreen({ state }) {
           <button class="btn" onClick=${only(() => keepEdits(cuesScene))}>Keep my changes</button>
         </div>`}
       <div class="cues__name" aria-hidden="true">${line.name}</div>
+      <p class="sr-only">${spokenName(line.name)}</p>
       <div class="cues__panel">
         <div class="cues__text" ref=${textRef}>
           <div class="cues__speech">
@@ -152,7 +160,8 @@ export function CuesScreen({ state }) {
         </div>
         <div class=${'cues__more' + (moreBelow ? '' : ' cues__more--hidden')} aria-hidden="true">scroll ▾</div>
       </div>
-      <div class="sr-only">${lines.slice(index + 1).map((later, i) => html`<p key=${i}>${later.text}</p>`)}</div>
+      <div class="sr-only">${lines.slice(index + 1).map((later, i) => html`
+        <p key=${'n' + i}>${spokenName(later.name)}</p><p key=${'t' + i}>${later.text}</p>`)}</div>
       <div class="cues__bottom" aria-hidden="true">
         <span>${cues.source}${cues.note ? ` · ${cues.note}` : ''}</span>
         <span>${next ? `next: ${next.name}` : 'last line'}</span>

@@ -116,6 +116,10 @@ export function speak({ text, voice, language, rate = 1, fromWord = 0, onWord = 
   return () => { if (retry) retry(); else if (mine === latest) { latest++; synth().cancel(); } };
 }
 
+// a moment of silence between one line and the next: with one voice for everybody, it is what
+// tells one line from another (Ana, 1 Oct)
+export const LINE_PAUSE = 800; // ms
+
 export const stopSpeaking = () => synth()?.cancel();
 
 // iOS only lets a page speak after a tap: call this inside the tap (▶ or 🔊), the real lines follow later
