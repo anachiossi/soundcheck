@@ -7,15 +7,16 @@
 // Used by: screens/hours.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
-import { formatDate, tagOf } from '../model.js';
+import { formatDate } from '../model.js';
 import { COMMUTE, commuteOf, wakePlan, nextShootingDay } from '../hours-rules.js';
 import { saveSettings } from '../kit-editing.js';
 
 export const SHORTCUT = 'soundcheck alarms';
 
-// shortcuts://run-shortcut?name=soundcheck%20alarms&input=text&text=06:00;06:45;LBE D10
+// shortcuts://run-shortcut?name=soundcheck%20alarms&input=text&text=06:00;06:45 — just the two times, so
+// the shortcut takes the First Item (wake) and the Last Item (leave): no index to type (Ana, iOS 27)
 export const alarmsLink = (project, plan) => `shortcuts://run-shortcut?name=${encodeURIComponent(SHORTCUT)}&input=text&text=${
-  encodeURIComponent(`${plan.wake};${plan.leaveFrom};${tagOf(project)} D${String(plan.day).padStart(2, '0')}`)}`;
+  encodeURIComponent(`${plan.wake};${plan.leaveFrom}`)}`;
 
 export function Tomorrow({ project }) {
   const day = nextShootingDay(project);

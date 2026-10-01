@@ -40,7 +40,7 @@ export function HelpScreen() {
         <li>Add <b>Split Text</b>: split the <b>Shortcut Input</b> by <b>Custom</b> <code>;</code></li>
         <li>Add <b>Get Item from List</b> → <b>First Item</b> of Split Text, then <b>Create Alarm</b> (Clock):
           time = that item, label <b>soundcheck · Wake up</b>.</li>
-        <li>Add <b>Get Item from List</b> → <b>Item at Index 2</b> of Split Text, then <b>Create Alarm</b>:
+        <li>Add <b>Get Item from List</b> → <b>Last Item</b> (Último Item) of Split Text, then <b>Create Alarm</b>:
           time = that item, label <b>soundcheck · Leave home</b>.</li>
         <li>In the shortcut's settings (ⓘ), turn off "Show When Run" if you like.</li>
       </ol>
