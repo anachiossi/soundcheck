@@ -594,3 +594,5 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
 .gear__actions { display: flex; align-items: center; gap: 6px; }
 .hours__export { margin-bottom: 12px; }
 .gear__cat small, .gear__title small { margin-left: 6px; }
+.export-choices { display: grid; gap: 8px; padding: 6px 0 4px; }
+.export-choices .btn { justify-content: flex-start; font-size: 17px; }

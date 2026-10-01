@@ -4,7 +4,7 @@
 //                 by sub-category (a case in a cart: its contents one step further in)
 // Used by: screens/gear.js
 
-import { categoryById, truckOf, allInCategory, contentsOf, colourOf, ticked, holds, itemById } from '../gear-rules.js';
+import { categoryById, truckOf, tabItems, contentsOf, colourOf, ticked, holds, itemById } from '../gear-rules.js';
 import { newCanvas, box, text, font } from './draw.js';
 import { WIDTH, PAD, fontsReady, header, footer, FOOTER_HEIGHT, cropHeight } from './image.js';
 
@@ -48,7 +48,7 @@ function truckLines(project) {
 }
 
 function categoryLines(project, id) {
-  return allInCategory(project, id).flatMap(item => [{ item, level: 0, showInside: true }, ...insideLines(project, item, 1)]);
+  return tabItems(project, id).flatMap(item => [{ item, level: 0, showInside: true }, ...insideLines(project, item, 1)]);
 }
 
 // what a cart / case holds, by sub-category, and what those hold, one level further in each time

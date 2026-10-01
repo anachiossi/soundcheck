@@ -1,6 +1,6 @@
 // gear.js — the Gear department's tabs (gear-rules.js):
 //   • GearTruckScreen: every volume (carts, cases, poles, tripods, other…) by category, a tick each,
-//     "12 / 20 on the truck", Clear ticks, Export, + Category (a new tab), and the History of what
+//     "12 / 20 on the truck", Clear ticks, Export (image · text tree · Excel), + Category (a new tab), and the History of what
 //     entered / left / changed
 //   • GearCategoryScreen (one tab per top category): its objects; a cart or case opens to show what
 //     it holds, by sub-category, each tickable; + Add, + Sub-category, ✎ the category; Export
@@ -10,13 +10,16 @@
 import { html, useState } from '../../vendor/preact-htm.js';
 import { formatStamp } from '../model.js';
 import {
-  topCategories, categoryById, subCategories, allInCategory, contentsOf, truckOf, colourOf,
+  topCategories, categoryById, subCategories, tabItems, contentsOf, truckOf, colourOf,
   ticked, tickCount, isContainer, itemById, startsAsVolume,
 } from '../gear-rules.js';
 import { toggleTick, clearTicks } from '../gear-editing.js';
 import { ObjectSheet, CategorySheet } from '../parts/gear-form.js';
 import { gearImage } from '../export/gear-image.js';
-import { shareCanvas } from '../export/share.js';
+import { gearText, gearSheets } from '../export/gear-text.js';
+import { xlsxBlob } from '../export/xlsx.js';
+import { shareCanvas, shareFile } from '../export/share.js';
+import { showMessage } from '../state.js';
 import { Icon } from '../parts/icons.js';
 
 const qty = item => (item.qty > 1 ? html` <small>×${item.qty}</small>` : '');
@@ -54,8 +57,7 @@ export function GearTruckScreen({ state }) {
         <b class=${count.done === count.all && count.all ? 'gear__count gear__count--done' : 'gear__count'}>${count.done} / ${count.all} on the truck</b>
         <span class="gear__actions">
           <button class="btn" disabled=${!count.done} onClick=${() => clearTicks(all.map(i => i.id))}>Clear ticks</button>
-          <button class="btn" disabled=${!all.length} onClick=${async () => shareCanvas(await gearImage(project, 'truck'), 'gear-truck.png')}
-                  aria-label="Export the truck list"><${Icon} name="image" /></button>
+          <${ExportButton} project=${project} what="truck" title="Truck" disabled=${!all.length} />
         </span>
       </div>
       ${all.length === 0 && html`<p class="empty">No volumes yet. Add carts, cases, poles… in their tabs: they come here by themselves.</p>`}
@@ -118,7 +120,7 @@ export function GearCategoryScreen({ state }) {
   if (!category) return null;
   const subs = subCategories(project, category.id);
   const isList = category.id === 'cables'; // cables: the pieces are counted too
-  const items = allInCategory(project, category.id); // all of them, also those in a cart or case
+  const items = tabItems(project, category.id); // all of them, also those in a cart or case
   const newObject = extra => ({ category: category.id, volume: startsAsVolume(project, category.id), ...extra });
   const addInside = box => setEditing({ category: subs[0]?.id || category.id, inside: box.id, volume: false });
   const total = items.reduce((n, i) => n + (Number(i.qty) || 1), 0);
@@ -128,8 +130,7 @@ export function GearCategoryScreen({ state }) {
       <div class="gear__head">
         <h2 class="gear__title" style=${`--cat:${category.color}`}>${category.name} <small>${items.length}${isList ? ` · ${total} pieces` : ''}</small></h2>
         <span class="gear__actions">
-          <button class="btn" disabled=${!items.length} onClick=${async () => shareCanvas(await gearImage(project, category.id), `gear-${category.id}.png`)}
-                  aria-label=${`Export ${category.name}`}><${Icon} name="image" /></button>
+          <${ExportButton} project=${project} what=${category.id} title=${category.name} disabled=${!items.length} />
           <button class="icon-btn" onClick=${() => setEditingCat(category)} aria-label="Change the category"><${Icon} name="edit" /></button>
         </span>
       </div>
@@ -145,6 +146,31 @@ export function GearCategoryScreen({ state }) {
       ${editing && html`<${ObjectSheet} project=${project} object=${editing} close=${() => setEditing(null)} />`}
       ${editingCat && html`<${CategorySheet} category=${editingCat} close=${() => setEditingCat(null)} />`}
     </div>`;
+}
+
+// Export → Image (as before) · Copy as text (a tree, like the `tree` command) · Excel (all the gear + history)
+function ExportButton({ project, what, title, disabled }) {
+  const [open, setOpen] = useState(false);
+  const name = what === 'truck' ? 'truck' : what;
+  const copy = async () => {
+    const text = gearText(project, what);
+    try { await navigator.clipboard.writeText(text); showMessage('ok', `${title} copied as text: paste it anywhere.`); }
+    catch { await shareFile(new Blob([text], { type: 'text/plain' }), `gear-${name}.txt`); }
+    setOpen(false);
+  };
+  return html`
+    <button class="btn" disabled=${disabled} onClick=${() => setOpen(true)}><${Icon} name="image" /> Export</button>
+    ${open && html`
+      <div class="sheet-backdrop" onClick=${() => setOpen(false)}></div>
+      <div class="sheet gear-sheet" role="dialog" aria-label=${`Export ${title}`}>
+        <header class="sheet__head"><b>Export ${title}</b>
+          <button class="icon-btn" onClick=${() => setOpen(false)} aria-label="Close"><${Icon} name="close" /></button></header>
+        <div class="export-choices">
+          <button class="btn" onClick=${async () => { setOpen(false); shareCanvas(await gearImage(project, what), `gear-${name}.png`); }}>🖼 Image</button>
+          <button class="btn" onClick=${copy}>📋 Copy as text</button>
+          <button class="btn" onClick=${() => { setOpen(false); shareFile(xlsxBlob(gearSheets(project)), `${project.id}-gear.xlsx`); }}>📊 Excel · all the gear</button>
+        </div>
+      </div>`}`;
 }
 
 // "+ Category" (on the Truck tab): a new top category = a new tab

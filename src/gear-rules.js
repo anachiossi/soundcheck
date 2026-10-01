@@ -63,6 +63,14 @@ export function allInCategory(project, topId) {
   return activeItems(project).filter(item => topOf(project, item.category)?.id === topId);
 }
 
+// what a tab lists: all its objects, except those already shown inside one of them (the batteries
+// inside a case of the Cases tab appear in that case, not again on their own)
+export function tabItems(project, topId) {
+  const all = allInCategory(project, topId);
+  const listed = new Set(all.map(item => item.id));
+  return all.filter(item => !(item.inside && listed.has(item.inside)));
+}
+
 // the truck: every volume, grouped by top category: [{ category, items }]
 export function truckOf(project) {
   return topCategories(project)
