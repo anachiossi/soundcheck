@@ -1,4 +1,4 @@
-// hours.js — the Hours screen (tap the ⏱ in the top bar): one week of shooting days, Monday to Sunday,
+// hours.js — the Hours screen (Projects → ⏱ Hours, or the ⏱ in the top bar): one week of shooting days, Monday to Sunday,
 // for production: call and wrap of the ODG, the REAL wrap, hours worked and overtime, and the total.
 //   • ‹ › other weeks · tap a day's real wrap to type it (also for days already gone)
 //   • the film's working day (8h continuate…) decides where overtime starts (hours-rules.js)

@@ -24,7 +24,7 @@ export function HelpScreen() {
       <ul class="help">
         <li>The ⏱ in the top bar counts down to the ODG's wrap, then counts the overtime (+0h 35m).</li>
         <li>After the wrap: "Did today finish on time?" — No asks again every hour ("Is this a wrap?") until you type the real wrap.</li>
-        <li>Tap ⏱ for the week, the overtime, and the images for production (week or whole film).</li>
+        <li>Tap ⏱ (or Projects → ⏱ Hours, any day) for the week, the overtime, and the images for production (week or whole film). Tap a day's wrap to correct it.</li>
         <li><b>Notifications</b> at the wrap, even with the app closed: Hours → 🔔 Wrap alerts → Allow (Home Screen app, iOS 16.4 or later). They can come up to 10 minutes late.</li>
       </ul>
 

@@ -147,7 +147,29 @@ def file_documents(film, other_sides):
                 target.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(source, target)
                 changed.append(f"day {day} {name}")
+    changed += file_latest_pdl(film)
     return changed
+
+
+def file_latest_pdl(film):
+    """The newest PDL email's PDF → docs/pdl.pdf (+ docs/pdl.json: which email), for the app's
+    Projects screen. The emails are in date order, so the last one found wins."""
+    import shutil
+    latest = None
+    for email_folder in sorted((film / "_inbox").iterdir()):
+        pdl = next((p for p in email_folder.glob("*.pdf") if "PDL" in p.name.upper()), None)
+        if pdl:
+            latest = (pdl, json.loads((email_folder / "email.json").read_text(encoding="utf-8")))
+    if not latest:
+        return []
+    pdl, email = latest
+    target = film / "docs" / "pdl.pdf"
+    if target.exists() and target.read_bytes() == pdl.read_bytes():
+        return []
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(pdl, target)
+    write_json(film / "docs" / "pdl.json", {"subject": email["subject"], "received": email["date"], "file": pdl.name})
+    return ["the latest PDL"]
 
 
 if __name__ == "__main__":

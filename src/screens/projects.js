@@ -1,7 +1,8 @@
 // projects.js — the Projects screen.
 // • Connect this device to the data (the private soundcheck-data repo), once.
 // • Films: the ones in the repo (tap to download) and the ones on this device.
-// • The open film: sync status, "Sync now", backup file.
+// • The open film: sync status, "Sync now", backup file; its documents (📄 script, 📄 latest PDL,
+//   offline) and ⏱ Hours (the week / whole film for production, fix any day's wrap).
 // • Screen: Auto / Light / Dark (parts/theme-switch.js).
 // • ? Help → the Help page (screens/help.js): offline use, wrap alerts, hearing the lines…
 // Each film has its own database on the device; old films are kept.
@@ -14,6 +15,7 @@ import { syncNow, downloadFilm, loadFilmList } from '../sync.js';
 import { checkConnection } from '../store/github.js';
 import { Icon } from '../parts/icons.js';
 import { ThemeSwitch } from '../parts/theme-switch.js';
+import { cuesSummary } from '../cues-rules.js';
 
 export function ProjectsScreen({ state }) {
   const { project, projects, connection, films, online } = state;
@@ -69,7 +71,26 @@ function OpenFilm({ state }) {
     <p class=${waiting || conflicts || sync.error ? 'warn-text' : 'muted'}>${status}</p>
     ${connection && html`
       <button class="btn" disabled=${!online || sync.running} onClick=${() => syncNow({ loud: true })}>↻ Sync now</button>
-      ${!online && html`<small class="muted"> No signal: changes wait on this device.</small>`}`}`;
+      ${!online && html`<small class="muted"> No signal: changes wait on this device.</small>`}`}
+    <${FilmDocuments} project=${project} />`;
+}
+
+// 📄 Script · 📄 PDL (when they are on the device) · ⏱ Hours
+function FilmDocuments({ project }) {
+  const script = cuesSummary(project);
+  const doc = (file, title) => {
+    const path = `${project.folder}/docs/${file}`;
+    return project.documents?.[path] && html`
+      <button class="btn btn--doc" onClick=${() => setState({ screen: 'document', documentPath: path, documentTitle: title })}>
+        <${Icon} name="document" /> ${title}</button>`;
+  };
+  return html`
+    <div class="toolbar film-docs">
+      ${doc('script.pdf', `Script${script.version ? ` ${script.version}` : ''}`)}
+      ${doc('pdl.pdf', 'PDL')}
+      <button class="btn" onClick=${() => setState({ screen: 'hours' })}>⏱ Hours</button>
+    </div>
+    ${script.script > 0 && html`<p class="muted with-icon"><${Icon} name="cues" /> Cues for ${script.script} scenes${script.sides ? `, ${script.sides} updated from the sides` : ''}</p>`}`;
 }
 
 function Connect() {
