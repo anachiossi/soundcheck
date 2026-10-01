@@ -72,7 +72,7 @@ export function Picker({ state }) {
           <button key=${item.id} class=${'option' + (used.has(item.id) ? ' option--used' : '') + (row[field] === item.id ? ' option--current' : '')}
                   onClick=${() => pick(item.id)}>
             <${Pill} item=${item} />
-            ${field === 'tx_id' && html`<small>${item.model}${used.has(item.id) ? ' · in use' : ''}</small>`}
+            ${field === 'tx_id' && html`<small>${item.frequency ? html`<b>${item.frequency}</b> · ` : ''}${item.model}${used.has(item.id) ? ' · in use' : ''}</small>`}
             ${field !== 'tx_id' && used.has(item.id) && html`<small>in use</small>`}
           </button>`)}
         ${items.length === 0 && html`<p class="empty">Nothing matches "${query}".</p>`}

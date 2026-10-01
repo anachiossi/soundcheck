@@ -24,7 +24,7 @@ export function fieldsFor(list, project) {
   ];
   if (list === 'ifbReceivers') return [
     { key: 'id', label: 'Number' }, { key: 'model', label: 'Model' }, { key: 'color', label: 'Colour', type: 'color' },
-    { key: 'connector', label: 'Connector' },
+    { key: 'connector', label: 'Connector' }, { key: 'frequency', label: 'Frequency (MHz)' },
   ];
   if (list === 'characters') return [
     { key: 'id', label: 'Number' }, { key: 'name', label: 'Name' }, { key: 'actor', label: 'Actor' },
@@ -36,7 +36,8 @@ export function fieldsFor(list, project) {
   ];
   if (list === 'transmitters') return [
     { key: 'id', label: 'Number' }, { key: 'model', label: 'Model' }, { key: 'color', label: 'Colour', type: 'color' },
-    { key: 'connector', label: 'Connector' }, { key: 'order', label: 'Order of use', type: 'number' },
+    { key: 'connector', label: 'Connector' }, { key: 'frequency', label: 'Frequency (MHz)' },
+    { key: 'order', label: 'Order of use', type: 'number' },
   ];
   return [
     { key: 'id', label: 'Number' }, { key: 'model', label: 'Model' }, { key: 'color', label: 'Colour', type: 'color' },
@@ -104,7 +105,7 @@ export function KitScreen({ state }) {
         </small>`} />
     <${Section} ...${shared} list="transmitters" title="Transmitters"
       blank=${{ id: nextId('transmitters'), color: '#e9e9e9', order: project.transmitters.length + 1 }}
-      render=${tx => html`<${TxPill} tx=${tx} /><small>${tx.model}<br />${tx.connector}</small>`} />
+      render=${tx => html`<${TxPill} tx=${tx} /><small>${tx.model}<br />${tx.connector}${tx.frequency ? html` · <b>${tx.frequency}</b>` : ''}</small>`} />
     <${Section} ...${shared} list="lavaliers" title="Lavaliers"
       blank=${{ id: nextId('lavaliers'), color: '#000000', attenuated: false }}
       render=${lav => html`<${LavPill} lav=${lav} /><small>${lav.brand} · ${lav.connector}${lav.attenuated ? html`<br /><b class="text-danger">attenuated</b>` : ''}</small>`} />`;

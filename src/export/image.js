@@ -83,15 +83,17 @@ export function drawScene(ctx, project, sceneId, y) {
   // Column titles, so "YES" reads as "this character speaks".
   font(ctx, 600, 20);
   text(ctx, 'CHARACTER', PAD + 24, y + 12, 0, '#64748b');
-  text(ctx, 'TX', PAD + 551, y + 12, 0, '#64748b', 'center');
+  text(ctx, 'TX', PAD + 441, y + 12, 0, '#64748b', 'center');
+  text(ctx, 'MHz', PAD + 561, y + 12, 0, '#64748b', 'center');
   text(ctx, 'LAV', PAD + 656, y + 12, 0, '#64748b');
   text(ctx, 'SPEAKS', PAD + 940, y + 12, 0, '#64748b', 'center');
   y += 34;
   for (const row of rows) {
     const h = ROW - 16;
     const c = row.character;
-    pill(ctx, PAD, y, 470, h, c?.color, c?.name || `? ${row.char_id}`, c?.actor);
-    pill(ctx, PAD + 486, y, 130, h, c?.color || row.tx?.color, row.tx?.id || '—');
+    pill(ctx, PAD, y, 370, h, c?.color, c?.name || `? ${row.char_id}`, c?.actor);
+    pill(ctx, PAD + 386, y, 110, h, c?.color || row.tx?.color, row.tx?.id || '—');
+    if (row.tx?.frequency) { font(ctx, 700, 28); text(ctx, String(row.tx.frequency), PAD + 561, y + h / 2, 0, '#0f172a', 'center'); }
     pill(ctx, PAD + 632, y, 220, h, row.lav?.color, row.lav?.model || '—', row.lav ? `lav ${row.lav.id}` : '',
       { outline: row.lav?.attenuated ? '#dc2626' : null });
     if (row.connectorMismatch) { font(ctx, 800, 34); text(ctx, '!', PAD + 862, y + h / 2, 0, '#ea580c'); }

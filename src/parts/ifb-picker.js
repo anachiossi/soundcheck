@@ -43,7 +43,7 @@ export function IfbPicker({ state }) {
           <button key=${item.id} class=${'option' + (used.has(item.id) ? ' option--used' : '') + (row[field] === item.id ? ' option--current' : '')}
                   onClick=${() => pick(item.id)}>
             ${field === 'crew_id' ? html`<${CrewPill} person=${item} />` : html`<${GearPill} item=${item} person=${person} />`}
-            ${field !== 'crew_id' && html`<small>${item.model}${used.has(item.id) ? ' · in use' : ''}</small>`}
+            ${field !== 'crew_id' && html`<small>${item.frequency ? html`<b>${item.frequency}</b> · ` : ''}${item.model}${used.has(item.id) ? ' · in use' : ''}</small>`}
             ${field === 'crew_id' && used.has(item.id) && html`<small>on the list</small>`}
           </button>`)}
         ${items.length === 0 && html`<p class="empty">Nothing matches "${query}".</p>`}

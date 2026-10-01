@@ -16,7 +16,7 @@ export function IfbKitScreen({ state }) {
     <p class="muted">Tap anything to change it.</p>
     <${Section} ...${shared} list="ifbReceivers" file="ifb/receivers.json" title="Receivers"
       blank=${{ id: nextId('ifbReceivers'), color: '#e9e9e9', connector: 'jack' }}
-      render=${rx => html`<${GearPill} item=${rx} /><small>${rx.model}<br />${rx.connector || ''}</small>`} />
+      render=${rx => html`<${GearPill} item=${rx} /><small>${rx.model}<br />${rx.connector || ''}${rx.frequency ? html` · <b>${rx.frequency}</b>` : ''}</small>`} />
     <${Section} ...${shared} list="ifbHeadphones" file="ifb/headphones.json" title="Headphones"
       blank=${{ id: nextId('ifbHeadphones'), color: '#e9e9e9', attenuated: false }}
       render=${hp => html`<${GearPill} item=${hp} /><small>${hp.model}<br />${hp.connector || ''}</small>`} />
