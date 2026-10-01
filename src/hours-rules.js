@@ -81,16 +81,33 @@ export function today(project, now = new Date()) {
   return { ...base, phase: 'ask', over };
 }
 
-// The days of one week (Monday to Sunday) that have shooting, with their hours, for the report.
+// A shooting day with its hours, for the report: { day, date, call, wrap, real_wrap, late, worked, extra }
+function withHours(project, d) {
+  const hours = hoursOf(project, d.day);
+  return { ...d, real_wrap: hours?.status === 'wrapped' ? hours.real_wrap : '', late: hours?.status === 'late',
+    ...(workedOf(project, d.day) || { worked: null, extra: null }) };
+}
+
+// The days of one week (Monday to Sunday) that have shooting, with their hours.
 export function weekOf(project, monday) {
   const end = new Date(monday); end.setDate(end.getDate() + 7);
   const inWeek = d => { const at = new Date(`${d.date}T12:00`); return at >= monday && at < end; };
-  return shootingDays(project).filter(inWeek).map(d => {
-    const hours = hoursOf(project, d.day);
-    return { ...d, real_wrap: hours?.status === 'wrapped' ? hours.real_wrap : '', late: hours?.status === 'late',
-      ...(workedOf(project, d.day) || { worked: null, extra: null }) };
-  });
+  return shootingDays(project).filter(inWeek).map(d => withHours(project, d));
 }
+
+// The whole film, week by week: [{ monday, days: [...] }]
+export function filmWeeks(project) {
+  const weeks = new Map();
+  for (const d of shootingDays(project)) {
+    const monday = mondayOf(new Date(`${d.date}T12:00`));
+    const key = monday.getTime();
+    if (!weeks.has(key)) weeks.set(key, { monday, days: [] });
+    weeks.get(key).days.push(withHours(project, d));
+  }
+  return [...weeks.values()].sort((a, b) => a.monday - b.monday);
+}
+
+export const extraOf = days => days.reduce((sum, d) => sum + (d.extra || 0), 0);
 
 // Monday 00:00 of the week of `date`
 export function mondayOf(date) {

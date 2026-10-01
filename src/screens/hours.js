@@ -2,13 +2,13 @@
 // for production: call and wrap of the ODG, the REAL wrap, hours worked and overtime, and the total.
 //   • ‹ › other weeks · tap a day's real wrap to type it (also for days already gone)
 //   • the film's working day (8h continuate…) decides where overtime starts (hours-rules.js)
-//   • Export → the week as an image, to send to production
+//   • Week / Whole film → the hours as an image for production (the film: week by week, with totals)
 //   • 🔔 Wrap alerts: a notification at the wrap, even with the app closed (parts/wrap-alerts.js)
 // Used by: main.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
 import { formatDate } from '../model.js';
-import { WORKDAYS, workdayOf, weekOf, mondayOf, hm } from '../hours-rules.js';
+import { WORKDAYS, workdayOf, weekOf, filmWeeks, mondayOf, hm } from '../hours-rules.js';
 import { wrappedAt, setWorkday } from '../hours-editing.js';
 import { hoursImage } from '../export/hours-image.js';
 import { shareCanvas } from '../export/share.js';
@@ -60,8 +60,12 @@ export function HoursScreen({ state }) {
           </tbody>
           <tfoot><tr><td colspan="5">Overtime this week</td><td class=${total ? 'hours__extra' : ''}>${total ? `+${hm(total)}` : '—'}</td></tr></tfoot>
         </table>
-        <button class="btn" onClick=${async () => shareCanvas(await hoursImage(project, days, title), `hours-${iso(monday)}.png`)}>
-          <${Icon} name="image" /> Export</button>`}
+        <div class="hours__export">
+          <button class="btn" onClick=${async () => shareCanvas(await hoursImage(project, [{ monday, days }], title), `hours-${iso(monday)}.png`)}>
+            <${Icon} name="image" /> Week</button>
+          <button class="btn" onClick=${async () => shareCanvas(await hoursImage(project, filmWeeks(project), project.name), 'hours-film.png')}>
+            <${Icon} name="image" /> Whole film</button>
+        </div>`}
       <div class="hours__alerts"><${WrapAlerts} project=${project} /></div>
     </div>`;
 }
