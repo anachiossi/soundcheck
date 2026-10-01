@@ -150,7 +150,7 @@ button.scene-pill { cursor: pointer; }
 .tag--morning { background: var(--t-morning); color: var(--t-morning-ink); }
 .scene__empty { color: var(--muted); margin: 10px 4px; }
 .mics { margin-top: 6px; }
-.mics__row { display: grid; grid-template-columns: minmax(0, 1fr) 66px 124px 64px; gap: 6px; align-items: end; padding: 3px 0; }
+.mics__row { display: grid; grid-template-columns: minmax(0, 1fr) 92px 96px 64px; gap: 6px; align-items: end; padding: 3px 0; }
 .mics__cell { display: flex; flex-direction: column; min-width: 0; }
 .mics__label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin: 0 0 3px 8px; }
 .pill { display: flex; align-items: center; gap: 6px; min-height: var(--pill-h); border-radius: 999px; padding: 4px 14px; min-width: 0; overflow: hidden; white-space: nowrap; font-size: 17px; }
@@ -189,7 +189,7 @@ button.scene-pill { cursor: pointer; }
 /* ---- 7. Editing, picker, sync ------------------------------------------- */
 .scene--editing { outline: 3px solid var(--accent); outline-offset: 6px; border-radius: 10px; }
 .scene__waiting { margin: 6px 4px 0; font-size: 13px; font-weight: 600; color: var(--warn); }
-.mics__row--edit { grid-template-columns: minmax(0, 1fr) 66px 124px 64px 64px; align-items: center; }
+.mics__row--edit { grid-template-columns: minmax(0, 1fr) 92px 96px 64px 64px; align-items: center; }
 .edit-cell { border: 0; background: none; padding: 0; min-width: 0; text-align: left; border-radius: 999px; }
 .edit-cell:focus-visible { outline: 3px solid var(--accent); }
 .pill--empty { border: 2px dashed var(--muted-2); color: var(--muted); justify-content: center; font-weight: 600; font-size: 13px; }
@@ -490,8 +490,8 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
 @media (max-width: 600px) {
   #app { padding: calc(44px + env(safe-area-inset-top)) max(6px, env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left)); }   /* keeps the room under the clock strip */
   .page { padding: 10px 8px; }
-  .mics__row { grid-template-columns: minmax(0, 1fr) 54px 84px 52px; gap: 4px; }
-  .mics__row--edit { grid-template-columns: minmax(0, 1fr) 50px 76px 48px 30px; }
+  .mics__row { grid-template-columns: minmax(0, 1fr) 70px 66px 52px; gap: 4px; }   /* TX wide enough for its frequency, lav = model only */
+  .mics__row--edit { grid-template-columns: minmax(0, 1fr) 64px 62px 48px 30px; }
   .row-tools { flex-direction: column; }
   .row-tools .icon-btn { padding: 0 4px; font-size: 16px; }
   .pill { padding: 4px 10px; }
