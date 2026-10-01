@@ -79,9 +79,9 @@ export function sceneInfo(project, sceneId) {
 // Groups the script's time of day (Italian or English) into 4 colours.
 export function timeClass(timeOfDay) {
   const t = String(timeOfDay || '').toLowerCase();
-  if (/nott|night/.test(t)) return 'night';
-  if (/tramont|sera|dusk|evening|sunset/.test(t)) return 'dusk';
-  if (/mattin|alba|morning|dawn/.test(t)) return 'morning';
+  if (/nott|night|noite|madrugada/.test(t)) return 'night';   // Italian · English · Portuguese
+  if (/tramont|sera|dusk|evening|sunset|lusco|anoitec|entardec/.test(t)) return 'dusk';
+  if (/mattin|alba|morning|dawn|manh|amanhec/.test(t)) return 'morning';
   return 'day';
 }
 

@@ -47,14 +47,20 @@ def characters_of(film):
     return json.loads((film / "characters.json").read_text(encoding="utf-8"))
 
 
+def reader_options(film):
+    """The film's own script-reader options (settings.json → "script_reader"); none = the default reader."""
+    settings = Path(film) / "settings.json"
+    return json.loads(settings.read_text(encoding="utf-8")).get("script_reader", {}) if settings.exists() else {}
+
+
 def write_sides_lines(film, sides_pdf, day, scene_ids):
-    scenes = read_lines(sides_pdf, scene_ids)
+    scenes = read_lines(sides_pdf, scene_ids, reader_options(film))
     return write_scene_files(Path(film) / "lines" / "sides", scenes, f"Sides · Day {day}", characters_of(Path(film)))
 
 
 def write_script_lines(film, script_pdf, version):
     film = Path(film)
-    scenes = read_lines(script_pdf)
+    scenes = read_lines(script_pdf, options=reader_options(film))
     folder = film / "lines" / "script"
     for old in folder.glob("*.json") if folder.exists() else []:
         if old.stem not in scenes:  # a scene cut from the new version
