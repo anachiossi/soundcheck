@@ -52,15 +52,17 @@ export function GearTruckScreen({ state }) {
     <div class="gear">
       <div class="gear__head">
         <b class=${count.done === count.all && count.all ? 'gear__count gear__count--done' : 'gear__count'}>${count.done} / ${count.all} on the truck</b>
-        <button class="btn" disabled=${!count.done} onClick=${() => clearTicks(all.map(i => i.id))}>Clear ticks</button>
+        <span class="gear__actions">
+          <button class="btn" disabled=${!count.done} onClick=${() => clearTicks(all.map(i => i.id))}>Clear ticks</button>
+          <button class="btn" disabled=${!all.length} onClick=${async () => shareCanvas(await gearImage(project, 'truck'), 'gear-truck.png')}
+                  aria-label="Export the truck list"><${Icon} name="image" /></button>
+        </span>
       </div>
       ${all.length === 0 && html`<p class="empty">No volumes yet. Add carts, cases, poles… in their tabs: they come here by themselves.</p>`}
       ${groups.map(({ category, items }) => html`
         <h3 class="gear__cat" style=${`--cat:${category.color}`} key=${category.id}>${category.name}
           <small>${tickCount(project, items).done}/${items.length}</small></h3>
         ${items.map(item => html`<${Row} key=${item.id} project=${project} item=${item} edit=${setEditing} />`)}`)}
-      ${all.length > 0 && html`<button class="btn" onClick=${async () => shareCanvas(await gearImage(project, 'truck'), 'gear-truck.png')}>
-        <${Icon} name="image" /> Export</button>`}
       <div class="toolbar"><${NewCategoryButton} /></div>
       <${History} project=${project} />
       ${editing && html`<${ObjectSheet} project=${project} object=${editing} close=${() => setEditing(null)} />`}
@@ -125,7 +127,11 @@ export function GearCategoryScreen({ state }) {
     <div class="gear">
       <div class="gear__head">
         <h2 class="gear__title" style=${`--cat:${category.color}`}>${category.name} <small>${items.length}${isList ? ` · ${total} pieces` : ''}</small></h2>
-        <button class="icon-btn" onClick=${() => setEditingCat(category)} aria-label="Change the category"><${Icon} name="edit" /></button>
+        <span class="gear__actions">
+          <button class="btn" disabled=${!items.length} onClick=${async () => shareCanvas(await gearImage(project, category.id), `gear-${category.id}.png`)}
+                  aria-label=${`Export ${category.name}`}><${Icon} name="image" /></button>
+          <button class="icon-btn" onClick=${() => setEditingCat(category)} aria-label="Change the category"><${Icon} name="edit" /></button>
+        </span>
       </div>
       ${items.length === 0 && html`<p class="empty">Nothing in ${category.name} yet.</p>`}
       ${items.map(item => (isContainer(project, item)
@@ -134,8 +140,6 @@ export function GearCategoryScreen({ state }) {
       <div class="toolbar">
         <button class="btn btn--primary" onClick=${() => setEditing(newObject())}>+ Add</button>
         <button class="btn" onClick=${() => setEditingCat({ parent: category.id, color: category.color })}>+ Sub-category</button>
-        ${items.length > 0 && html`<button class="btn" onClick=${async () => shareCanvas(await gearImage(project, category.id), `gear-${category.id}.png`)}>
-          <${Icon} name="image" /> Export</button>`}
       </div>
       ${subs.length > 0 && html`<p class="muted gear__subs">Sub-categories: ${subs.map((s, i) => html`${i ? ' · ' : ''}<button class="link" onClick=${() => setEditingCat(s)}>${s.name}</button>`)}</p>`}
       ${editing && html`<${ObjectSheet} project=${project} object=${editing} close=${() => setEditing(null)} />`}

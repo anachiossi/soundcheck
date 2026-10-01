@@ -40,6 +40,12 @@ export function HoursScreen({ state }) {
           ${Object.entries(WORKDAYS).map(([id, w]) => html`<option key=${id} value=${id}>${w.label}</option>`)}
         </select>
       </label>
+      <div class="hours__export">
+        <button class="btn" disabled=${days.length === 0} onClick=${async () => shareCanvas(await hoursImage(project, [{ monday, days }], title), `hours-${iso(monday)}.png`)}>
+          <${Icon} name="image" /> Week</button>
+        <button class="btn" onClick=${async () => shareCanvas(await hoursImage(project, filmWeeks(project), project.name), 'hours-film.png')}>
+          <${Icon} name="image" /> Whole film</button>
+      </div>
       ${days.length === 0 ? html`<p class="empty">No shooting this week.</p>` : html`
         <table class="hours__table">
           <thead><tr><th>Day</th><th>Call</th><th>ODG wrap</th><th>Wrap</th><th>Worked</th><th>Extra</th></tr></thead>
@@ -59,13 +65,7 @@ export function HoursScreen({ state }) {
               </tr>`)}
           </tbody>
           <tfoot><tr><td colspan="5">Overtime this week</td><td class=${total ? 'hours__extra' : ''}>${total ? `+${hm(total)}` : '—'}</td></tr></tfoot>
-        </table>
-        <div class="hours__export">
-          <button class="btn" onClick=${async () => shareCanvas(await hoursImage(project, [{ monday, days }], title), `hours-${iso(monday)}.png`)}>
-            <${Icon} name="image" /> Week</button>
-          <button class="btn" onClick=${async () => shareCanvas(await hoursImage(project, filmWeeks(project), project.name), 'hours-film.png')}>
-            <${Icon} name="image" /> Whole film</button>
-        </div>`}
+        </table>`}
       <div class="hours__alerts"><${WrapAlerts} project=${project} /></div>
     </div>`;
 }

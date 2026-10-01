@@ -591,3 +591,6 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
 .gear__history li { margin: 4px 0; }
 .gear__subs { margin-top: 10px; }
 .gear-sheet .choices { flex-wrap: wrap; }
+.gear__actions { display: flex; align-items: center; gap: 6px; }
+.hours__export { margin-bottom: 12px; }
+.gear__cat small, .gear__title small { margin-left: 6px; }
