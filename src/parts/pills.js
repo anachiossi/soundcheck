@@ -41,7 +41,7 @@ export function LavPill({ lav, id, mismatch, number }) {
   if (!lav) return html`<span class="pill pill--missing">${id ? `? ${id}` : '—'}</span>`;
   return html`
     <span class="lav-cell">
-      <span class=${'pill pill--lav' + (lav.attenuated ? ' pill--attenuated' : '')}
+      <span class=${'pill pill--lav' + (number ? '' : ' pill--lav-model') + (lav.attenuated ? ' pill--attenuated' : '')}
             style=${coloured(lav.color)} title=${lav.attenuated ? 'attenuated' : ''}>
         <b>${lav.model}</b>${number && html`<small class="pill__id">${lav.id}</small>`}
       </span>
