@@ -8,7 +8,7 @@
 // Used by: main.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
-import { formatStamp, exportName } from '../model.js';
+import { formatStamp, exportName, shortDate, localTodayIso } from '../model.js';
 import {
   topCategories, categoryById, subCategories, tabItems, contentsOf, truckOf, colourOf,
   ticked, tickCount, isContainer, itemById, startsAsVolume,
@@ -155,7 +155,7 @@ function ExportButton({ project, what, title, disabled }) {
   const copy = async () => {
     const text = gearText(project, what);
     try { await navigator.clipboard.writeText(text); showMessage('ok', `${title} copied as text: paste it anywhere.`); }
-    catch { await shareFile(new Blob([text], { type: 'text/plain' }), exportName(project, `gear-${name}.txt`)); }
+    catch { await shareFile(new Blob([text], { type: 'text/plain' }), exportName(project, `gear_${name}_${shortDate(localTodayIso())}.txt`)); }
     setOpen(false);
   };
   return html`
@@ -166,9 +166,9 @@ function ExportButton({ project, what, title, disabled }) {
         <header class="sheet__head"><b>Export ${title}</b>
           <button class="icon-btn" onClick=${() => setOpen(false)} aria-label="Close"><${Icon} name="close" /></button></header>
         <div class="export-choices">
-          <button class="btn" onClick=${async () => { setOpen(false); shareCanvas(await gearImage(project, what), exportName(project, `gear-${name}.png`)); }}>🖼 Image</button>
+          <button class="btn" onClick=${async () => { setOpen(false); shareCanvas(await gearImage(project, what), exportName(project, `gear_${name}_${shortDate(localTodayIso())}.png`)); }}>🖼 Image</button>
           <button class="btn" onClick=${copy}>📋 Copy as text</button>
-          <button class="btn" onClick=${() => { setOpen(false); shareFile(xlsxBlob(gearSheets(project)), exportName(project, 'gear.xlsx')); }}>📊 Excel · all the gear</button>
+          <button class="btn" onClick=${() => { setOpen(false); shareFile(xlsxBlob(gearSheets(project)), exportName(project, `gear_${shortDate(localTodayIso())}.xlsx`)); }}>📊 Excel · all the gear</button>
         </div>
       </div>`}`;
 }

@@ -45,7 +45,7 @@ export function DocumentScreen({ state }) {
     return () => { cancelled = true; };
   }, [documentPath]);
 
-  const fileName = exportName(getState().project, `${documentTitle}.pdf`);
+  const fileName = exportName(getState().project, getState().documentFile || `${documentTitle}.pdf`);
   return html`
     <div class="document-bar">
       <button class="link back" onClick=${() => showScreen('schedule')}>‹ Back</button>

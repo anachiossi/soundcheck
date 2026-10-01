@@ -94,7 +94,7 @@ function FilmDocuments({ project }) {
   const doc = (file, title) => {
     const path = `${project.folder}/docs/${file}`;
     return project.documents?.[path] && html`
-      <button class="btn btn--doc" onClick=${() => setState({ screen: 'document', documentPath: path, documentTitle: title })}>
+      <button class="btn btn--doc" onClick=${() => setState({ screen: 'document', documentPath: path, documentTitle: title, documentFile: `${title.replace(/\s+/g, '_')}.pdf` })}>
         <${Icon} name="document" /> ${title}</button>`;
   };
   return html`

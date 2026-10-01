@@ -33,6 +33,12 @@ export function tagOf(project) {
 }
 
 // 'day-10.png' → 'LBE_day-10.png'
+// pieces of exported files' names, the way production writes them (ODG #6, STRALCI DAY #7, 28.09.26),
+// numbers with two digits so the files sort in order: 'DAY09', 'WEEK02', '02.10.26'
+export const dayTag = day => `DAY${String(day).padStart(2, '0')}`;
+export const weekTag = week => `WEEK${String(week).padStart(2, '0')}`;
+export const shortDate = iso => (iso ? `${iso.slice(8, 10)}.${iso.slice(5, 7)}.${iso.slice(2, 4)}` : '');
+
 export const exportName = (project, name) => `${tagOf(project)}_${name}`
   .replace(/\s*·\s*/g, '_').replace(/\s+/g, '-').replace(/[^\w.#()-]+/g, '_'); // 'Day 9 · ODG.pdf' → 'LBE_Day-9_ODG.pdf'
 

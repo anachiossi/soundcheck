@@ -17,6 +17,7 @@ let state = {
   proposalId: null,         // the proposal open in the 'proposal' screen
   documentPath: null,       // the PDF open in the 'document' screen, e.g. '…/docs/day-6/odg.pdf'
   documentTitle: '',
+  documentFile: '',      // the name it gets when shared: 'DAY09_ODG.pdf' (the film's tag goes in front)
   cuesScene: null,          // the scene open in 🎙 Cues (full screen)
   cuesFrom: null,           // the screen to go back to when Cues closes
   scheduleMode: 'day',      // 'day' | 'week' | 'all'
@@ -69,11 +70,11 @@ export async function saveAndShow(project, extra = {}) {
 
 function savePreferences() {
   const { screen, scheduleMode, day, week, lookup, project, edit, department,
-    cuesScene, cuesFrom, documentPath, documentTitle, proposalId } = state;
+    cuesScene, cuesFrom, documentPath, documentTitle, documentFile, proposalId } = state;
   try {
     // (the open Cues scene / document / proposal too, so reopening comes back to it)
     localStorage.setItem('sc_prefs', JSON.stringify({ screen, scheduleMode, day, week, lookup, department, projectId: project?.id,
-      cuesScene, cuesFrom, documentPath, documentTitle, proposalId }));
+      cuesScene, cuesFrom, documentPath, documentTitle, documentFile, proposalId }));
     localStorage.setItem('sc_edit', JSON.stringify(edit && { ...edit, projectId: project?.id }));
   } catch { /* private mode: fine, just not remembered */ }
 }
