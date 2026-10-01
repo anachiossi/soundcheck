@@ -25,6 +25,10 @@
 //     ifb/receivers.json   [{ id, model, color, connector }]
 //     ifb/headphones.json  [{ id, model, color, connector, attenuated }]
 //     ifb/list.json        { updated_at, rows: [{ crew_id, rx_id, hp_id, out }] }  one list for the film
+//     gear/categories.json [{ id, name, color, parent }]   Gear department (gear-rules.js): categories
+//     gear/items.json      [{ id, name, category, qty, inside, volume, note, added, removed, removed_note }]
+//     gear/history.json    [{ at, item, name, what, note }]   what entered / left / changed (not ticks, not moves)
+//     gear/checks.json     { item id: true }                  today's ticks (truck, case contents)
 //
 // One file per scene preset: saving scene 12 never touches scene 13.
 
@@ -33,8 +37,13 @@ import { PROJECT_FORMAT } from '../model.js';
 export const FILM_FORMAT = 'soundcheck-film';
 const LISTS = ['characters', 'transmitters', 'lavaliers', 'schedule'];
 // IFB files and the name each one has in the device's copy of the film
+export const GEAR_FILES = { 'gear/categories.json': 'gearCategories', 'gear/items.json': 'gearItems',
+  'gear/history.json': 'gearHistory', 'gear/checks.json': 'gearChecks' };
 export const IFB_FILES = { 'ifb/crew.json': 'crew', 'ifb/receivers.json': 'ifbReceivers',
   'ifb/headphones.json': 'ifbHeadphones', 'ifb/list.json': 'ifbList' };
+
+// files kept under a name in the device's copy of the film (IFB and Gear lists)
+const NAMED_FILES = { ...IFB_FILES, ...GEAR_FILES };
 
 export const presetFile = sceneId => `presets/${sceneId}.json`;
 
@@ -85,7 +94,7 @@ export function projectToFiles(project) {
   for (const [sceneId, sound] of Object.entries(project.sound || {})) files[soundFile(sceneId)] = sound;
   for (const [day, hours] of Object.entries(project.hours || {})) files[hoursFile(day)] = hours;
   for (const [phone, push] of Object.entries(project.push || {})) files[pushFile(phone)] = push;
-  for (const [path, key] of Object.entries(IFB_FILES)) if (project[key]) files[path] = project[key];
+  for (const [path, key] of Object.entries(NAMED_FILES)) if (project[key]) files[path] = project[key];
   return files;
 }
 
@@ -115,7 +124,7 @@ export function fileContent(project, path) {
   if (soundFromPath(path)) return project.sound?.[soundFromPath(path)];
   if (hoursFromPath(path)) return project.hours?.[hoursFromPath(path)];
   if (pushFromPath(path)) return project.push?.[pushFromPath(path)];
-  if (IFB_FILES[path]) return project[IFB_FILES[path]];
+  if (NAMED_FILES[path]) return project[NAMED_FILES[path]];
   const key = path.replace(/\.json$/, '');
   if (key === 'film') return { format: FILM_FORMAT, version: 1, id: project.id, name: project.name };
   return project[key];
@@ -132,7 +141,7 @@ export function setFileContent(project, path, content) {
   else if (soundFromPath(path)) project.sound = { ...project.sound, [soundFromPath(path)]: content };
   else if (hoursFromPath(path)) project.hours = { ...project.hours, [hoursFromPath(path)]: content };
   else if (pushFromPath(path)) project.push = { ...project.push, [pushFromPath(path)]: content };
-  else if (IFB_FILES[path]) project[IFB_FILES[path]] = content;
+  else if (NAMED_FILES[path]) project[NAMED_FILES[path]] = content;
   else if (key === 'film') project.name = content.name;
   else if (LISTS.includes(key) || key === 'scenes' || key === 'settings') project[key] = content;
 }
@@ -190,7 +199,7 @@ export function filesToDownload(project, remoteShas) {
 // The kinds of files the app uses (the folder also holds e.g. inbox.json for the pipeline).
 function isAppFile(path) {
   const key = path.replace(/\.json$/, '');
-  return Boolean(sceneFromPath(path) || proposalFromPath(path) || linesFromPath(path) || soundFromPath(path) || hoursFromPath(path) || pushFromPath(path) || IFB_FILES[path]
+  return Boolean(sceneFromPath(path) || proposalFromPath(path) || linesFromPath(path) || soundFromPath(path) || hoursFromPath(path) || pushFromPath(path) || NAMED_FILES[path]
     || key === 'film' || key === 'scenes' || key === 'settings' || LISTS.includes(key));
 }
 

@@ -20,6 +20,7 @@ const DRAWINGS = {
   cues: html`<path d="M4 5h16v11h-9l-4 4v-4H4z" /><path d="M8 9h8M8 12.5h5" />`,  // speech bubble: the lines, spoken
   voice: html`<path d="M4 9h4l5-4v14l-5-4H4z" /><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" />`,  // read aloud
   timeline: html`<path d="M2 11h5v6H2zM9 11h6v6H9zM17 11h5v6h-5z" /><path d="M4 3h4l-2 3z" /><path d="M6 6v15" />`,
+  gear: html`<rect x="3" y="7" width="18" height="13" rx="2" /><path d="M9 7V5h6v2" /><path d="M3 12h18" />`,  // a case
   headphones: html`<path d="M4 14v-2a8 8 0 0 1 16 0v2" /><rect x="3" y="13" width="5" height="8" rx="2" /><rect x="16" y="13" width="5" height="8" rx="2" />`,
 };
 

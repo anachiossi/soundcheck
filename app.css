@@ -564,3 +564,30 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
 .hours__export { display: flex; gap: 8px; }
 .help-link { display: block; margin-top: 18px; }
 .help-page .section-title { margin-top: 22px; }
+
+/* Gear (screens/gear.js): many tabs scroll sideways; colour = category (--cat) */
+.tabs--scroll button, .tabs--scroll button:disabled { flex: none; padding: 10px 14px; }
+.gear__head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.gear__count { font-size: 18px; }
+.gear__count--done { color: #16a34a; }
+.gear__title { margin: 0; font-size: 20px; border-left: 6px solid var(--cat); padding-left: 10px; }
+.gear__title small, .gear__cat small { color: var(--muted); font-weight: 600; }
+.gear__cat { margin: 18px 0 6px; font-size: 16px; border-left: 6px solid var(--cat); padding-left: 10px; }
+.gear__sub { margin: 10px 0 4px; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em;
+  border-left: 4px solid var(--cat); padding-left: 8px; color: var(--muted); }
+.gear-row { display: flex; align-items: center; gap: 10px; margin: 4px 0; padding: 6px 8px 6px 0; border-radius: 12px;
+  background: var(--card); border-left: 6px solid var(--cat); }
+.gear-row__name { flex: 1; min-width: 0; font-weight: 600; font-size: 17px; text-align: left; }
+.gear-row__name small { display: block; font-weight: 400; font-size: 13px; }
+.gear-row__name > small:first-child { display: inline; }
+.gear-row__open { background: none; border: 0; padding: 4px 0; color: var(--ink); font: inherit; font-weight: 700; }
+.gear-row__open small { display: inline; margin-left: 6px; }
+.gear-tick { flex: none; width: 34px; height: 34px; margin-left: 8px; border-radius: 9px; border: 2px solid var(--line-strong);
+  background: var(--card); color: #fff; font-weight: 800; font-size: 18px; }
+.gear-tick--on { background: #16a34a; border-color: #16a34a; }
+.gear-box { margin: 6px 0; }
+.gear-box__inside { margin: 0 0 10px 22px; }
+.gear__history ul { margin: 6px 0 0; padding-left: 18px; }
+.gear__history li { margin: 4px 0; }
+.gear__subs { margin-top: 10px; }
+.gear-sheet .choices { flex-wrap: wrap; }

@@ -12,7 +12,7 @@ import { upgradeOutbox } from './store/repo-files.js';
 let state = {
   project: null,            // the open film (see model.js)
   projects: local.listProjects(),
-  department: 'mics',       // 'mics' | 'ifb' — which department's tabs are shown
+  department: 'mics',       // 'mics' | 'ifb' | 'gear' — which department's tabs are shown
   screen: 'schedule',       // 'schedule' | 'scenes' | 'cues-picker' | 'kit' | 'projects' | 'proposal' | 'document' | 'cues'
   proposalId: null,         // the proposal open in the 'proposal' screen
   documentPath: null,       // the PDF open in the 'document' screen, e.g. '…/docs/day-6/odg.pdf'

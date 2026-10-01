@@ -25,13 +25,15 @@ import { IfbKitScreen } from './screens/ifb-kit.js';
 import { IfbPicker } from './parts/ifb-picker.js';
 import { HoursScreen } from './screens/hours.js';
 import { HelpScreen } from './screens/help.js';
+import { GearTruckScreen, GearCategoryScreen } from './screens/gear.js';
+import { topCategories } from './gear-rules.js';
 import { WrapBadge, WrapQuestion } from './parts/wrap-clock.js';
 import { Icon } from './parts/icons.js';
 import { EmailBadge } from './parts/email-robot.js';
 import { ConflictBadge } from './parts/conflicts.js';
 import { applyTheme, followPhone } from './theme.js';
 
-// Two departments, each with its own big tabs. Projects is shared.
+// Three departments, each with its own big tabs. Projects is shared.
 const TABS = {
   mics: [
     ['schedule', 'Schedule', ScheduleScreen],
@@ -46,7 +48,15 @@ const TABS = {
     ['ifb-kit', 'Kit', IfbKitScreen],
     ['projects', 'Projects', ProjectsScreen],
   ],
+  gear: [['gear-truck', 'Truck', GearTruckScreen], ['projects', 'Projects', ProjectsScreen]], // + a tab per category
 };
+
+// Gear: Truck, then one tab per top category (Carts, Cases, Cables… and any new one), then Projects
+function tabsOf(department, project) {
+  if (department !== 'gear' || !project) return TABS[department] || TABS.mics;
+  const categories = topCategories(project).map(c => [`gear-${c.id}`, c.name, GearCategoryScreen]);
+  return [TABS.gear[0], ...categories, TABS.gear[1]];
+}
 
 function DepartmentSwitch({ department }) {
   const choose = next => next !== department && setState({ department: next, screen: TABS[next][0][0] });
@@ -54,6 +64,7 @@ function DepartmentSwitch({ department }) {
     <div class="segmented department">
       <button class=${department === 'mics' ? 'on' : ''} onClick=${() => choose('mics')}><${Icon} name="mic" /> Mics</button>
       <button class=${department === 'ifb' ? 'on' : ''} onClick=${() => choose('ifb')}><${Icon} name="headphones" /> IFB</button>
+      <button class=${department === 'gear' ? 'on' : ''} onClick=${() => choose('gear')}><${Icon} name="gear" /> Gear</button>
     </div>`;
 }
 
@@ -90,7 +101,7 @@ function App() {
   // the Scene Map and Timeline are moments to focus: full screen too, no title, badges or tabs
   if (current === 'cues-map') return html`<main class="focus"><${CuesMapScreen} state=${state} /></main>`;
   if (current === 'cues-timeline') return html`<main class="focus"><${CuesTimelineScreen} state=${state} /></main>`;
-  const tabs = TABS[state.department] || TABS.mics;
+  const tabs = tabsOf(state.department, project);
   const Screen = current === 'proposal' ? ProposalScreen
     : current === 'document' ? DocumentScreen
     : current === 'hours' ? HoursScreen
@@ -107,7 +118,7 @@ function App() {
       <div class="topbar__status"><${SyncBadge} state=${state} /> <${EmailBadge} state=${state} /> <${WrapBadge} project=${project} /></div>
       ${project && html`<${DepartmentSwitch} department=${state.department} />`}
     </header>
-    <nav class="tabs">
+    <nav class=${'tabs' + (state.department === 'gear' ? ' tabs--scroll' : '')}>
       ${tabs.map(([id, label]) => html`
         <button key=${id} class=${id === current || (id === 'cues-picker' && ['cues-map', 'cues-timeline'].includes(current)) ? 'on' : ''} disabled=${!project && id !== 'projects'}
                 onClick=${() => showScreen(id)}>${label}</button>`)}
