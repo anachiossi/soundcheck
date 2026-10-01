@@ -560,4 +560,4 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
 .hours__extra { color: #c2410c; font-weight: 800; }
 .hours__wrap { font: inherit; font-weight: 700; background: none; border: 1px dashed var(--line-strong); border-radius: 8px; padding: 4px 8px; color: var(--ink); }
 .hours__table input { font: inherit; width: 100%; max-width: 110px; }
-
+.hours__alerts { margin-top: 18px; }

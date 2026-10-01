@@ -32,6 +32,9 @@ export const timeOf = minutes => `${String(Math.floor(minutes / 60) % 24).padSta
 // 95 → '1h 35m' · -20 → '0h 20m' (the sign is shown by the caller)
 export const span = minutes => `${Math.floor(Math.abs(minutes) / 60)}h ${String(Math.abs(minutes) % 60).padStart(2, '0')}m`;
 
+// for tables: 480 → '8h' · 95 → '1h 35m' · nothing → ''
+export const hm = minutes => (minutes === null || minutes === undefined ? '' : span(minutes).replace(' 00m', ''));
+
 // the phone's date and minute: { date: '2026-10-01', minute: 1110 }
 export const clockOf = now => ({ date: localTodayIso(now), minute: now.getHours() * 60 + now.getMinutes() });
 

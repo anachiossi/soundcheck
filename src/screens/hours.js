@@ -3,18 +3,17 @@
 //   • ‹ › other weeks · tap a day's real wrap to type it (also for days already gone)
 //   • the film's working day (8h continuate…) decides where overtime starts (hours-rules.js)
 //   • Export → the week as an image, to send to production
+//   • 🔔 Wrap alerts: a notification at the wrap, even with the app closed (parts/wrap-alerts.js)
 // Used by: main.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
 import { formatDate } from '../model.js';
-import { WORKDAYS, workdayOf, weekOf, mondayOf, span } from '../hours-rules.js';
+import { WORKDAYS, workdayOf, weekOf, mondayOf, hm } from '../hours-rules.js';
 import { wrappedAt, setWorkday } from '../hours-editing.js';
 import { hoursImage } from '../export/hours-image.js';
 import { shareCanvas } from '../export/share.js';
 import { Icon } from '../parts/icons.js';
-
-// 480 → '8h' · 95 → '1h 35m'
-export const hm = minutes => (minutes === null || minutes === undefined ? '' : span(minutes).replace(' 00m', ''));
+import { WrapAlerts } from '../parts/wrap-alerts.js';
 
 export function HoursScreen({ state }) {
   const { project } = state;
@@ -63,5 +62,6 @@ export function HoursScreen({ state }) {
         </table>
         <button class="btn" onClick=${async () => shareCanvas(await hoursImage(project, days, title), `hours-${iso(monday)}.png`)}>
           <${Icon} name="image" /> Export</button>`}
+      <div class="hours__alerts"><${WrapAlerts} project=${project} /></div>
     </div>`;
 }

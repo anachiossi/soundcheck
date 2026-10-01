@@ -3,7 +3,7 @@
 // Used by: screens/hours.js
 
 import { formatDate } from '../model.js';
-import { WORKDAYS, workdayOf, span } from '../hours-rules.js';
+import { WORKDAYS, workdayOf, hm } from '../hours-rules.js';
 import { newCanvas, box, text, font } from './draw.js';
 import { WIDTH, PAD, fontsReady, header, footer, FOOTER_HEIGHT } from './image.js';
 
@@ -11,7 +11,6 @@ const ROW = 70;
 const COLUMNS = [ // [title, x of the column's centre (or left for the first)]
   ['DAY', PAD + 20], ['CALL', PAD + 400], ['ODG WRAP', PAD + 530], ['WRAP', PAD + 665], ['WORKED', PAD + 800], ['EXTRA', PAD + 935],
 ];
-const hm = minutes => (minutes === null || minutes === undefined ? '' : span(minutes).replace(' 00m', ''));
 
 export async function hoursImage(project, days, title) {
   await fontsReady();

@@ -18,6 +18,8 @@
 //                          the sound breakdown (dificultômetro + lav warnings), see sound-rules.js
 //     hours/9.json         { day, date, status: 'wrapped' | 'late', real_wrap, snooze_until } the REAL wrap of
 //                          shooting day 9 (hours-rules.js); one file per day, like the presets
+//     push/ana-iphone.json { endpoint, keys, device } where to send wrap alerts (parts/wrap-alerts.js);
+//                          read by the robot (pipeline/send_push.py), one file per phone
 //     settings.json        this film's own rules: presets (the generator), voices (read aloud), workday
 //     ifb/crew.json        [{ id, name, job, color, phone }]          IFB department:
 //     ifb/receivers.json   [{ id, model, color, connector }]
@@ -44,6 +46,12 @@ function sceneFromPath(relativePath) {
 export const proposalFile = id => `proposals/${id}.json`;
 export const soundFile = sceneId => `sound/${sceneId}.json`;
 export const hoursFile = day => `hours/${day}.json`;
+export const pushFile = phone => `push/${phone}.json`;
+
+function pushFromPath(relativePath) {
+  const match = /^push\/(.+)\.json$/.exec(relativePath);
+  return match ? match[1] : null;
+}
 
 function hoursFromPath(relativePath) {
   const match = /^hours\/(.+)\.json$/.exec(relativePath);
@@ -76,6 +84,7 @@ export function projectToFiles(project) {
   for (const [key, lines] of Object.entries(project.lines || {})) files[`lines/${key}.json`] = lines;
   for (const [sceneId, sound] of Object.entries(project.sound || {})) files[soundFile(sceneId)] = sound;
   for (const [day, hours] of Object.entries(project.hours || {})) files[hoursFile(day)] = hours;
+  for (const [phone, push] of Object.entries(project.push || {})) files[pushFile(phone)] = push;
   for (const [path, key] of Object.entries(IFB_FILES)) if (project[key]) files[path] = project[key];
   return files;
 }
@@ -84,7 +93,7 @@ export function projectToFiles(project) {
 export function emptyProject(film, folder) {
   return {
     format: PROJECT_FORMAT, version: 1, id: film.id, name: film.name, folder,
-    characters: [], transmitters: [], lavaliers: [], schedule: [], scenes: {}, presets: {}, proposals: {}, lines: {}, sound: {}, hours: {}, settings: {},
+    characters: [], transmitters: [], lavaliers: [], schedule: [], scenes: {}, presets: {}, proposals: {}, lines: {}, sound: {}, hours: {}, push: {}, settings: {},
     crew: [], ifbReceivers: [], ifbHeadphones: [], ifbList: { rows: [] },
     shas: {}, outbox: {}, conflicts: {}, data_as_of: null,
   };
@@ -105,6 +114,7 @@ export function fileContent(project, path) {
   if (linesKey) return project.lines?.[linesKey];
   if (soundFromPath(path)) return project.sound?.[soundFromPath(path)];
   if (hoursFromPath(path)) return project.hours?.[hoursFromPath(path)];
+  if (pushFromPath(path)) return project.push?.[pushFromPath(path)];
   if (IFB_FILES[path]) return project[IFB_FILES[path]];
   const key = path.replace(/\.json$/, '');
   if (key === 'film') return { format: FILM_FORMAT, version: 1, id: project.id, name: project.name };
@@ -121,6 +131,7 @@ export function setFileContent(project, path, content) {
   else if (linesFromPath(path)) project.lines = { ...project.lines, [linesFromPath(path)]: content };
   else if (soundFromPath(path)) project.sound = { ...project.sound, [soundFromPath(path)]: content };
   else if (hoursFromPath(path)) project.hours = { ...project.hours, [hoursFromPath(path)]: content };
+  else if (pushFromPath(path)) project.push = { ...project.push, [pushFromPath(path)]: content };
   else if (IFB_FILES[path]) project[IFB_FILES[path]] = content;
   else if (key === 'film') project.name = content.name;
   else if (LISTS.includes(key) || key === 'scenes' || key === 'settings') project[key] = content;
@@ -179,7 +190,7 @@ export function filesToDownload(project, remoteShas) {
 // The kinds of files the app uses (the folder also holds e.g. inbox.json for the pipeline).
 function isAppFile(path) {
   const key = path.replace(/\.json$/, '');
-  return Boolean(sceneFromPath(path) || proposalFromPath(path) || linesFromPath(path) || soundFromPath(path) || hoursFromPath(path) || IFB_FILES[path]
+  return Boolean(sceneFromPath(path) || proposalFromPath(path) || linesFromPath(path) || soundFromPath(path) || hoursFromPath(path) || pushFromPath(path) || IFB_FILES[path]
     || key === 'film' || key === 'scenes' || key === 'settings' || LISTS.includes(key));
 }
 
