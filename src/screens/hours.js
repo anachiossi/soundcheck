@@ -4,6 +4,7 @@
 //   • the film's working day (8h continuate…) decides where overtime starts (hours-rules.js)
 //   • Week / Whole film → the hours as an image for production (the film: week by week, with totals)
 //   • 🔔 Wrap alerts: a notification at the wrap, even with the app closed (parts/wrap-alerts.js)
+//   • on top, the night before the next day: sleep · wake · leave · meet, ⏰ Set alarms (parts/tomorrow.js)
 // Used by: main.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
@@ -14,6 +15,7 @@ import { hoursImage } from '../export/hours-image.js';
 import { shareCanvas } from '../export/share.js';
 import { Icon } from '../parts/icons.js';
 import { WrapAlerts } from '../parts/wrap-alerts.js';
+import { Tomorrow } from '../parts/tomorrow.js';
 
 export function HoursScreen({ state }) {
   const { project } = state;
@@ -29,6 +31,7 @@ export function HoursScreen({ state }) {
 
   return html`
     <div class="hours">
+      <${Tomorrow} project=${project} />
       <div class="hours__week">
         <button class="btn" onClick=${() => move(-1)} aria-label="Week before">‹</button>
         <b>${title}</b>

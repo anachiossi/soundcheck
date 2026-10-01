@@ -48,6 +48,7 @@ function checkForProductionEmails() {
   }
   reportChecked();
   try { checkWrapAlerts(); } catch (error) { console.warn(`Wrap alerts: ${error.message}`); } // never stops the emails
+  try { checkBedtime(); } catch (error) { console.warn(`Bedtime: ${error.message}`); }
 }
 
 // ---- Wrap alerts ------------------------------------------------------------------------------
@@ -88,6 +89,41 @@ function checkWrapAlerts() {
     sent.push(key);
     properties.setProperty('WRAP_SENT', JSON.stringify(sent.slice(-100)));
     console.log(`Wrap alert for ${film}: ${title}`);
+  }
+}
+
+// ---- Bedtime --------------------------------------------------------------------------------
+// The evening before a shooting day, at the time to sleep (the film's wake-up plan, settings.json
+// "commute": call − meeting − travel − getting ready − sleep hours; same as the app): "💤 Time to sleep".
+const COMMUTE = { meet_before_call: 45, travel_min: 75, travel_max: 90, get_ready: 45, sleep_hours: 8 };
+
+function checkBedtime() {
+  const now = new Date();
+  const minute = Number(Utilities.formatDate(now, TIME_ZONE, 'H')) * 60 + Number(Utilities.formatDate(now, TIME_ZONE, 'm'));
+  const tomorrow = Utilities.formatDate(new Date(now.getTime() + 24 * 3600 * 1000), TIME_ZONE, 'yyyy-MM-dd');
+  const properties = PropertiesService.getScriptProperties();
+  const sent = JSON.parse(properties.getProperty('WRAP_SENT') || '[]');
+  for (const film of (readRepo('projects') || []).filter(item => item.type === 'dir').map(item => item.name)) {
+    const key = `${film}|bed|${tomorrow}`;
+    if (sent.includes(key)) continue;
+    const phones = readRepo(`projects/${film}/push`);
+    if (!phones || !phones.length) continue;
+    const settings = readRepo(`projects/${film}/settings.json`, true);
+    if (!settings || !settings.commute) continue;
+    const c = Object.assign({}, COMMUTE, settings.commute);
+    const day = (readRepo(`projects/${film}/schedule.json`, true) || [])
+      .filter(row => row.date === tomorrow && row.call).sort((a, b) => a.order - b.order)[0];
+    const call = day && minutesOf(day.call);
+    if (call === null || call === undefined) continue;
+    const wake = call - c.meet_before_call - c.travel_max - c.get_ready;
+    const bedtime = 24 * 60 + wake - c.sleep_hours * 60; // minutes from today's midnight
+    if (minute < bedtime || minute > bedtime + 180) continue;
+    const clock = m => `${String(Math.floor(((m % 1440) + 1440) % 1440 / 60)).padStart(2, '0')}:${String(((m % 60) + 60) % 60).padStart(2, '0')}`;
+    startWorkflow(ALERTS, { film, title: '💤 Time to sleep', url: './#hours', tag: 'sleep',
+      body: `Tomorrow D${String(day.day).padStart(2, '0')}: wake ${clock(wake)} · call ${day.call}` });
+    sent.push(key);
+    properties.setProperty('WRAP_SENT', JSON.stringify(sent.slice(-100)));
+    console.log(`Bedtime for ${film}: wake ${clock(wake)}`);
   }
 }
 

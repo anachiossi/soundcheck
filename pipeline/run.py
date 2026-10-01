@@ -21,6 +21,7 @@ Only proposals are written. The film's data changes only when Ana accepts them i
 
 import datetime
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -83,6 +84,7 @@ def run(film_folder, include_past=False):
     documents = file_documents(film, other_sides)
     if documents:
         print(f"documents: {', '.join(documents)}")
+    tell_tomorrow(film, [p for p in written if p["id"].startswith("odg") and p["date"] >= today])
     if written or documents:
         if written:
             git(repo, "add", str(proposals))
@@ -95,6 +97,23 @@ def run(film_folder, include_past=False):
     else:
         print("nothing new")
     return written
+
+
+def tell_tomorrow(film, odgs):
+    """A new ODG for an upcoming day → a notification to the phones with "🔔 Wrap alerts" on:
+    "Tomorrow D10 · call 10:00 / ⏰ wake 07:00 · 🚪 leave 07:45–08:00 · 💤 sleep 23:00"; a tap opens the
+    app's Hours screen with ⏰ Set alarms. Only for films with a wake-up plan (settings "commute")."""
+    from wake_plan import commute_of, wake_plan
+    commute = commute_of(film)
+    if not odgs or not commute or not os.environ.get("VAPID_PRIVATE_KEY") or not any((film / "push").glob("*.json")):
+        return
+    from send_push import send
+    for odg in odgs:
+        plan = wake_plan(commute, odg.get("call"))
+        if plan:
+            send(film, f"Tomorrow D{odg['day']:02d} · call {plan['call']}",
+                 f"⏰ wake {plan['wake']} · 🚪 leave {plan['leave_from']}–{plan['leave_to']} · 💤 sleep {plan['sleep']} — tap to set the alarms",
+                 "./#hours", tag="tomorrow")
 
 
 def add_late_sides(film, other_sides):

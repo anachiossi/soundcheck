@@ -121,3 +121,31 @@ export function nowRounded(now = new Date()) {
   const { minute } = clockOf(now);
   return timeOf(minute - (minute % 5));
 }
+
+// ---- the night before: when to sleep, wake up and leave (Ana's "hora de acordar", 1 Oct) ----
+// settings.json → "commute" (per film; a film that moves every day will change them per day):
+//   meet_before_call  the meeting point, minutes before the call (45)
+//   travel_min / travel_max  from home to the meeting point (75 / 90): the window to leave
+//   get_ready         from waking up to leaving (45) · sleep_hours (8)
+// call 09:00 → meeting 08:15 · leave 06:45–07:00 · wake 06:00 · sleep 22:00 (the night before)
+export const COMMUTE = { meet_before_call: 45, travel_min: 75, travel_max: 90, get_ready: 45, sleep_hours: 8 };
+export const commuteOf = project => (project.settings?.commute ? { ...COMMUTE, ...project.settings.commute } : null);
+
+const clock = minutes => timeOf(((minutes % 1440) + 1440) % 1440); // -45 → '23:15'
+
+export function wakePlan(project, day) {
+  const commute = commuteOf(project);
+  const call = minutesOf(day?.call);
+  if (!commute || call === null) return null;
+  const meet = call - commute.meet_before_call;
+  const leaveFrom = meet - commute.travel_max;
+  const wake = leaveFrom - commute.get_ready;
+  return { day: day.day, date: day.date, call: day.call, meet: clock(meet), leaveFrom: clock(leaveFrom),
+    leaveTo: clock(meet - commute.travel_min), wake: clock(wake), sleep: clock(wake - commute.sleep_hours * 60) };
+}
+
+// the next shooting day after today (tomorrow, or Monday after a weekend)
+export function nextShootingDay(project, now = new Date()) {
+  const today = clockOf(now).date;
+  return shootingDays(project).filter(d => d.date > today).sort((a, b) => a.date.localeCompare(b.date))[0] || null;
+}

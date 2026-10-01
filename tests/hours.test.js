@@ -63,3 +63,14 @@ test('hours/<day>.json travels with the film', () => {
   assert.equal(fileContent(project, 'hours/8.json').real_wrap, '19:00');
   assert.equal(project.hours['8'].status, 'wrapped');
 });
+
+test('the night before: meeting, leave window, wake, sleep (Ana\'s calculator)', async () => {
+  const { wakePlan, nextShootingDay } = await import('../src/hours-rules.js');
+  const project = { ...film(), settings: { commute: {} } };
+  assert.deepEqual(wakePlan(project, { day: 10, date: '2026-10-02', call: '09:00' }),
+    { day: 10, date: '2026-10-02', call: '09:00', meet: '08:15', leaveFrom: '06:45', leaveTo: '07:00', wake: '06:00', sleep: '22:00' });
+  assert.equal(wakePlan(project, { day: 1, call: '06:00' }).sleep, '19:00');
+  assert.equal(wakePlan(project, { day: 1, call: '03:00' }).wake, '00:00');
+  assert.equal(wakePlan({ settings: {} }, { call: '09:00' }), null, 'no commute settings: no plan');
+  assert.equal(nextShootingDay(project, at('2026-09-30', '20:00')).day, 9);
+});

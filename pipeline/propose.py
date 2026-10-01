@@ -128,7 +128,7 @@ def build_proposal(film_folder, email_folder, other_sides=None):
     return {
         "id": f"odg-{odg['number']}",
         "title": f"ODG #{odg['number']} · Day {odg['number']} · {nice_date(date)}",
-        "day": odg["number"], "date": date,
+        "day": odg["number"], "date": date, "call": odg["call"],
         "source": {"subject": email["subject"], "received": email["date"], "files": email["files"]},
         "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
         "status": "open" if changes else "done",  # done when every change is accepted or rejected

@@ -28,6 +28,24 @@ export function HelpScreen() {
         <li><b>Notifications</b> at the wrap, even with the app closed: Hours → 🔔 Wrap alerts → Allow (Home Screen app, iOS 16.4 or later). They can come up to 10 minutes late.</li>
       </ul>
 
+      <h2 class="section-title">Alarms for the next day</h2>
+      <p>Projects → ⏱ Hours shows, for the next shooting day: when to sleep, wake up, leave and be at the meeting
+        point (the numbers are set per film, under "Wake-up plan"). <b>⏰ Set alarms</b> creates the wake-up and
+        leave alarms in the iPhone's Clock through a shortcut. Make the shortcut once, in the Shortcuts app:</p>
+      <ol class="help">
+        <li>New shortcut, named exactly <b>soundcheck alarms</b>.</li>
+        <li><b>First, clear yesterday's:</b> add <b>Find Alarms</b> (Clock) where <b>Label contains</b> <code>soundcheck</code>,
+          then <b>Delete Alarms</b> with them. (If your iPhone has no delete action: <b>Toggle Alarm</b> → Off, so
+          the old ones never ring.) Your other alarms aren't touched.</li>
+        <li>Add <b>Split Text</b>: split the <b>Shortcut Input</b> by <b>Custom</b> <code>;</code></li>
+        <li>Add <b>Get Item from List</b> → <b>First Item</b> of Split Text, then <b>Create Alarm</b> (Clock):
+          time = that item, label <b>soundcheck · Wake up</b>.</li>
+        <li>Add <b>Get Item from List</b> → <b>Item at Index 2</b> of Split Text, then <b>Create Alarm</b>:
+          time = that item, label <b>soundcheck · Leave home</b>.</li>
+        <li>In the shortcut's settings (ⓘ), turn off "Show When Run" if you like.</li>
+      </ol>
+      <p class="muted">The robot also sends a notification when tomorrow's ODG arrives, and one at bedtime 💤.</p>
+
       <h2 class="section-title">Hearing the lines</h2>
       <ul class="help">
         <li>🔊 in Cues and the Timeline reads the scene with the phone's voice, a short pause between lines.

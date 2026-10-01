@@ -17,13 +17,13 @@ from pywebpush import WebPushException, webpush
 CONTACT = "mailto:chiossi.sound@gmail.com"  # who sends them (the push services ask for a contact)
 
 
-def send(film, title, body):
+def send(film, title, body, url="./", tag="wrap"):
     sent, gone = 0, []
     for path in sorted((Path(film) / "push").glob("*.json")):
         phone = json.loads(path.read_text(encoding="utf-8"))
         try:
             webpush({"endpoint": phone["endpoint"], "keys": phone["keys"]},
-                    data=json.dumps({"title": title, "body": body, "tag": "wrap"}),
+                    data=json.dumps({"title": title, "body": body, "tag": tag, "url": url}),
                     vapid_private_key=os.environ["VAPID_PRIVATE_KEY"], vapid_claims={"sub": CONTACT}, ttl=3600)
             sent += 1
         except WebPushException as error:
@@ -37,4 +37,5 @@ def send(film, title, body):
 
 
 if __name__ == "__main__":
-    send(sys.argv[1], sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else "")
+    args = sys.argv[1:] + [""] * 5
+    send(args[0], args[1], args[2], args[3] or "./", args[4] or "wrap")

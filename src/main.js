@@ -137,7 +137,15 @@ function App() {
 applyTheme();   // light / dark (Projects → Screen)
 followPhone();
 render(html`<${App} />`, document.getElementById('app'));
-start().then(startAutoSync);
+// a link into the app ('#hours', e.g. from the "Tomorrow" notification) opens that screen
+function openFromLink() {
+  if (location.hash === '#hours') {
+    setState({ screen: 'hours', department: 'mics' });
+    history.replaceState(null, '', location.pathname + location.search);
+  }
+}
+start().then(() => { openFromLink(); startAutoSync(); });
+addEventListener('hashchange', openFromLink);
 
 // Updates: look for a new version at start and whenever you come back to the
 // app; when it has been downloaded, reload once so you see it straight away.
