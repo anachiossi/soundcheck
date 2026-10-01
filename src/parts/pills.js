@@ -25,22 +25,25 @@ export function CharacterPill({ character, id }) {
     </span>`;
 }
 
-export function TxPill({ tx, character, id }) {
+// withFrequency: the TX's frequency under its number (scene tables, Ana 1 Oct)
+export function TxPill({ tx, character, id, withFrequency }) {
   if (!tx) return html`<span class="pill pill--missing">${id ? `? ${id}` : '—'}</span>`;
   const colour = character?.color && !isNearWhite(character.color) ? character.color : tx.color;
   return html`
-    <span class="pill pill--tx" style=${coloured(colour)} title=${tx.model}>
-      <b>${tx.id}</b>
+    <span class=${'pill pill--tx' + (withFrequency && tx.frequency ? ' pill--tx-freq' : '')} style=${coloured(colour)} title=${tx.model}>
+      <b>${tx.id}</b>${withFrequency && tx.frequency && html`<small>${tx.frequency}</small>`}
     </span>`;
 }
 
-export function LavPill({ lav, id, mismatch }) {
+// number: the lav's own number next to its model — only where a particular lav is chosen (Kit, picker);
+// the scene tables show the model and colour only (Ana, 1 Oct)
+export function LavPill({ lav, id, mismatch, number }) {
   if (!lav) return html`<span class="pill pill--missing">${id ? `? ${id}` : '—'}</span>`;
   return html`
     <span class="lav-cell">
       <span class=${'pill pill--lav' + (lav.attenuated ? ' pill--attenuated' : '')}
             style=${coloured(lav.color)} title=${lav.attenuated ? 'attenuated' : ''}>
-        <b>${lav.model}</b><small class="pill__id">${lav.id}</small>
+        <b>${lav.model}</b>${number && html`<small class="pill__id">${lav.id}</small>`}
       </span>
       ${mismatch && html`<span class="warn" title="TX and lav connectors differ">!</span>`}
     </span>`;

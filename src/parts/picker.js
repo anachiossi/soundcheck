@@ -42,7 +42,7 @@ export function Picker({ state }) {
   const Pill = ({ item }) =>
     field === 'char_id' ? html`<${CharacterPill} character=${item} />`
     : field === 'tx_id' ? html`<${TxPill} tx=${item} character=${character} />`
-    : html`<${LavPill} lav=${item} />`;
+    : html`<${LavPill} lav=${item} number />`;
 
   return html`
     <div class="sheet-backdrop" onClick=${close}></div>

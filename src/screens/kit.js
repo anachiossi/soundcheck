@@ -95,5 +95,5 @@ export function KitScreen({ state }) {
       render=${tx => html`<${TxPill} tx=${tx} /><small>${tx.model}<br />${tx.connector}${tx.frequency ? html` · <b>${tx.frequency}</b>` : ''}</small>`} />
     <${Section} ...${shared} list="lavaliers" title="Lavaliers"
       blank=${{ id: nextId('lavaliers'), color: '#000000', attenuated: false }}
-      render=${lav => html`<${LavPill} lav=${lav} /><small>${lav.brand} · ${lav.connector}${lav.attenuated ? html`<br /><b class="text-danger">attenuated</b>` : ''}</small>`} />`;
+      render=${lav => html`<${LavPill} lav=${lav} number /><small>${lav.brand} · ${lav.connector}${lav.attenuated ? html`<br /><b class="text-danger">attenuated</b>` : ''}</small>`} />`;
 }

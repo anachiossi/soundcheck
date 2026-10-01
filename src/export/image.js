@@ -94,7 +94,7 @@ export function drawScene(ctx, project, sceneId, y) {
     pill(ctx, PAD, y, 370, h, c?.color, c?.name || `? ${row.char_id}`, c?.actor);
     pill(ctx, PAD + 386, y, 110, h, c?.color || row.tx?.color, row.tx?.id || '—');
     if (row.tx?.frequency) { font(ctx, 700, 28); text(ctx, String(row.tx.frequency), PAD + 561, y + h / 2, 0, '#0f172a', 'center'); }
-    pill(ctx, PAD + 632, y, 220, h, row.lav?.color, row.lav?.model || '—', row.lav ? `lav ${row.lav.id}` : '',
+    pill(ctx, PAD + 632, y, 220, h, row.lav?.color, row.lav?.model || '—', '',
       { outline: row.lav?.attenuated ? '#dc2626' : null });
     if (row.connectorMismatch) { font(ctx, 800, 34); text(ctx, '!', PAD + 862, y + h / 2, 0, '#ea580c'); }
     const [label, bg, fg] = SPEAKER[row.speaker] || SPEAKER.maybe;

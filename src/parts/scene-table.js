@@ -94,7 +94,7 @@ function MicRows({ project, sceneId }) {
           </div>
           <div class="mics__cell">
             ${i === 0 && html`<span class="mics__label">TX</span>`}
-            <${TxPill} tx=${row.tx} character=${row.character} id=${row.tx_id} />
+            <${TxPill} tx=${row.tx} character=${row.character} id=${row.tx_id} withFrequency />
           </div>
           <div class="mics__cell">
             ${i === 0 && html`<span class="mics__label">Lav</span>`}

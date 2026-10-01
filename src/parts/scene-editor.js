@@ -39,7 +39,7 @@ export function SceneEditor({ project, edit }) {
         return html`
           <div class="mics__row mics__row--edit" key=${row.key}>
             ${cell(i, 'char_id', row.char_id ? html`<${CharacterPill} character=${character} id=${row.char_id} />` : empty('character'))}
-            ${cell(i, 'tx_id', row.tx_id ? html`<${TxPill} tx=${tx} character=${character} id=${row.tx_id} />` : empty('TX'))}
+            ${cell(i, 'tx_id', row.tx_id ? html`<${TxPill} tx=${tx} character=${character} id=${row.tx_id} withFrequency />` : empty('TX'))}
             ${cell(i, 'lav_id', row.lav_id ? html`<${LavPill} lav=${lav} id=${row.lav_id} />` : empty('lav'))}
             <button class="edit-cell" onClick=${() => cycleSpeaker(i)}><${SpeakerBadge} speaker=${row.speaker} /></button>
             <span class="row-tools">
