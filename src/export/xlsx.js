@@ -1,7 +1,11 @@
 // xlsx.js — writes a small Excel file (.xlsx) with no library: an .xlsx is a zip of a few XML
-// files. Sheets of rows (text or numbers), the first row bold, columns sized to their content.
+// files. Sheets of rows, the first row bold (or the rows listed in `bold`), columns sized to their content.
+// A cell is text, a number, or an object:
+//   { time: '18:30' }            a time of day, shown hh:mm (editable in Excel as a time)
+//   { f: 'MOD(E5-C5,1)', as: 'duration' | 'time' }   a formula (durations shown [h]:mm, e.g. 9:30)
+//   { text: 'Total', bold: true }
 //   xlsxBlob([{ name: 'Gear', rows: [['Name', 'Qty'], ['XLR 3m', 6]] }]) → Blob
-// Used by: screens/gear.js (the gear list for production / the rental)
+// Used by: screens/gear.js (the gear list), export/timesheet.js (the week's time sheet)
 
 const enc = new TextEncoder();
 const esc = s => String(s).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]))
@@ -13,17 +17,32 @@ function column(n) { // 0 → A, 26 → AA
   return s;
 }
 
-function sheetXml(rows) {
+// styles (styles.xml cellXfs): 0 plain · 1 bold · 2 time hh:mm · 3 duration [h]:mm · 4 bold duration
+const STYLE = { plain: 0, bold: 1, time: 2, duration: 3, boldDuration: 4 };
+const shown = v => (v && typeof v === 'object' ? v.text ?? v.time ?? '00:00' : String(v ?? ''));
+
+function cellXml(ref, v, boldRow) {
+  if (v && typeof v === 'object' && 'f' in v) {
+    const s = v.as === 'time' ? STYLE.time : v.bold || boldRow ? STYLE.boldDuration : STYLE.duration;
+    return `<c r="${ref}" s="${s}"><f>${esc(v.f)}</f></c>`;
+  }
+  if (v && typeof v === 'object' && 'time' in v) {
+    const [h, m] = String(v.time).split(':').map(Number);
+    return Number.isFinite(h) ? `<c r="${ref}" s="${STYLE.time}"><v>${(h * 60 + (m || 0)) / 1440}</v></c>` : `<c r="${ref}"/>`;
+  }
+  const s = (v && typeof v === 'object' && v.bold) || boldRow ? ` s="${STYLE.bold}"` : '';
+  if (typeof v === 'number') return `<c r="${ref}"${s}><v>${v}</v></c>`;
+  return `<c r="${ref}" t="inlineStr"${s}><is><t xml:space="preserve">${esc(shown(v))}</t></is></c>`;
+}
+
+function sheetXml({ rows, bold = [0], freeze = 1 }) {
   const widths = [];
-  rows.forEach(row => row.forEach((v, c) => { widths[c] = Math.min(60, Math.max(widths[c] || 6, String(v ?? '').length + 2)); }));
+  rows.forEach(row => row.forEach((v, c) => { widths[c] = Math.min(60, Math.max(widths[c] || 6, shown(v).length + 2)); }));
   const cols = widths.map((w, c) => `<col min="${c + 1}" max="${c + 1}" width="${w}" customWidth="1"/>`).join('');
-  const body = rows.map((row, r) => `<row r="${r + 1}">${row.map((v, c) => {
-    const ref = `${column(c)}${r + 1}`, style = r === 0 ? ' s="1"' : '';
-    return typeof v === 'number' ? `<c r="${ref}"${style}><v>${v}</v></c>`
-      : `<c r="${ref}" t="inlineStr"${style}><is><t xml:space="preserve">${esc(v ?? '')}</t></is></c>`;
-  }).join('')}</row>`).join('');
+  const body = rows.map((row, r) => `<row r="${r + 1}">${row.map((v, c) => cellXml(`${column(c)}${r + 1}`, v, bold.includes(r))).join('')}</row>`).join('');
+  const pane = freeze ? `<pane ySplit="${freeze}" topLeftCell="A${freeze + 1}" activePane="bottomLeft" state="frozen"/>` : '';
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">`
-    + `<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>`
+    + `<sheetViews><sheetView workbookViewId="0">${pane}</sheetView></sheetViews>`
     + `<cols>${cols}</cols><sheetData>${body}</sheetData></worksheet>`;
 }
 
@@ -44,13 +63,16 @@ function files(sheets) {
       + sheets.map((s, i) => `<Relationship Id="rId${i + 1}" Type="${ns}/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join('')
       + `<Relationship Id="rId${sheets.length + 1}" Type="${ns}/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`,
     'xl/styles.xml': `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="${ns}/spreadsheetml/2006/main">`
+      + '<numFmts count="2"><numFmt numFmtId="164" formatCode="hh:mm"/><numFmt numFmtId="165" formatCode="[h]:mm"/></numFmts>'
       + '<fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts>'
       + '<fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>'
       + '<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>'
       + '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
-      + '<cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs>'
+      + '<cellXfs count="5"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>'
+      + '<xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="165" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>'
+      + '<xf numFmtId="165" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1" applyNumberFormat="1"/></cellXfs>'
       + '</styleSheet>',
-    ...Object.fromEntries(sheets.map((s, i) => [`xl/worksheets/sheet${i + 1}.xml`, sheetXml(s.rows)])),
+    ...Object.fromEntries(sheets.map((s, i) => [`xl/worksheets/sheet${i + 1}.xml`, sheetXml(s)])),
   };
 }
 

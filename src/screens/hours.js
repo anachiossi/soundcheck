@@ -3,6 +3,7 @@
 //   • ‹ › other weeks · tap a day's real wrap to type it (also for days already gone)
 //   • the film's working day (8h continuate…) decides where overtime starts (hours-rules.js)
 //   • Week / Whole film → the hours as an image for production (the film: week by week, with totals)
+//   • 📊 Timesheet → the week as an editable Excel for production, one block per person of the sound department
 //   • 🔔 Wrap alerts: a notification at the wrap, even with the app closed (parts/wrap-alerts.js)
 //   • on top, the night before the next day: sleep · wake · leave · meet, ⏰ Set alarms (parts/tomorrow.js)
 // Used by: main.js
@@ -12,7 +13,8 @@ import { formatDate, exportName, shortDate, weekTag } from '../model.js';
 import { WORKDAYS, workdayOf, weekOf, filmWeeks, mondayOf, hm } from '../hours-rules.js';
 import { wrappedAt, setWorkday } from '../hours-editing.js';
 import { hoursImage } from '../export/hours-image.js';
-import { shareCanvas } from '../export/share.js';
+import { timesheetBlob } from '../export/timesheet.js';
+import { shareCanvas, shareFile } from '../export/share.js';
 import { Icon } from '../parts/icons.js';
 import { WrapAlerts } from '../parts/wrap-alerts.js';
 import { Tomorrow } from '../parts/tomorrow.js';
@@ -48,6 +50,8 @@ export function HoursScreen({ state }) {
           <${Icon} name="image" /> Week</button>
         <button class="btn" onClick=${async () => shareCanvas(await hoursImage(project, filmWeeks(project), project.name), exportName(project, 'hours_ALL-FILM.png'))}>
           <${Icon} name="image" /> Whole film</button>
+        <button class="btn" disabled=${days.length === 0} onClick=${() => shareFile(timesheetBlob(project, days, title),
+          exportName(project, `timesheet_${days[0]?.week ? `${weekTag(days[0].week)}_` : ''}${shortDate(iso(monday))}.xlsx`))}>📊 Timesheet</button>
       </div>
       ${days.length === 0 ? html`<p class="empty">No shooting this week.</p>` : html`
         <table class="hours__table">
