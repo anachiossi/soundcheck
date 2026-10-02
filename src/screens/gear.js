@@ -11,7 +11,7 @@ import { html, useState } from '../../vendor/preact-htm.js';
 import { formatStamp, exportName, shortDate, localTodayIso } from '../model.js';
 import {
   topCategories, categoryById, subCategories, tabItems, contentsOf, truckOf, colourOf,
-  ticked, tickCount, isContainer, itemById, startsAsVolume,
+  ticked, tickCount, isContainer, itemById, startsAsVolume, searchGear,
 } from '../gear-rules.js';
 import { toggleTick, clearTicks } from '../gear-editing.js';
 import { ObjectSheet, CategorySheet } from '../parts/gear-form.js';
@@ -19,7 +19,7 @@ import { gearImage } from '../export/gear-image.js';
 import { gearText, gearSheets } from '../export/gear-text.js';
 import { xlsxBlob } from '../export/xlsx.js';
 import { shareCanvas, shareFile } from '../export/share.js';
-import { showMessage } from '../state.js';
+import { showMessage, setState } from '../state.js';
 import { manualsByBrand, manualPath, openManual } from '../manuals.js';
 import { textColourFor } from '../colour.js';
 import { Icon } from '../parts/icons.js';
@@ -46,7 +46,7 @@ function Row({ project, item, edit, showInside }) {
     <div class="gear-row" style=${`--cat:${colourOf(project, item.category)}`}>
       <${Tick} project=${project} item=${item} />
       <span class="gear-row__name"><${NamePill} item=${item} />
-        ${(inside || item.note) && html`<small class="muted">${inside ? `in ${inside}` : ''}${inside && item.note ? ' · ' : ''}${item.note || ''}</small>`}</span>
+        ${(inside || item.note || item.type) && html`<small class="muted">${[item.type, inside && `in ${inside}`, item.note].filter(Boolean).join(' · ')}</small>`}</span>
       <button class="icon-btn" onClick=${() => edit(item)} aria-label=${`Change ${item.name}`}><${Icon} name="edit" /></button>
     </div>`;
 }
@@ -57,8 +57,10 @@ export function GearTruckScreen({ state }) {
   const groups = truckOf(project);
   const all = groups.flatMap(g => g.items);
   const count = tickCount(project, all);
+  if (state.gearQuery) return html`<div class="gear"><${GearSearch} state=${state} /></div>`;
   return html`
     <div class="gear">
+      <${GearSearch} state=${state} />
       <div class="gear__head">
         <b class=${count.done === count.all && count.all ? 'gear__count gear__count--done' : 'gear__count'}>${count.done} / ${count.all} on the truck</b>
         <span class="gear__actions">
@@ -100,7 +102,7 @@ function Container({ project, item, edit, addInside, showInside }) {
       <div class="gear-row gear-row--box">
         <${Tick} project=${project} item=${item} />
         <button class="gear-row__name gear-row__open" onClick=${() => setOpen(o => !o)}>
-          ${open ? '▾' : '▸'} <${NamePill} item=${item} /> <small class="muted">${where ? `in ${where} · ` : ''}${inside.length ? `${count.done}/${inside.length} checked` : 'empty'}</small></button>
+          ${open ? '▾' : '▸'} <${NamePill} item=${item} /> <small class="muted">${item.type ? `${item.type} · ` : ''}${where ? `in ${where} · ` : ''}${inside.length ? `${count.done}/${inside.length} checked` : 'empty'}</small></button>
         <button class="icon-btn" onClick=${() => edit(item)} aria-label=${`Change ${item.name}`}><${Icon} name="edit" /></button>
       </div>
       ${open && html`
@@ -130,9 +132,11 @@ export function GearCategoryScreen({ state }) {
   const newObject = extra => ({ category: category.id, volume: startsAsVolume(project, category.id), ...extra });
   const addInside = box => setEditing({ category: subs[0]?.id || category.id, inside: box.id, volume: false });
   const total = items.reduce((n, i) => n + (Number(i.qty) || 1), 0);
+  if (state.gearQuery) return html`<div class="gear"><${GearSearch} state=${state} /></div>`;
 
   return html`
     <div class="gear">
+      <${GearSearch} state=${state} />
       <div class="gear__head">
         <h2 class="gear__title" style=${`--cat:${category.color}`}>${category.name} <small>${items.length}${isList ? ` · ${total} pieces` : ''}</small></h2>
         <span class="gear__actions">
@@ -177,6 +181,27 @@ function ExportButton({ project, what, title, disabled }) {
           <button class="btn" onClick=${() => { setOpen(false); shareFile(xlsxBlob(gearSheets(project)), exportName(project, `gear_${shortDate(localTodayIso())}.xlsx`)); }}>📊 Excel · all the gear</button>
         </div>
       </div>`}`;
+}
+
+// 🔍 on every Gear tab: "xlr cable" → every XLR cable with where it is (Magliner › Pelican yellow ›);
+// "wood box" → every wood box, also inside other cases. While searching, the results replace the tab.
+function GearSearch({ state }) {
+  const { project, gearQuery = '' } = state;
+  const [editing, setEditing] = useState(null);
+  const results = searchGear(project, gearQuery);
+  return html`
+    <div class="gear-search">
+      <input type="search" value=${gearQuery} placeholder="🔍 Search: xlr cable, wood box, slate…" aria-label="Search the gear"
+             onInput=${e => setState({ gearQuery: e.target.value })} />
+    </div>
+    ${gearQuery && html`
+      <p class="muted">${results.length} found</p>
+      ${results.map(({ item, path }) => html`
+        <div class="gear-result" key=${item.id}>
+          ${path.length > 0 && html`<p class="gear-result__path">${path.map((box, i) => html`${i ? ' › ' : ''}<${NamePill} item=${box} />`)} ›</p>`}
+          <${Row} project=${project} item=${item} edit=${setEditing} />
+        </div>`)}
+      ${editing && html`<${ObjectSheet} project=${project} object=${editing} close=${() => setEditing(null)} />`}`}`;
 }
 
 // Gear → Manuals: the equipment manuals by brand, read offline in the app's PDF viewer (manuals.js)

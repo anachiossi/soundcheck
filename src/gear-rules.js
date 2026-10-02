@@ -2,8 +2,9 @@
 //   • CATEGORIES, like classes: the top ones are the tabs (Carts, Cases, Cables, Poles, Tripods,
 //     Other, + any new one); a category can have SUB-categories (e.g. Cases → Batteries) that group
 //     things inside a cart or a case. Each has a colour.
-//   • OBJECTS: { id, name, category, qty, inside (the cart / case it's in), volume (a piece that goes
-//     on the truck), color (its real colour — "the yellow Pelican" — shown as a pill), note }. A cart or a case HOLDS the objects whose `inside` is its id. The two are
+//   • OBJECTS: { id, name, nicknames [..], type (Pelican, soft bag, wood box…), category, qty, inside (the
+//     cart / case it's in), volume (a piece that goes on the truck), color (its real colour — "the yellow
+//     Pelican" — shown as a pill), note }. Carts and cases hold loose things and other cases, any depth. A cart or a case HOLDS the objects whose `inside` is its id. The two are
 //     separate: a case riding in a cart can still be its own volume; one fixed to the cart is not.
 //   • a tab lists all its objects, wherever they are ("in Main Karl")
 //   • the TRUCK is every volume, by category; TICKS (gear/checks.json) are day-to-day help only
@@ -111,4 +112,30 @@ export function historyOf(before, after) {
   if ((before.qty || 1) !== (after.qty || 1)) changes.push(`quantity: ${before.qty || 1} → ${after.qty || 1}`);
   if (before.category !== after.category) changes.push('category changed');
   return changes.length ? { what: 'changed', note: changes.join(', ') } : null;
+}
+
+// ---- search (Ana, 2 Oct): "xlr cable" → every XLR cable with where it is; "wood box" → every wood box ----
+// An object is found when every word of the search is in its name, nicknames, type (Pelican, wood box…),
+// note or category (and the category's parent): "xlr cable" finds "XLR 3m" in Cables.
+export const CASE_TYPES = ['Pelican', 'hard case', 'soft bag', 'wood box', 'flight case', 'rack', 'drawer', 'box', 'pouch'];
+
+const plain = text => String(text || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+// the carts / cases an object is in, outermost first: [Magliner, Pelican yellow]
+export function pathOf(project, item) {
+  const path = [];
+  for (let at = item.inside && itemById(project, item.inside), n = 0; at && n < 20; at = at.inside && itemById(project, at.inside), n++) path.unshift(at);
+  return path;
+}
+
+export function searchGear(project, query) {
+  const words = plain(query).split(/\s+/).filter(Boolean);
+  if (!words.length) return [];
+  return activeItems(project).filter(item => {
+    const category = categoryById(project, item.category);
+    const parent = category?.parent && categoryById(project, category.parent);
+    const haystack = plain([item.name, ...(item.nicknames || []), item.type, item.note, category?.name, parent?.name].join(' '));
+    return words.every(word => haystack.includes(word));
+  }).map(item => ({ item, path: pathOf(project, item) }))
+    .sort((a, b) => a.path.map(p => p.name).concat(a.item.name).join('/').localeCompare(b.path.map(p => p.name).concat(b.item.name).join('/')));
 }

@@ -1,11 +1,12 @@
 // gear-form.js — the sheets to add or change an object or a category of the Gear department.
-//   Object: name · its real colour · quantity · category (or one of its sub-categories) · inside which cart / case ·
+//   Object: name · nicknames (for the search) · type (Pelican, wood box…) · its real colour · quantity ·
+//   category (or one of its sub-categories) · inside which cart / case ·
 //   goes on the truck as a volume · note. "Remove" asks why (optional) — it goes in the history.
 //   Category: name · colour (a sub-category belongs to a tab's category).
 // Used by: screens/gear.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
-import { categoriesOf, topOf, containersOf, CASE_COLOURS } from '../gear-rules.js';
+import { categoriesOf, topOf, containersOf, CASE_COLOURS, CASE_TYPES } from '../gear-rules.js';
 import { textColourFor } from '../colour.js';
 import { saveObject, removeObject, saveCategory } from '../gear-editing.js';
 import { Icon } from './icons.js';
@@ -44,6 +45,12 @@ export function ObjectSheet({ project, object, close }) {
   return html`<${Sheet} title=${values.id ? values.name : `New in ${top?.name || 'Gear'}`} close=${close}>
     <form class="item-form" onSubmit=${submit}>
       <label><span>Name</span><input value=${values.name || ''} onInput=${e => set('name', e.target.value)} required autofocus /></label>
+      <label><span>Nicknames (other names it goes by, for the search; commas between)</span>
+        <input value=${(values.nicknames || []).join(', ')} placeholder="e.g. slate case, the small one"
+               onInput=${e => set('nicknames', e.target.value.split(',').map(n => n.trim()).filter(Boolean))} /></label>
+      <label><span>Type</span><input list="gear-types" value=${values.type || ''} placeholder="Pelican, soft bag, wood box…"
+               onInput=${e => set('type', e.target.value)} />
+        <datalist id="gear-types">${CASE_TYPES.map(t => html`<option key=${t} value=${t} />`)}</datalist></label>
       <label><span>Colour (the case's real colour)</span><span class="choices">
         <button type="button" class=${'choice' + (!values.color ? ' choice--on' : '')} onClick=${() => set('color', '')}>none</button>
         ${CASE_COLOURS.map(c => html`<button type="button" key=${c} title=${c} onClick=${() => set('color', c)}

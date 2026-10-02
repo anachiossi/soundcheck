@@ -64,3 +64,19 @@ test('batteries in a case are contents, not a container', () => {
   assert.equal(isContainer(film, film.gearItems[1]), false, 'AA (Cases → Batteries)');
   assert.deepEqual(containersOf(film, 'g4').map(i => i.id), ['g1'], 'XLR 30m can go into the Pelican, not into the AA');
 });
+
+test('search: words in name, nicknames, type or category; with the path', async () => {
+  const { searchGear } = await import('../src/gear-rules.js');
+  const kit = { ...film, gearItems: [
+    { id: 'm', name: 'Magliner', category: 'carts' },
+    { id: 'p', name: 'Pelican yellow', category: 'cases', type: 'Pelican', inside: 'm', nicknames: ['slate case'] },
+    { id: 'w', name: 'Schoeps CMIT', category: 'cases', type: 'wood box', inside: 'p' },
+    { id: 'x', name: 'XLR 3m', category: 'cables', qty: 6, inside: 'p' },
+    { id: 'b', name: 'BNC-SMA', category: 'cables', qty: 2, inside: 'm' },
+  ] };
+  const paths = q => searchGear(kit, q).map(r => [...r.path.map(p => p.name), r.item.name].join(' › '));
+  assert.deepEqual(paths('xlr cable'), ['Magliner › Pelican yellow › XLR 3m']);
+  assert.deepEqual(paths('wood box'), ['Magliner › Pelican yellow › Schoeps CMIT'], 'a case inside a case inside a cart');
+  assert.deepEqual(paths('slate'), ['Magliner › Pelican yellow'], 'by nickname');
+  assert.deepEqual(paths('cables').length, 2);
+});
