@@ -6,7 +6,7 @@
 //   projects/<film-id>/
 //     film.json            { format, version, id, name, tag }   tag: 'LBE', starts exported files' names
 //     characters.json      [{ id, name, actor, color, pref_tx, pref_lav_model, pref_lav_color, … }]
-//     transmitters.json    [{ id, model, color, connector, order }]
+//     transmitters.json    [{ id, model, color, connector, order, frequency, serial }]
 //     lavaliers.json       [{ id, model, color, connector, attenuated, brand }]
 //     schedule.json        [{ scene_id, day, order, date, week, call, wrap }]
 //     scenes.json          { '12': { int_ext, time_of_day, set, location, pages, story_day, synopsis, notes } }
