@@ -1,12 +1,14 @@
 // gear-form.js — the sheets to add or change an object or a category of the Gear department.
-//   Object: name · nicknames (for the search) · type (Pelican, wood box…) · its real colour · quantity ·
-//   category (or one of its sub-categories) · inside which cart / case ·
-//   goes on the truck as a volume · note. "Remove" asks why (optional) — it goes in the history.
-//   Category: name · colour (a sub-category belongs to a tab's category).
+//   Object: name · brand · type (Pelican, wood box, cable, mic…) · quantity · DETAILS, its own fields
+//   (a cable's connectors and length, a mic's capsule…; the type offers the fields its kind uses) ·
+//   nicknames (for the search) · its real colour · category · inside which cart / case · goes on the truck
+//   as a volume · note. A cart or case lists what it holds, with "+ Add inside". "Remove" asks why
+//   (optional) — it goes in the history.
+//   Category: name · colour · inside which category (a sub-category, e.g. Cases → Batteries).
 // Used by: screens/gear.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
-import { categoriesOf, topOf, containersOf, CASE_COLOURS, CASE_TYPES } from '../gear-rules.js';
+import { categoriesOf, topCategories, topOf, containersOf, isContainer, childrenOf, pathOf, fieldsOfType, typesOf, CASE_COLOURS } from '../gear-rules.js';
 import { textColourFor } from '../colour.js';
 import { saveObject, removeObject, saveCategory } from '../gear-editing.js';
 import { Icon } from './icons.js';
@@ -21,15 +23,44 @@ function Sheet({ title, close, children }) {
     </div>`;
 }
 
-// object: the object to change, or { category, inside, volume } for a new one
-export function ObjectSheet({ project, object, close }) {
+// the object's own fields: one line each (field | value | ×), then the type's usual fields to add
+function Details({ project, values, set }) {
+  const details = values.details || [];
+  const change = (i, key, value) => set('details', details.map((d, j) => (j === i ? { ...d, [key]: value } : d)));
+  const have = new Set(details.map(d => d.label.toLowerCase()));
+  const suggested = fieldsOfType(project, values.type).filter(label => !have.has(label.toLowerCase()));
+  const add = label => set('details', [...details, { label, value: '' }]);
+  return html`
+    <div class="gear-details">
+      <span class="gear-details__title">Details${values.type ? html` <small>fields of “${values.type}”</small>` : ''}</span>
+      ${details.map((d, i) => html`
+        <div class="gear-details__row" key=${i}>
+          <input class="gear-details__label" value=${d.label} onInput=${e => change(i, 'label', e.target.value)} aria-label="Field" placeholder="Field" />
+          <input value=${d.value} onInput=${e => change(i, 'value', e.target.value)} aria-label=${d.label || 'Value'} placeholder="—" />
+          <button type="button" class="icon-btn" onClick=${() => set('details', details.filter((_, j) => j !== i))} aria-label=${`Remove ${d.label}`}><${Icon} name="close" /></button>
+        </div>`)}
+      <div class="gear-details__add">
+        ${suggested.map(label => html`<button type="button" key=${label} class="choice choice--dashed" onClick=${() => add(label)}>+ ${label}</button>`)}
+        <button type="button" class="choice" onClick=${() => add('')}>+ Other field</button>
+      </div>
+    </div>`;
+}
+
+// object: the object to change, or { category, inside, volume } for a new one.
+// open(object): show another object's sheet (something it holds, or a new one inside it)
+export function ObjectSheet({ project, object, close, open }) {
   const [values, setValues] = useState({ qty: 1, note: '', ...object });
   const [removing, setRemoving] = useState(null); // the "why" being typed
   const set = (key, value) => setValues(v => ({ ...v, [key]: value }));
-  const top = topOf(project, values.category);
-  const categories = categoriesOf(project).filter(c => topOf(project, c.id)?.id === top?.id);
+  const categories = categoriesOf(project);
   const containers = containersOf(project, values.id);
-  const submit = event => { event.preventDefault(); saveObject(values); close(); };
+  const box = values.id && isContainer(project, values);
+  const holds = box ? childrenOf(project, values.id) : [];
+  const where = item => [...pathOf(project, item), item].map(x => x.name).join(' › ');
+  const clean = () => ({ ...values, details: (values.details || []).filter(d => d.label.trim() || d.value.trim()) });
+  const submit = event => { event.preventDefault(); saveObject(clean()); close(); };
+  // a new thing inside a case starts in Other (a loose thing), not as a case
+  const addInside = () => open({ inside: values.id, category: categories.some(c => c.id === 'other') ? 'other' : values.category, volume: false });
 
   if (removing !== null) {
     return html`<${Sheet} title=${`Remove ${values.name}`} close=${close}>
@@ -42,29 +73,44 @@ export function ObjectSheet({ project, object, close }) {
         </div>
       </form></${Sheet}>`;
   }
-  return html`<${Sheet} title=${values.id ? values.name : `New in ${top?.name || 'Gear'}`} close=${close}>
+  return html`<${Sheet} title=${values.id ? values.name : 'New'} close=${close}>
     <form class="item-form" onSubmit=${submit}>
-      <label><span>Name</span><input value=${values.name || ''} onInput=${e => set('name', e.target.value)} required autofocus /></label>
+      ${values.id && pathOf(project, values).length > 0 && html`<p class="muted gear-sheet__where">in ${pathOf(project, values).map(x => x.name).join(' › ')}</p>`}
+      <div class="gear-sheet__grid">
+        <label><span>Name</span><input value=${values.name || ''} onInput=${e => set('name', e.target.value)} required autofocus=${!values.id} /></label>
+        <label><span>Brand</span><input value=${values.brand || ''} onInput=${e => set('brand', e.target.value)} /></label>
+        <label><span>Type</span><input list="gear-types" value=${values.type || ''} placeholder="Pelican, cable, mic…"
+                 onInput=${e => set('type', e.target.value)} />
+          <datalist id="gear-types">${typesOf(project).map(t => html`<option key=${t} value=${t} />`)}</datalist></label>
+        <label><span>Quantity</span><input type="number" min="1" value=${values.qty} onInput=${e => set('qty', e.target.value)} /></label>
+      </div>
+      <${Details} project=${project} values=${values} set=${set} />
+      ${box && html`
+        <div class="gear-details">
+          <span class="gear-details__title">Inside it <small>${holds.length}</small></span>
+          ${holds.map(item => html`<button type="button" key=${item.id} class="gear-details__row gear-details__link" onClick=${() => open(item)}>${item.name}${item.qty > 1 ? ` ×${item.qty}` : ''}</button>`)}
+          <div class="gear-details__add"><button type="button" class="choice" onClick=${addInside}>+ Add inside</button></div>
+        </div>`}
       <label><span>Nicknames (other names it goes by, for the search; commas between)</span>
         <input value=${(values.nicknames || []).join(', ')} placeholder="e.g. slate case, the small one"
                onInput=${e => set('nicknames', e.target.value.split(',').map(n => n.trim()).filter(Boolean))} /></label>
-      <label><span>Type</span><input list="gear-types" value=${values.type || ''} placeholder="Pelican, soft bag, wood box…"
-               onInput=${e => set('type', e.target.value)} />
-        <datalist id="gear-types">${CASE_TYPES.map(t => html`<option key=${t} value=${t} />`)}</datalist></label>
-      <label><span>Colour (the case's real colour)</span><span class="choices">
+      <label><span>Colour (its real colour)</span><span class="choices">
         <button type="button" class=${'choice' + (!values.color ? ' choice--on' : '')} onClick=${() => set('color', '')}>none</button>
         ${CASE_COLOURS.map(c => html`<button type="button" key=${c} title=${c} onClick=${() => set('color', c)}
           class=${'choice choice--swatch' + (values.color === c ? ' choice--on' : '')} style=${`background:${c};color:${textColourFor(c)}`}></button>`)}
         <input type="color" value=${/^#[0-9a-f]{6}$/i.test(values.color || '') ? values.color : '#888888'} onInput=${e => set('color', e.target.value)} aria-label="Another colour" />
       </span></label>
-      <label><span>Quantity</span><input type="number" min="1" value=${values.qty} onInput=${e => set('qty', e.target.value)} /></label>
-      ${categories.length > 1 && html`<label><span>Category</span><span class="choices">
-        ${categories.map(c => html`<button type="button" key=${c.id} class=${'choice' + (values.category === c.id ? ' choice--on' : '')}
-          onClick=${() => set('category', c.id)}>${c.name}</button>`)}</span></label>`}
-      <label><span>Inside</span><span class="choices">
-        <button type="button" class=${'choice' + (!values.inside ? ' choice--on' : '')} onClick=${() => set('inside', '')}>nothing</button>
-        ${containers.map(c => html`<button type="button" key=${c.id} class=${'choice' + (values.inside === c.id ? ' choice--on' : '')}
-          onClick=${() => set('inside', c.id)}>${c.name}</button>`)}</span></label>
+      <div class="gear-sheet__grid">
+        <label><span>Inside</span>
+          <select value=${values.inside || ''} onChange=${e => set('inside', e.target.value)}>
+            <option value="">nothing (on its own)</option>
+            ${containers.map(c => html`<option key=${c.id} value=${c.id}>${where(c)}</option>`)}
+          </select></label>
+        <label><span>Category</span>
+          <select value=${values.category || ''} onChange=${e => set('category', e.target.value)}>
+            ${categories.map(c => html`<option key=${c.id} value=${c.id}>${c.parent ? `${topOf(project, c.id)?.name} › ${c.name}` : c.name}</option>`)}
+          </select></label>
+      </div>
       <label class="item-form__check"><span>Goes on the truck (a volume)</span>
         <input type="checkbox" checked=${!!values.volume} onChange=${e => set('volume', e.target.checked)} /></label>
       <label><span>Note</span><input value=${values.note || ''} onInput=${e => set('note', e.target.value)} /></label>
@@ -76,17 +122,22 @@ export function ObjectSheet({ project, object, close }) {
     </form></${Sheet}>`;
 }
 
-// category: the one to change, or { parent } for a new sub-category, or {} for a new tab
-export function CategorySheet({ category, close }) {
+// category: the one to change, or {} for a new one (a sub-category when it goes inside another)
+export function CategorySheet({ project, category, close }) {
   const [values, setValues] = useState({ color: '#64748b', ...category });
   const set = (key, value) => setValues(v => ({ ...v, [key]: value }));
-  const kind = values.parent ? 'sub-category' : 'category';
-  return html`<${Sheet} title=${values.id ? values.name : `New ${kind}`} close=${close}>
+  const parents = topCategories(project).filter(c => c.id !== values.id);
+  return html`<${Sheet} title=${values.id ? values.name : 'New category'} close=${close}>
     <form class="item-form" onSubmit=${e => { e.preventDefault(); saveCategory(values); close(); }}>
       <label><span>Name</span><input value=${values.name || ''} onInput=${e => set('name', e.target.value)} required autofocus /></label>
       <label><span>Colour</span><span class="color-field">
         <input type="color" value=${values.color} onInput=${e => set('color', e.target.value)} />
         <input value=${values.color} onInput=${e => set('color', e.target.value)} /></span></label>
+      <label><span>Inside category (a sub-category, e.g. Cases › Batteries)</span>
+        <select value=${values.parent || ''} onChange=${e => set('parent', e.target.value)}>
+          <option value="">none (a main category)</option>
+          ${parents.map(c => html`<option key=${c.id} value=${c.id}>${c.name}</option>`)}
+        </select></label>
       <div class="edit-actions">
         <button type="button" class="btn" onClick=${close}>Cancel</button>
         <button class="btn btn--primary">Save</button>

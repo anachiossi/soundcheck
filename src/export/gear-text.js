@@ -1,23 +1,24 @@
 // gear-text.js — the Gear lists as text, drawn like the `tree` command: each cart / case is a folder
 // with what it holds inside, ☑ / ☐ for the ticks. To paste into WhatsApp, an email, a note.
 //   'truck'       every volume by category (a cart's or case's contents underneath)
-//   a category    all its objects, wherever they are, with their contents
+//   'inventory'   the whole tree, with each object's brand and details (BNC · SMA · 3 m)
 // Used by: screens/gear.js
 
-import { categoryById, categoriesOf, truckOf, tabItems, contentsOf, ticked, holds, itemById } from '../gear-rules.js';
+import { categoriesOf, truckOf, topItems, contentsOf, ticked, holds, itemById } from '../gear-rules.js';
 
-const label = (project, item, showInside) => {
+const label = (project, item) => {
   const parts = [`${ticked(project, item.id) ? '☑' : '☐'} ${item.name}`];
+  if (item.brand) parts.push(item.brand);
   if (item.qty > 1) parts.push(`×${item.qty}`);
-  const where = showInside && item.inside ? itemById(project, item.inside)?.name : '';
-  if (where) parts.push(`(in ${where})`);
+  const details = (item.details || []).filter(d => d.value).map(d => d.value);
+  if (details.length) parts.push(`[${details.join(' · ')}]`);
   if (item.note) parts.push(`— ${item.note}`);
   return parts.join(' ');
 };
 
 // lines for an object and, if it holds things, its contents (grouped by sub-category), as a tree
-function branch(project, item, prefix, last, showInside, depth = 0) {
-  const lines = [`${prefix}${last ? '└── ' : '├── '}${label(project, item, showInside)}`];
+function branch(project, item, prefix, last, depth = 0) {
+  const lines = [`${prefix}${last ? '└── ' : '├── '}${label(project, item)}`];
   if (!holds(project, item.id) || depth > 4) return lines;
   const inner = prefix + (last ? '    ' : '│   ');
   const groups = contentsOf(project, item.id);
@@ -26,9 +27,9 @@ function branch(project, item, prefix, last, showInside, depth = 0) {
     if (category && groups.length > 1) {
       lines.push(`${inner}${lastGroup ? '└── ' : '├── '}${category.name}/`);
       const sub = inner + (lastGroup ? '    ' : '│   ');
-      items.forEach((it, i) => lines.push(...branch(project, it, sub, i === items.length - 1, false, depth + 1)));
+      items.forEach((it, i) => lines.push(...branch(project, it, sub, i === items.length - 1, depth + 1)));
     } else {
-      items.forEach((it, i) => lines.push(...branch(project, it, inner, lastGroup && i === items.length - 1, false, depth + 1)));
+      items.forEach((it, i) => lines.push(...branch(project, it, inner, lastGroup && i === items.length - 1, depth + 1)));
     }
   });
   return lines;
@@ -45,14 +46,13 @@ export function gearText(project, what) {
     groups.map(g => ({ ...g, items: g.items.filter(item => !inVolume(item)) })).filter(g => g.items.length).forEach(({ category, items }, g, shown) => {
       const lastGroup = g === shown.length - 1;
       lines.push(`${lastGroup ? '└── ' : '├── '}${category.name}/`);
-      items.forEach((item, i) => lines.push(...branch(project, item, lastGroup ? '    ' : '│   ', i === items.length - 1, false)));
+      items.forEach((item, i) => lines.push(...branch(project, item, lastGroup ? '    ' : '│   ', i === items.length - 1)));
     });
     return lines.join('\n');
   }
-  const category = categoryById(project, what);
-  const items = tabItems(project, what);
-  const lines = [`${project.name} · ${category?.name || 'Gear'} · ${items.length}`];
-  items.forEach((item, i) => lines.push(...branch(project, item, '', i === items.length - 1, true)));
+  const items = topItems(project);
+  const lines = [`${project.name} · Inventory`];
+  items.forEach((item, i) => lines.push(...branch(project, item, '', i === items.length - 1)));
   return lines.join('\n');
 }
 
@@ -75,12 +75,14 @@ export function gearSheets(project) {
   const subName = id => (categories.get(id)?.parent ? categories.get(id).name : '');
   const day = iso => (iso ? String(iso).slice(0, 10) : '');
   const items = (project.gearItems || []).filter(i => !i.removed);
-  const rows = items.map(item => [topName(item.category), subName(item.category), pathOf(project, item), item.name, colourName(item.color),
-    Number(item.qty) || 1, item.volume ? 'yes' : '', ticked(project, item.id) ? '✓' : '', item.note || '', day(item.added)])
+  const details = item => (item.details || []).filter(d => d.value).map(d => `${d.label}: ${d.value}`).join(' · ');
+  const rows = items.map(item => [topName(item.category), subName(item.category), pathOf(project, item), item.name, item.brand || '',
+    item.type || '', colourName(item.color), Number(item.qty) || 1, details(item), item.volume ? 'yes' : '', ticked(project, item.id) ? '✓' : '',
+    item.note || '', day(item.added)])
     .sort((a, b) => `${a[0]}|${a[2]}|${a[3]}`.localeCompare(`${b[0]}|${b[2]}|${b[3]}`));
   const history = [...(project.gearHistory || [])].map(e => [day(e.at), { added: 'in', removed: 'out', changed: 'changed' }[e.what] || e.what, e.name, e.note || '']);
   return [
-    { name: 'Gear', rows: [['Category', 'Sub-category', 'Inside', 'Name', 'Colour', 'Qty', 'Truck volume', 'Ticked', 'Note', 'Added'], ...rows] },
+    { name: 'Gear', rows: [['Category', 'Sub-category', 'Inside', 'Name', 'Brand', 'Type', 'Colour', 'Qty', 'Details', 'Truck volume', 'Ticked', 'Note', 'Added'], ...rows] },
     { name: 'History', rows: [['Date', 'What', 'Name', 'Why / what changed'], ...history] },
   ];
 }

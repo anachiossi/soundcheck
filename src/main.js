@@ -25,8 +25,7 @@ import { IfbKitScreen } from './screens/ifb-kit.js';
 import { IfbPicker } from './parts/ifb-picker.js';
 import { HoursScreen } from './screens/hours.js';
 import { HelpScreen } from './screens/help.js';
-import { GearTruckScreen, GearCategoryScreen, GearManualsScreen } from './screens/gear.js';
-import { topCategories } from './gear-rules.js';
+import { GearTruckScreen, GearInventoryScreen, GearManualsScreen } from './screens/gear.js';
 import { WrapBadge, WrapQuestion } from './parts/wrap-clock.js';
 import { Icon } from './parts/icons.js';
 import { EmailBadge } from './parts/email-robot.js';
@@ -48,15 +47,15 @@ const TABS = {
     ['ifb-kit', 'Kit', IfbKitScreen],
     ['projects', 'Projects', ProjectsScreen],
   ],
-  gear: [['gear-truck', 'Truck', GearTruckScreen], ['projects', 'Projects', ProjectsScreen]], // + a tab per category
+  gear: [
+    ['gear-truck', 'Truck', GearTruckScreen],
+    ['gear-inventory', 'Inventory', GearInventoryScreen],
+    ['gear-manuals', 'Manuals', GearManualsScreen],
+    ['projects', 'Projects', ProjectsScreen],
+  ],
 };
 
-// Gear: Truck, then one tab per top category (Carts, Cases, Cables… and any new one), Manuals, then Projects
-function tabsOf(department, project) {
-  if (department !== 'gear' || !project) return TABS[department] || TABS.mics;
-  const categories = topCategories(project).map(c => [`gear-${c.id}`, c.name, GearCategoryScreen]);
-  return [TABS.gear[0], ...categories, ['gear-manuals', 'Manuals', GearManualsScreen], TABS.gear[1]];
-}
+const tabsOf = department => TABS[department] || TABS.mics;
 
 function DepartmentSwitch({ department }) {
   const choose = next => next !== department && setState({ department: next, screen: TABS[next][0][0] });
@@ -101,7 +100,7 @@ function App() {
   // the Scene Map and Timeline are moments to focus: full screen too, no title, badges or tabs
   if (current === 'cues-map') return html`<main class="focus"><${CuesMapScreen} state=${state} /></main>`;
   if (current === 'cues-timeline') return html`<main class="focus"><${CuesTimelineScreen} state=${state} /></main>`;
-  const tabs = tabsOf(state.department, project);
+  const tabs = tabsOf(state.department);
   const Screen = current === 'proposal' ? ProposalScreen
     : current === 'document' ? DocumentScreen
     : current === 'hours' ? HoursScreen
@@ -118,7 +117,7 @@ function App() {
       <div class="topbar__status"><${SyncBadge} state=${state} /> <${EmailBadge} state=${state} /> <${WrapBadge} project=${project} /></div>
       ${project && html`<${DepartmentSwitch} department=${state.department} />`}
     </header>
-    <nav class=${'tabs' + (state.department === 'gear' ? ' tabs--scroll' : '')}>
+    <nav class="tabs">
       ${tabs.map(([id, label]) => html`
         <button key=${id} class=${id === current || (id === 'cues-picker' && ['cues-map', 'cues-timeline'].includes(current)) ? 'on' : ''} disabled=${!project && id !== 'projects'}
                 onClick=${() => showScreen(id)}>${label}</button>`)}

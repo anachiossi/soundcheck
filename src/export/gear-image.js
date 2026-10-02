@@ -1,10 +1,10 @@
 // gear-image.js — the Gear lists as images, to confirm the equipment with the rental or production:
 //   'truck'       every volume by category, with its tick
-//   a category    all its objects (wherever they are); each cart / case followed by what it holds,
-//                 by sub-category (a case in a cart: its contents one step further in)
+//   'inventory'   the whole tree: each cart / case followed by what it holds, by sub-category
+//                 (a case in a cart: its contents one step further in)
 // Used by: screens/gear.js
 
-import { categoryById, truckOf, tabItems, contentsOf, colourOf, ticked, holds, itemById } from '../gear-rules.js';
+import { truckOf, topItems, contentsOf, colourOf, ticked, holds } from '../gear-rules.js';
 import { newCanvas, box, text, font } from './draw.js';
 import { textColourFor } from '../colour.js';
 import { WIDTH, PAD, fontsReady, header, footer, FOOTER_HEIGHT, cropHeight } from './image.js';
@@ -13,9 +13,9 @@ const ROW = 58;
 
 export async function gearImage(project, what) {
   await fontsReady();
-  const lines = what === 'truck' ? truckLines(project) : categoryLines(project, what);
+  const lines = what === 'truck' ? truckLines(project) : inventoryLines(project);
   const { canvas, ctx } = newCanvas(WIDTH, 190 + lines.length * ROW + FOOTER_HEIGHT + 60);
-  const title = what === 'truck' ? 'Truck' : categoryById(project, what)?.name || 'Gear';
+  const title = what === 'truck' ? 'Truck' : 'Inventory';
   const volumes = lines.filter(l => l.item && l.level === 0).length;
   header(ctx, WIDTH, `Gear · ${title}`, `${project.name} · ${volumes} ${what === 'truck' ? 'volumes' : 'items'}`);
   let y = 180;
@@ -36,8 +36,7 @@ export async function gearImage(project, what) {
       box(ctx, x + 62, y + 12, pillWidth, ROW - 22, (ROW - 22) / 2, item.color || '#e2e8f0', item.color ? null : '#cbd5e1', 2);
       text(ctx, name, x + 78, y + 31, pillWidth - 28, item.color ? textColourFor(item.color) : '#0f172a');
       font(ctx, 400, 22);
-      const where = line.showInside && item.inside ? `in ${itemById(project, item.inside)?.name || '?'}` : '';
-      text(ctx, [item.qty > 1 ? `×${item.qty}` : '', where].filter(Boolean).join(' · '), WIDTH - PAD - 16, y + 31, 220, '#475569', 'right');
+      text(ctx, [item.brand, item.qty > 1 ? `×${item.qty}` : ''].filter(Boolean).join(' · '), WIDTH - PAD - 16, y + 31, 220, '#475569', 'right');
     }
     y += ROW;
   }
@@ -52,8 +51,8 @@ function truckLines(project) {
   ]);
 }
 
-function categoryLines(project, id) {
-  return tabItems(project, id).flatMap(item => [{ item, level: 0, showInside: true }, ...insideLines(project, item, 1)]);
+function inventoryLines(project) {
+  return topItems(project).flatMap(item => [{ item, level: 0 }, ...insideLines(project, item, 1)]);
 }
 
 // what a cart / case holds, by sub-category, and what those hold, one level further in each time

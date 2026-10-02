@@ -565,31 +565,13 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
 .help-link { display: block; margin-top: 18px; }
 .help-page .section-title { margin-top: 22px; }
 
-/* Gear (screens/gear.js): many tabs scroll sideways; colour = category (--cat) */
-.tabs--scroll button, .tabs--scroll button:disabled { flex: none; padding: 10px 14px; }
+/* Gear (screens/gear.js): Truck · Inventory · Manuals; colour = category (--cat) or the object's real colour */
 .gear__head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
-.gear__count { font-size: 18px; }
-.gear__count--done { color: #16a34a; }
 .gear__title { margin: 0; font-size: 20px; border-left: 6px solid var(--cat); padding-left: 10px; }
 .gear__title small, .gear__cat small { color: var(--muted); font-weight: 600; }
 .gear__cat { margin: 18px 0 6px; font-size: 16px; border-left: 6px solid var(--cat); padding-left: 10px; }
-.gear__sub { margin: 10px 0 4px; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em;
-  border-left: 4px solid var(--cat); padding-left: 8px; color: var(--muted); }
-.gear-row { display: flex; align-items: center; gap: 10px; margin: 4px 0; padding: 6px 8px 6px 0; border-radius: 12px;
-  background: var(--card); border-left: 6px solid var(--cat); }
-.gear-row__name { flex: 1; min-width: 0; font-weight: 600; font-size: 17px; text-align: left; }
-.gear-row__name small { display: block; font-weight: 400; font-size: 13px; }
-.gear-row__name > small:first-child { display: inline; }
-.gear-row__open { background: none; border: 0; padding: 4px 0; color: var(--ink); font: inherit; font-weight: 700; }
-.gear-row__open small { display: inline; margin-left: 6px; }
-.gear-tick { flex: none; width: 34px; height: 34px; margin-left: 8px; border-radius: 9px; border: 2px solid var(--line-strong);
-  background: var(--card); color: #fff; font-weight: 800; font-size: 18px; }
-.gear-tick--on { background: #16a34a; border-color: #16a34a; }
-.gear-box { margin: 6px 0; }
-.gear-box__inside { margin: 0 0 10px 22px; }
 .gear__history ul { margin: 6px 0 0; padding-left: 18px; }
 .gear__history li { margin: 4px 0; }
-.gear__subs { margin-top: 10px; }
 .gear-sheet .choices { flex-wrap: wrap; }
 .gear__actions { display: flex; align-items: center; gap: 6px; }
 .hours__export { margin-bottom: 12px; }
@@ -604,13 +586,6 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
 .pill--tx-freq { flex-direction: column; gap: 0; line-height: 1; }
 .pill--tx-freq small { font-size: 12px; font-weight: 700; margin-top: 3px; letter-spacing: -.01em; }
 .pill--lav-model { justify-content: center; }   /* the model alone, centred (no lav number) */
-/* a gear object's name in its real colour (the yellow Pelican) */
-.gear-pill { display: inline-block; padding: 5px 12px; border-radius: 999px; font-weight: 700; max-width: 100%;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
-.gear-pill small { font-size: 13px; opacity: .85; }
-.gear-pill--plain { background: var(--tab-bg); color: var(--ink); border: 1px solid var(--line-strong); }
-.gear-row__name > small:first-child { display: inline; }
-.gear-row__name .gear-pill + small { display: block; margin: 3px 0 0 4px; }
 /* the night before (parts/tomorrow.js) */
 .tomorrow { display: grid; gap: 10px; margin-bottom: 18px; padding: 14px; border-radius: 16px; background: var(--card); border: 1px solid var(--line); }
 .tomorrow__day { margin: 0; font-size: 17px; }
@@ -630,7 +605,60 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
 /* 🔍 gear search */
 .gear-search input { width: 100%; font: inherit; font-size: 17px; padding: 10px 14px; margin-bottom: 10px; border: 1px solid var(--line-strong);
   border-radius: 999px; background: var(--card); color: var(--ink); }
-.gear-result { margin: 8px 0 12px; }
-.gear-result__path { margin: 0 0 2px 4px; font-size: 13px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
-.gear-result__path .gear-pill { padding: 2px 8px; font-size: 13px; }
-.gear-row__name .gear-pill small { display: inline; margin: 0; }   /* ×6 stays next to the name */
+
+/* Gear → Truck: numbered rows, tap to tick (screens/gear.js) */
+.truck-count b { display: block; font-size: 34px; line-height: 1; font-variant-numeric: tabular-nums; }
+.truck-count b span { color: var(--muted-2); font-weight: 600; }
+.truck-count small { color: var(--ink-soft); font-size: 13px; }
+.truck-bar { height: 6px; margin: 0 0 12px; border-radius: 3px; background: var(--soft-2); overflow: hidden; }
+.truck-bar span { display: block; height: 100%; background: var(--accent); }
+.gear-list, .gear-tree { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.gear-list__head { display: flex; align-items: center; gap: 8px; width: 100%; height: 32px; padding: 0 14px; border: 0; border-bottom: 1px solid var(--line);
+  background: var(--soft); color: var(--ink-soft); font: inherit; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; text-align: left; }
+.gear-list__head span:nth-child(2) { flex: 1; }
+.gear-list__head small { font-weight: 400; letter-spacing: 0; text-transform: none; font-variant-numeric: tabular-nums; }
+.gear-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.truck-row { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 0 14px 0 6px; border: 0; border-bottom: 1px solid var(--line);
+  background: none; color: var(--ink); font: inherit; text-align: left; }
+.truck-row__number { width: 44px; flex: none; white-space: nowrap; text-align: right; font-size: 13px; color: var(--muted-2); font-variant-numeric: tabular-nums; }
+.truck-row__name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.truck-row small { color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.truck-row--on .truck-row__name { color: var(--muted-2); text-decoration: line-through; }
+.gear-check { width: 20px; height: 20px; flex: none; box-sizing: border-box; border-radius: 6px; border: 1.5px solid var(--line-strong);
+  display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; color: var(--on-accent); }
+.gear-check--on { background: var(--accent); border-color: var(--accent); }
+.gear-chip { width: 12px; height: 12px; flex: none; border-radius: 3px; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .18); }
+.gear-chip--none { width: 6px; height: 6px; margin: 0 3px; border-radius: 50%; background: var(--line-strong); box-shadow: none; }
+.gear-chip--loose { box-sizing: border-box; border: 1.5px dashed var(--muted-2); box-shadow: none; }
+
+/* Gear → Inventory: one tree, like a file explorer */
+.gear-tree__row { position: relative; display: flex; align-items: center; min-height: 44px; padding-right: 4px; border-bottom: 1px solid var(--line); }
+.gear-tree__guide { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--line); }
+.gear-tree__indent { flex: none; }
+.gear-tree__open { width: 28px; height: 44px; flex: none; padding: 0; border: 0; background: none; color: var(--muted); font-size: 13px; }
+.gear-tree__name { flex: 1; min-width: 0; min-height: 44px; padding: 0 8px; border: 0; background: none; color: var(--ink); font: inherit;
+  text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gear-tree__name small { color: var(--muted); font-size: inherit; }
+.gear-tree__name--top, .gear-tree__name--found { font-weight: 700; }
+.gear-tree__name--path { color: var(--muted); }
+.gear-tree__name--loose { font-style: italic; color: var(--muted); }
+.gear-tree__type { padding-right: 6px; font-size: 12px; color: var(--muted-2); white-space: nowrap; }
+.gear-tree__count { min-width: 24px; padding-right: 6px; text-align: right; font-size: 13px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.gear-tree__tick { width: 36px; height: 44px; flex: none; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; background: none; }
+.gear-checking { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 14px; color: var(--ink-soft); }
+.gear-checking span { flex: 1; }
+
+/* the object's sheet: name · brand / type · qty, its details (field | value) */
+.gear-sheet__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.gear-sheet__grid input, .gear-sheet select { min-width: 0; }
+.gear-sheet select { font: inherit; font-size: 16px; padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--card); color: var(--ink); }
+.gear-sheet__where { margin: 0; font-size: 13px; }
+.gear-details { display: grid; grid-template-columns: minmax(0, 1fr); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.gear-details__title { padding: 8px 12px 6px; font-weight: 600; font-size: 13px; }
+.gear-details__title small { color: var(--muted); font-weight: 400; }
+.gear-details__row { display: flex; align-items: center; min-height: 42px; border-top: 1px solid var(--line); }
+.item-form .gear-details__row input { flex: 1; min-width: 0; border: 0; border-radius: 0; padding: 8px 10px; background: none; color: var(--ink); }
+.item-form .gear-details__row input.gear-details__label { flex: 0 0 38%; font-size: 14px; color: var(--muted); }
+.gear-details__link { width: 100%; padding: 0 12px; border-left: 0; border-right: 0; border-bottom: 0; background: none; color: var(--ink); font: inherit; text-align: left; }
+.gear-details__add { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 12px; border-top: 1px solid var(--line); }
+.choice--dashed { border-style: dashed; color: var(--ink-soft); font-weight: 400; }

@@ -2,12 +2,14 @@
 //   • CATEGORIES, like classes: the top ones are the tabs (Carts, Cases, Cables, Poles, Tripods,
 //     Other, + any new one); a category can have SUB-categories (e.g. Cases → Batteries) that group
 //     things inside a cart or a case. Each has a colour.
-//   • OBJECTS: { id, name, nicknames [..], type (Pelican, soft bag, wood box…), category, qty, inside (the
-//     cart / case it's in), volume (a piece that goes on the truck), color (its real colour — "the yellow
-//     Pelican" — shown as a pill), note }. Carts and cases hold loose things and other cases, any depth. A cart or a case HOLDS the objects whose `inside` is its id. The two are
+//   • OBJECTS: { id, name, brand, nicknames [..], type (Pelican, wood box, cable, mic…), category, qty,
+//     inside (the cart / case it's in), volume (a piece that goes on the truck), color (its real colour —
+//     "the yellow Pelican"), details [{ label, value }] (its own fields: a cable's connectors and length,
+//     a mic's capsule and suspension…), note }. Carts and cases hold loose things and other cases, any depth. A cart or a case HOLDS the objects whose `inside` is its id. The two are
 //     separate: a case riding in a cart can still be its own volume; one fixed to the cart is not.
-//   • a tab lists all its objects, wherever they are ("in Main Karl")
-//   • the TRUCK is every volume, by category; TICKS (gear/checks.json) are day-to-day help only
+//   • the INVENTORY is one tree, like a file explorer (Ana, 2 Oct): carts and cases open to show the
+//     cases inside them, and their loose things folded under "Loose items"; the search shows where things are
+//   • the TRUCK is every volume, by category, numbered; TICKS (gear/checks.json) are day-to-day help only
 //   • HISTORY (gear/history.json): what entered, left (with why), or changed — not ticks, not moves
 // Files: gear/categories.json, items.json, history.json, checks.json (store/repo-files.js).
 // Used by: screens/gear.js, gear-editing.js, export/gear-image.js
@@ -59,21 +61,14 @@ export function contentsOf(project, containerId) {
 
 export const holds = (project, id) => activeItems(project).some(item => item.inside === id);
 
-// a cart or a case (or anything holding things): it opens to show its contents. Things in a
-// sub-category (Cases → Batteries) are contents, not containers.
-export const isContainer = (project, item) => holds(project, item.id) || ['carts', 'cases'].includes(item.category);
+// a cart or a case (or anything holding things, or whose type is a case: Pelican, wood box…): it opens
+// to show its contents. Things in a sub-category (Cases → Batteries) are contents, not containers.
+export const isContainer = (project, item) => holds(project, item.id) || ['carts', 'cases'].includes(item.category)
+  || CASE_TYPES.some(type => plain(type) === plain(item.type));
 
 // every object in a category tab, wherever it is (e.g. all the cables, also those in cases)
 export function allInCategory(project, topId) {
   return activeItems(project).filter(item => topOf(project, item.category)?.id === topId);
-}
-
-// what a tab lists: all its objects, except those already shown inside one of them (the batteries
-// inside a case of the Cases tab appear in that case, not again on their own)
-export function tabItems(project, topId) {
-  const all = allInCategory(project, topId);
-  const listed = new Set(all.map(item => item.id));
-  return all.filter(item => !(item.inside && listed.has(item.inside)));
 }
 
 // the truck: every volume, grouped by top category: [{ category, items }]
@@ -90,6 +85,20 @@ export const ticked = (project, id) => Boolean(project.gearChecks?.[id]);
 // '12 / 20'
 export function tickCount(project, items) {
   return { done: items.filter(item => ticked(project, item.id)).length, all: items.length };
+}
+
+// the truck's volumes counted one by one: Exp. Drums ×3 are 3 volumes. Each object gets its numbers
+// (1, 2… or '13–15'), so the loading can be counted aloud: { numbers: { id: '13–15' }, all, loaded }
+const volumes = item => Math.max(1, Number(item.qty) || 1);
+export function countVolumes(project, items) {
+  const numbers = {};
+  let next = 1, loaded = 0;
+  for (const item of items) {
+    numbers[item.id] = volumes(item) > 1 ? `${next}–${next + volumes(item) - 1}` : String(next);
+    next += volumes(item);
+    if (ticked(project, item.id)) loaded += volumes(item);
+  }
+  return { numbers, all: next - 1, loaded };
 }
 
 // the containers an object can go into (carts and cases, and anything that holds things already) —
@@ -110,14 +119,18 @@ export function historyOf(before, after) {
   const changes = [];
   if (before.name !== after.name) changes.push(`name: ${before.name} → ${after.name}`);
   if ((before.qty || 1) !== (after.qty || 1)) changes.push(`quantity: ${before.qty || 1} → ${after.qty || 1}`);
+  if ((before.brand || '') !== (after.brand || '')) changes.push(`brand: ${before.brand || '—'} → ${after.brand || '—'}`);
   if (before.category !== after.category) changes.push('category changed');
   return changes.length ? { what: 'changed', note: changes.join(', ') } : null;
 }
 
 // ---- search (Ana, 2 Oct): "xlr cable" → every XLR cable with where it is; "wood box" → every wood box ----
-// An object is found when every word of the search is in its name, nicknames, type (Pelican, wood box…),
-// note or category (and the category's parent): "xlr cable" finds "XLR 3m" in Cables.
-export const CASE_TYPES = ['Pelican', 'hard case', 'soft bag', 'wood box', 'flight case', 'rack', 'drawer', 'box', 'pouch'];
+// An object is found when every word of the search is in its name, brand, nicknames, type (Pelican, wood
+// box…), details (BNC, fur…), note or category (and the category's parent): "xlr cable" finds "XLR 3m".
+export const CASE_TYPES = ['Pelican', 'hard case', 'soft bag', 'wood box', 'tube', 'flight case', 'rack', 'drawer', 'box', 'pouch'];
+// the types offered when typing one (the cases' and the usual things'; any other can be typed)
+export const typesOf = project => [...new Set([...CASE_TYPES, 'cable', 'mic', 'cart',
+  ...activeItems(project).map(item => item.type).filter(Boolean)])];
 
 const plain = text => String(text || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
@@ -134,8 +147,44 @@ export function searchGear(project, query) {
   return activeItems(project).filter(item => {
     const category = categoryById(project, item.category);
     const parent = category?.parent && categoryById(project, category.parent);
-    const haystack = plain([item.name, ...(item.nicknames || []), item.type, item.note, category?.name, parent?.name].join(' '));
+    const details = (item.details || []).flatMap(d => [d.label, d.value]);
+    const haystack = plain([item.name, item.brand, ...(item.nicknames || []), item.type, ...details, item.note, category?.name, parent?.name].join(' '));
     return words.every(word => haystack.includes(word));
   }).map(item => ({ item, path: pathOf(project, item) }))
     .sort((a, b) => a.path.map(p => p.name).concat(a.item.name).join('/').localeCompare(b.path.map(p => p.name).concat(b.item.name).join('/')));
+}
+
+// ---- the inventory tree ----
+
+// what is in nothing (or in something no longer in the list): the tree's first level
+export const topItems = project => activeItems(project).filter(item => !item.inside || !itemById(project, item.inside));
+export const childrenOf = (project, id) => activeItems(project).filter(item => item.inside === id);
+
+// one level of the tree: the carts and cases, then the loose things (shown folded under "Loose items")
+export function splitLoose(project, items) {
+  return { boxes: items.filter(item => isContainer(project, item)), loose: items.filter(item => !isContainer(project, item)) };
+}
+
+// while searching, the tree shows only the matches and the carts / cases they are in:
+// { found: Set of matching ids, shown: Set of ids to draw (the matches and everything around them) }
+export function searchTree(project, query) {
+  const found = new Set(searchGear(project, query).map(r => r.item.id));
+  const shown = new Set(found);
+  for (const id of found) pathOf(project, itemById(project, id)).forEach(box => shown.add(box.id));
+  return { found, shown };
+}
+
+// ---- an object's own fields ("details"), by type (Ana, 2 Oct): a cable has connectors and a length, a
+// mic a capsule and a suspension… The type works like a class: the fields other objects of the same type
+// use are offered too, so all cables end up described the same way. ----
+const STARTING_FIELDS = {
+  cable: ['Connector A', 'Connector B', 'Length', 'Cable type', 'Colour'],
+  mic: ['Model', 'Capsule', 'Pattern', 'Suspension', 'Windshield', 'Accessories'],
+};
+export function fieldsOfType(project, type) {
+  if (!plain(type)) return [];
+  const used = activeItems(project).filter(item => plain(item.type) === plain(type)).flatMap(item => (item.details || []).map(d => d.label));
+  const labels = [...(STARTING_FIELDS[plain(type)] || []), ...used].filter(Boolean);
+  const seen = new Set();
+  return labels.filter(label => !seen.has(plain(label)) && seen.add(plain(label)));
 }

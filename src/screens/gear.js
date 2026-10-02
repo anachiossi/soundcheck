@@ -1,17 +1,19 @@
-// gear.js — the Gear department's tabs (gear-rules.js):
-//   • GearTruckScreen: every volume (carts, cases, poles, tripods, other…) by category, a tick each,
-//     "12 / 20 on the truck", Clear ticks, Export (image · text tree · Excel), + Category (a new tab), and the History of what
-//     entered / left / changed
-//   • GearCategoryScreen (one tab per top category): its objects; a cart or case opens to show what
-//     it holds, by sub-category, each tickable; + Add, + Sub-category, ✎ the category; Export
+// gear.js — the Gear department's tabs (gear-rules.js), as Ana chose them on 2 Oct (mockup "Gear inventory redesign"):
+//   • GearTruckScreen: the loading checklist. Every volume by category, numbered 1, 2, 3… (Exp. Drums ×3 =
+//     '13–15'), tap a row to tick it (it gets crossed out), "10 / 23 volumes loaded · 13 to go", Clear,
+//     Export (image · text tree · Excel), + Category, and the History of what entered / left / changed
+//   • GearInventoryScreen: where everything is. A search and one tree, like a file explorer: carts and
+//     cases open (▸) to show the cases inside them, and their loose things folded under "Loose items".
+//     Searching shows only the matches, inside the cases they are in. Tap a name to see / change it.
+//     Tick boxes only in Check mode.
+//   • GearManualsScreen: the manuals by brand
 // Everything is editable here (parts/gear-form.js) and lives in the film (gear/…), offline first.
 // Used by: main.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
 import { formatStamp, exportName, shortDate, localTodayIso } from '../model.js';
 import {
-  topCategories, categoryById, subCategories, tabItems, contentsOf, truckOf, colourOf,
-  ticked, tickCount, isContainer, itemById, startsAsVolume, searchGear,
+  truckOf, ticked, countVolumes, topItems, childrenOf, splitLoose, searchTree, isContainer, startsAsVolume,
 } from '../gear-rules.js';
 import { toggleTick, clearTicks } from '../gear-editing.js';
 import { ObjectSheet, CategorySheet } from '../parts/gear-form.js';
@@ -21,61 +23,64 @@ import { xlsxBlob } from '../export/xlsx.js';
 import { shareCanvas, shareFile } from '../export/share.js';
 import { showMessage, setState } from '../state.js';
 import { manualsByBrand, manualPath, openManual } from '../manuals.js';
-import { textColourFor } from '../colour.js';
 import { Icon } from '../parts/icons.js';
 
-const qty = item => (item.qty > 1 ? html` <small>×${item.qty}</small>` : '');
+// the small square in the object's real colour (a dot when it has none)
+const Chip = ({ item }) => html`<span class=${'gear-chip' + (item.color ? '' : ' gear-chip--none')}
+  style=${item.color ? `background:${item.color}` : ''}></span>`;
 
-// the object's name as a pill in its real colour (neutral when it has none)
-const NamePill = ({ item }) => html`<span class=${'gear-pill' + (item.color ? '' : ' gear-pill--plain')}
-  style=${item.color ? `background:${item.color};color:${textColourFor(item.color)}` : ''}>${item.name}${qty(item)}</span>`;
+const CheckBox = ({ on }) => html`<span class=${'gear-check' + (on ? ' gear-check--on' : '')}>${on ? '✓' : ''}</span>`;
 
-function Tick({ project, item }) {
-  const on = ticked(project, item.id);
-  return html`<button class=${'gear-tick' + (on ? ' gear-tick--on' : '')} onClick=${() => toggleTick(item.id)}
-                      aria-label=${on ? `Untick ${item.name}` : `Tick ${item.name}`}>${on ? '✓' : ''}</button>`;
-}
-
-// "in Main Karl" (where an object is), when it is inside something and that isn't already clear
-const whereOf = (project, item, showInside) => (showInside && item.inside ? itemById(project, item.inside)?.name : '');
-
-// one object: tick · colour · name ×qty · where it is · ✎
-function Row({ project, item, edit, showInside }) {
-  const inside = whereOf(project, item, showInside);
-  return html`
-    <div class="gear-row" style=${`--cat:${colourOf(project, item.category)}`}>
-      <${Tick} project=${project} item=${item} />
-      <span class="gear-row__name"><${NamePill} item=${item} />
-        ${(inside || item.note || item.type) && html`<small class="muted">${[item.type, inside && `in ${inside}`, item.note].filter(Boolean).join(' · ')}</small>`}</span>
-      <button class="icon-btn" onClick=${() => edit(item)} aria-label=${`Change ${item.name}`}><${Icon} name="edit" /></button>
-    </div>`;
+// the object being changed in the sheet; from the sheet another one can be opened (what a case holds)
+function useSheet(project) {
+  const [editing, setEditing] = useState(null);
+  const sheet = editing && html`<${ObjectSheet} key=${editing.id || `new-${editing.inside || ''}`} project=${project} object=${editing}
+    close=${() => setEditing(null)} open=${setEditing} />`;
+  return [sheet, setEditing];
 }
 
 export function GearTruckScreen({ state }) {
   const { project } = state;
-  const [editing, setEditing] = useState(null);
+  const [category, setCategory] = useState(null); // the category being changed (or a new one)
   const groups = truckOf(project);
   const all = groups.flatMap(g => g.items);
-  const count = tickCount(project, all);
-  if (state.gearQuery) return html`<div class="gear"><${GearSearch} state=${state} /></div>`;
+  const { numbers, all: total, loaded } = countVolumes(project, all);
   return html`
     <div class="gear">
-      <${GearSearch} state=${state} />
       <div class="gear__head">
-        <b class=${count.done === count.all && count.all ? 'gear__count gear__count--done' : 'gear__count'}>${count.done} / ${count.all} on the truck</b>
+        <div class="truck-count">
+          <b>${loaded}<span> / ${total}</span></b>
+          <small>volumes loaded · ${loaded === total && total ? 'all in' : `${total - loaded} to go`}</small>
+        </div>
         <span class="gear__actions">
-          <button class="btn" disabled=${!count.done} onClick=${() => clearTicks(all.map(i => i.id))}>Clear ticks</button>
+          <button class="btn" disabled=${!loaded} onClick=${() => clearTicks(all.map(i => i.id))}>Clear</button>
           <${ExportButton} project=${project} what="truck" title="Truck" disabled=${!all.length} />
         </span>
       </div>
-      ${all.length === 0 && html`<p class="empty">No volumes yet. Add carts, cases, poles… in their tabs: they come here by themselves.</p>`}
-      ${groups.map(({ category, items }) => html`
-        <h3 class="gear__cat" style=${`--cat:${category.color}`} key=${category.id}>${category.name}
-          <small>${tickCount(project, items).done}/${items.length}</small></h3>
-        ${items.map(item => html`<${Row} key=${item.id} project=${project} item=${item} edit=${setEditing} />`)}`)}
-      <div class="toolbar"><${NewCategoryButton} /></div>
+      <div class="truck-bar"><span style=${`width:${total ? Math.round((loaded / total) * 100) : 0}%`}></span></div>
+      ${all.length === 0 && html`<p class="empty">No volumes yet. In Inventory, mark carts and cases "Goes on the truck": they come here by themselves.</p>`}
+      ${all.length > 0 && html`
+        <div class="gear-list">
+          ${groups.map(({ category: c, items }) => {
+            const count = countVolumes(project, items);
+            return html`
+              <button class="gear-list__head" key=${c.id} onClick=${() => setCategory(c)} aria-label=${`Change ${c.name}`}>
+                <span class="gear-dot" style=${`background:${c.color}`}></span><span>${c.name}</span>
+                <small>${count.loaded} / ${count.all}</small></button>
+              ${items.map(item => html`
+                <button key=${item.id} class=${'truck-row' + (ticked(project, item.id) ? ' truck-row--on' : '')} onClick=${() => toggleTick(item.id)}
+                        aria-pressed=${ticked(project, item.id)}>
+                  <span class="truck-row__number">${numbers[item.id]}</span>
+                  <${CheckBox} on=${ticked(project, item.id)} />
+                  <${Chip} item=${item} />
+                  <span class="truck-row__name">${item.name}</span>
+                  ${item.qty > 1 && html`<small>×${item.qty}</small>`}
+                </button>`)}`;
+          })}
+        </div>`}
+      <div class="toolbar"><button class="btn btn--quiet" onClick=${() => setCategory({})}>+ Category</button></div>
       <${History} project=${project} />
-      ${editing && html`<${ObjectSheet} project=${project} object=${editing} close=${() => setEditing(null)} />`}
+      ${category && html`<${CategorySheet} project=${project} category=${category} close=${() => setCategory(null)} />`}
     </div>`;
 }
 
@@ -90,82 +95,103 @@ function History({ project }) {
     </details>`;
 }
 
-// a cart / case: its header, and what it holds by sub-category, tickable (a case in a cart opens too)
-function Container({ project, item, edit, addInside, showInside }) {
-  const where = whereOf(project, item, showInside);
-  const [open, setOpen] = useState(false);
-  const groups = contentsOf(project, item.id);
-  const inside = groups.flatMap(g => g.items);
-  const count = tickCount(project, inside);
-  return html`
-    <div class="gear-box" style=${`--cat:${colourOf(project, item.category)}`}>
-      <div class="gear-row gear-row--box">
-        <${Tick} project=${project} item=${item} />
-        <button class="gear-row__name gear-row__open" onClick=${() => setOpen(o => !o)}>
-          ${open ? '▾' : '▸'} <${NamePill} item=${item} /> <small class="muted">${item.type ? `${item.type} · ` : ''}${where ? `in ${where} · ` : ''}${inside.length ? `${count.done}/${inside.length} checked` : 'empty'}</small></button>
-        <button class="icon-btn" onClick=${() => edit(item)} aria-label=${`Change ${item.name}`}><${Icon} name="edit" /></button>
-      </div>
-      ${open && html`
-        <div class="gear-box__inside">
-          ${groups.map(({ category, items }) => html`
-            ${category && html`<p class="gear__sub" style=${`--cat:${category.color}`}>${category.name}</p>`}
-            ${items.map(i => (isContainer(project, i)
-              ? html`<${Container} key=${i.id} project=${project} item=${i} edit=${edit} addInside=${addInside} />`
-              : html`<${Row} key=${i.id} project=${project} item=${i} edit=${edit} />`))}`)}
-          <div class="toolbar">
-            <button class="btn btn--quiet" onClick=${() => addInside(item)}>+ Add inside</button>
-            ${count.done > 0 && html`<button class="btn btn--quiet" onClick=${() => clearTicks(inside.map(i => i.id))}>Clear ticks</button>`}
-          </div>
-        </div>`}
-    </div>`;
+// ---- Inventory: the tree ----
+
+// the rows of the tree, top to bottom: { item, depth } or { loose: { id, count }, depth } (the "Loose items"
+// fold). While searching, `search.shown` says what to draw; inside a matching case everything is drawn.
+function treeRows(project, items, depth, parentId, isOpen, search) {
+  const visible = search ? items.filter(item => search.shown.has(item.id)) : items;
+  const { boxes, loose } = splitLoose(project, visible);
+  const rows = [];
+  for (const item of boxes) {
+    rows.push({ item, depth });
+    const inner = search && search.found.has(item.id) ? null : search;
+    if (isOpen(item.id, item)) rows.push(...treeRows(project, childrenOf(project, item.id), depth + 1, item.id, isOpen, inner));
+  }
+  if (loose.length) {
+    const id = `${parentId}~loose`;
+    rows.push({ loose: { id, count: loose.length }, depth });
+    if (isOpen(id)) rows.push(...loose.map(item => ({ item, depth: depth + 1 })));
+  }
+  return rows;
 }
 
-export function GearCategoryScreen({ state }) {
-  const { project } = state;
-  const category = categoryById(project, state.screen.replace(/^gear-/, '')) || topCategories(project)[0];
-  const [editing, setEditing] = useState(null);       // an object (or a new one)
-  const [editingCat, setEditingCat] = useState(null); // a category (or a new sub-category)
-  if (!category) return null;
-  const subs = subCategories(project, category.id);
-  const isList = category.id === 'cables'; // cables: the pieces are counted too
-  const items = tabItems(project, category.id); // all of them, also those in a cart or case
-  const newObject = extra => ({ category: category.id, volume: startsAsVolume(project, category.id), ...extra });
-  const addInside = box => setEditing({ category: subs[0]?.id || category.id, inside: box.id, volume: false });
-  const total = items.reduce((n, i) => n + (Number(i.qty) || 1), 0);
-  if (state.gearQuery) return html`<div class="gear"><${GearSearch} state=${state} /></div>`;
+const INDENT = 18;
 
+function TreeRow({ project, row, open, toggle, edit, checking, search }) {
+  const { item, loose, depth } = row;
+  const guides = Array.from({ length: depth }, (_, d) => html`<span class="gear-tree__guide" style=${`left:${6 + d * INDENT + 14}px`}></span>`);
+  const indent = html`<span class="gear-tree__indent" style=${`width:${6 + depth * INDENT}px`}></span>`;
+  const chevron = html`<button class="gear-tree__open" onClick=${toggle} aria-label=${open ? 'Close' : 'Open'} aria-expanded=${open}>${open ? '▾' : '▸'}</button>`;
+  if (loose) {
+    return html`<div class="gear-tree__row">${guides}${indent}${chevron}
+      <span class="gear-chip gear-chip--loose"></span>
+      <button class="gear-tree__name gear-tree__name--loose" onClick=${toggle}>Loose items</button>
+      <span class="gear-tree__count">${loose.count}</span>${checking && html`<span class="gear-tree__tick"></span>`}</div>`;
+  }
+  const box = isContainer(project, item);
+  const look = search ? (search.found.has(item.id) ? ' gear-tree__name--found' : ' gear-tree__name--path') : depth === 0 ? ' gear-tree__name--top' : '';
+  const on = ticked(project, item.id);
+  return html`<div class="gear-tree__row">${guides}${indent}
+    ${box ? chevron : html`<span class="gear-tree__open"></span>`}
+    <${Chip} item=${item} />
+    <button class=${'gear-tree__name' + look} onClick=${() => edit(item)}>${item.name}${item.nicknames?.[0] && html`<small> · ${item.nicknames[0]}</small>`}</button>
+    ${item.type && html`<span class="gear-tree__type">${item.type}</span>`}
+    <span class="gear-tree__count">${box ? childrenOf(project, item.id).length : item.qty > 1 ? `×${item.qty}` : ''}</span>
+    ${checking && html`<button class="gear-tree__tick" onClick=${() => toggleTick(item.id)} aria-label=${on ? `Untick ${item.name}` : `Tick ${item.name}`}>
+      <${CheckBox} on=${on} /></button>`}
+  </div>`;
+}
+
+export function GearInventoryScreen({ state }) {
+  const { project, gearQuery = '', gearOpen = {}, gearChecking = false } = state;
+  const [sheet, edit] = useSheet(project);
+  const search = gearQuery.trim() ? searchTree(project, gearQuery) : null;
+  // while searching, the way down to each match is open (a matching case opens like any other)
+  const isOpen = (id, item) => (search && !(item && search.found.has(id)) ? true : Boolean(gearOpen[id]));
+  const toggle = id => setState({ gearOpen: { ...gearOpen, [id]: !gearOpen[id] } });
+  const rows = treeRows(project, topItems(project), 0, 'top', isOpen, search);
+  const ticks = Object.keys(project.gearChecks || {}).length;
+  const newObject = () => edit({ category: 'other', volume: startsAsVolume(project, 'other') });
   return html`
     <div class="gear">
-      <${GearSearch} state=${state} />
+      <div class="gear-search">
+        <input type="search" value=${gearQuery} placeholder="Search: xlr, wood box, schoeps…" aria-label="Search the gear"
+               onInput=${e => setState({ gearQuery: e.target.value })} />
+      </div>
       <div class="gear__head">
-        <h2 class="gear__title" style=${`--cat:${category.color}`}>${category.name} <small>${items.length}${isList ? ` · ${total} pieces` : ''}</small></h2>
+        <span class="muted">${search ? (search.found.size ? `${search.found.size} found` : 'Nothing found') : ''}</span>
         <span class="gear__actions">
-          <${ExportButton} project=${project} what=${category.id} title=${category.name} disabled=${!items.length} />
-          <button class="icon-btn" onClick=${() => setEditingCat(category)} aria-label="Change the category"><${Icon} name="edit" /></button>
+          <button class=${'btn' + (gearChecking ? ' btn--primary' : '')} aria-pressed=${gearChecking}
+                  onClick=${() => setState({ gearChecking: !gearChecking })}>☑ Check</button>
+          <${ExportButton} project=${project} what="inventory" title="Inventory" disabled=${!topItems(project).length} />
         </span>
       </div>
-      ${items.length === 0 && html`<p class="empty">Nothing in ${category.name} yet.</p>`}
-      ${items.map(item => (isContainer(project, item)
-        ? html`<${Container} key=${item.id} project=${project} item=${item} edit=${setEditing} addInside=${addInside} showInside />`
-        : html`<${Row} key=${item.id} project=${project} item=${item} edit=${setEditing} showInside />`))}
-      <div class="toolbar">
-        <button class="btn btn--primary" onClick=${() => setEditing(newObject())}>+ Add</button>
-        <button class="btn" onClick=${() => setEditingCat({ parent: category.id, color: category.color })}>+ Sub-category</button>
-      </div>
-      ${subs.length > 0 && html`<p class="muted gear__subs">Sub-categories: ${subs.map((s, i) => html`${i ? ' · ' : ''}<button class="link" onClick=${() => setEditingCat(s)}>${s.name}</button>`)}</p>`}
-      ${editing && html`<${ObjectSheet} project=${project} object=${editing} close=${() => setEditing(null)} />`}
-      ${editingCat && html`<${CategorySheet} category=${editingCat} close=${() => setEditingCat(null)} />`}
+      ${gearChecking && html`
+        <div class="gear-checking"><span>Checking · ${ticks} ticked</span>
+          <button class="btn" disabled=${!ticks} onClick=${() => clearTicks(Object.keys(project.gearChecks || {}))}>Clear</button>
+          <button class="btn btn--primary" onClick=${() => setState({ gearChecking: false })}>Done</button></div>`}
+      ${rows.length === 0 && !search && html`<p class="empty">Nothing yet. + Add the first cart or case.</p>`}
+      ${rows.length > 0 && html`
+        <div class="gear-tree">
+          ${rows.map(row => {
+            const id = row.item ? row.item.id : row.loose.id;
+            return html`<${TreeRow} key=${id} project=${project} row=${row} open=${isOpen(id, row.item)} toggle=${() => toggle(id)}
+                                   edit=${edit} checking=${gearChecking} search=${search} />`;
+          })}
+        </div>`}
+      <div class="toolbar"><button class="btn btn--primary" onClick=${newObject}>+ Add</button></div>
+      ${sheet}
     </div>`;
 }
 
-// Export → Image (as before) · Copy as text (a tree, like the `tree` command) · Excel (all the gear + history)
+// Export → Image · Copy as text (a tree, like the `tree` command) · Excel (all the gear + history)
 function ExportButton({ project, what, title, disabled }) {
   const [open, setOpen] = useState(false);
-  const name = what === 'truck' ? 'truck' : what;
   const copy = async () => {
     const text = gearText(project, what);
     try { await navigator.clipboard.writeText(text); showMessage('ok', `${title} copied as text: paste it anywhere.`); }
-    catch { await shareFile(new Blob([text], { type: 'text/plain' }), exportName(project, `gear-${name}_${shortDate(localTodayIso())}.txt`)); }
+    catch { await shareFile(new Blob([text], { type: 'text/plain' }), exportName(project, `gear-${what}_${shortDate(localTodayIso())}.txt`)); }
     setOpen(false);
   };
   return html`
@@ -176,32 +202,11 @@ function ExportButton({ project, what, title, disabled }) {
         <header class="sheet__head"><b>Export ${title}</b>
           <button class="icon-btn" onClick=${() => setOpen(false)} aria-label="Close"><${Icon} name="close" /></button></header>
         <div class="export-choices">
-          <button class="btn" onClick=${async () => { setOpen(false); shareCanvas(await gearImage(project, what), exportName(project, `gear-${name}_${shortDate(localTodayIso())}.png`)); }}>🖼 Image</button>
+          <button class="btn" onClick=${async () => { setOpen(false); shareCanvas(await gearImage(project, what), exportName(project, `gear-${what}_${shortDate(localTodayIso())}.png`)); }}>🖼 Image</button>
           <button class="btn" onClick=${copy}>📋 Copy as text</button>
           <button class="btn" onClick=${() => { setOpen(false); shareFile(xlsxBlob(gearSheets(project)), exportName(project, `gear_${shortDate(localTodayIso())}.xlsx`)); }}>📊 Excel · all the gear</button>
         </div>
       </div>`}`;
-}
-
-// 🔍 on every Gear tab: "xlr cable" → every XLR cable with where it is (Magliner › Pelican yellow ›);
-// "wood box" → every wood box, also inside other cases. While searching, the results replace the tab.
-function GearSearch({ state }) {
-  const { project, gearQuery = '' } = state;
-  const [editing, setEditing] = useState(null);
-  const results = searchGear(project, gearQuery);
-  return html`
-    <div class="gear-search">
-      <input type="search" value=${gearQuery} placeholder="🔍 Search: xlr cable, wood box, slate…" aria-label="Search the gear"
-             onInput=${e => setState({ gearQuery: e.target.value })} />
-    </div>
-    ${gearQuery && html`
-      <p class="muted">${results.length} found</p>
-      ${results.map(({ item, path }) => html`
-        <div class="gear-result" key=${item.id}>
-          ${path.length > 0 && html`<p class="gear-result__path">${path.map((box, i) => html`${i ? ' › ' : ''}<${NamePill} item=${box} />`)} ›</p>`}
-          <${Row} project=${project} item=${item} edit=${setEditing} />
-        </div>`)}
-      ${editing && html`<${ObjectSheet} project=${project} object=${editing} close=${() => setEditing(null)} />`}`}`;
 }
 
 // Gear → Manuals: the equipment manuals by brand, read offline in the app's PDF viewer (manuals.js)
@@ -221,11 +226,4 @@ export function GearManualsScreen({ state }) {
               ${!manualPath(project, manual) && html`<small>⬇ downloads at the next sync</small>`}</span>
           </button>`)}`)}
     </div>`;
-}
-
-// "+ Category" (on the Truck tab): a new top category = a new tab
-function NewCategoryButton() {
-  const [open, setOpen] = useState(false);
-  return html`<button class="btn btn--quiet" onClick=${() => setOpen(true)}>+ Category</button>
-    ${open && html`<${CategorySheet} category=${{}} close=${() => setOpen(false)} />`}`;
 }

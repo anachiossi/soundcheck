@@ -80,3 +80,43 @@ test('search: words in name, nicknames, type or category; with the path', async 
   assert.deepEqual(paths('slate'), ['Magliner › Pelican yellow'], 'by nickname');
   assert.deepEqual(paths('cables').length, 2);
 });
+
+// ---- the inventory tree, details by type, the truck's numbering (Ana, 2 Oct) ----
+const intMics = { ...film, gearItems: [
+  { id: 'k', name: 'Magliner', category: 'carts' },
+  { id: 'b', name: 'BNC–SMA cable', category: 'cables', type: 'cable', qty: 2, inside: 'k',
+    details: [{ label: 'Connector A', value: 'BNC' }, { label: 'Connector B', value: 'SMA' }, { label: 'Ferrite', value: 'yes' }] },
+  { id: 'i', name: 'Inf. Mic’s', category: 'cases', volume: true },
+  { id: 'w', name: 'Schoeps wood box', nicknames: ['MINI CMIT'], category: 'other', type: 'wood box', inside: 'i' },
+  { id: 'f', name: 'Schoeps mic', brand: 'Schoeps', category: 'other', type: 'mic', inside: 'i', details: [{ label: 'Windshield', value: 'fur' }] },
+  { id: 'd', name: 'Exp. Drums', category: 'cables', qty: 3, volume: true },
+] };
+
+test('tree: what is in nothing on top; a case’s cases apart from its loose things', async () => {
+  const { topItems, childrenOf, splitLoose } = await import('../src/gear-rules.js');
+  assert.deepEqual(topItems(intMics).map(i => i.id), ['k', 'i', 'd']);
+  const { boxes, loose } = splitLoose(intMics, childrenOf(intMics, 'i'));
+  assert.deepEqual([boxes.map(i => i.id), loose.map(i => i.id)], [['w'], ['f']], 'a wood box is a case by its type');
+});
+
+test('search: by brand and details too; the tree keeps the cases a match is in', async () => {
+  const { searchTree } = await import('../src/gear-rules.js');
+  assert.deepEqual([...searchTree(intMics, 'fur').found], ['f']);
+  assert.deepEqual([...searchTree(intMics, 'fur').shown].sort(), ['f', 'i']);
+  assert.deepEqual([...searchTree(intMics, 'sma').found], ['b']);
+  assert.deepEqual([...searchTree(intMics, 'schoeps').found].sort(), ['f', 'w']);
+});
+
+test('details: the type offers its usual fields and the ones other objects of that type use', async () => {
+  const { fieldsOfType } = await import('../src/gear-rules.js');
+  assert.deepEqual(fieldsOfType(intMics, 'Cable'), ['Connector A', 'Connector B', 'Length', 'Cable type', 'Colour', 'Ferrite']);
+  assert.deepEqual(fieldsOfType(intMics, ''), []);
+  assert.deepEqual(fieldsOfType(intMics, 'tripod'), []);
+});
+
+test('truck: volumes numbered one by one, Exp. Drums ×3 = 3 volumes', async () => {
+  const { countVolumes } = await import('../src/gear-rules.js');
+  const volumes = intMics.gearItems.filter(i => i.volume);
+  const ticked = { ...intMics, gearChecks: { d: true } };
+  assert.deepEqual(countVolumes(ticked, volumes), { numbers: { i: '1', d: '2–4' }, all: 4, loaded: 3 });
+});
