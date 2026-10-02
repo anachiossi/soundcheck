@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-09-30 · live version **v66** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-10-02 · live version **v95** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
@@ -66,6 +66,17 @@ colour as a frame.
 **IFB department** (switch Mics | IFB): one IFB list for the film (OUT / ✓ back), crew with
 Call / WhatsApp / 🚨 emergency order, IFB kit; new crew from each ODG proposed next to their role.
 IFB list editor: ↑ moves a row up (v59), like the mics editor.
+
+**Gear department** (tabs Truck · Inventory · Manuals · Projects), per film in `gear/` (v95 redesign,
+Ana's mockup "Gear inventory redesign", 2 Oct):
+- Truck: the loading checklist — every volume numbered 1, 2, 3… (×3 = '28–30'), tap a row to tick,
+  "10 / 34 volumes loaded · 24 to go", category headers with counts; History of in / out / changes.
+- Inventory: search + one tree (carts and cases open ▸; loose things folded under "Loose items");
+  searching shows the matches inside the cases they are in; ticks only in ☑ Check mode.
+- Objects: name, brand, type, qty, colour, nicknames, inside, volume, note + **details** (own fields;
+  the type offers the fields others of that type use — `fieldsOfType`). Rules in `src/gear-rules.js`.
+- Manuals by brand (`docs/manuals/<brand>/`, `gear/manuals.json`). Hours / timesheet live in Projects.
+- LBE gear = Angelo Bonanni's kit, built by Ana day by day from photos (Inf. Mic's done 2 Oct).
 
 ## Email robot (runs in the cloud, no laptop needed)
 Gmail (sound.chiossi@) ← production forwards → **Apps Script trigger every 10 min**
