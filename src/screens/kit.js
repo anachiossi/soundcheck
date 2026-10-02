@@ -10,6 +10,7 @@ import { scenesUsing } from '../preset-rules.js';
 import { resolveConflict } from '../sync.js';
 import { CharacterPill, TxPill, LavPill } from '../parts/pills.js';
 import { ItemForm } from '../parts/item-form.js';
+import { manualsForModels, manualPath, openManual } from '../manuals.js';
 
 const distinct = values => [...new Set(values.filter(Boolean))].sort(naturalCompare);
 
@@ -94,7 +95,17 @@ export function KitScreen({ state }) {
     <${Section} ...${shared} list="transmitters" title="Transmitters"
       blank=${{ id: nextId('transmitters'), color: '#e9e9e9', order: project.transmitters.length + 1 }}
       render=${tx => html`<${TxPill} tx=${tx} /><small>${tx.model}${tx.serial ? ` #${tx.serial}` : ''}<br />${tx.connector}${tx.frequency ? html` · <b>${tx.frequency}</b>` : ''}</small>`} />
+    <${TxManuals} project=${project} />
     <${Section} ...${shared} list="lavaliers" title="Lavaliers"
       blank=${{ id: nextId('lavaliers'), color: '#000000', attenuated: false }}
       render=${lav => html`<${LavPill} lav=${lav} number /><small>${lav.brand} · ${lav.connector}${lav.attenuated ? html`<br /><b class="text-danger">attenuated</b>` : ''}</small>`} />`;
+}
+
+// 📄 the manuals of the kit's transmitter models (Gear → Manuals has them all, by brand)
+function TxManuals({ project }) {
+  const manuals = manualsForModels(project, project.transmitters.map(tx => tx.model));
+  if (!manuals.length) return null;
+  return html`<div class="toolbar kit-manuals">${manuals.map(manual => html`
+    <button key=${manual.file} class="btn btn--doc" disabled=${!manualPath(project, manual)} onClick=${() => openManual(project, manual, 'kit')}>
+      📄 ${manual.title}</button>`)}</div>`;
 }

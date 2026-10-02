@@ -29,6 +29,7 @@
 //     gear/items.json      [{ id, name, category, qty, inside, volume, note, added, removed, removed_note }]
 //     gear/history.json    [{ at, item, name, what, note }]   what entered / left / changed (not ticks, not moves)
 //     gear/checks.json     { item id: true }                  today's ticks (truck, case contents)
+//     gear/manuals.json    [{ brand, title, date, file: 'docs/manuals/Zaxcom/ZMT4.pdf', models: ['ZMT4', 'ZMT4.5'] }]
 //
 // One file per scene preset: saving scene 12 never touches scene 13.
 
@@ -38,7 +39,7 @@ export const FILM_FORMAT = 'soundcheck-film';
 const LISTS = ['characters', 'transmitters', 'lavaliers', 'schedule'];
 // IFB files and the name each one has in the device's copy of the film
 export const GEAR_FILES = { 'gear/categories.json': 'gearCategories', 'gear/items.json': 'gearItems',
-  'gear/history.json': 'gearHistory', 'gear/checks.json': 'gearChecks' };
+  'gear/history.json': 'gearHistory', 'gear/checks.json': 'gearChecks', 'gear/manuals.json': 'gearManuals' };
 export const IFB_FILES = { 'ifb/crew.json': 'crew', 'ifb/receivers.json': 'ifbReceivers',
   'ifb/headphones.json': 'ifbHeadphones', 'ifb/list.json': 'ifbList' };
 

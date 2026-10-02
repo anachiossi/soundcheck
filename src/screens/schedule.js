@@ -63,7 +63,7 @@ function DocumentButtons({ project, day }) {
     const path = `${project.folder}/docs/day-${day}/${file}.pdf`;
     if (!project.documents?.[path]) return null;
     return html`<button class="btn btn--doc" key=${file}
-      onClick=${() => setState({ screen: 'document', documentPath: path, documentTitle: `${label} · Day ${day}`, documentFile: `${label === 'Sides' ? 'sides' : label}_${dayTag(day)}_${shortDate(shootingDays(project).find(d => d.day === day)?.date)}.pdf` })}><${Icon} name="document" /> ${label}</button>`;
+      onClick=${() => setState({ screen: 'document', documentPath: path, documentTitle: `${label} · Day ${day}`, documentFile: `${label === 'Sides' ? 'sides' : label}_${dayTag(day)}_${shortDate(shootingDays(project).find(d => d.day === day)?.date)}.pdf`, documentFrom: 'schedule' })}><${Icon} name="document" /> ${label}</button>`;
   });
 }
 

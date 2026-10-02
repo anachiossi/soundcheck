@@ -20,6 +20,7 @@ import { gearText, gearSheets } from '../export/gear-text.js';
 import { xlsxBlob } from '../export/xlsx.js';
 import { shareCanvas, shareFile } from '../export/share.js';
 import { showMessage } from '../state.js';
+import { manualsByBrand, manualPath, openManual } from '../manuals.js';
 import { textColourFor } from '../colour.js';
 import { Icon } from '../parts/icons.js';
 
@@ -176,6 +177,25 @@ function ExportButton({ project, what, title, disabled }) {
           <button class="btn" onClick=${() => { setOpen(false); shareFile(xlsxBlob(gearSheets(project)), exportName(project, `gear_${shortDate(localTodayIso())}.xlsx`)); }}>📊 Excel · all the gear</button>
         </div>
       </div>`}`;
+}
+
+// Gear → Manuals: the equipment manuals by brand, read offline in the app's PDF viewer (manuals.js)
+export function GearManualsScreen({ state }) {
+  const { project } = state;
+  const brands = manualsByBrand(project);
+  return html`
+    <div class="gear">
+      <h2 class="gear__title" style="--cat:#64748b">Manuals</h2>
+      ${Object.keys(brands).length === 0 && html`<p class="empty">No manuals for this film yet.</p>`}
+      ${Object.entries(brands).map(([brand, manuals]) => html`
+        <h3 class="gear__cat" style="--cat:#475569" key=${brand}>${brand} <small>${manuals.length}</small></h3>
+        ${manuals.map(manual => html`
+          <button key=${manual.file} class="manual" disabled=${!manualPath(project, manual)} onClick=${() => openManual(project, manual, 'gear-manuals')}>
+            <${Icon} name="document" />
+            <span><b>${manual.title}</b><small>${[manual.date, (manual.models || []).join(' · ')].filter(Boolean).join(' — ')}</small>
+              ${!manualPath(project, manual) && html`<small>⬇ downloads at the next sync</small>`}</span>
+          </button>`)}`)}
+    </div>`;
 }
 
 // "+ Category" (on the Truck tab): a new top category = a new tab

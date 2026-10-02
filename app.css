@@ -620,3 +620,10 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
 .tomorrow__times b { font-size: 17px; font-variant-numeric: tabular-nums; }
 .tomorrow .btn--primary { justify-self: start; text-decoration: none; }
 .tomorrow__settings form { margin-top: 8px; }
+/* Gear → Manuals (screens/gear.js) */
+.manual { display: flex; align-items: center; gap: 12px; width: 100%; margin: 6px 0; padding: 12px 14px; border-radius: 14px;
+  border: 1px solid var(--line); background: var(--card); color: var(--ink); font: inherit; text-align: left; }
+.manual span { display: grid; flex: 1; min-width: 0; }
+.manual small { color: var(--muted); font-size: 13px; }
+.manual:disabled { opacity: .6; }
+.kit-manuals { margin-top: 8px; flex-wrap: wrap; }

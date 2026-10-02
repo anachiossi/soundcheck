@@ -48,7 +48,7 @@ export function DocumentScreen({ state }) {
   const fileName = exportName(getState().project, getState().documentFile || `${documentTitle}.pdf`);
   return html`
     <div class="document-bar">
-      <button class="link back" onClick=${() => showScreen('schedule')}>‹ Back</button>
+      <button class="link back" onClick=${() => showScreen(getState().documentFrom || 'schedule')}>‹ Back</button>
       <b>${documentTitle}</b>
       ${blob && html`<button class="btn btn--small" onClick=${() => shareFile(blob, fileName)}>Share</button>`}
     </div>

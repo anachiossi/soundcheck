@@ -25,7 +25,7 @@ import { IfbKitScreen } from './screens/ifb-kit.js';
 import { IfbPicker } from './parts/ifb-picker.js';
 import { HoursScreen } from './screens/hours.js';
 import { HelpScreen } from './screens/help.js';
-import { GearTruckScreen, GearCategoryScreen } from './screens/gear.js';
+import { GearTruckScreen, GearCategoryScreen, GearManualsScreen } from './screens/gear.js';
 import { topCategories } from './gear-rules.js';
 import { WrapBadge, WrapQuestion } from './parts/wrap-clock.js';
 import { Icon } from './parts/icons.js';
@@ -51,11 +51,11 @@ const TABS = {
   gear: [['gear-truck', 'Truck', GearTruckScreen], ['projects', 'Projects', ProjectsScreen]], // + a tab per category
 };
 
-// Gear: Truck, then one tab per top category (Carts, Cases, Cables… and any new one), then Projects
+// Gear: Truck, then one tab per top category (Carts, Cases, Cables… and any new one), Manuals, then Projects
 function tabsOf(department, project) {
   if (department !== 'gear' || !project) return TABS[department] || TABS.mics;
   const categories = topCategories(project).map(c => [`gear-${c.id}`, c.name, GearCategoryScreen]);
-  return [TABS.gear[0], ...categories, TABS.gear[1]];
+  return [TABS.gear[0], ...categories, ['gear-manuals', 'Manuals', GearManualsScreen], TABS.gear[1]];
 }
 
 function DepartmentSwitch({ department }) {
