@@ -3,7 +3,8 @@
 //     '13–15'), tap a row to tick it (it gets crossed out), "10 / 23 volumes loaded · 13 to go", Clear,
 //     Export (image · text tree · Excel), + Category, and the History of what entered / left / changed
 //   • GearInventoryScreen: where everything is. A search and one tree, like a file explorer: carts and
-//     cases open (▸) to show the cases inside them, and their loose things folded under "Loose items".
+//     cases open (▸) to show what they hold: their cases first, then the loose things A–Z (no ▸; Ana 5 Oct:
+//     the "Loose items" fold was visual noise).
 //     Searching shows only the matches, inside the cases they are in. Tap a name to see / change it.
 //     Tick boxes only in Check mode.
 //   • GearManualsScreen: the manuals by brand
@@ -97,38 +98,29 @@ function History({ project }) {
 
 // ---- Inventory: the tree ----
 
-// the rows of the tree, top to bottom: { item, depth } or { loose: { id, count }, depth } (the "Loose items"
-// fold). While searching, `search.shown` says what to draw; inside a matching case everything is drawn.
-function treeRows(project, items, depth, parentId, isOpen, search) {
+// the rows of the tree, top to bottom: { item, depth }. At each level the cases first (they open), then
+// the loose things in alphabetical order. While searching, `search.shown` says what to draw; inside a
+// matching case everything is drawn.
+function treeRows(project, items, depth, isOpen, search) {
   const visible = search ? items.filter(item => search.shown.has(item.id)) : items;
   const { boxes, loose } = splitLoose(project, visible);
   const rows = [];
   for (const item of boxes) {
     rows.push({ item, depth });
     const inner = search && search.found.has(item.id) ? null : search;
-    if (isOpen(item.id, item)) rows.push(...treeRows(project, childrenOf(project, item.id), depth + 1, item.id, isOpen, inner));
+    if (isOpen(item.id)) rows.push(...treeRows(project, childrenOf(project, item.id), depth + 1, isOpen, inner));
   }
-  if (loose.length) {
-    const id = `${parentId}~loose`;
-    rows.push({ loose: { id, count: loose.length }, depth });
-    if (isOpen(id)) rows.push(...loose.map(item => ({ item, depth: depth + 1 })));
-  }
-  return rows;
+  const byName = [...loose].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true }));
+  return [...rows, ...byName.map(item => ({ item, depth }))];
 }
 
 const INDENT = 18;
 
 function TreeRow({ project, row, open, toggle, edit, checking, search }) {
-  const { item, loose, depth } = row;
+  const { item, depth } = row;
   const guides = Array.from({ length: depth }, (_, d) => html`<span class="gear-tree__guide" style=${`left:${6 + d * INDENT + 14}px`}></span>`);
   const indent = html`<span class="gear-tree__indent" style=${`width:${6 + depth * INDENT}px`}></span>`;
   const chevron = html`<button class="gear-tree__open" onClick=${toggle} aria-label=${open ? 'Close' : 'Open'} aria-expanded=${open}>${open ? '▾' : '▸'}</button>`;
-  if (loose) {
-    return html`<div class="gear-tree__row">${guides}${indent}${chevron}
-      <span class="gear-chip gear-chip--loose"></span>
-      <button class="gear-tree__name gear-tree__name--loose" onClick=${toggle}>Loose items</button>
-      <span class="gear-tree__count">${loose.count}</span>${checking && html`<span class="gear-tree__tick"></span>`}</div>`;
-  }
   const box = isContainer(project, item);
   const look = search ? (search.found.has(item.id) ? ' gear-tree__name--found' : ' gear-tree__name--path') : depth === 0 ? ' gear-tree__name--top' : '';
   const on = ticked(project, item.id);
@@ -148,9 +140,9 @@ export function GearInventoryScreen({ state }) {
   const [sheet, edit] = useSheet(project);
   const search = gearQuery.trim() ? searchTree(project, gearQuery) : null;
   // while searching, the way down to each match is open (a matching case opens like any other)
-  const isOpen = (id, item) => (search && !(item && search.found.has(id)) ? true : Boolean(gearOpen[id]));
+  const isOpen = id => (search && !search.found.has(id) ? true : Boolean(gearOpen[id]));
   const toggle = id => setState({ gearOpen: { ...gearOpen, [id]: !gearOpen[id] } });
-  const rows = treeRows(project, topItems(project), 0, 'top', isOpen, search);
+  const rows = treeRows(project, topItems(project), 0, isOpen, search);
   const ticks = Object.keys(project.gearChecks || {}).length;
   const newObject = () => edit({ category: 'other', volume: startsAsVolume(project, 'other') });
   return html`
@@ -174,11 +166,8 @@ export function GearInventoryScreen({ state }) {
       ${rows.length === 0 && !search && html`<p class="empty">Nothing yet. + Add the first cart or case.</p>`}
       ${rows.length > 0 && html`
         <div class="gear-tree">
-          ${rows.map(row => {
-            const id = row.item ? row.item.id : row.loose.id;
-            return html`<${TreeRow} key=${id} project=${project} row=${row} open=${isOpen(id, row.item)} toggle=${() => toggle(id)}
-                                   edit=${edit} checking=${gearChecking} search=${search} />`;
-          })}
+          ${rows.map(row => html`<${TreeRow} key=${row.item.id} project=${project} row=${row} open=${isOpen(row.item.id)}
+            toggle=${() => toggle(row.item.id)} edit=${edit} checking=${gearChecking} search=${search} />`)}
         </div>`}
       <div class="toolbar"><button class="btn btn--primary" onClick=${newObject}>+ Add</button></div>
       ${sheet}

@@ -8,7 +8,7 @@
 //     a mic's capsule and suspension…), note }. Carts and cases hold loose things and other cases, any depth. A cart or a case HOLDS the objects whose `inside` is its id. The two are
 //     separate: a case riding in a cart can still be its own volume; one fixed to the cart is not.
 //   • the INVENTORY is one tree, like a file explorer (Ana, 2 Oct): carts and cases open to show the
-//     cases inside them, and their loose things folded under "Loose items"; the search shows where things are
+//     cases inside them, then their loose things A–Z; the search shows where things are
 //   • the TRUCK is every volume, by category, numbered; TICKS (gear/checks.json) are day-to-day help only
 //   • HISTORY (gear/history.json): what entered, left (with why), or changed — not ticks, not moves
 // Files: gear/categories.json, items.json, history.json, checks.json (store/repo-files.js).
@@ -160,7 +160,7 @@ export function searchGear(project, query) {
 export const topItems = project => activeItems(project).filter(item => !item.inside || !itemById(project, item.inside));
 export const childrenOf = (project, id) => activeItems(project).filter(item => item.inside === id);
 
-// one level of the tree: the carts and cases, then the loose things (shown folded under "Loose items")
+// one level of the tree: the carts and cases (they open), then the loose things
 export function splitLoose(project, items) {
   return { boxes: items.filter(item => isContainer(project, item)), loose: items.filter(item => !isContainer(project, item)) };
 }
