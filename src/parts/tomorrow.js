@@ -3,6 +3,7 @@
 // leave times to an iPhone shortcut ("soundcheck alarms"), which first removes its old alarms (label
 // "soundcheck · …") and then creates the two new ones in Clock — never piling up (Ana) —
 // a web app can't set alarms itself. The robot's push "Tomorrow D10 · call 10:00" opens the app here.
+// While the app syncs the button waits: a new ODG may change the call (it is applied by itself, sync.js).
 // Also: the five numbers of the film (settings.json → "commute"), editable.
 // Used by: screens/hours.js
 
@@ -10,6 +11,7 @@ import { html, useState } from '../../vendor/preact-htm.js';
 import { formatDate } from '../model.js';
 import { COMMUTE, commuteOf, wakePlan, nextShootingDay } from '../hours-rules.js';
 import { saveSettings } from '../kit-editing.js';
+import { getState } from '../state.js';
 
 export const SHORTCUT = 'soundcheck alarms';
 
@@ -32,7 +34,9 @@ export function Tomorrow({ project }) {
           <span><small>🚪 leave</small><b>${plan.leaveFrom}</b><small>to ${plan.leaveTo}</small></span>
           <span><small>📍 meet</small><b>${plan.meet}</b></span>
         </div>
-        <a class="btn btn--primary" href=${alarmsLink(project, plan)}>⏰ Set alarms ${plan.wake} · ${plan.leaveFrom}</a>`
+        ${getState().sync?.running
+          ? html`<span class="btn" aria-disabled="true">⏳ Checking for a new ODG…</span>`
+          : html`<a class="btn btn--primary" href=${alarmsLink(project, plan)}>⏰ Set alarms ${plan.wake} · ${plan.leaveFrom}</a>`}`
       : html`<p class="muted">No next shooting day with a call time yet.</p>`}
       <${CommuteSettings} project=${project} />
     </section>`;
