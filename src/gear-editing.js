@@ -69,6 +69,17 @@ export function saveCategory(fields) {
     ['gear/categories.json'], `${name} saved.`);
 }
 
+// a move into another cart / case, or out of all of them (inside ''), with everything it holds.
+// Not history (Ana: moving something from a case to another is not an edit).
+export function moveObject(id, inside) {
+  const project = getState().project;
+  const items = project.gearItems || [];
+  const object = items.find(item => item.id === id);
+  if (!object || (object.inside || '') === inside) return;
+  const where = inside ? `into ${items.find(item => item.id === inside)?.name}` : 'out on its own';
+  return save({ gearItems: items.map(item => (item.id === id ? { ...item, inside } : item)) }, ['gear/items.json'], `${object.name} moved ${where}.`);
+}
+
 export function toggleTick(id) {
   const checks = { ...getState().project.gearChecks };
   if (checks[id]) delete checks[id]; else checks[id] = true;

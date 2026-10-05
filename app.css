@@ -660,3 +660,15 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
 .gear-details__link { width: 100%; padding: 0 12px; border-left: 0; border-right: 0; border-bottom: 0; background: none; color: var(--ink); font: inherit; text-align: left; }
 .gear-details__add { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 12px; border-top: 1px solid var(--line); }
 .choice--dashed { border-style: dashed; color: var(--ink-soft); font-weight: 400; }
+
+/* press, hold and drag into a case (parts/gear-drag.js) */
+.gear-tree__row { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.gear-tree__grip { display: flex; align-items: center; align-self: stretch; padding: 0 2px; }
+.gear-tree__row--lifted { opacity: .35; }
+.gear-tree__row--target { background: var(--accent-soft); box-shadow: inset 0 0 0 2px var(--accent); }
+/* pinned to the top of the screen while dragging: always in reach, and the list doesn't move under the finger */
+.gear-tree__out { position: fixed; top: 0; left: 0; right: 0; z-index: 25; min-height: 52px; display: flex; align-items: center; justify-content: center;
+  padding: env(safe-area-inset-top) 14px 0; background: var(--card); border-bottom: 1px dashed var(--line-strong); color: var(--ink-soft); font-size: 15px; }
+.gear-ghost { position: fixed; z-index: 30; pointer-events: none; transform: translate(-20%, -130%); max-width: 70vw; padding: 8px 14px;
+  border-radius: 12px; background: var(--accent); color: var(--on-accent); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .25); }

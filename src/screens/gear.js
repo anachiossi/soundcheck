@@ -6,7 +6,7 @@
 //     cases open (▸) to show what they hold: their cases first, then the loose things A–Z (no ▸; Ana 5 Oct:
 //     the "Loose items" fold was visual noise).
 //     Searching shows only the matches, inside the cases they are in. Tap a name to see / change it.
-//     Tick boxes only in Check mode.
+//     Tick boxes only in Check mode. Press, hold and drag a square or name into a case (parts/gear-drag.js).
 //   • GearManualsScreen: the manuals by brand
 // Everything is editable here (parts/gear-form.js) and lives in the film (gear/…), offline first.
 // Used by: main.js
@@ -16,13 +16,14 @@ import { formatStamp, exportName, shortDate, localTodayIso } from '../model.js';
 import {
   truckOf, ticked, countVolumes, topItems, childrenOf, splitLoose, searchTree, isContainer, startsAsVolume,
 } from '../gear-rules.js';
-import { toggleTick, clearTicks } from '../gear-editing.js';
+import { toggleTick, clearTicks, moveObject } from '../gear-editing.js';
+import { useGearDrag } from '../parts/gear-drag.js';
 import { ObjectSheet, CategorySheet } from '../parts/gear-form.js';
 import { gearImage } from '../export/gear-image.js';
 import { gearText, gearSheets } from '../export/gear-text.js';
 import { xlsxBlob } from '../export/xlsx.js';
 import { shareCanvas, shareFile } from '../export/share.js';
-import { showMessage, setState } from '../state.js';
+import { showMessage, setState, getState } from '../state.js';
 import { manualsByBrand, manualPath, openManual } from '../manuals.js';
 import { Icon } from '../parts/icons.js';
 
@@ -116,7 +117,7 @@ function treeRows(project, items, depth, isOpen, search) {
 
 const INDENT = 18;
 
-function TreeRow({ project, row, open, toggle, edit, checking, search }) {
+function TreeRow({ project, row, open, toggle, edit, checking, search, drag }) {
   const { item, depth } = row;
   const guides = Array.from({ length: depth }, (_, d) => html`<span class="gear-tree__guide" style=${`left:${6 + d * INDENT + 14}px`}></span>`);
   const indent = html`<span class="gear-tree__indent" style=${`width:${6 + depth * INDENT}px`}></span>`;
@@ -124,10 +125,13 @@ function TreeRow({ project, row, open, toggle, edit, checking, search }) {
   const box = isContainer(project, item);
   const look = search ? (search.found.has(item.id) ? ' gear-tree__name--found' : ' gear-tree__name--path') : depth === 0 ? ' gear-tree__name--top' : '';
   const on = ticked(project, item.id);
-  return html`<div class="gear-tree__row">${guides}${indent}
+  // where a dragged thing lands when let go over this row: in this case, or next to this loose thing
+  const drop = box ? item.id : item.inside || '';
+  const state = drag.dragging?.id === item.id ? ' gear-tree__row--lifted' : drag.dragging && drag.target === item.id ? ' gear-tree__row--target' : '';
+  return html`<div class=${'gear-tree__row' + state} data-drop=${drop}>${guides}${indent}
     ${box ? chevron : html`<span class="gear-tree__open"></span>`}
-    <${Chip} item=${item} />
-    <button class=${'gear-tree__name' + look} onClick=${() => edit(item)}>${item.name}${item.nicknames?.[0] && html`<small> · ${item.nicknames[0]}</small>`}</button>
+    <span class="gear-tree__grip" ...${drag.hold(item)}><${Chip} item=${item} /></span>
+    <button class=${'gear-tree__name' + look} ...${drag.hold(item)} onClick=${() => !drag.wasDrag() && edit(item)}>${item.name}${item.nicknames?.[0] && html`<small> · ${item.nicknames[0]}</small>`}</button>
     ${item.type && html`<span class="gear-tree__type">${item.type}</span>`}
     <span class="gear-tree__count">${box ? childrenOf(project, item.id).length : item.qty > 1 ? `×${item.qty}` : ''}</span>
     ${checking && html`<button class="gear-tree__tick" onClick=${() => toggleTick(item.id)} aria-label=${on ? `Untick ${item.name}` : `Tick ${item.name}`}>
@@ -142,6 +146,7 @@ export function GearInventoryScreen({ state }) {
   // while searching, the way down to each match is open (a matching case opens like any other)
   const isOpen = id => (search && !search.found.has(id) ? true : Boolean(gearOpen[id]));
   const toggle = id => setState({ gearOpen: { ...gearOpen, [id]: !gearOpen[id] } });
+  const drag = useGearDrag(project, { open: id => setState({ gearOpen: { ...getState().gearOpen, [id]: true } }), move: moveObject });
   const rows = treeRows(project, topItems(project), 0, isOpen, search);
   const ticks = Object.keys(project.gearChecks || {}).length;
   const newObject = () => edit({ category: 'other', volume: startsAsVolume(project, 'other') });
@@ -165,10 +170,12 @@ export function GearInventoryScreen({ state }) {
           <button class="btn btn--primary" onClick=${() => setState({ gearChecking: false })}>Done</button></div>`}
       ${rows.length === 0 && !search && html`<p class="empty">Nothing yet. + Add the first cart or case.</p>`}
       ${rows.length > 0 && html`
-        <div class="gear-tree">
+        <div class=${'gear-tree' + (drag.dragging ? ' gear-tree--dragging' : '')}>
+          ${drag.dragging && html`<div class=${'gear-tree__out' + (drag.target === '' ? ' gear-tree__row--target' : '')} data-drop="">↑ Out of every case</div>`}
           ${rows.map(row => html`<${TreeRow} key=${row.item.id} project=${project} row=${row} open=${isOpen(row.item.id)}
-            toggle=${() => toggle(row.item.id)} edit=${edit} checking=${gearChecking} search=${search} />`)}
+            toggle=${() => toggle(row.item.id)} edit=${edit} checking=${gearChecking} search=${search} drag=${drag} />`)}
         </div>`}
+      ${drag.ghost}
       <div class="toolbar"><button class="btn btn--primary" onClick=${newObject}>+ Add</button></div>
       ${sheet}
     </div>`;
