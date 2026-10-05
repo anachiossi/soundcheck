@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-10-02 · live version **v96** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-10-02 · live version **v97** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
@@ -72,7 +72,8 @@ Ana's mockup "Gear inventory redesign", 2 Oct):
 - Truck: the loading checklist — every volume numbered 1, 2, 3… (×3 = '28–30'), tap a row to tick,
   "10 / 34 volumes loaded · 24 to go", category headers with counts; History of in / out / changes.
 - Inventory: search + one tree (carts and cases open ▸; loose things after them A–Z, no fold (v96));
-  searching shows the matches inside the cases they are in; ticks only in ☑ Check mode.
+  searching shows the matches inside the cases they are in; ticks only in ☑ Check mode;
+  press, hold and drag a square or name into a case (v97, `parts/gear-drag.js`, `.shots/gear-drag.mjs`).
 - Objects: name, brand, type, qty, colour, nicknames, inside, volume, note + **details** (own fields;
   the type offers the fields others of that type use — `fieldsOfType`). Rules in `src/gear-rules.js`.
 - Manuals by brand (`docs/manuals/<brand>/`, `gear/manuals.json`). Hours / timesheet live in Projects.
