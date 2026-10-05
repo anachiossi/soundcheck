@@ -120,3 +120,10 @@ test('truck: volumes numbered one by one, Exp. Drums ×3 = 3 volumes', async () 
   const ticked = { ...intMics, gearChecks: { d: true } };
   assert.deepEqual(countVolumes(ticked, volumes), { numbers: { i: '1', d: '2–4' }, all: 4, loaded: 3 });
 });
+
+test('a type naming a case makes a case: Plastic case, soft case', async () => {
+  const { isContainer } = await import('../src/gear-rules.js');
+  assert.equal(isContainer(film, { id: 'x', category: 'other', type: 'Plastic case' }), true);
+  assert.equal(isContainer(film, { id: 'y', category: 'other', type: 'soft case' }), true);
+  assert.equal(isContainer(film, { id: 'z', category: 'other', type: 'mic' }), false);
+});

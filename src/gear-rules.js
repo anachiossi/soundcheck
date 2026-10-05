@@ -64,7 +64,9 @@ export const holds = (project, id) => activeItems(project).some(item => item.ins
 // a cart or a case (or anything holding things, or whose type is a case: Pelican, wood box…): it opens
 // to show its contents. Things in a sub-category (Cases → Batteries) are contents, not containers.
 export const isContainer = (project, item) => holds(project, item.id) || ['carts', 'cases'].includes(item.category)
-  || CASE_TYPES.some(type => plain(type) === plain(item.type));
+  || CASE_WORDS.test(plain(item.type));
+// a type with one of these words holds things: "Plastic case", "soft case", "wood box", "Pelican"…
+const CASE_WORDS = /\b(case|bag|box|pouch|tube|drawer|rack|pelican|trunk)\b/;
 
 // every object in a category tab, wherever it is (e.g. all the cables, also those in cases)
 export function allInCategory(project, topId) {
