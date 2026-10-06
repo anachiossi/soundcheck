@@ -182,6 +182,8 @@ export function searchTree(project, query) {
 const STARTING_FIELDS = {
   cable: ['Connector A', 'Connector B', 'Length', 'Cable type', 'Colour'],
   mic: ['Model', 'Capsule', 'Pattern', 'Suspension', 'Windshield', 'Accessories'],
+  tx: ['Number', 'Model', 'Frequency', 'Serial', 'Connector'],
+  lav: ['Model', 'Colour', 'Connector', 'Adaptor', 'Attenuated'],
 };
 export function fieldsOfType(project, type) {
   if (!plain(type)) return [];
