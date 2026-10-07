@@ -422,10 +422,11 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
 .map-line__n { position: absolute; left: 10px; top: 14px; color: var(--muted-2); font-size: 13px; }
 .map-line__who { flex: none; max-width: 70%; box-sizing: border-box; padding: 4px 14px; border-radius: 999px; font-weight: 800; font-size: 13px;
   text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.map-line__cue { align-self: stretch; margin: 0 8%; text-indent: 2.5em; min-width: 0;   /* a tab before the first word (Ana, 7 Oct) */ font-family: var(--cue-font); font-size: 16px; line-height: 1.3; }
+.map-line__cue { align-self: stretch; margin: 0 8%; min-width: 0; font-family: var(--cue-font); font-size: 16px; line-height: 1.3; }
 .map-line { cursor: pointer; }
 .map-line--open { box-shadow: 0 0 0 2px var(--ink) inset; }
 .map-line__learn { display: flex; margin-top: 6px; }
+.map-line__phrase { display: block; text-indent: 2.5em; }   /* one phrase per row, a tab before each (Ana, 7 Oct) */
 .map-line__cue small { display: block; text-indent: 0; font-family: inherit; font-size: 12px; color: var(--muted); margin-top: 2px; }
 
 /* ---- 13. IFB department ------------------------------------------------------ */
@@ -591,6 +592,7 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
 /* the night before (parts/tomorrow.js) */
 .tomorrow { display: grid; gap: 10px; margin-bottom: 18px; padding: 14px; border-radius: 16px; background: var(--card); border: 1px solid var(--line); }
 .tomorrow__day { margin: 0; font-size: 17px; }
+.tomorrow__odg { text-align: left; white-space: normal; background: var(--warn-bg); border: 1px solid var(--warn-line); color: var(--warn-ink); font-weight: 600; }
 .tomorrow__times { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
 .tomorrow__times span { display: grid; justify-items: center; gap: 2px; padding: 8px 4px; border-radius: 12px; background: var(--tab-bg); }
 .tomorrow__times small { font-size: 12px; color: var(--muted); }

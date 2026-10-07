@@ -3,7 +3,8 @@
 // leave times to an iPhone shortcut ("soundcheck alarms"), which first removes its old alarms (label
 // "soundcheck · …") and then creates the two new ones in Clock — never piling up (Ana) —
 // a web app can't set alarms itself. The robot's push "Tomorrow D10 · call 10:00" opens the app here.
-// While the app syncs the button waits: a new ODG may change the call (it is applied by itself, sync.js).
+// While the app syncs the button waits: a new ODG may come. The times use the newest ODG even before it
+// is reviewed (hours-rules.js nextShootingDay); an ODG waiting for review is shown above — tap it to review.
 // Also: the five numbers of the film (settings.json → "commute"), editable.
 // Used by: screens/hours.js
 
@@ -11,7 +12,8 @@ import { html, useState } from '../../vendor/preact-htm.js';
 import { formatDate } from '../model.js';
 import { COMMUTE, commuteOf, wakePlan, nextShootingDay } from '../hours-rules.js';
 import { saveSettings } from '../kit-editing.js';
-import { getState } from '../state.js';
+import { getState, setState } from '../state.js';
+import { undecided } from '../proposal-rules.js';
 
 export const SHORTCUT = 'soundcheck alarms';
 
@@ -23,6 +25,7 @@ export const alarmsLink = (project, plan) => `shortcuts://run-shortcut?name=${en
 export function Tomorrow({ project }) {
   const day = nextShootingDay(project);
   const plan = day && wakePlan(project, day);
+  const waiting = Object.values(project.proposals || {}).filter(p => p.id.startsWith('odg-') && p.status === 'open' && undecided(p).length);
   if (!commuteOf(project)) return html`<${CommuteSettings} project=${project} />`;
   return html`
     <section class="tomorrow">
@@ -34,6 +37,8 @@ export function Tomorrow({ project }) {
           <span><small>🚪 leave</small><b>${plan.leaveFrom}</b><small>to ${plan.leaveTo}</small></span>
           <span><small>📍 meet</small><b>${plan.meet}</b></span>
         </div>
+        ${waiting.map(p => html`<button key=${p.id} class="btn tomorrow__odg" onClick=${() => setState({ screen: 'proposal', proposalId: p.id })}>
+          📬 ${p.title} waits for your review — the alarms already use its call</button>`)}
         ${getState().sync?.running
           ? html`<span class="btn" aria-disabled="true">⏳ Checking for a new ODG…</span>`
           : html`<a class="btn btn--primary" href=${alarmsLink(project, plan)}>⏰ Set alarms ${plan.wake} · ${plan.leaveFrom}</a>`}`

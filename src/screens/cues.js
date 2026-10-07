@@ -138,7 +138,7 @@ export function CuesScreen({ state }) {
         <span class="cues__scene"><${ScenePill} project=${project} sceneId=${cuesScene} hash /></span>
         <button class=${'cues__close' + (reading ? ' cues__close--on' : '')} aria-label=${reading ? 'Stop reading aloud' : 'Read aloud'}
                 onClick=${only(() => { if (!reading) unlockSpeech(); setReading(!reading); })}><${Icon} name="voice" /></button>
-        <button class="cues__close" onClick=${only(() => setState({ screen: 'cues-map', cuesLine: 0 }))} aria-label="Scene map">
+        <button class="cues__close" onClick=${only(() => setState({ screen: 'cues-map', cuesLine: 0 }))} aria-label="Dialogue map">
           <${Icon} name="map" /></button>
         <button class="cues__close cues__edit" onClick=${only(() => setEditor({ index, adding: false }))} aria-label="Edit this line">
           <${Icon} name="edit" /></button>

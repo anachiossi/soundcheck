@@ -69,7 +69,7 @@ export function toSpeaker(value) {
 export function shootingDays(project) {
   const days = new Map();
   for (const s of project.schedule) {
-    if (!days.has(s.day)) days.set(s.day, { day: s.day, date: s.date, week: s.week, call: s.call, wrap: s.wrap, scenes: [] });
+    if (!days.has(s.day)) days.set(s.day, { day: s.day, date: s.date, week: s.week, call: s.call, wrap: s.wrap, fromOdg: s.fromOdg, scenes: [] });
     days.get(s.day).scenes.push(s);
   }
   for (const d of days.values()) d.scenes.sort((a, b) => a.order - b.order);

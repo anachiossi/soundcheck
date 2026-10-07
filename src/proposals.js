@@ -3,9 +3,9 @@
 // preset), exactly like an edit by hand: saved on the device, then uploaded.
 // Reject: nothing changes. Either way the decision is written in the proposal file,
 // so other devices don't ask again. When every change is decided, the proposal is done.
-// ODG proposals are accepted by themselves as soon as they arrive (Ana, 5 Oct: the alarms were set from
-// the old call while ODG #12 was waiting for review); they stay readable and every change can be undone by hand.
-// Used by: screens/proposal.js, sync.js (applyNewOdgs)
+// Every proposal waits for Ana, ODGs too (7 Oct, back from v99's auto-apply: "still a beta… so I can
+// catch up any mistakes like the 27 fin"). The Tomorrow card says when an ODG is waiting (parts/tomorrow.js).
+// Used by: screens/proposal.js
 
 import { getState, saveAndShow, showMessage } from './state.js';
 import { applyChange, undecided } from './proposal-rules.js';
@@ -38,17 +38,6 @@ async function decide(proposalId, changeIds, decision) {
 
 export const acceptChange = (proposalId, changeId) => decide(proposalId, [changeId], 'accepted');
 export const rejectChange = (proposalId, changeId) => decide(proposalId, [changeId], 'rejected');
-
-// every change of the ODGs that arrived and nobody decided yet: applied (the ODG is the truth for the day)
-export async function applyNewOdgs() {
-  const proposals = Object.values(getState().project?.proposals || {});
-  for (const proposal of proposals.filter(p => p.id.startsWith('odg-') && p.status === 'open')) {
-    const changes = undecided(proposal);
-    if (!changes.length) continue;
-    await decide(proposal.id, changes.map(c => c.id), 'accepted');
-    showMessage('ok', `${proposal.title}: applied (${changes.length} change${changes.length > 1 ? 's' : ''}).`);
-  }
-}
 
 export function acceptAll(proposalId) {
   const proposal = getState().project.proposals[proposalId];

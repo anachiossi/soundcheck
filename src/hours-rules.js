@@ -145,9 +145,35 @@ export function wakePlan(project, day) {
 }
 
 // the next shooting day whose call is still ahead: later today (after midnight, the day you are about
-// to wake up for — Ana, 00:15), tomorrow, or Monday after a weekend
+// to wake up for — Ana, 00:15), tomorrow, or Monday after a weekend.
+// The alarms never wait for a review (Ana, 7 Oct: "make sure the alarm works with or without auto
+// approve"): the date / call / wrap of an ODG not yet accepted count already. Only times and dates —
+// the scenes still wait for Ana. day.fromOdg = the ODG it came from (shown on the card).
 export function nextShootingDay(project, now = new Date()) {
   const { date: today, minute } = clockOf(now);
   const ahead = d => d.date > today || (d.date === today && (minutesOf(d.call) ?? 0) > minute);
-  return shootingDays(project).filter(ahead).sort((a, b) => a.date.localeCompare(b.date))[0] || null;
+  return shootingDays(withWaitingOdgTimes(project)).filter(ahead).sort((a, b) => a.date.localeCompare(b.date))[0] || null;
+}
+
+const TIME_FIELDS = ['date', 'call', 'wrap'];
+export function withWaitingOdgTimes(project) {
+  const decided = (proposal, change) => proposal.decisions?.[change.id];
+  const odgs = Object.values(project.proposals || {}).filter(p => p.id?.startsWith('odg-') && p.status === 'open')
+    .sort((a, b) => (a.day || 0) - (b.day || 0)); // the newest ODG last: it wins
+  let schedule = project.schedule || [];
+  for (const proposal of odgs) {
+    for (const change of proposal.changes || []) {
+      const { op } = change;
+      if (decided(proposal, change) || !op) continue;
+      const fields = Object.fromEntries(Object.entries(op.fields || {}).filter(([k, v]) => TIME_FIELDS.includes(k) && v));
+      if (!Object.keys(fields).length) continue;
+      const known = schedule.some(row => row.day === op.day);
+      if (op.op === 'set_day' || (op.op === 'set_day_scenes' && known)) {
+        schedule = schedule.map(row => (row.day === op.day ? { ...row, ...fields, fromOdg: proposal.title } : row));
+      } else if (op.op === 'set_day_scenes') { // a new day: only its times, for the alarm
+        schedule = [...schedule, { day: op.day, order: 1, scene_id: '', ...fields, fromOdg: proposal.title }];
+      }
+    }
+  }
+  return schedule === project.schedule ? project : { ...project, schedule };
 }

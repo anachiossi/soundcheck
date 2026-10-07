@@ -33,7 +33,7 @@ function SceneButton({ project, sceneId }) {
         <span class="cue-scene__icons">
           <button class="icon-btn cue-scene__icon" aria-label=${`Learn scene ${sceneId}`}
                   onClick=${event => { event.stopPropagation(); openCues(sceneId); }}><${Icon} name="cues" /></button>
-          <button class="icon-btn cue-scene__icon" aria-label=${`Scene map of ${sceneId}`}
+          <button class="icon-btn cue-scene__icon" aria-label=${`Dialogue map of ${sceneId}`}
                   onClick=${event => { event.stopPropagation(); openMap(sceneId); }}><${Icon} name="map" /></button>
           <button class="icon-btn cue-scene__icon" aria-label=${`Timeline of ${sceneId}`}
                   onClick=${event => { event.stopPropagation(); openTimeline(sceneId); }}><${Icon} name="timeline" /></button>

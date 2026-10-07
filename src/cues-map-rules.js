@@ -29,6 +29,26 @@ function lastSentence(text) {
   return (sentences.length > 1 ? '…' : '') + last;
 }
 
+// A line cut into its phrases, one per row in the Dialogue map (Ana, 7 Oct: "a new line every phrase…
+// ':' is still in the same phrase"). A phrase ends at . ? ! … (with any closing quote); a break in the
+// script (a stage direction) ends one too. Titles like "Avv." or "Sig." don't end a phrase.
+const TITLES = /(?:^|[\s'’])(?:avv|sig|sigg|sig\.ra|dott|dott\.ssa|prof|ing|mr|mrs|ms|dr|st)\.$/i;
+export function phrasesOf(text) {
+  const phrases = [];
+  for (const part of String(text).split(/\n+/)) {
+    let current = '';
+    for (const piece of part.match(/[^.?!…]+(?:[.?!…]+["”’»)]*|$)/g) || []) {
+      current += piece;
+      if (/[.?!…]["”’»)]*$/.test(current.trim()) && !TITLES.test(current.trim())) {
+        if (current.trim()) phrases.push(current.trim());
+        current = '';
+      }
+    }
+    if (current.trim()) phrases.push(current.trim());
+  }
+  return phrases;
+}
+
 export function sceneMap(lines) {
   const beats = [];
   const seen = new Set();

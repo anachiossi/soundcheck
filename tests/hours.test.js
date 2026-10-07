@@ -76,3 +76,28 @@ test('the night before: meeting, leave window, wake, sleep (Ana\'s calculator)',
   assert.equal(nextShootingDay(project, at('2026-10-01', '00:15')).day, 9, 'after midnight: the day you wake up for');
   assert.equal(nextShootingDay(project, at('2026-10-01', '12:00')), null, 'after its call: the next one');
 });
+
+test('the alarms use the call of an ODG still waiting for review (Ana, 7 Oct)', async () => {
+  const { nextShootingDay, wakePlan } = await import('../src/hours-rules.js');
+  const project = {
+    settings: { commute: { meet_before_call: 90, travel_min: 30, travel_max: 45, get_ready: 45, sleep_hours: 8 } },
+    schedule: [{ day: 15, order: 1, scene_id: '27fin', date: '2026-10-09', call: '09:00', wrap: '17:00' }],
+    proposals: {
+      'odg-14': { id: 'odg-14', title: 'ODG #14', day: 14, status: 'open', decisions: {}, changes: [
+        { id: 'c1', op: { op: 'set_day', day: 15, fields: { call: '10:00', wrap: '18:00' } } },
+        { id: 'c2', op: { op: 'set_day_scenes', day: 15, scene_ids: [] } }] },
+    },
+  };
+  const now = new Date('2026-10-08T20:00:00');
+  const day = nextShootingDay(project, now);
+  assert.equal(day.call, '10:00');
+  assert.equal(day.fromOdg, 'ODG #14');
+  assert.equal(day.scenes.length, 1); // the scenes still wait for Ana
+  assert.equal(wakePlan(project, day).wake, '07:00');
+  project.proposals['odg-14'].decisions = { c1: 'rejected' };
+  assert.equal(nextShootingDay(project, now).call, '09:00'); // a rejected change doesn't count
+  project.proposals['odg-14'].decisions = {};
+  project.proposals['odg-15'] = { id: 'odg-15', title: 'ODG #15', day: 15, status: 'open', decisions: {}, changes: [
+    { id: 'c1', op: { op: 'set_day_scenes', day: 16, scene_ids: ['29'], fields: { date: '2026-10-12', call: '08:00' } } }] };
+  assert.equal(nextShootingDay(project, new Date('2026-10-10T20:00:00')).call, '08:00'); // a new day from an ODG
+});

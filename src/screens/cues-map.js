@@ -1,7 +1,7 @@
-// cues-map.js — the Scene Map: the whole scene at a glance, to learn WHO speaks WHEN.
+// cues-map.js — the Dialogue map (was Scene Map, renamed by Ana 7 Oct): the whole scene at a glance, to learn WHO speaks WHEN.
 //   • pinned at the top: a colour strip, one piece per line (the "shape" of the scene; tap = jump
 //     there) and ▶ / ■ auto-scroll with its speed (parts/auto-scroll.js)
-//   • then the beats: each line laid out like the script page — the name centred, the whole line under it
+//   • then the beats: each line laid out like the script page — the name centred, the line under it, one phrase per row, each with a tab
 //     (Ana, 7 Oct: "show the entire line" — hands-free while booming, with ▶ auto-scroll)
 //   • tap a line → it opens the mic (🎙 Cues from that line) — the same mic as everywhere
 //   • full screen (a moment to focus): a slim row with Cues · Timeline … ✕ instead of a header
@@ -12,7 +12,7 @@ import { html, useState } from '../../vendor/preact-htm.js';
 import { byId } from '../model.js';
 import { textColourFor, isNearWhite } from '../colour.js';
 import { cueLines } from '../cues-rules.js';
-import { sceneMap } from '../cues-map-rules.js';
+import { sceneMap, phrasesOf } from '../cues-map-rules.js';
 import { setState } from '../state.js';
 import { Icon } from '../parts/icons.js';
 import { AutoScroll } from '../parts/auto-scroll.js';
@@ -61,7 +61,7 @@ export function CuesMapScreen({ state }) {
               <span class="map-line__n">${row.index + 1}</span>
               <span class="map-line__who" style=${`background:${colour};color:${textColourFor(colour)}`}>${row.name}</span>
               <span class="map-line__cue">
-                ${cues.lines[row.index].text}
+                ${phrasesOf(cues.lines[row.index].text).map((phrase, k) => html`<span class="map-line__phrase" key=${k}>${phrase}</span>`)}
                 ${notes.length > 0 && html`<small>${notes.join(' · ')}</small>`}
                 ${isOpen && html`<button class="icon-btn map-line__learn" aria-label="Cues from this line"
                   onClick=${event => { event.stopPropagation(); learnFrom(row.index); }}><${Icon} name="cues" /></button>`}

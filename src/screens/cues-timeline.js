@@ -181,7 +181,7 @@ export function CuesTimelineScreen({ state }) {
       <div class="focus-bar">
         <button class="icon-btn" onClick=${() => setState({ screen: 'cues', cuesLine: now?.index || 0, cuesFrom: 'cues-timeline' })}
                 aria-label="Cues from this line"><${Icon} name="cues" /></button>
-        <button class="icon-btn" onClick=${() => setState({ screen: 'cues-map' })} aria-label="Scene map"><${Icon} name="map" /></button>
+        <button class="icon-btn" onClick=${() => setState({ screen: 'cues-map' })} aria-label="Dialogue map"><${Icon} name="map" /></button>
         <span class="focus-bar__space"></span>
         <button class=${'icon-btn focus-bar__toggle' + (showText ? ' focus-bar__toggle--on' : '')} onClick=${toggleText}
                 aria-label=${showText ? 'Hide the words' : 'Show the words'}>Aa</button>

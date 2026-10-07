@@ -1,7 +1,7 @@
 // cues-map.test.js — the Scene Map: cues and beats. Run: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { sceneMap } from '../src/cues-map-rules.js';
+import { sceneMap, phrasesOf } from '../src/cues-map-rules.js';
 
 const say = (char_id, text) => ({ name: `C${char_id}`, char_id, text });
 
@@ -33,4 +33,11 @@ test('a long speech starts a beat and the next line starts another', () => {
 test('never more than 8 lines in a beat', () => {
   const lines = Array.from({ length: 20 }, (_, i) => say(String(i % 2), 'x'));
   assert.deepEqual(sceneMap(lines).map(b => b.rows.length), [8, 8, 4]);
+});
+
+test('a line cut into phrases: at . ? ! …, never at ":" or after a title like Avv.', () => {
+  assert.deepEqual(phrasesOf('Guarda qua, fratello: lo spezzatino. Ieri? Sì!'), ['Guarda qua, fratello: lo spezzatino.', 'Ieri?', 'Sì!']);
+  assert.deepEqual(phrasesOf('Aspetta… «Vieni.» Ecco'), ['Aspetta…', '«Vieni.»', 'Ecco']);
+  assert.deepEqual(phrasesOf("L'Avv. Magnoni è qui. Bene"), ["L'Avv. Magnoni è qui.", 'Bene']);
+  assert.deepEqual(phrasesOf('Prima parte\nseconda?!'), ['Prima parte', 'seconda?!']);
 });
