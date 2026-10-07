@@ -4,7 +4,7 @@
 // yet = a plain white pill.
 //   <${ScenePill} project=${project} sceneId="11" />                     small, "11"
 //   <${ScenePill} project=${project} sceneId="11" size="title" hash />   the slate's "#11": big, black, never tinted
-//   onClick → a button (active = chosen); without it, a plain label.
+//   onClick → a button (active = chosen); without it, a plain label. done → dark grey (already shot).
 // Used by: parts/banners.js, parts/scene-table.js, screens/schedule.js, screens/scenes.js,
 //          screens/cues-picker.js, screens/cues.js, screens/cues-map.js
 
@@ -12,9 +12,9 @@ import { html } from '../../vendor/preact-htm.js';
 import { textColourFor } from '../colour.js';
 import { LEVELS, soundOf } from '../sound-rules.js';
 
-export function ScenePill({ project, sceneId, size = 'chip', hash = false, onClick, active = false }) {
-  // the slate is already full of information: its number stays plain black
-  const colour = size === 'title' ? null : LEVELS[soundOf(project, sceneId)?.level]?.color;
+export function ScenePill({ project, sceneId, size = 'chip', hash = false, onClick, active = false, done = false }) {
+  // the slate is already full of information: its number stays plain black; a scene already shot is dark grey (Scenes tab)
+  const colour = size === 'title' ? null : done ? '#374151' : LEVELS[soundOf(project, sceneId)?.level]?.color;
   const style = colour ? `background:${colour};color:${textColourFor(colour)};border-color:${colour}` : '';
   const className = `scene-pill scene-pill--${size}` + (active ? ' scene-pill--on' : '');
   const label = hash ? `#${sceneId}` : sceneId;

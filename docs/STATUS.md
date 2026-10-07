@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-10-07 · live version **v113** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-10-07 · live version **v114** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
@@ -58,6 +58,7 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   v64: Kit voice menu and the character voice field removed (Ana: one voice, no choices, no warnings).
 - Cues text priority (`cues-rules.js`): on-set edit (`lines/set/`) → newest sides → script;
   a newer paper after an edit is flagged, never overwrites it.
+- Scenes tab: scenes already shot are dark grey (v114, `doneScenes`: every day they're on is over) — the film's progress.
 - Schedule: finished days green, opens on today; conflicts badge opens a Keep mine / Use the other list.
 - 🔊 **Sound breakdown** per scene (`sound/<scene>.json`): dificultômetro level MOS · AMB · EASY ·
   MEDIUM · HARD (Ana's colours), flags with emojis (💧 😱 🍝 💥 🎵 🚗 👥 👶 🐾), notes, lav warnings per

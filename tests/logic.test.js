@@ -128,3 +128,13 @@ test('a day is over after its wrap time; Schedule then opens on the next day', (
   assert.equal(defaultDay(film, at('2026-09-29', 10)), 7);
   assert.equal(defaultDay(film, at('2026-09-29', 18)), 8);
 });
+
+test('scenes already shot: every day they are on is over (Scenes tab, dark grey)', async () => {
+  const { doneScenes } = await import('../src/model.js');
+  const project = { schedule: [
+    { scene_id: '1', day: 1, order: 1, date: '2026-10-05', call: '09:00', wrap: '18:00' },
+    { scene_id: '2', day: 2, order: 1, date: '2026-10-07', call: '09:00', wrap: '18:00' },
+    { scene_id: '3', day: 3, order: 1, date: '2026-10-09', call: '09:00', wrap: '18:00' }] };
+  assert.deepEqual([...doneScenes(project, new Date('2026-10-07T19:44:00'))], ['1', '2']);
+  assert.deepEqual([...doneScenes(project, new Date('2026-10-07T12:00:00'))], ['1']);
+});

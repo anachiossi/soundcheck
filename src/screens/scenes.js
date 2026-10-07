@@ -1,11 +1,11 @@
 // scenes.js — the Scenes screen: look up any scenes, side by side.
-// Type a scene number (or tap one from the list); each chosen scene shows its
+// Scenes already shot are dark grey (the film's progress). Type a scene number (or tap one from the list); each chosen scene shows its
 // mic table with ✎ to edit, 📷 to export and ✕ to remove it. Choices are remembered.
 // Used by: main.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
 import { ScenePill } from '../parts/scene-pill.js';
-import { allSceneIds, exportName } from '../model.js';
+import { allSceneIds, exportName, doneScenes } from '../model.js';
 import { sceneFileName } from './schedule.js';
 import { addLookup, removeLookup, clearLookup } from '../state.js';
 import { SceneTable } from '../parts/scene-table.js';
@@ -16,6 +16,7 @@ export function ScenesScreen({ state }) {
   const { project, lookup } = state;
   const [query, setQuery] = useState('');
   const all = allSceneIds(project);
+  const done = doneScenes(project); // already shot: dark grey, so the list shows how far the film is
   const q = query.trim().toLowerCase();
   const matches = q ? all.filter(id => id.toLowerCase().startsWith(q)) : all;
 
@@ -34,7 +35,7 @@ export function ScenesScreen({ state }) {
     </form>
     <div class="chips">
       ${matches.map(id => html`
-        <${ScenePill} key=${id} project=${project} sceneId=${id} active=${lookup.includes(id)} onClick=${() => choose(id)} />`)}
+        <${ScenePill} key=${id} project=${project} sceneId=${id} active=${lookup.includes(id)} done=${done.has(id)} onClick=${() => choose(id)} />`)}
       ${matches.length === 0 && html`<span class="empty">No scene "${query}".</span>`}
     </div>
     ${lookup.map(id => html`

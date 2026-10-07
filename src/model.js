@@ -116,6 +116,15 @@ export function scheduleFor(project, sceneId) {
 // Is a shooting day over? Its date is past, or it is today and the wrap time (from the ODG) has
 // passed. A night shoot that wraps after midnight (wrap earlier than call) ends the next morning.
 // `now` is a Date, or a 'YYYY-MM-DD' meaning the start of that day.
+// the scenes already shot: every day they are on is over (dayIsDone) — the Scenes tab greys them, so the
+// list is also the film's progress (Ana, 7 Oct). A scene on no day is not done.
+export function doneScenes(project, now = new Date()) {
+  const days = new Map(shootingDays(project).map(d => [d.day, dayIsDone(d, now)]));
+  const on = new Map();
+  for (const row of project.schedule) on.set(String(row.scene_id), [...(on.get(String(row.scene_id)) || []), days.get(row.day)]);
+  return new Set([...on].filter(([, list]) => list.every(Boolean)).map(([id]) => id));
+}
+
 export function dayIsDone(day, now = new Date()) {
   const at = typeof now === 'string' ? new Date(`${now}T00:00`) : now;
   const minutes = time => { const [h, m] = String(time).split(':').map(Number); return h * 60 + (m || 0); };
