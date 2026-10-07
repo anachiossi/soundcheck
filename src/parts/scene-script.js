@@ -7,10 +7,12 @@
 
 import { html, useEffect, useRef } from '../../vendor/preact-htm.js';
 import { textColourFor } from '../colour.js';
+import { Marked } from './line-search.js';
+import { findIn } from '../cues-map-rules.js';
 
 const WAIT_AFTER_TOUCH = 3000; // ms the script stays where the finger left it
 
-export function SceneScript({ lines, current, saying, colourOf, onJump }) {
+export function SceneScript({ lines, current, saying, colourOf, onJump, query = '' }) {
   const box = useRef(null);
   const touchedAt = useRef(0);
 
@@ -38,8 +40,8 @@ export function SceneScript({ lines, current, saying, colourOf, onJump }) {
           <p class="script-line__name"><span class="script-line__mark"
              style=${`background:${colourOf(line)};color:${textColourFor(colourOf(line))}`}>${line.name}</span></p>
           <p class="script-line__text">${i === current
-            ? String(line.text).split(/\s+/).filter(Boolean).map((word, w) => html`<span key=${w} class=${w <= saying ? 'said' : 'coming'}>${word}</span>${' '}`)
-            : line.text}</p>
+            ? String(line.text).split(/\s+/).filter(Boolean).map((word, w) => html`<span key=${w} class=${w <= saying ? 'said' : 'coming'}><${Marked} text=${word} query=${query} /></span>${' '}`)
+            : html`<${Marked} text=${line.text} query=${query} />`}</p>
         </div>`)}
       <div class="script__space"></div>
     </div>`;

@@ -25,6 +25,7 @@ import { setState } from '../state.js';
 import { backToPaper, keepEdits } from '../cues-editing.js';
 import { CueLineEditor } from '../parts/cue-line-editor.js';
 import { Icon } from '../parts/icons.js';
+import { SearchBar, Marked } from '../parts/line-search.js';
 import { voicesReady, phoneVoices, filmVoices, pickVoice, voiceKindOf, speak, unlockSpeech, LINE_PAUSE } from '../read-aloud.js';
 
 // 'PRINCE JOHN' → 'Prince John.' (said as a name, with a stop after it)
@@ -81,6 +82,7 @@ export function CuesScreen({ state }) {
   const cues = cueLines(project, cuesScene);
   const [index, setIndex] = useState(() => Math.min(state.cuesLine || 0, Math.max(0, (cues?.lines.length || 1) - 1)));
   const [editor, setEditor] = useState(null); // { index, adding } while ✎ is open
+  const [search, setSearch] = useState(null); // 🔍 { query, at } while the search bar is open
   const textRef = useRef(null);
   const moreBelow = useMoreBelow(textRef, index);
   useWakeLock();
@@ -126,7 +128,7 @@ export function CuesScreen({ state }) {
   const colour = byId(project.characters).get(String(line.char_id))?.color;
   const background = colour && !isNearWhite(colour) ? colour : '#475569';
   const onTap = event => {
-    if (editor || event.target.closest('.cues__top, .cues__bottom, .cues__newer')) return; // the bars never turn the page
+    if (editor || event.target.closest('.cues__top, .cues__bottom, .cues__newer, .line-search')) return; // the bars never turn the page
     const back = event.clientX < innerWidth * 0.3;
     setIndex(i => (back ? Math.max(0, i - 1) : Math.min(lines.length, i + 1)));
   };
@@ -138,12 +140,15 @@ export function CuesScreen({ state }) {
         <span class="cues__scene"><${ScenePill} project=${project} sceneId=${cuesScene} hash /></span>
         <button class=${'cues__close' + (reading ? ' cues__close--on' : '')} aria-label=${reading ? 'Stop reading aloud' : 'Read aloud'}
                 onClick=${only(() => { if (!reading) unlockSpeech(); setReading(!reading); })}><${Icon} name="voice" /></button>
+        <button class="cues__close" onClick=${only(() => setSearch(search ? null : { query: '', at: 0 }))} aria-label="Search the lines">
+          <${Icon} name="search" /></button>
         <button class="cues__close" onClick=${only(() => setState({ screen: 'cues-map', cuesLine: 0 }))} aria-label="Dialogue map">
           <${Icon} name="map" /></button>
         <button class="cues__close cues__edit" onClick=${only(() => setEditor({ index, adding: false }))} aria-label="Edit this line">
           <${Icon} name="edit" /></button>
         <button class="cues__close" ...${closeProps(close)} aria-label="Close"><${Icon} name="close" /></button>
       </div>
+      ${search && html`<${SearchBar} lines=${lines} search=${search} setSearch=${setSearch} onGo=${match => setIndex(match.line)} />`}
       ${cues.newer && html`
         <div class="cues__newer" aria-hidden="true">
           <span>New text arrived: ${cues.newer}</span>
@@ -155,7 +160,7 @@ export function CuesScreen({ state }) {
       <div class="cues__panel">
         <div class="cues__text" ref=${textRef}>
           <div class="cues__speech">
-            ${phraseLines(line.text).split('\n').map((phrase, i) => html`<p class="cues__phrase" key=${i}>${phrase}</p>`)}
+            ${phraseLines(line.text).split('\n').map((phrase, i) => html`<p class="cues__phrase" key=${i}><${Marked} text=${phrase} query=${search?.query} /></p>`)}
           </div>
         </div>
         <div class=${'cues__more' + (moreBelow ? '' : ' cues__more--hidden')} aria-hidden="true">scroll ▾</div>

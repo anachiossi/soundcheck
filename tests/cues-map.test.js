@@ -47,3 +47,19 @@ test('a line cut into phrases: at . ? ! …, never at ":" or after a title like 
   assert.deepEqual(phrasesOf("L'Avv. Magnoni è qui. Bene"), ["L'Avv. Magnoni è qui.", 'Bene']);
   assert.deepEqual(phrasesOf('Prima parte\nseconda?!'), ['Prima parte', 'seconda?!']);
 });
+
+test('🔍 search: every match, no matter capitals or accents, in the script\'s own spelling', async () => {
+  const { findIn, matchesOf } = await import('../src/cues-map-rules.js');
+  assert.deepEqual(findIn('Perché? PERCHE no.', 'perche'), [{ text: 'Perché', hit: true }, { text: '? ', hit: false }, { text: 'PERCHE', hit: true }, { text: ' no.', hit: false }]);
+  assert.deepEqual(findIn('ciao', ''), [{ text: 'ciao', hit: false }]);
+  const lines = [say('1', 'La lasagna. Lasagna!'), say('2', 'Niente'), say('1', 'Ancora lasagna?')];
+  assert.deepEqual(matchesOf(lines, 'lasagna'), [{ line: 0, phrase: 0, nth: 0 }, { line: 0, phrase: 1, nth: 0 }, { line: 2, phrase: 0, nth: 0 }]);
+});
+
+test('"Are there" at the start: everyone but who enters mid-scene; entering before the first line = there', () => {
+  const lines = [act('1', 'a', 'Ines entra in cucina, seguita da Roy.'), say('8', 'b'), act('9', 'c', 'In quel momento appare MARIO.'), say('1', 'd')];
+  const beats = sceneMap(lines, cast, ['1', '8', '9', '12', '13']);
+  assert.deepEqual(beats[0].there, ['Ines', 'Prince John', 'Roy', 'Helen']);
+  assert.equal(beats[0].title, '');
+  assert.deepEqual(beats.map(b => [b.from, b.to, b.title]), [[0, 1, ''], [2, 3, 'Mario enters']]);
+});

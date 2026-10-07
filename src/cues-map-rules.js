@@ -133,16 +133,36 @@ export function movesTitle(moves) {
   }).filter(Boolean).join(' · ');
 }
 
-export function sceneMap(lines, characters = []) {
+// present = the ids of who is in the scene (its mic preset); the speakers count too.
+// "Are there" (Ana, 7 Oct: "differentiate ARE THERE from ENTERS. The enters should be only for who's action
+// is arrive in the middle of the scene"): everyone in the scene at its start — all but those whose first
+// event is entering later. Someone entering in the opening action (before the first line) is "there".
+export function sceneMap(lines, characters = [], present = []) {
+  const events = lines.map(line => (line.action ? movesIn(line.action, characters) : []));
+  const firstMove = new Map(); // char id → its first enters / leaves / dies, with the line
+  events.forEach((list, index) => list.filter(e => CHANNEL.includes(e.kind)).forEach(e => {
+    if (!firstMove.has(e.char_id)) firstMove.set(e.char_id, { ...e, index });
+  }));
+  const spokeAt = new Map();
+  lines.forEach((line, index) => { if (line.char_id && !spokeAt.has(String(line.char_id))) spokeAt.set(String(line.char_id), index); });
+  const comesLater = id => { const m = firstMove.get(id); return m && m.kind === 'enters' && m.index > 0 && !(spokeAt.get(id) < m.index); };
+  const ids = [...new Set([...spokeAt.keys(), ...present.map(String), ...[...firstMove.keys()]])];
+  const byId = new Map(characters.map(c => [String(c.id), c]));
+  const there = ids.filter(id => byId.has(id) && !comesLater(id) && !(firstMove.get(id)?.kind === 'enters' && firstMove.get(id).index > 0))
+    .map(id => nice(byId.get(id).name));
+
   const beats = [];
   let beat = null;
   lines.forEach((line, index) => {
     const words = wordsOf(line.text).length;
-    const events = line.action ? movesIn(line.action, characters) : [];
-    const moves = events.filter(e => CHANNEL.includes(e.kind));   // a channel opens / closes: a new beat
-    const sounds = events.filter(e => !CHANNEL.includes(e.kind));  // cries, laughs…: a note on the line
-    if (!beat || moves.length) {
-      beat = { rows: [], title: moves.length ? movesTitle(moves) : '' };
+    const all = events[index];
+    // at the first line, entering = being there: not an "enters"
+    const moves = all.filter(e => CHANNEL.includes(e.kind) && !(index === 0 && e.kind === 'enters'));
+    const sounds = all.filter(e => !CHANNEL.includes(e.kind));   // cries, laughs…: a note on the line
+    if (!beat || (moves.length && index > 0)) {
+      beat = { rows: [], title: index === 0 ? '' : movesTitle(moves) };
+      if (index === 0) beat.there = there;
+      if (index === 0 && moves.length) beat.title = movesTitle(moves); // someone leaves / dies before the first line
       beats.push(beat);
     }
     beat.rows.push({
@@ -150,5 +170,38 @@ export function sceneMap(lines, characters = []) {
       cue: { full: lastSentence(line.text), fast: lastWords(line.text, 4) },
     });
   });
-  return beats.map((b, i) => ({ number: i + 1, title: b.title, from: b.rows[0].index, to: b.rows.at(-1).index, rows: b.rows }));
+  return beats.map((b, i) => ({ number: i + 1, title: b.title, there: b.there || null, from: b.rows[0].index, to: b.rows.at(-1).index, rows: b.rows }));
+}
+
+// ---- 🔍 search (Ana, 7 Oct: on set "we start from WORD" — who said it, and when) ----
+// The text cut into pieces, the matches marked: [{ text, hit }]. Capitals and accents don't matter
+// ("perche" finds "perché"); the pieces keep the script's own spelling.
+export function findIn(text, query) {
+  const plain = ch => ch.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const chars = [...String(text)];
+  const wanted = [...String(query || '').trim()].map(plain).join('');
+  if (!wanted) return [{ text: String(text), hit: false }];
+  const flat = chars.map(plain);
+  const pieces = [];
+  let from = 0;
+  for (let i = 0; i < chars.length;) {
+    let j = i, got = '';
+    while (j < chars.length && got.length < wanted.length && wanted.startsWith(got + flat[j])) got += flat[j++];
+    if (got === wanted) {
+      if (i > from) pieces.push({ text: chars.slice(from, i).join(''), hit: false });
+      pieces.push({ text: chars.slice(i, j).join(''), hit: true });
+      i = from = j;
+    } else i++;
+  }
+  if (from < chars.length) pieces.push({ text: chars.slice(from).join(''), hit: false });
+  return pieces;
+}
+
+// every match of the scene, in order: [{ line, phrase, nth }] (nth = which match inside that phrase)
+export function matchesOf(lines, query) {
+  const found = [];
+  lines.forEach((line, i) => phrasesOf(line.text).forEach((phrase, k) => {
+    findIn(phrase, query).filter(p => p.hit).forEach((_, nth) => found.push({ line: i, phrase: k, nth }));
+  }));
+  return found;
 }

@@ -13,6 +13,8 @@ const DRAWINGS = {
   document: html`<path d="M6 3h8l4 4v14H6z" /><path d="M14 3v4h4" /><path d="M9 12h6M9 16h6" />`,
   close: html`<path d="M6 6l12 12M18 6L6 18" />`,
   up: html`<path d="M12 19V5M6 11l6-6 6 6" />`,
+  down: html`<path d="M12 5v14M6 13l6 6 6-6" />`,
+  search: html`<circle cx="11" cy="11" r="6.5" /><path d="M16 16l4.5 4.5" />`,
   pin: html`<path d="M12 21s-6-5.6-6-10a6 6 0 0 1 12 0c0 4.4-6 10-6 10z" /><circle cx="12" cy="11" r="2" />`,
   download: html`<path d="M12 4v11M7 10l5 5 5-5" /><path d="M5 20h14" />`,
   inbox: html`<rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 7l9 6 9-6" />`,

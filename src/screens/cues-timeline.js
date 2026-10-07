@@ -23,6 +23,7 @@ import { timelineBlocks, blockAtTime, wordAtTime, pixelsAt, timeAt } from '../cu
 import { setState } from '../state.js';
 import { Icon } from '../parts/icons.js';
 import { SceneScript } from '../parts/scene-script.js';
+import { SearchBar } from '../parts/line-search.js';
 import { voicesReady, phoneVoices, filmVoices, pickVoice, voiceKindOf, speak, unlockSpeech, LINE_PAUSE } from '../read-aloud.js';
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
@@ -38,6 +39,7 @@ export function CuesTimelineScreen({ state }) {
   const cues = cueLines(project, cuesScene);
   const [time, setTime] = useState(0);            // speaking time (seconds) under the cursor
   const [playing, setPlaying] = useState(false);
+  const [search, setSearch] = useState(null); // 🔍 { query, at } while the search bar is open
   const [speed, setSpeed] = useState(loadSpeed);
   const [width, setWidth] = useState(0);          // the track's width
   const [showText, setShowText] = useState(() => { try { return localStorage.getItem('sc_timeline_text') !== 'off'; } catch { return true; } });
@@ -187,9 +189,11 @@ export function CuesTimelineScreen({ state }) {
                 aria-label=${showText ? 'Hide the words' : 'Show the words'}>Aa</button>
         <button class=${'icon-btn focus-bar__toggle' + (aloud ? ' focus-bar__toggle--on' : '')} onClick=${toggleAloud}
                 aria-label=${aloud ? 'Stop reading aloud' : 'Read aloud'}><${Icon} name="voice" /></button>
+        <button class="icon-btn" onClick=${() => setSearch(search ? null : { query: '', at: 0 })} aria-label="Search the lines"><${Icon} name="search" /></button>
         <button class="icon-btn" onClick=${() => setState({ screen: 'cues-picker' })} aria-label="Close"><${Icon} name="close" /></button>
       </div>
-      ${showText ? html`<${SceneScript} lines=${cues.lines} current=${now?.index ?? 0} saying=${saying} colourOf=${colourOf} onJump=${jumpTo} />`
+      ${search && html`<${SearchBar} lines=${cues.lines} search=${search} setSearch=${setSearch} onGo=${match => jumpTo(match.line)} />`}
+      ${showText ? html`<${SceneScript} lines=${cues.lines} current=${now?.index ?? 0} saying=${saying} colourOf=${colourOf} onJump=${jumpTo} query=${search?.query} />`
         : html`<div class="script"></div>`}
       <div class="timeline__player">
 
