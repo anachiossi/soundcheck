@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-10-07 · live version **v100** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-10-07 · live version **v101** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
@@ -34,7 +34,7 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   ODG proposals apply by themselves at the sync that brings them (v99, `applyNewOdgs`); ⏰ Set alarms waits during a sync.
 - ✉ badge: when Gmail was last checked; "Check emails now" starts the robot from the phone.
 - 🎙 **Cues**: learn a scene's lines full screen (phrases, speaker colours, scroll); ✎ edit / delete /
-  add lines on set (`lines/set/`); **Scene Map** (colour strip, beats, last words Full/Fast,
+  add lines on set (`lines/set/`); **Scene Map** (colour strip, beats, every line whole (v101),
   ▶ auto-scroll with speed, touch to pause); **Scene Timeline** = a player, full screen: the scene's
   script scrolls like Spotify lyrics (`parts/scene-script.js`, names on a highlight of the character's
   colour), the Pro Tools-style track of speakers is the play bar (cursor, speed, scrub, paced like a

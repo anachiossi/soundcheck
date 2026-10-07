@@ -1,8 +1,8 @@
 // cues-map.js — the Scene Map: the whole scene at a glance, to learn WHO speaks WHEN.
 //   • pinned at the top: a colour strip, one piece per line (the "shape" of the scene; tap = jump
 //     there) and ▶ / ■ auto-scroll with its speed (parts/auto-scroll.js)
-//   • then the beats: each line is the speaker's pill + its last words (the cue)
-//   • tap a line → it opens to the whole line, with the mic (🎙 Cues from that line) — the same mic as everywhere
+//   • then the beats: each line is the speaker's pill + the whole line (Ana, 7 Oct: "show the entire line")
+//   • tap a line → it opens the mic (🎙 Cues from that line) — the same mic as everywhere
 //   • full screen (a moment to focus): a slim row with Cues · Timeline … ✕ instead of a header
 // Changes made in Cues (✎) show here at once, because the map is made from the same lines (cueLines).
 // Used by: main.js (from the Cues tab, or the map button in Cues)
@@ -18,7 +18,7 @@ import { AutoScroll } from '../parts/auto-scroll.js';
 
 export function CuesMapScreen({ state }) {
   const { project, cuesScene } = state;
-  const [open, setOpen] = useState(null); // the line shown whole
+  const [open, setOpen] = useState(null); // the line showing its mic
   const cues = cueLines(project, cuesScene);
   const back = () => setState({ screen: 'cues-picker', cuesScene: null });
   if (!cues) return html`<p class="empty">No lines for scene ${cuesScene}.</p><button class="btn" onClick=${back}>‹ Cues</button>`;
@@ -60,7 +60,7 @@ export function CuesMapScreen({ state }) {
               <span class="map-line__n">${row.index + 1}</span>
               <span class="map-line__who" style=${`background:${colour};color:${textColourFor(colour)}`}>${row.name}</span>
               <span class="map-line__cue">
-                ${isOpen ? cues.lines[row.index].text : row.cue.fast}
+                ${cues.lines[row.index].text}
                 ${notes.length > 0 && html`<small>${notes.join(' · ')}</small>`}
                 ${isOpen && html`<button class="icon-btn map-line__learn" aria-label="Cues from this line"
                   onClick=${event => { event.stopPropagation(); learnFrom(row.index); }}><${Icon} name="cues" /></button>`}
