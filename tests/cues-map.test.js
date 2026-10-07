@@ -1,7 +1,7 @@
 // cues-map.test.js — the Scene Map: cues and beats. Run: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { sceneMap, phrasesOf } from '../src/cues-map-rules.js';
+import { sceneMap, phrasesOf, movesIn, movesTitle } from '../src/cues-map-rules.js';
 
 const say = (char_id, text) => ({ name: `C${char_id}`, char_id, text });
 
@@ -17,22 +17,24 @@ test('a short line is its own cue, without dots', () => {
   assert.equal(beat.rows[0].cue.fast, 'Marco!');
 });
 
-test('a new beat when someone enters, but not before 3 lines', () => {
-  const lines = [say('1', 'a'), say('2', 'b'), say('1', 'c'), say('2', 'd'), say('3', 'enters')];
-  const beats = sceneMap(lines);
-  assert.deepEqual(beats.map(b => [b.from, b.to]), [[0, 3], [4, 4]]);
-  assert.equal(beats[1].rows[0].entrance, true);
+const cast = [{ id: '1', name: 'INES' }, { id: '8', name: 'PRINCE JOHN' }, { id: '9', name: 'MARIO' }, { id: '12', name: 'ROY' }, { id: '13', name: 'HELEN' }];
+const act = (char_id, text, action) => ({ ...say(char_id, text), action });
+
+test('who arrives or leaves comes from the action, next to the name (not from a first line)', () => {
+  assert.equal(movesTitle(movesIn('In quel momento appare in cucina MARIO [50, magrissimo].', cast)), 'Mario enters');
+  assert.equal(movesTitle(movesIn('Roy ed Helen escono dalla cucina.', cast)), 'Roy and Helen leave');
+  assert.equal(movesTitle(movesIn('Prince John prende il piatto e se ne va.', cast)), 'Prince John leaves');
+  assert.deepEqual(movesIn('Il RUMORE di una macchina arriva da fuori. Mario riesce a parlare.', cast), []);
 });
 
-test('a long speech starts a beat and the next line starts another', () => {
-  const long = Array(45).fill('parola').join(' ');
-  const lines = [say('1', 'a'), say('2', 'b'), say('1', 'c'), say('2', long), say('1', 'e'), say('2', 'f'), say('1', 'g')];
-  assert.deepEqual(sceneMap(lines).map(b => [b.from, b.to]), [[0, 2], [3, 3], [4, 6]]);
-});
-
-test('never more than 8 lines in a beat', () => {
-  const lines = Array.from({ length: 20 }, (_, i) => say(String(i % 2), 'x'));
-  assert.deepEqual(sceneMap(lines).map(b => b.rows.length), [8, 8, 4]);
+test('beats start at an arrival / exit, else at an action after 5 lines, never more than 10 lines', () => {
+  const lines = [act('1', 'a', 'Tutti mangiano in cucina.'), say('8', 'b'), say('12', 'c'), act('1', 'd', 'Prince guarda Roy.'),
+    say('8', 'e'), say('12', 'f'), act('8', 'g', 'Ines si alza.'), act('9', 'h', 'In quel momento appare MARIO.'), say('1', 'i')];
+  const beats = sceneMap(lines, cast);
+  assert.deepEqual(beats.map(b => [b.from, b.to, b.title]), [[0, 5, 'Tutti mangiano in cucina'], [6, 6, 'Ines si alza'], [7, 8, 'Mario enters']]);
+  assert.equal(beats[0].rows[1].moves.length, 0);
+  const many = Array.from({ length: 23 }, (_, i) => say(String(i % 2), 'x'));
+  assert.deepEqual(sceneMap(many).map(b => b.rows.length), [10, 10, 3]);
 });
 
 test('a line cut into phrases: at . ? ! …, never at ":" or after a title like Avv.', () => {

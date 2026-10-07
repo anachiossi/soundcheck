@@ -3,7 +3,7 @@
 // When you change any app file, bump VERSION so devices pick up the new files.
 // (Film data is NOT stored here; it lives in the per-film database.)
 
-const VERSION = 'soundcheck-v108';
+const VERSION = 'soundcheck-v109';
 const FILES = [
   './', 'index.html', 'app.css', 'manifest.webmanifest',
   'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png',

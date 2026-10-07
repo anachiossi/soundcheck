@@ -414,6 +414,8 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
 .map-strip__piece { flex: 1; min-width: 3px; border: 0; padding: 0; border-radius: 3px; }
 .map-beat { margin-bottom: 18px; }
 .map-beat__title { font-size: 15px; margin: 0 0 6px; text-transform: uppercase; letter-spacing: .04em; }
+.map-line__moves { font-size: 13px; font-style: italic; color: var(--muted); }   /* "Mario enters" in the middle of a beat */
+.map-beat__title { text-transform: none; letter-spacing: 0; }
 .map-beat__title small { font-weight: 400; color: var(--muted); text-transform: none; letter-spacing: 0; margin-left: 6px; }
 /* a line laid out like the script page (Ana, 7 Oct): the name centred, the words under it in a centred
    column with margins, aligned left; the line number in the left margin */

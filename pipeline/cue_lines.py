@@ -2,7 +2,7 @@
     projects/<film>/lines/sides/<scene>.json   from the latest sides with that scene
     projects/<film>/lines/script/<scene>.json  from the full script (the fallback)
     { scene_id, source: 'Sides · Day 6' | 'Script 21.08.26', heading,
-      lines: [{ name, char_id, text }] }        char_id → the character's colour in the app
+      lines: [{ name, char_id, text, action? }] }  char_id → the character's colour; action = what happens before
 The full script PDF is also kept as docs/script.pdf (📄 in Kit, readable offline).
 
 New script version (by hand, on the laptop):
@@ -24,7 +24,8 @@ def with_characters(lines, characters):
     out = []
     for line in lines:
         char_id, _ = find_character(line["name"], characters)
-        out.append({"name": line["name"], "char_id": char_id or "", "text": line["text"]})
+        out.append({"name": line["name"], "char_id": char_id or "", "text": line["text"],
+                    **({"action": line["action"]} if line.get("action") else {})})
     return out
 
 

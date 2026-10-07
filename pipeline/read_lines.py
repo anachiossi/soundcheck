@@ -3,7 +3,8 @@ or the full script), for the app's 🎙 Cues mode.
 
 Layout (LBE script, A4): scene number far left (x ≈ 54) beside the heading (x ≈ 108);
 speaker name (x ≈ 240–260); dialogue (x ≈ 180); stage directions in brackets (x ≈ 205–220,
-left out: Cues shows only the words); action (x ≈ 108) ends a speech.
+left out: Cues shows only the words); action (x ≈ 108) ends a speech, and is kept as the next line's
+"action" (what happens before it: the Dialogue map's beats and who enters or leaves — Ana, 7 Oct).
 A speech broken by a page turn ("(CONT'D)", "(MORE)") stays one speech.
 Options, OFF unless the film's settings.json turns them on (so one film never changes another):
     "script_reader": { "watermarks": true, "unnumbered_scenes": true }
@@ -72,17 +73,22 @@ def join_text(parts):
 
 
 def read_lines(path, wanted=None, options=None):
-    """{'2': {'heading': 'INT. CASTELLO, CUCINA. GIORNO', 'lines': [{'name': 'INES', 'text': '…'}, …]}}"""
+    """{'2': {'heading': 'INT. CASTELLO, CUCINA. GIORNO', 'lines': [{'name': 'INES', 'text': '…', 'action': '…'}, …]}}
+    action = the action paragraphs printed since the line before (only when there are some)."""
     lines = page_lines(path, options)
     unnumbered = (options or {}).get("unnumbered_scenes")
     scenes, current, speech = {}, None, None
+    action = []  # the action read since the last line, for the next one
 
     def finish():
-        nonlocal speech
+        nonlocal speech, action
         if speech and speech["parts"]:
             text = join_text(speech["parts"])
             if text:
-                scenes[current]["lines"].append({"name": speech["name"], "text": text})
+                line = {"name": speech["name"], "text": text}
+                if speech["action"]:
+                    line["action"] = speech["action"]
+                scenes[current]["lines"].append(line)
         speech = None
 
     for page, y, x, text in lines:
@@ -91,6 +97,7 @@ def read_lines(path, wanted=None, options=None):
                             and HEADING_X[0] <= xx <= HEADING_X[1] and HEADING_RE.match(t)), None)
             if heading:
                 finish()
+                action = []
                 current = text
                 scenes.setdefault(current, {"heading": re.sub(r"\s+", " ", heading), "lines": []})
                 continue
@@ -100,6 +107,7 @@ def read_lines(path, wanted=None, options=None):
                 p == page and abs(yy - y) <= 2 and SCENE_X[0] <= xx <= SCENE_X[1] and SCENE_ID_RE.match(t)
                 for p, yy, xx, t in lines):
             finish()  # a heading without a number: a new scene all the same
+            action = []
             current = next_letter(current, scenes)
             scenes[current] = {"heading": re.sub(r"\s+", " ", text), "lines": []}
             continue
@@ -108,7 +116,8 @@ def read_lines(path, wanted=None, options=None):
             if speech and speech["name"] == name and CONTINUED_RE.search(text) and speech["open"]:
                 continue  # same speech, carried over a page turn
             finish()
-            speech = {"name": name, "parts": [], "open": True}
+            speech = {"name": name, "parts": [], "open": True, "action": re.sub(r"\s+", " ", " ".join(action)).strip()}
+            action = []
         elif speech and DIALOGUE_X[0] <= x <= DIALOGUE_X[1] and re.fullmatch(r"\(.*\)", text):
             if speech["parts"] and speech["parts"][-1] != "\n":
                 speech["parts"].append("\n")  # a stage direction in brackets, on the dialogue's margin
@@ -119,6 +128,8 @@ def read_lines(path, wanted=None, options=None):
                 speech["parts"].append("\n")  # the words go on after a stage direction
         elif HEADING_X[0] <= x <= HEADING_X[1] and not HEADING_RE.match(text):
             finish()  # action ends the speech
+            if not PAGE_FURNITURE.match(text):
+                action.append(text)
     finish()
     if wanted:
         scenes = {sid: scene for sid, scene in scenes.items() if sid in wanted}
