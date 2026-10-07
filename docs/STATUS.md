@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-10-02 · live version **v99** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-10-07 · live version **v100** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
@@ -78,7 +78,9 @@ Ana's mockup "Gear inventory redesign", 2 Oct):
 - Objects: name, brand, type, qty, colour, nicknames, inside, volume, note + **details** (own fields;
   the type offers the fields others of that type use — `fieldsOfType`). Rules in `src/gear-rules.js`.
 - Manuals by brand (`docs/manuals/<brand>/`, `gear/manuals.json`). Hours / timesheet live in Projects.
-- LBE gear = Angelo Bonanni's kit, built by Ana day by day from photos (Inf. Mic's done 2 Oct).
+- LBE gear = Angelo Bonanni's kit, dictated by Ana from photos and written by Claude in the data
+  (`.shots/lbe-*.mjs`): Inf. Mic's, Maverick → Lav Acessories #1 (TX, lavs, …) and #2 (straps, pouches) done.
+  Next: Maverick crates 3–4, Furs / Various / Lectro boxes, the other carts and cases.
 
 ## Email robot (runs in the cloud, no laptop needed)
 Gmail (sound.chiossi@) ← production forwards → **Apps Script trigger every 10 min**
@@ -109,6 +111,8 @@ first review sent 29 Sep for days 8–30). Next: kit import/export → new-film 
 film before November.
 
 ## Open / next (none started)
+- Ana to answer: remove misread crew "Antonio Arte Astrid Ardenti"? keep new crew for review instead of auto-apply?
+  warn when an ODG date and weekday don't match (ODG #13 "Giovedì 7")? TX 21 / B1–B3 / 4060… exist?
 - **Simon game** for Cues (quiz on the order of speakers): designed, waiting for Ana's go.
   Proposed defaults: each round replays from the start of the beat; cue words only on a mistake;
   silent by default.
