@@ -1,6 +1,6 @@
 // cues-map.js — the Dialogue map (was Scene Map, renamed by Ana 7 Oct): the whole scene at a glance, to learn WHO speaks WHEN.
 //   • pinned at the top: a colour strip, one piece per line (the "shape" of the scene; tap = jump
-//     there) and ▶ / ■ auto-scroll with its speed (parts/auto-scroll.js)
+//     there; slide along it like a scroll bar), with a ▼ over the line being read and ▶ / ■ auto-scroll with its speed (parts/auto-scroll.js)
 //   • then the beats, titled by the script's action ("Mario enters" / its first words — cues-map-rules.js);
 //     who arrives or leaves also shows above that line. Each line laid out like the script page — the name centred, the line under it, one phrase per row, each with a tab
 //     (Ana, 7 Oct: "show the entire line" — hands-free while booming, with ▶ auto-scroll)
@@ -9,7 +9,7 @@
 // Changes made in Cues (✎) show here at once, because the map is made from the same lines (cueLines).
 // Used by: main.js (from the Cues tab, or the map button in Cues)
 
-import { html, useState } from '../../vendor/preact-htm.js';
+import { html, useState, useEffect } from '../../vendor/preact-htm.js';
 import { byId } from '../model.js';
 import { textColourFor, isNearWhite } from '../colour.js';
 import { cueLines } from '../cues-rules.js';
@@ -21,7 +21,22 @@ import { AutoScroll } from '../parts/auto-scroll.js';
 export function CuesMapScreen({ state }) {
   const { project, cuesScene } = state;
   const [open, setOpen] = useState(null); // the line showing its mic
+  const [here, setHere] = useState(0);    // the line being read: the ▼ over the colour strip (Ana, 7 Oct)
   const cues = cueLines(project, cuesScene);
+  useEffect(() => {
+    let frame = 0;
+    const find = () => {
+      frame = 0;
+      const top = document.querySelector('.map-top')?.getBoundingClientRect().bottom || 0;
+      const rows = [...document.querySelectorAll('.map-line')];
+      const first = rows.find(row => row.getBoundingClientRect().bottom > top + 8);
+      setHere(first ? Number(first.id.replace('map-line-', '')) : rows.length - 1);
+    };
+    const onScroll = () => { if (!frame) frame = requestAnimationFrame(find); };
+    find();
+    addEventListener('scroll', onScroll, { passive: true });
+    return () => { removeEventListener('scroll', onScroll); cancelAnimationFrame(frame); };
+  }, [cuesScene]);
   const back = () => setState({ screen: 'cues-picker', cuesScene: null });
   if (!cues) return html`<p class="empty">No lines for scene ${cuesScene}.</p><button class="btn" onClick=${back}>‹ Cues</button>`;
 
@@ -32,7 +47,21 @@ export function CuesMapScreen({ state }) {
   };
   const beats = sceneMap(cues.lines, project.characters || []);
   const learnFrom = index => setState({ screen: 'cues', cuesLine: index, cuesFrom: 'cues-map' });
-  const jump = index => document.getElementById(`map-line-${index}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  // the strip is also a scroll bar (Ana, 7 Oct): touch or slide along it → that line comes to the top
+  const jump = index => {
+    const row = document.getElementById(`map-line-${index}`);
+    const top = document.querySelector('.map-top')?.getBoundingClientRect().height || 0;
+    if (row) scrollTo(0, row.getBoundingClientRect().top + scrollY - top - 8);
+  };
+  const lineAt = event => {
+    const box = event.currentTarget.getBoundingClientRect();
+    return Math.min(cues.lines.length - 1, Math.max(0, Math.floor(((event.clientX - box.left) / box.width) * cues.lines.length)));
+  };
+  const scrub = event => {
+    if (event.type === 'pointerdown') event.currentTarget.setPointerCapture(event.pointerId);
+    else if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
+    jump(lineAt(event));
+  };
 
   return html`
     <div class="map-top">
@@ -42,10 +71,11 @@ export function CuesMapScreen({ state }) {
         <span class="focus-bar__space"></span>
         <button class="icon-btn" onClick=${back} aria-label="Close"><${Icon} name="close" /></button>
       </div>
-      <div class="map-strip" aria-label="The order of speakers">
+      <div class="map-strip" aria-label="The order of speakers — touch or slide to go to a line" style=${cues.lines.length > 60 ? 'gap:1px' : ''}
+           onPointerDown=${scrub} onPointerMove=${scrub}>
+        <span class="map-strip__here" aria-hidden="true" style=${`left:${((here + 0.5) / cues.lines.length) * 100}%`}>▼</span>
         ${cues.lines.map((line, i) => html`
-          <button key=${i} class="map-strip__piece" style=${`background:${colourOf(line)}`}
-                  title=${`${i + 1} ${line.name}`} onClick=${() => jump(i)}></button>`)}
+          <span key=${i} class="map-strip__piece" style=${`background:${colourOf(line)}`} title=${`${i + 1} ${line.name}`}></span>`)}
       </div>
       <${AutoScroll} />
     </div>
