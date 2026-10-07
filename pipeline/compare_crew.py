@@ -99,7 +99,7 @@ def check_crew(odg_crew, crew, ifb_rows):
     by_id = {person["id"]: person for person in crew}
     for row in ifb_rows:
         person = by_id.get(row.get("crew_id"))
-        if person and person["name"] not in found:
+        if person and not person.get("device") and person["name"] not in found:  # a device is never on a call sheet
             stand_ins = [e["name"] for e in odg_crew if e["name"] in new_people and same_role(e["role"], person.get("job"))]
             instead = f" · today in that role: {', '.join(stand_ins)}" if stand_ins else ""
             ifb_today.append(f"{person['name']} (RX {row.get('rx_id') or '—'}) is not on today's call sheet{instead}")

@@ -18,8 +18,9 @@ def preferred_free_tx(character, rows):
     return tx if tx and tx not in used else ""
 
 
-def check_scene_mics(scene_id, odg_cast_ids, speaker_names, preset, characters, source="ODG"):
-    """speaker_names: None when there are no sides for this scene."""
+def check_scene_mics(scene_id, odg_cast_ids, speaker_names, preset, characters, source="ODG", group_cues=()):
+    """speaker_names: None when there are no sides for this scene.
+    group_cues: cues that are a group talking (settings.json, e.g. TUTTI, I DOMESTICI) — not a character."""
     changes, warnings, checks = [], [], []
     by_id = {c["id"]: c for c in characters}
     rows = (preset or {}).get("rows", [])
@@ -27,7 +28,13 @@ def check_scene_mics(scene_id, odg_cast_ids, speaker_names, preset, characters, 
     name = lambda cid: by_id.get(cid, {}).get("name", f"ID {cid}")
 
     speakers = set()
+    groups = {g.upper() for g in group_cues}
+    heard_groups = [cue for cue in speaker_names or [] if cue.upper() in groups]
+    if heard_groups:
+        checks.append(f"Scene {scene_id}: group cues {', '.join(heard_groups)} (a group talking, not a character)")
     for cue in speaker_names or []:
+        if cue.upper() in groups:
+            continue
         cid, _ = find_character(cue, characters)
         if cid:
             speakers.add(cid)

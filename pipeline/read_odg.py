@@ -21,7 +21,7 @@ MONTHS = {m: i + 1 for i, m in enumerate(
      "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"])}
 WEEKDAYS = ["lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato", "domenica"]
 DATE_RE = re.compile(r"(" + "|".join(WEEKDAYS) + r")\s+(\d{1,2})\s+(\w+)\s+(\d{4})", re.I)
-SCENE_ID_RE = re.compile(r"^\d+[A-Za-z]*$")
+SCENE_ID_RE = re.compile(r"^\d+\s*[A-Za-z]*$")  # 27 · 27A · 27fin · "27 fin" (ODG #14)
 INT_EXT_RE = re.compile(r"^([IE](?:\s*[-/]\s*[IE])?)\s*/\s*([A-Z]+)$")  # I / G · I-E / N · E / T
 CAST_RE = re.compile(r"^\d+(\s*,\s*\d+)*$")
 PAGES_RE = re.compile(r"^(\d+\s+)?\d/8$|^\d+$")
@@ -97,7 +97,7 @@ def read_scene_table(lines):
             location = []
         heading = next((k for k, line in enumerate(location) if STANDBY_RE.match(line)), None)
         scenes.append({
-            "scene_id": block[0], "story_day": block[1],
+            "scene_id": re.sub(r"\s+", "", block[0]), "story_day": block[1],
             "int_ext": {"I": "INT", "E": "EXT"}.get(re.sub(r"[\s/-]", "", int_ext), "INT/EXT"),
             "day_night": day_night, "set": clean(block[3]), "synopsis": clean(" ".join(synopsis)),
             "cast": cast, "pages": pages, "location": clean(" ".join(location[:heading])),

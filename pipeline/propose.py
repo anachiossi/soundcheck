@@ -32,6 +32,7 @@ def load_film(folder):
     presets = {p.stem: json.loads(p.read_text(encoding="utf-8")) for p in (folder / "presets").glob("*.json")}
     return {"characters": read("characters.json"), "schedule": read("schedule.json"),
             "scenes": read("scenes.json"), "presets": presets,
+            "settings": read("settings.json", {}),
             "crew": read("ifb/crew.json", []), "ifb_rows": (read("ifb/list.json", {}) or {}).get("rows", [])}
 
 
@@ -86,7 +87,9 @@ def build_proposal(film_folder, email_folder, other_sides=None):
     add(check_cast_list(odg["cast"], film["characters"]))
     advance = odg.get("advance") or {}
     days = [(odg["scenes"], odg["notes"], True)]
-    if advance.get("day"):
+    if advance.get("day") and not advance["scenes"]:  # printed, but no scene read: never remove a day for that
+        warnings.append(f"Day {advance['day']} (next day): its scenes could not be read on the ODG — schedule not changed.")
+    elif advance.get("day"):
         add(check_day(advance["day"], advance["date"], advance["call"], advance["wrap"],
                       [s["scene_id"] for s in advance["scenes"]], film["schedule"], f"Day {advance['day']} (next day)"))
         days.append((advance["scenes"], advance.get("notes", {}), False))
@@ -96,7 +99,8 @@ def build_proposal(film_folder, email_folder, other_sides=None):
             sid = scene["scene_id"]
             add(check_scene_info(scene, film["scenes"].get(sid)))
             speaker_names = sides[sid]["speakers"] if today and sid in sides else None
-            add(check_scene_mics(sid, scene["cast"], speaker_names, film["presets"].get(sid), film["characters"]))
+            add(check_scene_mics(sid, scene["cast"], speaker_names, film["presets"].get(sid), film["characters"],
+                                 group_cues=film["settings"].get("group_cues", [])))
             for department, text in scene_notes.get(sid, {}).items():
                 kind, text = note_kind(department, text)  # 'sound' (visible), 'info' (more info) or None
                 seen = [t.lower() for _, t in notes.get(sid, [])]
