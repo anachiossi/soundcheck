@@ -1,7 +1,8 @@
 // cues-map.js — the Scene Map: the whole scene at a glance, to learn WHO speaks WHEN.
 //   • pinned at the top: a colour strip, one piece per line (the "shape" of the scene; tap = jump
 //     there) and ▶ / ■ auto-scroll with its speed (parts/auto-scroll.js)
-//   • then the beats: each line is the speaker's pill + the whole line (Ana, 7 Oct: "show the entire line")
+//   • then the beats: each line is the speaker's pill with the whole line under it, like the script
+//     (Ana, 7 Oct: "show the entire line" — hands-free while booming, with ▶ auto-scroll)
 //   • tap a line → it opens the mic (🎙 Cues from that line) — the same mic as everywhere
 //   • full screen (a moment to focus): a slim row with Cues · Timeline … ✕ instead of a header
 // Changes made in Cues (✎) show here at once, because the map is made from the same lines (cueLines).
