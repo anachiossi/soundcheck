@@ -54,6 +54,7 @@ test('🔍 search: every match, no matter capitals or accents, in the script\'s 
   assert.deepEqual(findIn('ciao', ''), [{ text: 'ciao', hit: false }]);
   const lines = [say('1', 'La lasagna. Lasagna!'), say('2', 'Niente'), say('1', 'Ancora lasagna?')];
   assert.deepEqual(matchesOf(lines, 'lasagna'), [{ line: 0, phrase: 0, nth: 0 }, { line: 0, phrase: 1, nth: 0 }, { line: 2, phrase: 0, nth: 0 }]);
+  assert.deepEqual(matchesOf([{ name: 'LE FAVRE', text: 'Ciao.' }, say('2', 'Favre!')], 'favre'), [{ line: 0, phrase: -1, nth: 0 }, { line: 1, phrase: 0, nth: 0 }]); // the speaker too
 });
 
 test('"Are there" = who is there before anything happens; the opening action listed in order above line 1', () => {

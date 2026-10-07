@@ -155,7 +155,7 @@ export function CuesScreen({ state }) {
           <button class="btn" onClick=${only(() => { backToPaper(cuesScene); setIndex(0); })}>Use it</button>
           <button class="btn" onClick=${only(() => keepEdits(cuesScene))}>Keep my changes</button>
         </div>`}
-      <div class="cues__name" aria-hidden="true">${line.name}</div>
+      <div class="cues__name" aria-hidden="true"><${Marked} text=${line.name} query=${search?.query} /></div>
       <p class="sr-only">${spokenName(line.name)}</p>
       <div class="cues__panel">
         <div class="cues__text" ref=${textRef}>

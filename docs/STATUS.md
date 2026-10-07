@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-10-07 · live version **v115** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-10-07 · live version **v116** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
@@ -41,7 +41,7 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   script scrolls like Spotify lyrics (`parts/scene-script.js`, names on a highlight of the character's
   colour), the Pro Tools-style track of speakers is the play bar (cursor, speed, scrub, paced like a
   person speaking — `cues-timeline-rules.js`). Map and Timeline open full screen (`main.js` focus).
-- 🔍 **Search the lines** (v112, `parts/line-search.js`) in Cues, Dialogue map and Timeline: every match highlighted
+- 🔍 **Search the lines** (v112, `parts/line-search.js`) in Cues, Dialogue map and Timeline: words and speakers (v116), every match highlighted
   (capitals / accents ignored), "2 / 7" with ↑ ↓ — on set "we start from WORD".
 - 🔊 **Read aloud** (Timeline and Cues): the phone's own voices (`src/read-aloud.js`); two per film,
   female + male, in `settings.json` → `voices`; each character's `voice` in

@@ -227,11 +227,15 @@ export function findIn(text, query) {
   return pieces;
 }
 
-// every match of the scene, in order: [{ line, phrase, nth }] (nth = which match inside that phrase)
+// every match of the scene, in order: [{ line, phrase, nth }] (nth = which match inside that phrase).
+// The speaker's name counts too (Ana, 7 Oct: "should also find a character name. Like Favre"): phrase -1.
 export function matchesOf(lines, query) {
   const found = [];
-  lines.forEach((line, i) => phrasesOf(line.text).forEach((phrase, k) => {
-    findIn(phrase, query).filter(p => p.hit).forEach((_, nth) => found.push({ line: i, phrase: k, nth }));
-  }));
+  lines.forEach((line, i) => {
+    findIn(line.name || '', query).filter(p => p.hit).forEach((_, nth) => found.push({ line: i, phrase: -1, nth }));
+    phrasesOf(line.text).forEach((phrase, k) => {
+      findIn(phrase, query).filter(p => p.hit).forEach((_, nth) => found.push({ line: i, phrase: k, nth }));
+    });
+  });
   return found;
 }

@@ -98,7 +98,8 @@ export function CuesMapScreen({ state }) {
                  role="button" onClick=${() => setOpen(isOpen ? null : row.index)}>
               <span class="map-line__n">${row.index + 1}</span>
               
-              <span class="map-line__who" style=${`background:${colour};color:${textColourFor(colour)}`}>${row.name}</span>
+              <span class="map-line__who" style=${`background:${colour};color:${textColourFor(colour)}`}><${Marked} text=${row.name}
+                query=${search?.query} now=${found && found.line === row.index && found.phrase === -1 ? found.nth : -1} /></span>
               <span class="map-line__cue">
                 ${phrasesOf(cues.lines[row.index].text).map((phrase, k) => html`<span class="map-line__phrase" key=${k}><${Marked} text=${phrase}
                   query=${search?.query} now=${found && found.line === row.index && found.phrase === k ? found.nth : -1} /></span>`)}

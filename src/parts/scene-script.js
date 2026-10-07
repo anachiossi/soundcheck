@@ -38,7 +38,7 @@ export function SceneScript({ lines, current, saying, colourOf, onJump, query = 
         <div key=${i} class=${'script-line' + (i < current ? ' script-line--said' : i === current ? ' script-line--now' : '')}
              role="button" onClick=${() => jump(i)}>
           <p class="script-line__name"><span class="script-line__mark"
-             style=${`background:${colourOf(line)};color:${textColourFor(colourOf(line))}`}>${line.name}</span></p>
+             style=${`background:${colourOf(line)};color:${textColourFor(colourOf(line))}`}><${Marked} text=${line.name} query=${query} /></span></p>
           <p class="script-line__text">${i === current
             ? String(line.text).split(/\s+/).filter(Boolean).map((word, w) => html`<span key=${w} class=${w <= saying ? 'said' : 'coming'}><${Marked} text=${word} query=${query} /></span>${' '}`)
             : html`<${Marked} text=${line.text} query=${query} />`}</p>
