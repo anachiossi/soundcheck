@@ -18,6 +18,7 @@ import {
 } from '../gear-rules.js';
 import { toggleTick, clearTicks, moveObject } from '../gear-editing.js';
 import { useGearDrag } from '../parts/gear-drag.js';
+import { textColourFor } from '../colour.js';
 import { ObjectSheet, CategorySheet } from '../parts/gear-form.js';
 import { gearImage } from '../export/gear-image.js';
 import { gearText, gearSheets } from '../export/gear-text.js';
@@ -30,6 +31,11 @@ import { Icon } from '../parts/icons.js';
 // the small square in the object's real colour (a dot when it has none)
 const Chip = ({ item }) => html`<span class=${'gear-chip' + (item.color ? '' : ' gear-chip--none')}
   style=${item.color ? `background:${item.color}` : ''}></span>`;
+
+// the name in a pill of the object's real colour, like the lavs and characters (Ana, 7 Oct); no colour = plain text
+const Tinted = ({ item }) => (item.color
+  ? html`<span class="gear-pill" style=${`background:${item.color};color:${textColourFor(item.color)}`}>${item.name}</span>`
+  : html`<span class="gear-pill gear-pill--none">${item.name}</span>`);
 
 const CheckBox = ({ on }) => html`<span class=${'gear-check' + (on ? ' gear-check--on' : '')}>${on ? '✓' : ''}</span>`;
 
@@ -131,8 +137,7 @@ function TreeRow({ project, row, open, toggle, edit, checking, search, drag }) {
   const state = drag.dragging?.id === item.id ? ' gear-tree__row--lifted' : drag.dragging && drag.target === item.id ? ' gear-tree__row--target' : '';
   return html`<div class=${'gear-tree__row' + state} data-drop=${drop}>${guides}${indent}
     ${box ? chevron : html`<span class="gear-tree__open"></span>`}
-    <span class="gear-tree__grip" ...${drag.hold(item)}><${Chip} item=${item} /></span>
-    <button class=${'gear-tree__name' + look} ...${drag.hold(item)} onClick=${() => !drag.wasDrag() && edit(item)}>${item.name}${item.nicknames?.[0] && html`<small> · ${item.nicknames[0]}</small>`}</button>
+    <button class=${'gear-tree__name' + look} ...${drag.hold(item)} onClick=${() => !drag.wasDrag() && edit(item)}><${Tinted} item=${item} /></button>
     ${item.type && html`<span class="gear-tree__type">${item.type}</span>`}
     <span class="gear-tree__count">${box ? childrenOf(project, item.id).length : item.qty > 1 ? `×${item.qty}` : ''}</span>
     ${checking && html`<button class="gear-tree__tick" onClick=${() => toggleTick(item.id)} aria-label=${on ? `Untick ${item.name}` : `Tick ${item.name}`}>
