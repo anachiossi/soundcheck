@@ -56,10 +56,18 @@ test('🔍 search: every match, no matter capitals or accents, in the script\'s 
   assert.deepEqual(matchesOf(lines, 'lasagna'), [{ line: 0, phrase: 0, nth: 0 }, { line: 0, phrase: 1, nth: 0 }, { line: 2, phrase: 0, nth: 0 }]);
 });
 
-test('"Are there" at the start: everyone but who enters mid-scene; entering before the first line = there', () => {
+test('"Are there" = who is there before anything happens; the opening action listed in order above line 1', () => {
   const lines = [act('1', 'a', 'Ines entra in cucina, seguita da Roy.'), say('8', 'b'), act('9', 'c', 'In quel momento appare MARIO.'), say('1', 'd')];
   const beats = sceneMap(lines, cast, ['1', '8', '9', '12', '13']);
-  assert.deepEqual(beats[0].there, ['Ines', 'Prince John', 'Roy', 'Helen']);
+  assert.deepEqual(beats[0].there, ['Prince John', 'Helen']);   // Ines and Roy come in: the opening, in order
+  assert.equal(beats[0].rows[0].note, 'Ines enters · Roy enters');
   assert.equal(beats[0].title, '');
   assert.deepEqual(beats.map(b => [b.from, b.to, b.title]), [[0, 1, ''], [2, 3, 'Mario enters']]);
+});
+
+test('the script\'s groups: "seguita da Le Favre, Lea e, con passo più lento, Luis Miguel" (sc. 27)', async () => {
+  const { eventsIn, eventsTitle } = await import('../src/cues-map-rules.js');
+  const people = [...cast, { id: '2', name: 'LE FAVRE' }, { id: '5', name: 'LEA' }, { id: '6', name: 'LUIS MIGUEL' }, { id: '15', name: 'MAURA' }, { id: '14', name: 'OONA' }];
+  const action = 'Ines entra di corsa, seguita da Le Favre, Lea e, con passo molto più lento, Luis Miguel. Si bloccano: Lea lancia un grido soffocato. Arrivano anche Maura, Roy e Oona.';
+  assert.equal(eventsTitle(eventsIn(action, people)), 'Ines enters · Le Favre and Lea enter · Luis Miguel enters · Lea screams · Maura, Roy and Oona enter');
 });

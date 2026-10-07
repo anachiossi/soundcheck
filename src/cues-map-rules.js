@@ -87,16 +87,27 @@ function namesOf(characters) {
 const escapeRe = text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const LEAD = /^(e|ed|poi|ma|quindi|allora|infine|cosi|anche|subito|lentamente)$/;
 
-// [{ char_id, name, kind: 'enters' | 'leaves' | 'dies' }] said by one action paragraph
-export function movesIn(action, characters = []) {
+// What happens in one action paragraph, in the script's order: [{ kind, at, people: [{ char_id, name }] }]
+// kind: enters · leaves · dies · cries · laughs · screams · whispers · shoots. One event per verb; the people
+// of "Ines entra, seguita da Le Favre, Lea e, con passo molto più lento, Luis Miguel" come in three
+// groups (Ines · Le Favre and Lea · Luis Miguel): an aside between names starts a new group (Ana, sc. 27).
+export function eventsIn(action, characters = []) {
   const names = namesOf(characters);
-  const moves = [];
-  const add = (c, kind) => { if (!moves.some(m => m.char_id === String(c.id) && m.kind === kind)) moves.push({ char_id: String(c.id), name: c.name, kind }); };
+  const events = [];
+  const seen = new Set(); // kind + id: nobody twice for the same thing
+  const push = (kind, at, list) => {
+    const people = list.map(({ c }) => c).filter(c => !seen.has(kind + c.id)).map(c => { seen.add(kind + c.id); return { char_id: String(c.id), name: c.name }; });
+    if (people.length) events.push({ kind, at, people });
+  };
   const text = plainText(action).replace(/\[[^\]]*\]/g, ' ').replace(/\([^)]*\)/g, ' '); // "[50, occhiali…]" "(con fucile)" out
-  let last = null; // the last person named: the subject of "E si accascia…" in the next sentence
-  for (const sentence of text.split(/[.!?…;:]+/)) {
+  let last = null;   // the last person named: the subject of "E si accascia…" in the next sentence
+  let offset = 0;    // where the sentence starts in the paragraph (for the order)
+  for (const sentence of text.split(/(?<=[.!?…;:])/)) {
     const found = names.flatMap(({ word, c }) => [...sentence.matchAll(new RegExp(`(?<![\\p{L}\\p{N}])${escapeRe(word)}(?![\\p{L}\\p{N}])`, 'gu'))]
-      .map(m => ({ at: m.index, end: m.index + m[0].length, c })));
+      .map(m => ({ at: m.index, end: m.index + m[0].length, c })))
+      .sort((x, y) => x.at - y.at)
+      // "prince john" wins over "prince" at the same place
+      .filter((f, i, all) => !all.some((g, j) => j !== i && g.at <= f.at && g.end >= f.end && (g.end - g.at) > (f.end - f.at)));
     for (const [kind, verbs] of Object.entries(VERBS)) {
       for (const verb of sentence.matchAll(verbs)) {
         if (/\bnon\s+(\S+\s+)?$/.test(sentence.slice(0, verb.index))) continue; // "Non piange."
@@ -106,67 +117,84 @@ export function movesIn(action, characters = []) {
         const after = found.filter(f => f.at > verb.index);
         const lead = sentence.slice(0, verb.index).trim().split(/\s+/).filter(w => w && !LEAD.test(w));
         let who;
-        if (PLURAL.test(verb[1])) who = (before.length ? before : after).sort((a, b) => a.at - b.at); // in the script's order
-        else if (before.length) who = [before.sort((a, b) => b.at - a.at)[0]];
+        if (PLURAL.test(verb[1])) who = before.length ? before : after;
+        else if (before.length) who = [before[before.length - 1]];
         else if (lead.length <= 1 && last) who = [{ c: last }];          // "E si accascia…": the one named before
-        else who = after.sort((a, b) => a.at - b.at).slice(0, 1);          // "appare in cucina MARIO"
-        who.forEach(({ c }) => add(c, kind));
-        // "Ines entra, seguita da Le Favre, Lea e Luis Miguel": the followers too
+        else who = after.slice(0, 1);                                       // "appare in cucina MARIO"
+        push(kind, offset + verb.index, who);
+        // the followers ("seguita da …"), grouped as the script groups them
         const followed = /\bseguit[oaie] da\b/.exec(sentence);
-        if (followed && followed.index > verb.index) found.filter(f => f.at > followed.index).forEach(({ c }) => add(c, kind));
+        if (followed && followed.index > verb.index) {
+          let group = [], prev = null;
+          for (const f of found.filter(x => x.at > followed.index)) {
+            const between = prev ? sentence.slice(prev.end, f.at).replace(/[,\s]|\bed?\b/g, '') : '';
+            if (between && group.length) { push(kind, offset + group[0].at, group); group = []; }
+            group.push(f); prev = f;
+          }
+          if (group.length) push(kind, offset + group[0].at, group);
+        }
       }
     }
-    const named = found.sort((a, b) => b.at - a.at)[0];
-    if (named) last = named.c;
+    if (found.length) last = found[found.length - 1].c;
+    offset += sentence.length;
   }
-  return moves;
+  return events.sort((x, y) => x.at - y.at);
 }
+
+// the same, one row per person: [{ char_id, name, kind }]
+export const movesIn = (action, characters = []) =>
+  eventsIn(action, characters).flatMap(e => e.people.map(person => ({ ...person, kind: e.kind })));
 
 const nice = name => name.toLowerCase().replace(/(^|[\s'’.-])\p{L}/gu, m => m.toUpperCase()); // MARIO → Mario
 const together = names => (names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names.at(-1)}` : names[0]);
 const VERB_WORDS = { enters: ['enters', 'enter'], leaves: ['leaves', 'leave'], dies: ['dies', 'die'], cries: ['cries', 'cry'],
   laughs: ['laughs', 'laugh'], screams: ['screams', 'scream'], whispers: ['whispers', 'whisper'], shoots: ['shoots', 'shoot'] };
+const said = (people, kind) => `${together(people.map(p => nice(p.name)))} ${VERB_WORDS[kind][people.length > 1 ? 1 : 0]}`;
+// "Mario and Helen enter" — everyone with the same kind together (beat titles)
 export function movesTitle(moves) {
   return Object.keys(VERB_WORDS).map(kind => {
-    const names = moves.filter(m => m.kind === kind).map(m => nice(m.name));
-    return names.length ? `${together(names)} ${VERB_WORDS[kind][names.length > 1 ? 1 : 0]}` : '';
+    const people = moves.filter(m => m.kind === kind);
+    return people.length ? said(people, kind) : '';
   }).filter(Boolean).join(' · ');
 }
+// "Ines enters · Le Favre and Lea enter · Lea screams" — in the script's order (the notes above a line)
+export const eventsTitle = events => events.map(e => said(e.people, e.kind)).join(' · ');
 
 // present = the ids of who is in the scene (its mic preset); the speakers count too.
-// "Are there" (Ana, 7 Oct: "differentiate ARE THERE from ENTERS. The enters should be only for who's action
-// is arrive in the middle of the scene"): everyone in the scene at its start — all but those whose first
-// event is entering later. Someone entering in the opening action (before the first line) is "there".
+// "Are there" (Ana, 7 Oct): who is in the scene before anything happens — all but those whose first
+// event is entering (even in the opening action, before the first line) and who didn't speak before.
+// The opening action's events are listed in order above the first line ("Ines enters · Le Favre and Lea
+// enter · Luis Miguel enters · Lea screams · Maura, Roy and Oona enter"). Later, a beat starts where
+// someone enters, leaves or dies; the sounds are notes above their line.
 export function sceneMap(lines, characters = [], present = []) {
-  const events = lines.map(line => (line.action ? movesIn(line.action, characters) : []));
+  const events = lines.map(line => (line.action ? eventsIn(line.action, characters) : []));
   const firstMove = new Map(); // char id → its first enters / leaves / dies, with the line
-  events.forEach((list, index) => list.filter(e => CHANNEL.includes(e.kind)).forEach(e => {
-    if (!firstMove.has(e.char_id)) firstMove.set(e.char_id, { ...e, index });
-  }));
+  events.forEach((list, index) => list.filter(e => CHANNEL.includes(e.kind)).forEach(e => e.people.forEach(p => {
+    if (!firstMove.has(p.char_id)) firstMove.set(p.char_id, { kind: e.kind, index });
+  })));
   const spokeAt = new Map();
   lines.forEach((line, index) => { if (line.char_id && !spokeAt.has(String(line.char_id))) spokeAt.set(String(line.char_id), index); });
-  const comesLater = id => { const m = firstMove.get(id); return m && m.kind === 'enters' && m.index > 0 && !(spokeAt.get(id) < m.index); };
-  const ids = [...new Set([...spokeAt.keys(), ...present.map(String), ...[...firstMove.keys()]])];
+  const arrives = id => { const m = firstMove.get(id); return m && m.kind === 'enters' && !(spokeAt.get(id) < m.index); };
   const byId = new Map(characters.map(c => [String(c.id), c]));
-  const there = ids.filter(id => byId.has(id) && !comesLater(id) && !(firstMove.get(id)?.kind === 'enters' && firstMove.get(id).index > 0))
-    .map(id => nice(byId.get(id).name));
+  const ids = [...new Set([...spokeAt.keys(), ...present.map(String), ...firstMove.keys()])];
+  const there = ids.filter(id => byId.has(id) && !arrives(id)).map(id => nice(byId.get(id).name));
 
   const beats = [];
   let beat = null;
   lines.forEach((line, index) => {
     const words = wordsOf(line.text).length;
     const all = events[index];
-    // at the first line, entering = being there: not an "enters"
-    const moves = all.filter(e => CHANNEL.includes(e.kind) && !(index === 0 && e.kind === 'enters'));
-    const sounds = all.filter(e => !CHANNEL.includes(e.kind));   // cries, laughs…: a note on the line
+    const moves = all.filter(e => CHANNEL.includes(e.kind)).flatMap(e => e.people.map(p => ({ ...p, kind: e.kind })));
+    const sounds = all.filter(e => !CHANNEL.includes(e.kind));
     if (!beat || (moves.length && index > 0)) {
       beat = { rows: [], title: index === 0 ? '' : movesTitle(moves) };
       if (index === 0) beat.there = there;
-      if (index === 0 && moves.length) beat.title = movesTitle(moves); // someone leaves / dies before the first line
       beats.push(beat);
     }
     beat.rows.push({
-      index, name: line.name, char_id: line.char_id, words, long: words >= LONG, moves, sounds,
+      index, name: line.name, char_id: line.char_id, words, long: words >= LONG, moves,
+      sounds: sounds.flatMap(e => e.people.map(p => ({ ...p, kind: e.kind }))),
+      note: eventsTitle(index === 0 ? all : sounds),   // above the line: the opening in order, later the sounds
       cue: { full: lastSentence(line.text), fast: lastWords(line.text, 4) },
     });
   });

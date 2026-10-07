@@ -14,7 +14,7 @@ import { html, useState, useEffect } from '../../vendor/preact-htm.js';
 import { byId } from '../model.js';
 import { textColourFor, isNearWhite } from '../colour.js';
 import { cueLines } from '../cues-rules.js';
-import { sceneMap, phrasesOf, movesTitle } from '../cues-map-rules.js';
+import { sceneMap, phrasesOf } from '../cues-map-rules.js';
 import { setState } from '../state.js';
 import { Icon } from '../parts/icons.js';
 import { AutoScroll } from '../parts/auto-scroll.js';
@@ -98,7 +98,7 @@ export function CuesMapScreen({ state }) {
             <div class=${'map-line' + (isOpen ? ' map-line--open' : '')} id=${`map-line-${row.index}`} key=${row.index}
                  role="button" onClick=${() => setOpen(isOpen ? null : row.index)}>
               <span class="map-line__n">${row.index + 1}</span>
-              ${row.sounds.length > 0 && html`<span class="map-line__moves">${movesTitle(row.sounds)}</span>`}
+              ${row.note && html`<span class="map-line__moves">${row.note.split(' · ').map((event, k) => html`<span key=${k}>${event}</span>`)}</span>`}
               <span class="map-line__who" style=${`background:${colour};color:${textColourFor(colour)}`}>${row.name}</span>
               <span class="map-line__cue">
                 ${phrasesOf(cues.lines[row.index].text).map((phrase, k) => html`<span class="map-line__phrase" key=${k}><${Marked} text=${phrase}
