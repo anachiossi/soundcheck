@@ -1,7 +1,7 @@
 // cues-map.js — the Scene Map: the whole scene at a glance, to learn WHO speaks WHEN.
 //   • pinned at the top: a colour strip, one piece per line (the "shape" of the scene; tap = jump
 //     there) and ▶ / ■ auto-scroll with its speed (parts/auto-scroll.js)
-//   • then the beats: each line is the speaker's pill with the whole line under it, like the script
+//   • then the beats: each line laid out like the script page — the name centred, the whole line under it
 //     (Ana, 7 Oct: "show the entire line" — hands-free while booming, with ▶ auto-scroll)
 //   • tap a line → it opens the mic (🎙 Cues from that line) — the same mic as everywhere
 //   • full screen (a moment to focus): a slim row with Cues · Timeline … ✕ instead of a header
@@ -53,7 +53,7 @@ export function CuesMapScreen({ state }) {
         <h3 class="map-beat__title">Beat ${beat.number} <small>lines ${beat.from + 1}–${beat.to + 1}</small></h3>
         ${beat.rows.map(row => {
           const colour = colourOf(row);
-          const notes = [row.entrance && 'enters', row.long && `long · ${row.words} words`].filter(Boolean);
+          const notes = [row.long && `long · ${row.words} words`].filter(Boolean); // no 'enters' from first lines (Ana: not an entrance)
           const isOpen = open === row.index;
           return html`
             <div class=${'map-line' + (isOpen ? ' map-line--open' : '')} id=${`map-line-${row.index}`} key=${row.index}
