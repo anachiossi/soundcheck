@@ -119,11 +119,12 @@ const INDENT = 18;
 
 function TreeRow({ project, row, open, toggle, edit, checking, search, drag }) {
   const { item, depth } = row;
-  const guides = Array.from({ length: depth }, (_, d) => html`<span class="gear-tree__guide" style=${`left:${6 + d * INDENT + 14}px`}></span>`);
+  const guides = Array.from({ length: depth }, (_, d) => html`<span class="gear-tree__guide" style=${`left:${6 + d * INDENT + 20}px`}></span>`);
   const indent = html`<span class="gear-tree__indent" style=${`width:${6 + depth * INDENT}px`}></span>`;
-  const chevron = html`<button class="gear-tree__open" onClick=${toggle} aria-label=${open ? 'Close' : 'Open'} aria-expanded=${open}>${open ? '▾' : '▸'}</button>`;
+  const chevron = html`<button class="gear-tree__open" onClick=${toggle} aria-label=${open ? 'Close' : 'Open'} aria-expanded=${open}>${open ? '▼' : '▶'}</button>`;
   const box = isContainer(project, item);
-  const look = search ? (search.found.has(item.id) ? ' gear-tree__name--found' : ' gear-tree__name--path') : depth === 0 ? ' gear-tree__name--top' : '';
+  const look = (search ? (search.found.has(item.id) ? ' gear-tree__name--found' : ' gear-tree__name--path') : depth === 0 ? ' gear-tree__name--top' : '')
+    + (box ? ' gear-tree__name--case' : '');
   const on = ticked(project, item.id);
   // where a dragged thing lands when let go over this row: in this case, or next to this loose thing
   const drop = box ? item.id : item.inside || '';
