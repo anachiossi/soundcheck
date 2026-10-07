@@ -18,7 +18,7 @@ import re
 import sys
 from pathlib import Path
 
-from compare import NOTE_ICONS, note_kind, check_cast_list, check_date, check_day, check_scene_info, nice_date
+from compare import NOTE_ICONS, note_kind, check_cast_list, check_date, check_next_day_date, check_day, check_scene_info, nice_date
 from compare_mics import check_scene_mics
 from compare_crew import check_crew
 from read_crew import read_crew
@@ -90,6 +90,8 @@ def build_proposal(film_folder, email_folder, other_sides=None):
     if advance.get("day") and not advance["scenes"]:  # printed, but no scene read: never remove a day for that
         warnings.append(f"Day {advance['day']} (next day): its scenes could not be read on the ODG — schedule not changed.")
     elif advance.get("day"):
+        advance["date"], date_warnings = check_next_day_date(advance, date)
+        warnings.extend(date_warnings)
         add(check_day(advance["day"], advance["date"], advance["call"], advance["wrap"],
                       [s["scene_id"] for s in advance["scenes"]], film["schedule"], f"Day {advance['day']} (next day)"))
         days.append((advance["scenes"], advance.get("notes", {}), False))

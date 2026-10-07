@@ -174,7 +174,7 @@ def read_odg(path):
     date, weekday = read_date(text)
     number = re.search(r"ODG\s*#\s*(\d+)", text)
     advance_day = re.search(r"DAY\s*#\s*(\d+)", advance_header)
-    advance_date, _ = read_date(advance_header)
+    advance_date, advance_weekday = read_date(advance_header)
     advance_times = re.findall(r"\d{1,2}[.:]\d{2}", lines[lines.index(advance_header) + 1]) if advance_header else []
 
     return {
@@ -189,6 +189,7 @@ def read_odg(path):
         "notes": read_notes(lines, "FABBISOGNI REPARTI", "AVANZAMENTO"),
         "advance": advance_header and {
             "day": int(advance_day.group(1)) if advance_day else None, "date": advance_date,
+            "weekday_printed": advance_weekday,
             "call": as_time(advance_times[0]) if advance_times else "",
             "wrap": as_time(advance_times[1]) if len(advance_times) > 1 else "",
             "scenes": read_scene_table(advance_lines),

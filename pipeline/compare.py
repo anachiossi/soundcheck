@@ -75,6 +75,24 @@ def check_date(odg, subject_date):
     return (subject_date or printed), warnings
 
 
+def check_next_day_date(advance, after):
+    """The next-day box has no email subject to check it against (ODG #13 printed "Giovedì 7 Ottobre":
+    7 Oct is a Wednesday, the day was Thursday 8). When the weekday and the date don't match, the weekday
+    wins: the nearest date after `after` (the ODG's own date) on that weekday, within a week."""
+    printed, weekday = advance.get("date", ""), advance.get("weekday_printed", "")
+    if not (printed and weekday) or WEEKDAYS[datetime.date.fromisoformat(printed).weekday()] == weekday:
+        return printed, []
+    start = datetime.date.fromisoformat(after or printed)
+    fixed = next((start + datetime.timedelta(days=n) for n in range(1, 8)
+                  if WEEKDAYS[(start + datetime.timedelta(days=n)).weekday()] == weekday), None)
+    real = ENGLISH_DAYS[datetime.date.fromisoformat(printed).weekday()]
+    text = (f"Day {advance['day']} (next day): the ODG prints '{weekday.capitalize()} {int(printed[8:])}/{printed[5:7]}', "
+            f"but that date is a {real}: a typo on the sheet.")
+    if not fixed:
+        return printed, [text]
+    return fixed.isoformat(), [text + f" The weekday is used: {ENGLISH_DAYS[fixed.weekday()]} {fixed.day}/{fixed.month:02d}."]
+
+
 def check_day(day_number, date, call, wrap, scene_ids, schedule, label, week=None):
     """Date, call/wrap (and week) and the list of scenes of one shooting day."""
     changes, checks = [], []
