@@ -163,9 +163,8 @@ export const eventsTitle = events => events.map(e => said(e.people, e.kind)).joi
 // present = the ids of who is in the scene (its mic preset); the speakers count too.
 // "Are there" (Ana, 7 Oct): who is in the scene before anything happens — all but those whose first
 // event is entering (even in the opening action, before the first line) and who didn't speak before.
-// The opening action's events are listed in order above the first line ("Ines enters · Le Favre and Lea
-// enter · Luis Miguel enters · Lea screams · Maura, Roy and Oona enter"). Later, a beat starts where
-// someone enters, leaves or dies; the sounds are notes above their line.
+// Each line gets the events of its action, in order, as one line of text before it (row.action). A beat
+// (no heading on screen) starts where someone enters, leaves or dies.
 export function sceneMap(lines, characters = [], present = []) {
   const events = lines.map(line => (line.action ? eventsIn(line.action, characters) : []));
   const firstMove = new Map(); // char id → its first enters / leaves / dies, with the line
@@ -194,7 +193,10 @@ export function sceneMap(lines, characters = [], present = []) {
     beat.rows.push({
       index, name: line.name, char_id: line.char_id, words, long: words >= LONG, moves,
       sounds: sounds.flatMap(e => e.people.map(p => ({ ...p, kind: e.kind }))),
-      note: eventsTitle(index === 0 ? all : sounds),   // above the line: the opening in order, later the sounds
+      // before the line, one line of text like the script's action (Ana, 7 Oct: "like the actions text in the
+      // script, they are all in one line"): "Lucrezio and Florin are there. Ines enters. Lea screams."
+      action: [index === 0 && there.length ? `${together(there)} ${there.length > 1 ? 'are' : 'is'} there` : '',
+        ...all.map(e => said(e.people, e.kind))].filter(Boolean).map(s => `${s}.`).join(' '),
       cue: { full: lastSentence(line.text), fast: lastWords(line.text, 4) },
     });
   });

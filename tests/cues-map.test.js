@@ -60,7 +60,7 @@ test('"Are there" = who is there before anything happens; the opening action lis
   const lines = [act('1', 'a', 'Ines entra in cucina, seguita da Roy.'), say('8', 'b'), act('9', 'c', 'In quel momento appare MARIO.'), say('1', 'd')];
   const beats = sceneMap(lines, cast, ['1', '8', '9', '12', '13']);
   assert.deepEqual(beats[0].there, ['Prince John', 'Helen']);   // Ines and Roy come in: the opening, in order
-  assert.equal(beats[0].rows[0].note, 'Ines enters · Roy enters');
+  assert.equal(beats[0].rows[0].action, 'Prince John and Helen are there. Ines enters. Roy enters.');
   assert.equal(beats[0].title, '');
   assert.deepEqual(beats.map(b => [b.from, b.to, b.title]), [[0, 1, ''], [2, 3, 'Mario enters']]);
 });
