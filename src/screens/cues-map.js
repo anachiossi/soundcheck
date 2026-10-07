@@ -1,8 +1,8 @@
 // cues-map.js — the Dialogue map (was Scene Map, renamed by Ana 7 Oct): the whole scene at a glance, to learn WHO speaks WHEN.
 //   • pinned at the top: a colour strip, one piece per line (the "shape" of the scene; tap = jump
 //     there; slide along it like a scroll bar), with a ▼ over the line being read and ▶ / ■ auto-scroll with its speed (parts/auto-scroll.js)
-//   • then the beats, titled by the script's action ("Mario enters" / its first words — cues-map-rules.js);
-//     who arrives or leaves also shows above that line. Each line laid out like the script page — the name centred, the line under it, one phrase per row, each with a tab
+//   • then the beats: a new one only where someone enters, leaves or dies ("Mario enters" — cues-map-rules.js);
+//     cries / laughs / screams / whispers / shots show above their line. Each line laid out like the script page — the name centred, the line under it, one phrase per row, each with a tab
 //     (Ana, 7 Oct: "show the entire line" — hands-free while booming, with ▶ auto-scroll)
 //   • tap a line → it opens the mic (🎙 Cues from that line) — the same mic as everywhere
 //   • full screen (a moment to focus): a slim row with Cues · Timeline … ✕ instead of a header
@@ -81,7 +81,7 @@ export function CuesMapScreen({ state }) {
     </div>
     ${beats.map(beat => html`
       <section class="map-beat" key=${beat.number}>
-        <h3 class="map-beat__title">${beat.title || `Beat ${beat.number}`} <small>lines ${beat.from + 1}–${beat.to + 1}</small></h3>
+        <h3 class="map-beat__title">${beat.title || 'Start'} <small>lines ${beat.from + 1}–${beat.to + 1}</small></h3>
         ${beat.rows.map(row => {
           const colour = colourOf(row);
           const notes = [row.long && `long · ${row.words} words`].filter(Boolean); // no 'enters' from first lines (Ana: not an entrance)
@@ -90,7 +90,7 @@ export function CuesMapScreen({ state }) {
             <div class=${'map-line' + (isOpen ? ' map-line--open' : '')} id=${`map-line-${row.index}`} key=${row.index}
                  role="button" onClick=${() => setOpen(isOpen ? null : row.index)}>
               <span class="map-line__n">${row.index + 1}</span>
-              ${row.moves.length > 0 && row.index !== beat.from && html`<span class="map-line__moves">${movesTitle(row.moves)}</span>`}
+              ${row.sounds.length > 0 && html`<span class="map-line__moves">${movesTitle(row.sounds)}</span>`}
               <span class="map-line__who" style=${`background:${colour};color:${textColourFor(colour)}`}>${row.name}</span>
               <span class="map-line__cue">
                 ${phrasesOf(cues.lines[row.index].text).map((phrase, k) => html`<span class="map-line__phrase" key=${k}>${phrase}</span>`)}

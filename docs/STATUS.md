@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-10-07 · live version **v110** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-10-07 · live version **v111** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
@@ -36,7 +36,7 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   the Tomorrow card shows "📬 ODG #N waits for your review — the alarms already use its call".
 - ✉ badge: when Gmail was last checked; "Check emails now" starts the robot from the phone.
 - 🎙 **Cues**: learn a scene's lines full screen (phrases, speaker colours, scroll); ✎ edit / delete /
-  add lines on set (`lines/set/`); **Dialogue map** (was Scene Map; colour strip, beats, every line laid out like the script page — name centred, one phrase per row with a tab (v106), beats titled from the script action: "Mario enters" or its first words (v109, `movesIn`); the strip is a scroll bar with a ▼ where you read (v110),
+  add lines on set (`lines/set/`); **Dialogue map** (was Scene Map; colour strip, beats, every line laid out like the script page — name centred, one phrase per row with a tab (v106), a new beat only where someone enters, leaves or dies; cries, laughs, screams, whispers and shots as notes on the line (v111, `movesIn`); the strip is a scroll bar with a ▼ where you read (v110),
   ▶ auto-scroll with speed, touch to pause); **Scene Timeline** = a player, full screen: the scene's
   script scrolls like Spotify lyrics (`parts/scene-script.js`, names on a highlight of the character's
   colour), the Pro Tools-style track of speakers is the play bar (cursor, speed, scrub, paced like a

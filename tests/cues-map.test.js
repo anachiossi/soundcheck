@@ -27,14 +27,18 @@ test('who arrives or leaves comes from the action, next to the name (not from a 
   assert.deepEqual(movesIn('Il RUMORE di una macchina arriva da fuori. Mario riesce a parlare.', cast), []);
 });
 
-test('beats start at an arrival / exit, else at an action after 5 lines, never more than 10 lines', () => {
-  const lines = [act('1', 'a', 'Tutti mangiano in cucina.'), say('8', 'b'), say('12', 'c'), act('1', 'd', 'Prince guarda Roy.'),
-    say('8', 'e'), say('12', 'f'), act('8', 'g', 'Ines si alza.'), act('9', 'h', 'In quel momento appare MARIO.'), say('1', 'i')];
+test('beats start only where someone enters, leaves or dies; sounds are notes on the line', () => {
+  const lines = [act('1', 'a', 'Tutti mangiano in cucina.'), say('8', 'b'), act('12', 'c', 'Roy ride.'), act('1', 'd', 'Prince guarda Roy.'),
+    act('9', 'e', 'In quel momento appare MARIO.'), say('1', 'f'), act('8', 'g', 'Poi si sente un CLOC. Gli occhi di Mario ruotano all\'indietro. E si accascia.')];
   const beats = sceneMap(lines, cast);
-  assert.deepEqual(beats.map(b => [b.from, b.to, b.title]), [[0, 5, 'Tutti mangiano in cucina'], [6, 6, 'Ines si alza'], [7, 8, 'Mario enters']]);
-  assert.equal(beats[0].rows[1].moves.length, 0);
-  const many = Array.from({ length: 23 }, (_, i) => say(String(i % 2), 'x'));
-  assert.deepEqual(sceneMap(many).map(b => b.rows.length), [10, 10, 3]);
+  assert.deepEqual(beats.map(b => [b.from, b.to, b.title]), [[0, 3, ''], [4, 5, 'Mario enters'], [6, 6, 'Mario dies']]);
+  assert.equal(movesTitle(beats[0].rows[2].sounds), 'Roy laughs');
+  assert.deepEqual(movesIn('Laudomia si ferma. Non piange.', [...cast, { id: '3', name: 'LAUDOMIA' }]), []);
+  assert.deepEqual(movesIn('Florin corre. Si accascia.', [...cast, { id: '7', name: 'FLORIN' }]), []); // crouching
+  assert.deepEqual(movesIn('Prince John si è piantato sulla soglia e ora la sua mole oscura la luce che arriva dalla cucina.', cast), []);
+  assert.equal(movesTitle(movesIn("Laudomia (con fucile) Prince John e l'avvocato Magnoni fanno irruzione nella cella.",
+    [...cast, { id: '3', name: 'LAUDOMIA' }, { id: '11', name: 'AVV. MAGNONI' }])), 'Laudomia, Prince John and Avv. Magnoni enter');
+  assert.equal(movesTitle(movesIn('Ines entra di corsa, seguita da Roy e Helen.', cast)), 'Ines, Roy and Helen enter');
 });
 
 test('a line cut into phrases: at . ? ! …, never at ":" or after a title like Avv.', () => {
