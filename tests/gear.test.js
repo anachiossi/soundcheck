@@ -127,3 +127,18 @@ test('a type naming a case makes a case: Plastic case, soft case', async () => {
   assert.equal(isContainer(film, { id: 'y', category: 'other', type: 'soft case' }), true);
   assert.equal(isContainer(film, { id: 'z', category: 'other', type: 'mic' }), false);
 });
+
+test('↑ moves a case up among the cases next to it; loose things and other cases stay', async () => {
+  const { moveUpAmongCases } = await import('../src/gear-rules.js');
+  const project = { gearItems: [
+    { id: 'a', name: 'Crate', type: 'Plastic case' },
+    { id: 'b', name: 'TX case', type: 'hard case', inside: 'a' },
+    { id: 'x', name: 'Scissors', inside: 'a' },
+    { id: 'old', name: 'Gone case', type: 'soft case', inside: 'a', removed: '2026-10-01' },
+    { id: 'c', name: 'Lavs case', type: 'soft case', inside: 'a' },
+    { id: 'd', name: 'Other crate', type: 'Plastic case' },
+  ] };
+  assert.deepEqual(moveUpAmongCases(project, 'c').map(i => i.id), ['a', 'c', 'x', 'old', 'b', 'd']);
+  assert.equal(moveUpAmongCases(project, 'b'), null); // already the first case in the crate
+  assert.deepEqual(moveUpAmongCases(project, 'd').map(i => i.id), ['d', 'b', 'x', 'old', 'c', 'a']);
+});

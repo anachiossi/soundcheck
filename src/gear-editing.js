@@ -3,7 +3,7 @@
 // Used by: screens/gear.js
 
 import { getState, saveAndShow, showMessage } from './state.js';
-import { categoriesOf, historyOf } from './gear-rules.js';
+import { categoriesOf, historyOf, moveUpAmongCases } from './gear-rules.js';
 import { syncNow } from './sync.js';
 
 const today = () => new Date().toISOString();
@@ -78,6 +78,12 @@ export function moveObject(id, inside) {
   if (!object || (object.inside || '') === inside) return;
   const where = inside ? `into ${items.find(item => item.id === inside)?.name}` : 'out on its own';
   return save({ gearItems: items.map(item => (item.id === id ? { ...item, inside } : item)) }, ['gear/items.json'], `${object.name} moved ${where}.`);
+}
+
+// ↑ a case one place up among the cases next to it (the tree's order). Not history, like a move.
+export function moveCaseUp(id) {
+  const gearItems = moveUpAmongCases(getState().project, id);
+  if (gearItems) return save({ gearItems }, ['gear/items.json']);
 }
 
 export function toggleTick(id) {

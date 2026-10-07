@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-10-07 · live version **v106** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-10-07 · live version **v108** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
@@ -76,7 +76,8 @@ Ana's mockup "Gear inventory redesign", 2 Oct):
   "10 / 34 volumes loaded · 24 to go", category headers with counts; History of in / out / changes.
 - Inventory: search + one tree (carts and cases open ▸; loose things after them A–Z, no fold (v96));
   searching shows the matches inside the cases they are in; ticks only in ☑ Check mode;
-  press, hold and drag a square or name into a case (v97, `parts/gear-drag.js`, `.shots/gear-drag.mjs`).
+  press, hold and drag a square or name into a case (v97, `parts/gear-drag.js`, `.shots/gear-drag.mjs`);
+  a case's sheet lists its cases first with ↑ to reorder them (v108, `moveUpAmongCases`), then the loose things A–Z.
 - Objects: name, brand, type, qty, colour, nicknames, inside, volume, note + **details** (own fields;
   the type offers the fields others of that type use — `fieldsOfType`). Rules in `src/gear-rules.js`.
 - Manuals by brand (`docs/manuals/<brand>/`, `gear/manuals.json`). Hours / timesheet live in Projects.
@@ -120,7 +121,6 @@ film before November.
   silent by default.
 - Questions left to Ana: should the sound bar's level chip also be plain? should the lav-picker
   warning be quieter too?
-- TX preset generator inside the app (old Colab notebook) — milestone E, not started.
 - Analyzer for a NEW film writing schedule.json / scenes.json / sound/ directly (today: one-off
   scripts in `D:\script_read_claude\projects\<film>\work\`).
 - Read aloud on the Scene Map (mentioned, not started). Verify v58 read-aloud on the real iPhone.

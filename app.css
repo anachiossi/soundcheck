@@ -661,7 +661,8 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
 .gear-details__row { display: flex; align-items: center; min-height: 42px; border-top: 1px solid var(--line); }
 .item-form .gear-details__row input { flex: 1; min-width: 0; border: 0; border-radius: 0; padding: 8px 10px; background: none; color: var(--ink); }
 .item-form .gear-details__row input.gear-details__label { flex: 0 0 38%; font-size: 14px; color: var(--muted); }
-.gear-details__link { width: 100%; padding: 0 12px; border-left: 0; border-right: 0; border-bottom: 0; background: none; color: var(--ink); font: inherit; text-align: left; }
+.gear-details__link { flex: 1; min-height: 42px; width: 100%; padding: 0 12px; border-left: 0; border-right: 0; border-bottom: 0; background: none; color: var(--ink); font: inherit; text-align: left; }
+.gear-details__row > .gear-details__link { border: 0; }   /* a case row: the name + ↑ */
 .gear-details__add { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 12px; border-top: 1px solid var(--line); }
 .choice--dashed { border-style: dashed; color: var(--ink-soft); font-weight: 400; }
 

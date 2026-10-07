@@ -162,6 +162,22 @@ export function searchGear(project, query) {
 export const topItems = project => activeItems(project).filter(item => !item.inside || !itemById(project, item.inside));
 export const childrenOf = (project, id) => activeItems(project).filter(item => item.inside === id);
 
+// ↑ in a case's sheet: a case goes up one place among the cases next to it (same parent), by swapping
+// places in items.json — that order is the tree's order (Ana, 7 Oct: "reorder inside a case").
+// Loose things are A–Z, so they have no order to change. Returns the new list, or null at the top.
+export function moveUpAmongCases(project, id) {
+  const items = project.gearItems || [];
+  const at = items.findIndex(item => item.id === id);
+  const item = items[at];
+  if (!item) return null;
+  const sibling = it => !it.removed && (it.inside || '') === (item.inside || '') && isContainer(project, it);
+  const before = items.slice(0, at).map((it, i) => [it, i]).filter(([it]) => sibling(it)).pop();
+  if (!before) return null;
+  const list = [...items];
+  [list[before[1]], list[at]] = [item, before[0]];
+  return list;
+}
+
 // one level of the tree: the carts and cases (they open), then the loose things
 export function splitLoose(project, items) {
   return { boxes: items.filter(item => isContainer(project, item)), loose: items.filter(item => !isContainer(project, item)) };

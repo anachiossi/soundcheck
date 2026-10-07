@@ -2,15 +2,15 @@
 //   Object: name · brand · type (Pelican, wood box, cable, mic…) · quantity · DETAILS, its own fields
 //   (a cable's connectors and length, a mic's capsule…; the type offers the fields its kind uses) ·
 //   nicknames (for the search) · its real colour · category · inside which cart / case · goes on the truck
-//   as a volume · note. A cart or case lists what it holds, with "+ Add inside". "Remove" asks why
+//   as a volume · note. A cart or case lists what it holds (its cases first, ↑ moves one up), with "+ Add inside". "Remove" asks why
 //   (optional) — it goes in the history.
 //   Category: name · colour · inside which category (a sub-category, e.g. Cases → Batteries).
 // Used by: screens/gear.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
-import { categoriesOf, topCategories, topOf, containersOf, isContainer, childrenOf, pathOf, fieldsOfType, typesOf, CASE_COLOURS } from '../gear-rules.js';
+import { categoriesOf, topCategories, topOf, containersOf, isContainer, childrenOf, pathOf, fieldsOfType, typesOf, splitLoose, CASE_COLOURS } from '../gear-rules.js';
 import { textColourFor } from '../colour.js';
-import { saveObject, removeObject, saveCategory } from '../gear-editing.js';
+import { saveObject, removeObject, saveCategory, moveCaseUp } from '../gear-editing.js';
 import { Icon } from './icons.js';
 
 function Sheet({ title, close, children }) {
@@ -56,6 +56,8 @@ export function ObjectSheet({ project, object, close, open }) {
   const containers = containersOf(project, values.id);
   const box = values.id && isContainer(project, values);
   const holds = box ? childrenOf(project, values.id) : [];
+  const inside = splitLoose(project, holds); // the cases in their order (↑ moves one up), then the loose things A–Z, like the tree
+  const byName = (a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true });
   const where = item => [...pathOf(project, item), item].map(x => x.name).join(' › ');
   const clean = () => ({ ...values, details: (values.details || []).filter(d => d.label.trim() || d.value.trim()) });
   const submit = event => { event.preventDefault(); saveObject(clean()); close(); };
@@ -88,7 +90,10 @@ export function ObjectSheet({ project, object, close, open }) {
       ${box && html`
         <div class="gear-details">
           <span class="gear-details__title">Inside it <small>${holds.length}</small></span>
-          ${holds.map(item => html`<button type="button" key=${item.id} class="gear-details__row gear-details__link" onClick=${() => open(item)}>${item.name}${item.qty > 1 ? ` ×${item.qty}` : ''}</button>`)}
+          ${inside.boxes.map((item, i) => html`<div class="gear-details__row" key=${item.id}>
+            <button type="button" class="gear-details__link" onClick=${() => open(item)}>▸ ${item.name}${item.qty > 1 ? ` ×${item.qty}` : ''}</button>
+            <button type="button" class="icon-btn" disabled=${i === 0} onClick=${() => moveCaseUp(item.id)} aria-label=${`Move ${item.name} up`}><${Icon} name="up" /></button></div>`)}
+          ${[...inside.loose].sort(byName).map(item => html`<button type="button" key=${item.id} class="gear-details__row gear-details__link" onClick=${() => open(item)}>${item.name}${item.qty > 1 ? ` ×${item.qty}` : ''}</button>`)}
           <div class="gear-details__add"><button type="button" class="choice" onClick=${addInside}>+ Add inside</button></div>
         </div>`}
       <label><span>Nicknames (other names it goes by, for the search; commas between)</span>
