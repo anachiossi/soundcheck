@@ -69,7 +69,6 @@ export function GearTruckScreen({ state }) {
                 <small>${count.loaded} / ${count.all}</small></button>
               ${items.map(item => html`
                 <button key=${item.id} class=${'truck-row' + (ticked(project, item.id) ? ' truck-row--on' : '')} onClick=${() => toggleTick(item.id)}
-                        style=${item.color ? `background:${item.color};color:${textColourFor(item.color)}` : ''}
                         aria-pressed=${ticked(project, item.id)}>
                   <span class="truck-row__number">${numbers[item.id]}</span>
                   <${CheckBox} on=${ticked(project, item.id)} />
@@ -149,11 +148,12 @@ function TreeRow({ project, row, open, toggle, edit, checking, search, drag }) {
   const state = drag.dragging?.id === item.id ? ' gear-tree__row--lifted' : drag.dragging && drag.target === item.id ? ' gear-tree__row--target' : '';
   // a case's whole row is in its colour (Ana, 8 Oct); its band then runs down beside what it holds
   // (from its own indent: the bands of the cases around it stay as they are)
-  const tint = item.color ? `color:${textColourFor(item.color)}` : ''; // things too, not only cases (Ana, 8 Oct: no squares)
-  const fill = tint && html`<span class="gear-tree__fill" style=${`left:${level(depth)}px;right:${level(depth)}px;background:${item.color}`}></span>`;
+  const tint = box && item.color ? `color:${textColourFor(item.color)}` : ''; // cases in their colour; things on paper
+  const fill = html`<span class=${'gear-tree__fill' + (tint ? '' : ' gear-tree__fill--paper')}
+    style=${`left:${level(depth)}px;right:${level(depth)}px` + (tint ? `;background:${item.color}` : '')}></span>`;
   return html`<div class=${'gear-tree__row' + state + (tint ? ' gear-tree__row--tinted' : '')} style=${tint + `;padding-right:${4 + level(depth)}px`} data-drop=${drop}>${fill}${guides}${indent}
     ${box ? chevron : html`<span class="gear-tree__open gear-tree__open--none"></span>`}
-    <button class=${'gear-tree__name' + look} ...${drag.hold(item)} onClick=${() => !drag.wasDrag() && edit(item)}><${Tinted} item=${item} noSquare=${Boolean(tint)} /></button>
+    <button class=${'gear-tree__name' + look} ...${drag.hold(item)} onClick=${() => !drag.wasDrag() && edit(item)}><${Tinted} item=${item} noDot=${Boolean(tint)} /></button>
     ${item.type && html`<span class="gear-tree__type">${item.type}</span>`}
     <span class="gear-tree__count">${box ? childrenOf(project, item.id).length : item.qty > 1 ? `×${item.qty}` : ''}</span>
     ${checking && html`<button class="gear-tree__tick" onClick=${() => toggleTick(item.id)} aria-label=${on ? `Untick ${item.name}` : `Tick ${item.name}`}>

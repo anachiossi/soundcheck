@@ -702,7 +702,7 @@ mark.hit--now { background: #f59e0b; box-shadow: 0 0 0 2px #f59e0b; }           
 .gear-tree__row--tinted .gear-tree__type { opacity: .75; }
 .gear-tree__fill { position: absolute; top: 0; bottom: 0; right: 0; }
 .gear-tree__row--tinted > :not(.gear-tree__fill):not(.gear-tree__guide) { position: relative; }   /* above the colour */
-:root[data-theme="dark"] .gear-tree__fill { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .25); }   /* a black case on the dark screen */
+:root[data-theme="dark"] .gear-tree__fill:not(.gear-tree__fill--paper) { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .25); }   /* a black case on the dark screen */
 .gear-qty { margin-left: 8px; color: var(--muted); font-size: 14px; }
 
 /* Cues top bar with six buttons on a phone (v120): the counter stays on one line, the buttons a bit smaller and
@@ -727,3 +727,17 @@ mark.hit--now { background: #f59e0b; box-shadow: 0 0 0 2px #f59e0b; }           
 .gear-details__row[style*="background"] .gear-qty, .gear-details__row[style*="background"] .icon-btn,
 .gear-details__row[style*="background"] .gear-details__link { color: inherit; }
 .gear-details__link { color: inherit; }
+
+/* v126 — a hand-made list on paper inside each box (Ana, 8 Oct): no lines between things, a • of the thing's colour;
+   the cases keep their colour (a thin darker line between two cases) */
+:root { --paper: #fbf8ef; }
+:root[data-theme="dark"] { --paper: #1f1e1a; }
+.gear-tree__row { border-bottom: 0; min-height: 40px; }
+.gear-tree__row--tinted { min-height: 44px; box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .14); }
+.gear-tree__fill--paper { background: var(--paper); }
+.gear-tree__row:not(.gear-tree__row--tinted) > :not(.gear-tree__fill):not(.gear-tree__guide) { position: relative; }
+.gear-dot { width: 10px; height: 10px; flex: none; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2); }
+:root[data-theme="dark"] .gear-dot { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .4); }
+.gear-dot--none { background: none; box-shadow: inset 0 0 0 1.5px var(--muted-2); }
+.gear-tree__closer { border-bottom: 0; }
+.truck-row, .gear-details__row { border-bottom-color: transparent; }

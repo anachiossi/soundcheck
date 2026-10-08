@@ -14,8 +14,11 @@ import { saveObject, removeObject, saveCategory, moveCaseUp } from '../gear-edit
 import { Icon } from './icons.js';
 
 // a thing's name; its colour is the row's background (Ana, 8 Oct: "no more square — squares are for check boxes only")
-export const Tinted = ({ item }) => html`<span class="gear-name-text">${item.name}</span>`;
-export const tintOf = item => (item.color ? `background:${item.color};color:${textColourFor(item.color)}` : '');
+// v126 (Ana, 8 Oct: "too colorful… a list made by hand, a piece of paper inside the box"): a thing is a small • of its
+// colour and its name on paper; only the cases keep their colour (tree rows). noDot: the row is in the colour already.
+export const Tinted = ({ item, noDot = false }) => html`${!noDot && html`<span class=${'gear-dot' + (item.color ? '' : ' gear-dot--none')}
+  style=${item.color ? `background:${item.color}` : ''}></span>`}<span class="gear-name-text">${item.name}</span>`;
+export const tintOf = () => '';
 
 
 function Sheet({ title, close, children }) {
