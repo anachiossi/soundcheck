@@ -14,12 +14,11 @@
 import { html, useState } from '../../vendor/preact-htm.js';
 import { formatStamp, exportName, shortDate, localTodayIso } from '../model.js';
 import {
-  truckOf, ticked, countVolumes, topItems, childrenOf, splitLoose, searchTree, isContainer, startsAsVolume,
+  truckOf, ticked, countVolumes, topItems, childrenOf, splitLoose, searchTree, isContainer, startsAsVolume, pathOf,
 } from '../gear-rules.js';
 import { toggleTick, clearTicks, moveObject } from '../gear-editing.js';
 import { useGearDrag } from '../parts/gear-drag.js';
-import { textColourFor } from '../colour.js';
-import { ObjectSheet, CategorySheet } from '../parts/gear-form.js';
+import { ObjectSheet, CategorySheet, Tinted } from '../parts/gear-form.js';
 import { gearImage } from '../export/gear-image.js';
 import { gearText, gearSheets } from '../export/gear-text.js';
 import { xlsxBlob } from '../export/xlsx.js';
@@ -29,14 +28,6 @@ import { manualsByBrand, manualPath, openManual } from '../manuals.js';
 import { Icon } from '../parts/icons.js';
 
 // the small square in the object's real colour (a dot when it has none)
-const Chip = ({ item }) => html`<span class=${'gear-chip' + (item.color ? '' : ' gear-chip--none')}
-  style=${item.color ? `background:${item.color}` : ''}></span>`;
-
-// the name in a pill of the object's real colour, like the lavs and characters (Ana, 7 Oct); no colour = plain text
-const Tinted = ({ item }) => (item.color
-  ? html`<span class="gear-pill" style=${`background:${item.color};color:${textColourFor(item.color)}`}>${item.name}</span>`
-  : html`<span class="gear-pill gear-pill--none">${item.name}</span>`);
-
 const CheckBox = ({ on }) => html`<span class=${'gear-check' + (on ? ' gear-check--on' : '')}>${on ? '✓' : ''}</span>`;
 
 // the object being changed in the sheet; from the sheet another one can be opened (what a case holds)
@@ -80,8 +71,7 @@ export function GearTruckScreen({ state }) {
                         aria-pressed=${ticked(project, item.id)}>
                   <span class="truck-row__number">${numbers[item.id]}</span>
                   <${CheckBox} on=${ticked(project, item.id)} />
-                  <${Chip} item=${item} />
-                  <span class="truck-row__name">${item.name}</span>
+                  <span class="truck-row__name"><${Tinted} item=${item} /></span>
                   ${item.qty > 1 && html`<small>×${item.qty}</small>`}
                 </button>`)}`;
           })}
@@ -121,11 +111,15 @@ function treeRows(project, items, depth, isOpen, search) {
   return [...rows, ...byName.map(item => ({ item, depth }))];
 }
 
-const INDENT = 18;
+const INDENT = 22;
 
 function TreeRow({ project, row, open, toggle, edit, checking, search, drag }) {
   const { item, depth } = row;
-  const guides = Array.from({ length: depth }, (_, d) => html`<span class="gear-tree__guide" style=${`left:${6 + d * INDENT + 20}px`}></span>`);
+  // under each case, a band of its colour runs down beside what it holds (Ana, 7 Oct: "the vertical space the tree
+  // occupies also tinted with that color… the whole square it occupies"); a case with no colour keeps a thin line
+  const path = pathOf(project, item).slice(-depth || Infinity).slice(0, depth);
+  const guides = path.map((box, d) => html`<span class=${'gear-tree__guide' + (box.color ? ' gear-tree__guide--band' : '')}
+    style=${`left:${6 + d * INDENT + 11}px` + (box.color ? `;background:${box.color}` : '')}></span>`);
   const indent = html`<span class="gear-tree__indent" style=${`width:${6 + depth * INDENT}px`}></span>`;
   const chevron = html`<button class="gear-tree__open" onClick=${toggle} aria-label=${open ? 'Close' : 'Open'} aria-expanded=${open}>${open ? '▼' : '▶'}</button>`;
   const box = isContainer(project, item);

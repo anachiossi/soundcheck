@@ -13,6 +13,12 @@ import { textColourFor } from '../colour.js';
 import { saveObject, removeObject, saveCategory, moveCaseUp } from '../gear-editing.js';
 import { Icon } from './icons.js';
 
+// the name in a pill of the object's real colour, like the lavs and characters (Ana, 7 Oct); no colour = plain text
+export const Tinted = ({ item }) => (item.color
+  ? html`<span class="gear-pill" style=${`background:${item.color};color:${textColourFor(item.color)}`}>${item.name}</span>`
+  : html`<span class="gear-pill gear-pill--none">${item.name}</span>`);
+
+
 function Sheet({ title, close, children }) {
   return html`
     <div class="sheet-backdrop" onClick=${close}></div>
@@ -91,9 +97,9 @@ export function ObjectSheet({ project, object, close, open }) {
         <div class="gear-details">
           <span class="gear-details__title">Inside it <small>${holds.length}</small></span>
           ${inside.boxes.map((item, i) => html`<div class="gear-details__row" key=${item.id}>
-            <button type="button" class="gear-details__link" onClick=${() => open(item)}>▸ ${item.name}${item.qty > 1 ? ` ×${item.qty}` : ''}</button>
+            <button type="button" class="gear-details__link" onClick=${() => open(item)}><b>▸</b> <${Tinted} item=${item} />${item.qty > 1 ? html`<small class="gear-qty">×${item.qty}</small>` : ''}</button>
             <button type="button" class="icon-btn" disabled=${i === 0} onClick=${() => moveCaseUp(item.id)} aria-label=${`Move ${item.name} up`}><${Icon} name="up" /></button></div>`)}
-          ${[...inside.loose].sort(byName).map(item => html`<button type="button" key=${item.id} class="gear-details__row gear-details__link" onClick=${() => open(item)}>${item.name}${item.qty > 1 ? ` ×${item.qty}` : ''}</button>`)}
+          ${[...inside.loose].sort(byName).map(item => html`<button type="button" key=${item.id} class="gear-details__row gear-details__link" onClick=${() => open(item)}><${Tinted} item=${item} />${item.qty > 1 ? html`<small class="gear-qty">×${item.qty}</small>` : ''}</button>`)}
           <div class="gear-details__add"><button type="button" class="choice" onClick=${addInside}>+ Add inside</button></div>
         </div>`}
       <label><span>Nicknames (other names it goes by, for the search; commas between)</span>
