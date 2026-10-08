@@ -120,6 +120,13 @@ Done: LBE `settings.json` + preset generator/checker (`pipeline/presets.py`, `pr
 first review sent 29 Sep for days 8–30). Next: kit import/export → new-film intake rehearsed on a mock
 film before November.
 
+## Waiting for Ana's OK (not released)
+- **Acc. column** (branch `acc-column`, v128): the Speaks column's label (Speaks ⇄) swaps that column for accessories
+  (per phone, `src/accessories.js`); preset rows get optional `acc: [gear ids]`; ✎ edits it with a picker of Gear straps,
+  pouches, lav furs/covers, foam mounts (character's `usual_acc` first); pills = lav pills (label Waist/Ankle/Pouch, `accLabel`);
+  in Acc. mode the column is as wide as Lav. Ana's rule: reuse the existing classes and layout, never redesign the Mics/IFB UI.
+  To release: merge `acc-column` into main, push, wait for v128 live.
+
 ## Open / next (none started)
 - Ana to answer: remove misread crew "Antonio Arte Astrid Ardenti"? keep new crew for review instead of auto-apply?
   warn when an ODG date and weekday don't match (ODG #13 "Giovedì 7")? TX 21 / B1–B3 / 4060… exist?
