@@ -49,6 +49,13 @@ export function LavPill({ lav, id, mismatch, number }) {
     </span>`;
 }
 
+// an accessory (strap, pouch, fur… from Gear) in the Acc. column: the lav pill's shape and size, the thing's
+// colour as background, a short label (Waist, Ankle, Big); its name, brand and id stay in the data (Ana, 8 Oct)
+export function AccPill({ thing }) {
+  return html`<span class="pill pill--lav pill--lav-model pill--acc" style=${coloured(thing.color || '#e5e7eb')} title=${thing.name}>
+    <b>${thing.label}</b></span>`;
+}
+
 const SPEAKER_LABEL = { yes: 'YES', no: 'NO', maybe: '?' };
 
 export function SpeakerBadge({ speaker }) {

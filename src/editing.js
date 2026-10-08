@@ -38,6 +38,15 @@ export function setCell(rowIndex, field, id) {
   setState({ picker: null });
 }
 
+// the Acc. column: a gear thing in or out of the row (several allowed; the picker stays open)
+export function toggleAcc(rowIndex, id) {
+  changeRows(rows => {
+    const acc = rows[rowIndex].acc || [];
+    rows[rowIndex] = { ...rows[rowIndex], acc: acc.includes(id) ? acc.filter(x => x !== id) : [...acc, id] };
+    return rows;
+  });
+}
+
 export function cycleSpeaker(rowIndex) {
   changeRows(rows => {
     rows[rowIndex] = { ...rows[rowIndex], speaker: SPEAKER_NEXT[rows[rowIndex].speaker] || 'yes' };

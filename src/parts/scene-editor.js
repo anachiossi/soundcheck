@@ -13,6 +13,8 @@ import { RowWarnings } from './sound-bar.js';
 import { openPicker, cycleSpeaker, addRow, deleteRow, moveRow, cancelEdit, saveEdit } from '../editing.js';
 import { CharacterPill, TxPill, LavPill, SpeakerBadge } from './pills.js';
 import { Icon } from './icons.js';
+import { accOn } from '../accessories.js';
+import { AccCell } from './scene-table.js';
 
 export function SceneEditor({ project, edit }) {
   const [confirming, setConfirming] = useState(false);
@@ -30,8 +32,9 @@ export function SceneEditor({ project, edit }) {
     saveEdit();
   };
 
+  const acc = accOn();
   return html`
-    <div class="mics mics--edit">
+    <div class=${'mics mics--edit' + (acc ? ' mics--acc' : '')}>
       ${edit.rows.map((row, i) => {
         const character = chars.get(String(row.char_id));
         const tx = txs.get(String(row.tx_id));
@@ -41,7 +44,9 @@ export function SceneEditor({ project, edit }) {
             ${cell(i, 'char_id', row.char_id ? html`<${CharacterPill} character=${character} id=${row.char_id} />` : empty('character'))}
             ${cell(i, 'tx_id', row.tx_id ? html`<${TxPill} tx=${tx} character=${character} id=${row.tx_id} withFrequency />` : empty('TX'))}
             ${cell(i, 'lav_id', row.lav_id ? html`<${LavPill} lav=${lav} id=${row.lav_id} />` : empty('lav'))}
-            <button class="edit-cell" onClick=${() => cycleSpeaker(i)}><${SpeakerBadge} speaker=${row.speaker} /></button>
+            ${acc
+              ? html`<button class="edit-cell" onClick=${() => openPicker(i, 'acc')}>${row.acc?.length ? html`<${AccCell} project=${project} row=${row} />` : empty('acc.')}</button>`
+              : html`<button class="edit-cell" onClick=${() => cycleSpeaker(i)}><${SpeakerBadge} speaker=${row.speaker} /></button>`}
             <span class="row-tools">
               <button class="icon-btn" disabled=${i === 0} onClick=${() => moveRow(i, -1)} aria-label="Move up"><${Icon} name="up" /></button>
               <button class="icon-btn icon-btn--remove" onClick=${() => deleteRow(i)} aria-label="Delete row"><${Icon} name="close" /></button>

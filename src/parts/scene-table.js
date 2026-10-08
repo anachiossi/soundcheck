@@ -1,5 +1,5 @@
 // scene-table.js — one scene: the grey "slate" title bar and its mic table
-// (Character · TX · Lav · Speaks). The slate shows #12, INT/EXT, time of day
+// (Character · TX · Lav · Speaks — or Acc.: the label of the last column swaps it, accessories.js). The slate shows #12, INT/EXT, time of day
 // and the set, then location · pages · story day, the synopsis, the notes that can impact sound
 // (orange) and "ⓘ more info" (director / costume / production notes, closed until tapped).
 // 🎙 opens Cues (learn the lines), ✎ turns the table into the editor.
@@ -17,10 +17,11 @@ import { getState, setState } from '../state.js';
 import { cueLines } from '../cues-rules.js';
 import { resolveConflict } from '../sync.js';
 import { presetFile } from '../store/repo-files.js';
-import { CharacterPill, TxPill, LavPill, SpeakerBadge } from './pills.js';
+import { CharacterPill, TxPill, LavPill, SpeakerBadge, AccPill } from './pills.js';
 import { SceneEditor } from './scene-editor.js';
 import { SoundBar, RowWarnings } from './sound-bar.js';
 import { Icon } from './icons.js';
+import { accOn, setAccOn, rowAccessories } from '../accessories.js';
 
 // "ⓘ more info (3)": director / costume notes from the ODGs and production notes, closed until tapped
 function MoreInfo({ items }) {
@@ -80,12 +81,26 @@ export function SceneTable({ project, sceneId, edit, showDay = false, onRemove, 
     </section>`;
 }
 
+// the last column's label is a button: Speaks ⇄ Acc. (Ana, 8 Oct: "a button that changes the speaks column to an
+// accessory column"); remembered on this phone, for every scene
+export const SwapLabel = ({ acc }) => html`<button class="mics__label mics__swap" onClick=${() => setAccOn(!acc)}
+  aria-label=${acc ? 'Show who speaks' : 'Show the accessories'}>${acc ? 'Acc.' : 'Speaks'} ⇄</button>`;
+
+// what holds the TX and covers the lav, in the Speaks column's width: a pill like the lav's for each thing, its
+// colour as background and a short word (Waist, Ankle, Pouch — accLabel), one under the other
+export function AccCell({ project, row }) {
+  const things = rowAccessories(project, row);
+  if (!things.length) return html`<span class="acc acc--empty">—</span>`;
+  return html`<span class="acc">${things.map(t => html`<${AccPill} key=${t.id} thing=${t} />`)}</span>`;
+}
+
 function MicRows({ project, sceneId }) {
   const rows = sceneRows(project, sceneId);
   if (!project.presets[sceneId]) return html`<p class="scene__empty">No preset yet. Tap the pencil to add mics.</p>`;
   if (!rows.length) return html`<p class="scene__empty">No mics in this scene.</p>`;
+  const acc = accOn(); // this phone shows Acc. in the last column instead of Speaks (the label swaps it)
   return html`
-    <div class="mics">
+    <div class=${'mics' + (acc ? ' mics--acc' : '')}>
       ${rows.map((row, i) => html`
         <div class="mics__row" key=${i}>
           <div class="mics__cell">
@@ -101,8 +116,8 @@ function MicRows({ project, sceneId }) {
             <${LavPill} lav=${row.lav} id=${row.lav_id} mismatch=${row.connectorMismatch} />
           </div>
           <div class="mics__cell">
-            ${i === 0 && html`<span class="mics__label">Speaks</span>`}
-            <${SpeakerBadge} speaker=${row.speaker} />
+            ${i === 0 && html`<${SwapLabel} acc=${acc} />`}
+            ${acc ? html`<${AccCell} project=${project} row=${row} />` : html`<${SpeakerBadge} speaker=${row.speaker} />`}
           </div>
           <${RowWarnings} project=${project} sceneId=${sceneId} charId=${row.char_id} />
         </div>`)}

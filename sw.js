@@ -3,7 +3,7 @@
 // When you change any app file, bump VERSION so devices pick up the new files.
 // (Film data is NOT stored here; it lives in the per-film database.)
 
-const VERSION = 'soundcheck-v127';
+const VERSION = 'soundcheck-v128';
 const FILES = [
   './', 'index.html', 'app.css', 'manifest.webmanifest',
   'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png',
@@ -12,7 +12,7 @@ const FILES = [
   'vendor/fonts/courier-prime-400.woff2', 'vendor/fonts/courier-prime-700.woff2',
   'src/main.js', 'src/state.js', 'src/model.js', 'src/colour.js',
   'src/editing.js', 'src/kit-editing.js', 'src/sync.js', 'src/preset-rules.js',
-  'src/proposals.js', 'src/proposal-rules.js', 'src/email-robot.js', 'src/sound-rules.js', 'src/sound-editing.js', 'src/parts/sound-bar.js', 'src/parts/scene-pill.js', 'src/parts/conflicts.js', 'src/parts/day-strip.js', 'src/read-aloud.js', 'src/parts/scene-script.js', 'src/parts/line-search.js', 'src/hours-rules.js', 'src/hours-editing.js', 'src/parts/wrap-clock.js', 'src/screens/hours.js', 'src/export/hours-image.js', 'src/parts/wrap-alerts.js', 'src/screens/help.js', 'src/parts/tomorrow.js', 'src/gear-rules.js', 'src/gear-editing.js', 'src/parts/gear-form.js', 'src/parts/gear-drag.js', 'src/screens/gear.js', 'src/export/gear-image.js', 'src/export/gear-text.js', 'src/export/xlsx.js', 'src/export/timesheet.js', 'src/manuals.js', 'src/parts/auto-scroll.js', 'src/theme.js', 'src/parts/theme-switch.js', 'src/parts/email-robot.js', 'src/cues-rules.js', 'src/cues-phrases.js', 'src/cues-map-rules.js', 'src/screens/cues-map.js', 'src/cues-timeline-rules.js', 'src/screens/cues-timeline.js', 'src/cues-editing.js', 'src/parts/cue-line-editor.js',
+  'src/proposals.js', 'src/proposal-rules.js', 'src/email-robot.js', 'src/sound-rules.js', 'src/sound-editing.js', 'src/parts/sound-bar.js', 'src/parts/scene-pill.js', 'src/parts/conflicts.js', 'src/parts/day-strip.js', 'src/read-aloud.js', 'src/parts/scene-script.js', 'src/parts/line-search.js', 'src/accessories.js', 'src/hours-rules.js', 'src/hours-editing.js', 'src/parts/wrap-clock.js', 'src/screens/hours.js', 'src/export/hours-image.js', 'src/parts/wrap-alerts.js', 'src/screens/help.js', 'src/parts/tomorrow.js', 'src/gear-rules.js', 'src/gear-editing.js', 'src/parts/gear-form.js', 'src/parts/gear-drag.js', 'src/screens/gear.js', 'src/export/gear-image.js', 'src/export/gear-text.js', 'src/export/xlsx.js', 'src/export/timesheet.js', 'src/manuals.js', 'src/parts/auto-scroll.js', 'src/theme.js', 'src/parts/theme-switch.js', 'src/parts/email-robot.js', 'src/cues-rules.js', 'src/cues-phrases.js', 'src/cues-map-rules.js', 'src/screens/cues-map.js', 'src/cues-timeline-rules.js', 'src/screens/cues-timeline.js', 'src/cues-editing.js', 'src/parts/cue-line-editor.js',
   'src/ifb-editing.js', 'src/ifb-rules.js',
   'src/store/local.js', 'src/store/github.js', 'src/store/repo-files.js',
   'src/parts/pills.js', 'src/parts/scene-table.js', 'src/parts/scene-editor.js', 'src/parts/picker.js', 'src/parts/banners.js', 'src/parts/item-form.js', 'src/parts/ifb-picker.js', 'src/parts/icons.js',

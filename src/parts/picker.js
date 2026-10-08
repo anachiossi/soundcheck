@@ -9,7 +9,9 @@ import { html, useState } from '../../vendor/preact-htm.js';
 import { naturalCompare, byId } from '../model.js';
 import { usedByOtherRows, sameDaySuggestions, preferredFor } from '../preset-rules.js';
 import { warningsFor, warningText } from '../sound-rules.js';
-import { setCell, closePicker } from '../editing.js';
+import { setCell, closePicker, toggleAcc } from '../editing.js';
+import { accessoryPool, usualFor, usedElsewhere } from '../accessories.js';
+import { itemGroups } from '../gear-rules.js';
 import { CharacterPill, TxPill, LavPill } from './pills.js';
 import { Icon } from './icons.js';
 
@@ -28,6 +30,7 @@ export function Picker({ state }) {
   if (!edit || !picker) return null;
 
   const { rowIndex, field } = picker;
+  if (field === 'acc') return html`<${AccPicker} project=${project} edit=${edit} rowIndex=${rowIndex} />`;
   const row = edit.rows[rowIndex];
   const character = byId(project.characters).get(String(row.char_id));
   const used = usedByOtherRows(edit.rows, rowIndex, field);
@@ -77,5 +80,46 @@ export function Picker({ state }) {
           </button>`)}
         ${items.length === 0 && html`<p class="empty">Nothing matches "${query}".</p>`}
       </div>
+    </div>`;
+}
+
+// the Acc. column (accessories.js): straps, pouches, furs and covers from Gear; tap to add or remove (several
+// allowed); the character's usual kit first; "×2 · 1 in use" says how many the other rows already took
+function AccPicker({ project, edit, rowIndex }) {
+  const [query, setQuery] = useState('');
+  const row = edit.rows[rowIndex];
+  const character = byId(project.characters).get(String(row.char_id));
+  const pool = accessoryPool(project);
+  const chosen = new Set(row.acc || []);
+  const usual = usualFor(project, character);
+  const q = query.trim().toLowerCase();
+  const shown = q ? pool.filter(item => [item.name, item.type, ...(item.nicknames || [])].join(' ').toLowerCase().includes(q)) : pool;
+  const option = item => {
+    const used = usedElsewhere(edit.rows, rowIndex, item.id);
+    const full = used >= (item.qty || 1);
+    return html`<button key=${item.id} class=${'acc-option' + (chosen.has(item.id) ? ' acc-option--on' : '') + (full && !chosen.has(item.id) ? ' acc-option--full' : '')}
+        onClick=${() => toggleAcc(rowIndex, item.id)} aria-pressed=${chosen.has(item.id)}>
+      <span class=${'gear-dot' + (item.color ? '' : ' gear-dot--none')} style=${item.color ? `background:${item.color}` : ''}></span>
+      <span class="acc-option__name">${item.name}</span>
+      <small>${item.qty > 1 ? `×${item.qty}` : ''}${used ? ` · ${full ? 'all in use' : `${used} in use`}` : ''}</small>
+    </button>`;
+  };
+  return html`
+    <div class="sheet-backdrop" onClick=${closePicker}></div>
+    <div class="sheet" role="dialog" aria-label="Choose accessories">
+      <header class="sheet__head">
+        <b>Acc. · #${edit.sceneId}${character ? ` · ${character.name}` : ''}</b>
+        <button class="icon-btn" onClick=${closePicker} aria-label="Done"><${Icon} name="close" /></button>
+      </header>
+      <div class="sheet__tools">
+        <input type="search" placeholder="Search: ankle, fur, pouch…" value=${query} onInput=${e => setQuery(e.target.value)} />
+        <button class="btn btn--primary" onClick=${closePicker}>Done</button>
+      </div>
+      ${pool.length === 0 && html`<p class="empty">No straps, pouches or furs in Gear yet.</p>`}
+      ${usual.length > 0 && !q && html`<p class="sheet__hint">${character?.name || ''} usually</p>
+        <div class="acc-options">${pool.filter(item => usual.includes(item.id)).map(option)}</div>`}
+      ${itemGroups(shown).map(group => html`<div key=${group.key || 'other'}>
+        <p class="sheet__hint">${group.title === 'OTHER' ? 'Other' : group.title.charAt(0) + group.title.slice(1).toLowerCase()}</p>
+        <div class="acc-options">${group.items.map(({ item }) => option(item))}</div></div>`)}
     </div>`;
 }
