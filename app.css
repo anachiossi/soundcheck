@@ -811,3 +811,6 @@ mark.hit--now { background: #f59e0b; box-shadow: 0 0 0 2px #f59e0b; }           
   .mics--acc .mics__row { grid-template-columns: minmax(0, 1fr) 70px 66px 66px; }
   .mics--acc .mics__row--edit { grid-template-columns: minmax(0, 1fr) 64px 62px 62px 30px; }
 }
+/* an Acc. cell is as tall as a pill even when empty, so its label lines up with CHARACTER · TX · LAV (Ana, 8 Oct) */
+.acc { min-height: var(--pill-h); justify-content: center; }
+.acc--empty { display: flex; align-items: center; justify-content: center; min-height: var(--pill-h); }
