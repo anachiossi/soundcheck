@@ -787,3 +787,27 @@ mark.hit--now { background: #f59e0b; box-shadow: 0 0 0 2px #f59e0b; }           
 .gear-result__path { display: flex; flex-wrap: wrap; gap: 4px; padding-left: 25px; font-size: 13px; color: var(--ink-soft); }
 .gear-result__path span { display: inline-flex; align-items: center; gap: 4px; }
 .gear-result__path i { font-style: normal; color: var(--muted-2); padding-left: 4px; }
+
+/* the Acc. column (accessories.js, v128): in the Speaks column's place, same width; the label swaps it */
+.acc-option--on .gear-dot { box-shadow: 0 0 0 1.5px var(--on-accent); }
+.acc--empty { color: var(--muted-2); text-align: center; }
+.acc-options { display: flex; flex-direction: column; }
+.acc-option { display: flex; align-items: center; gap: 10px; min-height: 46px; padding: 0 12px; border: 0; border-radius: 10px; background: none;
+  font: inherit; color: var(--ink); text-align: left; }
+.acc-option__name { flex: 1; min-width: 0; font-size: 16px; }
+.acc-option small { color: var(--muted); white-space: nowrap; }
+.acc-option--on { background: var(--accent); color: var(--on-accent); }
+.acc-option--on small { color: inherit; opacity: .8; }
+.acc-option--full .acc-option__name { color: var(--muted); }
+/* the Acc. column (v128): the label is the same .mics__label as the others, only made tappable; the pills are
+   lav pills, stacked when there are two */
+.mics__swap { border: 0; background: none; padding: 0; font-family: inherit; line-height: inherit; text-align: left; cursor: pointer; }
+.acc { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.mics__swap { white-space: nowrap; }
+/* Acc. mode: the last column is as wide as the Lav column, so its pills are exactly lav pills */
+.mics--acc .mics__row { grid-template-columns: minmax(0, 1fr) 92px 96px 96px; }
+.mics--acc .mics__row--edit { grid-template-columns: minmax(0, 1fr) 92px 96px 96px 64px; }
+@media (max-width: 600px) {
+  .mics--acc .mics__row { grid-template-columns: minmax(0, 1fr) 70px 66px 66px; }
+  .mics--acc .mics__row--edit { grid-template-columns: minmax(0, 1fr) 64px 62px 62px 30px; }
+}

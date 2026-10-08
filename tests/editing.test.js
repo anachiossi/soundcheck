@@ -126,3 +126,11 @@ test('files an older app version skipped are downloaded again', () => {
   const local = { ...project, shas: { 'lines/script/2.json': 'x', 'presets/1.json': 'b' }, lines: {} };
   assert.deepEqual(filesToDownload(local, { 'lines/script/2.json': 'x', 'presets/1.json': 'b' }), ['lines/script/2.json']);
 });
+
+test('the Acc. column: a row keeps its accessories when saved, none = no field (v128)', async () => {
+  const { cleanRows } = await import('../src/preset-rules.js');
+  assert.deepEqual(cleanRows([{ char_id: '1', tx_id: '3', lav_id: '12', speaker: 'yes', acc: ['g117'], key: 'k' }]),
+    [{ char_id: '1', tx_id: '3', lav_id: '12', speaker: 'yes', acc: ['g117'] }]);
+  assert.deepEqual(cleanRows([{ char_id: '1', tx_id: '3', lav_id: '', speaker: 'no', acc: [] }]),
+    [{ char_id: '1', tx_id: '3', lav_id: '', speaker: 'no' }]);
+});
