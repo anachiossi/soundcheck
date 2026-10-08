@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-10-07 · live version **v127** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-10-07 · live version **v128** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
@@ -27,6 +27,9 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
 **Mics department** (tabs Schedule · Scenes · Cues · Kit · Projects)
 - Schedule Day / Week / All film; every scene = slate (#, INT/EXT, time, set, location, pages,
   story day, synopsis, notes) + 🔊 sound bar + mic table (character · TX · lav · speaks).
+- Acc. column (v128, `src/accessories.js`): the Speaks column's label (Speaks ⇄) swaps that column for accessories, per phone;
+  rows get optional `acc: [gear ids]`; ✎ picks from Gear straps / pouches / lav furs / covers / foam mounts (character's
+  `usual_acc` first); lav-style pills labelled Waist / Ankle / Pouch (`accLabel`); images keep Speaks. Optional everywhere.
 - Edit presets anywhere, offline (✎ → picker → Save; warnings: TX/lav twice, "No lav" + lav).
 - Kit: characters (preferred TX / lavs), TX, lavs. Images (Export): scene, day, week, all film.
 - 📄 ODG / Sides PDFs of every day on the device (read offline).
@@ -119,13 +122,6 @@ The trigger reports each check to the GitHub variable `LAST_GMAIL_CHECK` (the �
 Done: LBE `settings.json` + preset generator/checker (`pipeline/presets.py`, `propose_presets.py`;
 first review sent 29 Sep for days 8–30). Next: kit import/export → new-film intake rehearsed on a mock
 film before November.
-
-## Waiting for Ana's OK (not released)
-- **Acc. column** (branch `acc-column`, v128): the Speaks column's label (Speaks ⇄) swaps that column for accessories
-  (per phone, `src/accessories.js`); preset rows get optional `acc: [gear ids]`; ✎ edits it with a picker of Gear straps,
-  pouches, lav furs/covers, foam mounts (character's `usual_acc` first); pills = lav pills (label Waist/Ankle/Pouch, `accLabel`);
-  in Acc. mode the column is as wide as Lav. Ana's rule: reuse the existing classes and layout, never redesign the Mics/IFB UI.
-  To release: merge `acc-column` into main, push, wait for v128 live.
 
 ## Open / next (none started)
 - Ana to answer: remove misread crew "Antonio Arte Astrid Ardenti"? keep new crew for review instead of auto-apply?
