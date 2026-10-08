@@ -702,3 +702,12 @@ mark.hit--now { background: #f59e0b; box-shadow: 0 0 0 2px #f59e0b; }           
 .gear-tree__name { display: flex; align-items: center; gap: 4px; }
 .gear-tree__name small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .gear-qty { margin-left: 8px; color: var(--muted); font-size: 14px; }
+
+/* Cues top bar with six buttons on a phone (v120): the counter stays on one line, the buttons a bit smaller and
+   their invisible touch areas no longer overlap the next button */
+.cues__top > span:first-child { white-space: nowrap; }
+@media (max-width: 430px) {
+  .cues__top { gap: 6px; }
+  .cues__top .cues__close { width: 42px; height: 42px; }
+  .cues__top .cues__close::after { inset: -3px; }
+}
