@@ -18,6 +18,7 @@ import {
 } from '../gear-rules.js';
 import { toggleTick, clearTicks, moveObject } from '../gear-editing.js';
 import { useGearDrag } from '../parts/gear-drag.js';
+import { textColourFor } from '../colour.js';
 import { ObjectSheet, CategorySheet, Tinted } from '../parts/gear-form.js';
 import { gearImage } from '../export/gear-image.js';
 import { gearText, gearSheets } from '../export/gear-text.js';
@@ -129,9 +130,13 @@ function TreeRow({ project, row, open, toggle, edit, checking, search, drag }) {
   // where a dragged thing lands when let go over this row: in this case, or next to this loose thing
   const drop = box ? item.id : item.inside || '';
   const state = drag.dragging?.id === item.id ? ' gear-tree__row--lifted' : drag.dragging && drag.target === item.id ? ' gear-tree__row--target' : '';
-  return html`<div class=${'gear-tree__row' + state} data-drop=${drop}>${guides}${indent}
+  // a case's whole row is in its colour (Ana, 8 Oct); its band then runs down beside what it holds
+  // (from its own indent: the bands of the cases around it stay as they are)
+  const tint = box && item.color ? `color:${textColourFor(item.color)}` : '';
+  const fill = tint && html`<span class="gear-tree__fill" style=${`left:${depth ? 6 + depth * INDENT - 2 : 0}px;background:${item.color}`}></span>`;
+  return html`<div class=${'gear-tree__row' + state + (tint ? ' gear-tree__row--tinted' : '')} style=${tint} data-drop=${drop}>${fill}${guides}${indent}
     ${box ? chevron : html`<span class="gear-tree__open"></span>`}
-    <button class=${'gear-tree__name' + look} ...${drag.hold(item)} onClick=${() => !drag.wasDrag() && edit(item)}><${Tinted} item=${item} /></button>
+    <button class=${'gear-tree__name' + look} ...${drag.hold(item)} onClick=${() => !drag.wasDrag() && edit(item)}><${Tinted} item=${item} noSquare=${Boolean(tint)} /></button>
     ${item.type && html`<span class="gear-tree__type">${item.type}</span>`}
     <span class="gear-tree__count">${box ? childrenOf(project, item.id).length : item.qty > 1 ? `×${item.qty}` : ''}</span>
     ${checking && html`<button class="gear-tree__tick" onClick=${() => toggleTick(item.id)} aria-label=${on ? `Untick ${item.name}` : `Tick ${item.name}`}>

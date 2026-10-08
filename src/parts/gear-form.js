@@ -13,10 +13,10 @@ import { textColourFor } from '../colour.js';
 import { saveObject, removeObject, saveCategory, moveCaseUp } from '../gear-editing.js';
 import { Icon } from './icons.js';
 
-// the name in a pill of the object's real colour, like the lavs and characters (Ana, 7 Oct); no colour = plain text
-export const Tinted = ({ item }) => (item.color
-  ? html`<span class="gear-pill" style=${`background:${item.color};color:${textColourFor(item.color)}`}>${item.name}</span>`
-  : html`<span class="gear-pill gear-pill--none">${item.name}</span>`);
+// a thing's name with a square of its real colour before it (Ana, 8 Oct: squares, not pills); no colour = a dashed
+// square. noSquare: the row itself is already in the colour (a case in the tree).
+export const Tinted = ({ item, noSquare = false }) => html`${!noSquare && html`<span class=${'gear-chip' + (item.color ? '' : ' gear-chip--none')}
+  style=${item.color ? `background:${item.color}` : ''}></span>`}<span class="gear-name-text">${item.name}</span>`;
 
 
 function Sheet({ title, close, children }) {
