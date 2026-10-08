@@ -112,7 +112,7 @@ function treeRows(project, items, depth, isOpen, search) {
   return [...rows, ...byName.map(item => ({ item, depth }))];
 }
 
-const INDENT = 22;
+const INDENT = 10; // per level: thin coloured stripes, so the names keep the width (Ana, 8 Oct)
 
 function TreeRow({ project, row, open, toggle, edit, checking, search, drag }) {
   const { item, depth } = row;
@@ -120,8 +120,8 @@ function TreeRow({ project, row, open, toggle, edit, checking, search, drag }) {
   // occupies also tinted with that color… the whole square it occupies"); a case with no colour keeps a thin line
   const path = pathOf(project, item).slice(-depth || Infinity).slice(0, depth);
   const guides = path.map((box, d) => html`<span class=${'gear-tree__guide' + (box.color ? ' gear-tree__guide--band' : '')}
-    style=${`left:${6 + d * INDENT + 11}px` + (box.color ? `;background:${box.color}` : '')}></span>`);
-  const indent = html`<span class="gear-tree__indent" style=${`width:${6 + depth * INDENT}px`}></span>`;
+    style=${`left:${d * INDENT}px` + (box.color ? `;background:${box.color}` : '')}></span>`);
+  const indent = html`<span class="gear-tree__indent" style=${`width:${depth * INDENT}px`}></span>`;
   const chevron = html`<button class="gear-tree__open" onClick=${toggle} aria-label=${open ? 'Close' : 'Open'} aria-expanded=${open}>${open ? '▼' : '▶'}</button>`;
   const box = isContainer(project, item);
   const look = (search ? (search.found.has(item.id) ? ' gear-tree__name--found' : ' gear-tree__name--path') : depth === 0 ? ' gear-tree__name--top' : '')
@@ -133,9 +133,9 @@ function TreeRow({ project, row, open, toggle, edit, checking, search, drag }) {
   // a case's whole row is in its colour (Ana, 8 Oct); its band then runs down beside what it holds
   // (from its own indent: the bands of the cases around it stay as they are)
   const tint = box && item.color ? `color:${textColourFor(item.color)}` : '';
-  const fill = tint && html`<span class="gear-tree__fill" style=${`left:${depth ? 6 + depth * INDENT - 2 : 0}px;background:${item.color}`}></span>`;
+  const fill = tint && html`<span class="gear-tree__fill" style=${`left:${depth * INDENT}px;background:${item.color}`}></span>`;
   return html`<div class=${'gear-tree__row' + state + (tint ? ' gear-tree__row--tinted' : '')} style=${tint} data-drop=${drop}>${fill}${guides}${indent}
-    ${box ? chevron : html`<span class="gear-tree__open"></span>`}
+    ${box ? chevron : html`<span class="gear-tree__open gear-tree__open--none"></span>`}
     <button class=${'gear-tree__name' + look} ...${drag.hold(item)} onClick=${() => !drag.wasDrag() && edit(item)}><${Tinted} item=${item} noSquare=${Boolean(tint)} /></button>
     ${item.type && html`<span class="gear-tree__type">${item.type}</span>`}
     <span class="gear-tree__count">${box ? childrenOf(project, item.id).length : item.qty > 1 ? `×${item.qty}` : ''}</span>

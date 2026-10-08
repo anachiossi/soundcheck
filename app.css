@@ -640,11 +640,11 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
 
 /* Gear → Inventory: one tree, like a file explorer */
 .gear-tree__row { position: relative; display: flex; align-items: center; min-height: 44px; padding-right: 4px; border-bottom: 1px solid var(--line); }
-.gear-tree__guide { position: absolute; top: 0; bottom: 0; width: 1px; margin-left: 9px; background: var(--line); }
-.gear-tree__guide--band { width: 19px; margin-left: 0; box-shadow: inset 1px 0 0 var(--chip-edge, rgba(0, 0, 0, .12)), inset -1px 0 0 var(--chip-edge, rgba(0, 0, 0, .12)); }   /* the case's colour, beside what it holds */
+.gear-tree__guide { position: absolute; top: 0; bottom: 0; width: 1px; margin-left: 4px; background: var(--line); }
+.gear-tree__guide--band { width: 8px; margin-left: 0; box-shadow: inset 1px 0 0 var(--chip-edge, rgba(0, 0, 0, .12)), inset -1px 0 0 var(--chip-edge, rgba(0, 0, 0, .12)); }   /* the case's colour, beside what it holds */
 :root[data-theme="dark"] .gear-tree__guide--band { --chip-edge: rgba(255, 255, 255, .3); }
 .gear-tree__indent { flex: none; }
-.gear-tree__open { width: 40px; height: 44px; flex: none; padding: 0; border: 0; background: none; color: var(--ink); font-size: 15px; line-height: 1; }   /* big ▸ / ▾ (Ana, 7 Oct) */
+.gear-tree__open { width: 34px; height: 44px; flex: none; padding: 0; border: 0; background: none; color: var(--ink); font-size: 15px; line-height: 1; }   /* big ▸ / ▾ (Ana, 7 Oct) */
 .gear-tree__name { flex: 1; min-width: 0; min-height: 44px; padding: 0 8px; border: 0; background: none; color: var(--ink); font: inherit;
   text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .gear-tree__name small { color: var(--muted); font-size: inherit; }
@@ -713,3 +713,4 @@ mark.hit--now { background: #f59e0b; box-shadow: 0 0 0 2px #f59e0b; }           
   .cues__top .cues__close { width: 42px; height: 42px; }
   .cues__top .cues__close::after { inset: -3px; }
 }
+.gear-tree__open--none { width: 8px; }   /* a thing has no arrow: no empty space for one (Ana, 8 Oct) */

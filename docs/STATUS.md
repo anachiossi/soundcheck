@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-10-07 · live version **v121** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-10-07 · live version **v122** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
@@ -82,7 +82,7 @@ Ana's mockup "Gear inventory redesign", 2 Oct):
   press, hold and drag a square or name into a case (v97, `parts/gear-drag.js`, `.shots/gear-drag.mjs`);
   a case's sheet lists its cases first with ↑ to reorder them (v108, `moveUpAmongCases`), then the loose things A–Z.
   v117–v121: cases bold with a big ▶ / ▼; a case's row is filled with its colour from its own indent, and that colour
-  runs down as a band beside what it holds; things show a square of their colour (`Tinted`, gear-form.js — tree, Truck,
+  runs down as a thin stripe (10 px per level, v122) beside what it holds; things show a square of their colour (`Tinted`, gear-form.js — tree, Truck,
   a case's sheet); no colour = dashed square; light edges on the dark screen. (Pills tried in v118–v120: Ana said no.)
 - Objects: name, brand, type, qty, colour, nicknames, inside, volume, note + **details** (own fields;
   the type offers the fields others of that type use — `fieldsOfType`). Rules in `src/gear-rules.js`.
