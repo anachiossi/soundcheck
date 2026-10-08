@@ -13,10 +13,9 @@ import { textColourFor } from '../colour.js';
 import { saveObject, removeObject, saveCategory, moveCaseUp } from '../gear-editing.js';
 import { Icon } from './icons.js';
 
-// a thing's name with a square of its real colour before it (Ana, 8 Oct: squares, not pills); no colour = a dashed
-// square. noSquare: the row itself is already in the colour (a case in the tree).
-export const Tinted = ({ item, noSquare = false }) => html`${!noSquare && html`<span class=${'gear-chip' + (item.color ? '' : ' gear-chip--none')}
-  style=${item.color ? `background:${item.color}` : ''}></span>`}<span class="gear-name-text">${item.name}</span>`;
+// a thing's name; its colour is the row's background (Ana, 8 Oct: "no more square — squares are for check boxes only")
+export const Tinted = ({ item }) => html`<span class="gear-name-text">${item.name}</span>`;
+export const tintOf = item => (item.color ? `background:${item.color};color:${textColourFor(item.color)}` : '');
 
 
 function Sheet({ title, close, children }) {
@@ -96,10 +95,10 @@ export function ObjectSheet({ project, object, close, open }) {
       ${box && html`
         <div class="gear-details">
           <span class="gear-details__title">Inside it <small>${holds.length}</small></span>
-          ${inside.boxes.map((item, i) => html`<div class="gear-details__row" key=${item.id}>
+          ${inside.boxes.map((item, i) => html`<div class="gear-details__row" key=${item.id} style=${tintOf(item)}>
             <button type="button" class="gear-details__link" onClick=${() => open(item)}><b>▸</b> <${Tinted} item=${item} />${item.qty > 1 ? html`<small class="gear-qty">×${item.qty}</small>` : ''}</button>
             <button type="button" class="icon-btn" disabled=${i === 0} onClick=${() => moveCaseUp(item.id)} aria-label=${`Move ${item.name} up`}><${Icon} name="up" /></button></div>`)}
-          ${[...inside.loose].sort(byName).map(item => html`<button type="button" key=${item.id} class="gear-details__row gear-details__link" onClick=${() => open(item)}><${Tinted} item=${item} />${item.qty > 1 ? html`<small class="gear-qty">×${item.qty}</small>` : ''}</button>`)}
+          ${[...inside.loose].sort(byName).map(item => html`<button type="button" key=${item.id} class="gear-details__row gear-details__link" style=${tintOf(item)} onClick=${() => open(item)}><${Tinted} item=${item} />${item.qty > 1 ? html`<small class="gear-qty">×${item.qty}</small>` : ''}</button>`)}
           <div class="gear-details__add"><button type="button" class="choice" onClick=${addInside}>+ Add inside</button></div>
         </div>`}
       <label><span>Nicknames (other names it goes by, for the search; commas between)</span>

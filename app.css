@@ -714,3 +714,16 @@ mark.hit--now { background: #f59e0b; box-shadow: 0 0 0 2px #f59e0b; }           
   .cues__top .cues__close::after { inset: -3px; }
 }
 .gear-tree__open--none { width: 8px; }   /* a thing has no arrow: no empty space for one (Ana, 8 Oct) */
+
+/* Gear tree boxes (v125): a case's colour on both sides of what it holds and a bar under it */
+.gear-tree__guide--right { left: auto; margin-left: 0; }
+.gear-tree__guide--left { margin-left: 4px; }
+.gear-tree__guide--band.gear-tree__guide--left, .gear-tree__guide--band.gear-tree__guide--right { margin-left: 0; }
+.gear-tree__closer { position: relative; height: 8px; border-bottom: 1px solid var(--line); }
+.gear-tree__closer .gear-tree__fill { bottom: 0; }
+
+/* v125: every thing's row in its own colour (no squares); text and small labels follow the row's colour */
+.truck-row[style*="background"] .truck-row__number, .truck-row[style*="background"] small,
+.gear-details__row[style*="background"] .gear-qty, .gear-details__row[style*="background"] .icon-btn,
+.gear-details__row[style*="background"] .gear-details__link { color: inherit; }
+.gear-details__link { color: inherit; }
