@@ -14,11 +14,10 @@
 import { html, useState } from '../../vendor/preact-htm.js';
 import { formatStamp, exportName, shortDate, localTodayIso } from '../model.js';
 import {
-  truckOf, ticked, countVolumes, topItems, childrenOf, splitLoose, searchTree, isContainer, startsAsVolume, pathOf,
+  truckOf, ticked, countVolumes, topItems, childrenOf, splitLoose, isContainer, startsAsVolume, searchGear, itemById, itemGroups,
 } from '../gear-rules.js';
 import { toggleTick, clearTicks, moveObject } from '../gear-editing.js';
 import { useGearDrag } from '../parts/gear-drag.js';
-import { textColourFor } from '../colour.js';
 import { ObjectSheet, CategorySheet, Tinted } from '../parts/gear-form.js';
 import { gearImage } from '../export/gear-image.js';
 import { gearText, gearSheets } from '../export/gear-text.js';
@@ -94,92 +93,118 @@ function History({ project }) {
     </details>`;
 }
 
-// ---- Inventory: the tree ----
+// ---- Inventory: one case at a time (v127, Ana's pick from the study "Gear inventory — UI study": A + Items 3) ----
+// Like Files / Finder: the top level lists the carts and cases; tap one to open it as its own screen, with
+// its path on top (Gear › Maverick › Lav Acessories #1) to jump back. Inside: its cases (a case icon in
+// the case's colour, the count, ›), then its items on paper, grouped by type with short names (STRAPS:
+// Ankle beige ×2…). Searching lists every match with where it is. No indentation, no frames.
 
-// the rows of the tree, top to bottom: { item, depth }. At each level the cases first (they open), then
-// the loose things in alphabetical order. While searching, `search.shown` says what to draw; inside a
-// matching case everything is drawn.
-function treeRows(project, items, depth, isOpen, search) {
-  const visible = search ? items.filter(item => search.shown.has(item.id)) : items;
-  const { boxes, loose } = splitLoose(project, visible);
-  const rows = [];
-  for (const item of boxes) {
-    rows.push({ item, depth });
-    const inner = search && search.found.has(item.id) ? null : search;
-    if (isOpen(item.id)) {
-      rows.push(...treeRows(project, childrenOf(project, item.id), depth + 1, isOpen, inner));
-      rows.push({ item, depth, closer: true }); // the bottom of the box (Ana, 8 Oct: "look more like a container")
-    }
-  }
-  const byName = [...loose].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true }));
-  return [...rows, ...byName.map(item => ({ item, depth }))];
+// the case icon of the study, in the case's colour (an outline when it has none, or a very light one)
+function CaseIcon({ color, size = 28 }) {
+  // a light or a very dark colour gets a grey edge, so it shows on a white card and on the dark screen
+  const [r, g, b] = color && /^#[0-9a-f]{6}$/i.test(color) ? [1, 3, 5].map(i => parseInt(color.slice(i, i + 2), 16)) : [255, 255, 255];
+  const lum = (r * 299 + g * 587 + b * 114) / 255000;
+  const stroke = lum > 0.8 || lum < 0.2 ? 'var(--muted)' : color;
+  return html`<svg class="gear-caseicon" width=${size} height=${size} viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M9 6.5V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1.5" fill="none" stroke=${stroke} stroke-width="1.6" />
+    <rect x="2.5" y="6.5" width="19" height="14" rx="3" fill=${color || 'none'} stroke=${stroke} stroke-width="1.2" /></svg>`;
 }
 
-const INDENT = 10; // per level: thin coloured stripes, so the names keep the width (Ana, 8 Oct)
+const Dot = ({ item }) => html`<span class=${'gear-dot gear-dot--big' + (item.color ? '' : ' gear-dot--none')}
+  style=${item.color ? `background:${item.color}` : ''}></span>`;
 
-// each open case is a box (Ana, 8 Oct): its colour on both sides of what it holds and a bar under it; the top
-// level (where the carts are) has no frame. A case with no colour: thin grey lines instead.
-function frames(path) {
-  return path.flatMap((box, k) => ['left', 'right'].map(side => html`<span key=${side + k}
-    class=${'gear-tree__guide gear-tree__guide--' + side + (box.color ? ' gear-tree__guide--band' : '')}
-    style=${`${side}:${k * INDENT}px` + (box.color ? `;background:${box.color}` : '')}></span>`));
-}
-
-function TreeCloser({ project, row }) {
-  const { item, depth } = row;
-  const path = pathOf(project, item).slice(-depth || Infinity).slice(0, depth);
-  return html`<div class="gear-tree__closer">${frames(path)}<span class="gear-tree__fill"
-    style=${`left:${depth * INDENT}px;right:${depth * INDENT}px;background:${item.color || 'var(--line-strong)'}`}></span></div>`;
-}
-
-function TreeRow({ project, row, open, toggle, edit, checking, search, drag }) {
-  const { item, depth } = row;
-  const path = pathOf(project, item).slice(-depth || Infinity).slice(0, depth);
-  const level = d => d * INDENT;
-  const guides = frames(path);
-  const indent = html`<span class="gear-tree__indent" style=${`width:${level(depth)}px`}></span>`;
-  const chevron = html`<button class="gear-tree__open" onClick=${toggle} aria-label=${open ? 'Close' : 'Open'} aria-expanded=${open}>${open ? '▼' : '▶'}</button>`;
-  const box = isContainer(project, item);
-  const look = (search ? (search.found.has(item.id) ? ' gear-tree__name--found' : ' gear-tree__name--path') : depth === 0 ? ' gear-tree__name--top' : '')
-    + (box ? ' gear-tree__name--case' : '');
+function Tick({ project, item }) {
   const on = ticked(project, item.id);
-  // where a dragged thing lands when let go over this row: in this case, or next to this loose thing
-  const drop = box ? item.id : item.inside || '';
-  const state = drag.dragging?.id === item.id ? ' gear-tree__row--lifted' : drag.dragging && drag.target === item.id ? ' gear-tree__row--target' : '';
-  // a case's whole row is in its colour (Ana, 8 Oct); its band then runs down beside what it holds
-  // (from its own indent: the bands of the cases around it stay as they are)
-  const tint = box && item.color ? `color:${textColourFor(item.color)}` : ''; // cases in their colour; things on paper
-  const fill = html`<span class=${'gear-tree__fill' + (tint ? '' : ' gear-tree__fill--paper')}
-    style=${`left:${level(depth)}px;right:${level(depth)}px` + (tint ? `;background:${item.color}` : '')}></span>`;
-  return html`<div class=${'gear-tree__row' + state + (tint ? ' gear-tree__row--tinted' : '')} style=${tint + `;padding-right:${4 + level(depth)}px`} data-drop=${drop}>${fill}${guides}${indent}
-    ${box ? chevron : html`<span class="gear-tree__open gear-tree__open--none"></span>`}
-    <button class=${'gear-tree__name' + look} ...${drag.hold(item)} onClick=${() => !drag.wasDrag() && edit(item)}><${Tinted} item=${item} noDot=${Boolean(tint)} /></button>
-    ${item.type && html`<span class="gear-tree__type">${item.type}</span>`}
-    <span class="gear-tree__count">${box ? childrenOf(project, item.id).length : item.qty > 1 ? `×${item.qty}` : ''}</span>
-    ${checking && html`<button class="gear-tree__tick" onClick=${() => toggleTick(item.id)} aria-label=${on ? `Untick ${item.name}` : `Tick ${item.name}`}>
-      <${CheckBox} on=${on} /></button>`}
+  return html`<button class="gear-tick" onClick=${event => { event.stopPropagation(); toggleTick(item.id); }}
+    aria-label=${on ? `Untick ${item.name}` : `Tick ${item.name}`}><${CheckBox} on=${on} /></button>`;
+}
+
+function CaseRows({ project, boxes, open, checking, drag }) {
+  return html`<div class="gear-cases">
+    ${boxes.map(item => {
+      const state = drag.dragging?.id === item.id ? ' gear-case--lifted' : drag.dragging && drag.target === item.id ? ' gear-case--target' : '';
+      return html`<div key=${item.id} class=${'gear-case' + state} data-drop=${item.id}>
+        <button class="gear-case__open" ...${drag.hold(item)} onClick=${() => !drag.wasDrag() && open(item.id)}>
+          <${CaseIcon} color=${item.color} />
+          <span class="gear-case__text"><span class="gear-case__name">${item.name}</span>
+            ${item.type && html`<span class="gear-case__type">${item.type}</span>`}</span>
+          <span class="gear-case__count">${childrenOf(project, item.id).length}</span>
+          <span class="gear-case__go" aria-hidden="true">›</span>
+        </button>
+        ${checking && html`<${Tick} project=${project} item=${item} />`}
+      </div>`;
+    })}</div>`;
+}
+
+function ItemList({ project, items, edit, checking, drag, inside }) {
+  return html`<div class="gear-paper" data-drop=${inside}>
+    ${itemGroups(items).map(group => html`
+      <div class="gear-paper__group" key=${group.key || 'other'}>
+        <div class="gear-paper__head"><span>${group.title}</span><small>${group.items.length}</small></div>
+        ${group.items.map(({ item, name }) => html`
+          <div key=${item.id} class=${'gear-paper__row' + (drag.dragging?.id === item.id ? ' gear-case--lifted' : '')} data-drop=${inside}>
+            <button class="gear-paper__item" ...${drag.hold(item)} onClick=${() => !drag.wasDrag() && edit(item)}>
+              <${Dot} item=${item} /><span class="gear-paper__name">${name}</span>
+              ${item.qty > 1 && html`<span class="gear-paper__qty">×${item.qty}</span>`}
+            </button>
+            ${checking && html`<${Tick} project=${project} item=${item} />`}
+          </div>`)}
+      </div>`)}
   </div>`;
 }
 
+// C: every match with where it is (the case icons of its path); tap a case to open it, a thing to edit it
+function SearchResults({ project, query, open, edit }) {
+  const results = searchGear(project, query);
+  if (!results.length) return html`<p class="empty">Nothing found for “${query}”.</p>`;
+  return html`<div class="gear-results">
+    ${results.map(({ item, path }) => {
+      const box = isContainer(project, item);
+      return html`<button key=${item.id} class="gear-result" onClick=${() => (box ? open([...path.map(p => p.id), item.id]) : edit(item))}>
+        <span class="gear-result__top">${box ? html`<${CaseIcon} color=${item.color} size=${22} />` : html`<${Dot} item=${item} />`}
+          <span class="gear-result__name">${item.name}</span>${item.qty > 1 && html`<span class="gear-paper__qty">×${item.qty}</span>`}</span>
+        ${path.length > 0 && html`<span class="gear-result__path">${path.map((p, i) => html`<span key=${p.id}>
+          <${CaseIcon} color=${p.color} size=${14} /> ${p.name}${i < path.length - 1 ? html`<i>›</i>` : ''}</span>`)}</span>`}
+      </button>`;
+    })}</div>`;
+}
+
 export function GearInventoryScreen({ state }) {
-  const { project, gearQuery = '', gearOpen = {}, gearChecking = false } = state;
+  const { project, gearQuery = '', gearPath = [], gearChecking = false } = state;
   const [sheet, edit] = useSheet(project);
-  const search = gearQuery.trim() ? searchTree(project, gearQuery) : null;
-  // while searching, the way down to each match is open (a matching case opens like any other)
-  const isOpen = id => (search && !search.found.has(id) ? true : Boolean(gearOpen[id]));
-  const toggle = id => setState({ gearOpen: { ...gearOpen, [id]: !gearOpen[id] } });
-  const drag = useGearDrag(project, { open: id => setState({ gearOpen: { ...getState().gearOpen, [id]: true } }), move: moveObject });
-  const rows = treeRows(project, topItems(project), 0, isOpen, search);
+  // the open case and the cases above it (a case removed meanwhile cuts the path there)
+  const chain = [];
+  for (const id of gearPath) { const box = itemById(project, id); if (!box) break; chain.push(box); }
+  const here = chain[chain.length - 1] || null;
+  const openPath = ids => setState({ gearPath: ids, gearQuery: '' });
+  const goTo = depth => setState({ gearPath: chain.slice(0, depth).map(b => b.id) });
+  const open = id => setState({ gearPath: [...chain.map(b => b.id), id] });
+  const drag = useGearDrag(project, { open, move: moveObject });
+  const query = gearQuery.trim();
+  const items = here ? childrenOf(project, here.id) : topItems(project);
+  const { boxes, loose } = splitLoose(project, items);
   const ticks = Object.keys(project.gearChecks || {}).length;
-  const newObject = () => edit({ category: 'other', volume: startsAsVolume(project, 'other') });
+  const newObject = () => edit(here ? { inside: here.id, category: 'other', volume: false } : { category: 'other', volume: startsAsVolume(project, 'other') });
   return html`
     <div class="gear">
-      <div class="gear-search">
+      ${!here && html`<div class="gear-search">
         <input type="search" value=${gearQuery} placeholder="Search: xlr, wood box, schoeps…" aria-label="Search the gear"
-               onInput=${e => setState({ gearQuery: e.target.value })} />
-      </div>
+               onInput=${e => setState({ gearQuery: e.target.value })} /></div>`}
+      ${here && !query && html`
+        <nav class="gear-path" aria-label="Where you are">
+          <button onClick=${() => goTo(0)}>Gear</button>
+          ${chain.map((box, i) => html`<span key=${box.id}><i>›</i>${i < chain.length - 1
+            ? html`<button onClick=${() => goTo(i + 1)}>${box.name}</button>` : html`<b>${box.name}</b>`}</span>`)}
+        </nav>
+        <div class="gear-here">
+          <button class="gear-here__back" onClick=${() => goTo(chain.length - 1)} aria-label="Back"><${Icon} name="back" /></button>
+          <${CaseIcon} color=${here.color} size=${34} />
+          <span class="gear-here__text"><strong>${here.name}</strong>
+            <small>${[here.type, `${items.length} ${items.length === 1 ? 'thing' : 'things'}`].filter(Boolean).join(' · ')}</small></span>
+          <button class="icon-btn" onClick=${() => edit(here)} aria-label=${`Edit ${here.name}`}><${Icon} name="edit" /></button>
+        </div>`}
       <div class="gear__head">
-        <span class="muted">${search ? (search.found.size ? `${search.found.size} found` : 'Nothing found') : ''}</span>
+        <span class="muted">${query ? '' : ''}</span>
         <span class="gear__actions">
           <button class=${'btn' + (gearChecking ? ' btn--primary' : '')} aria-pressed=${gearChecking}
                   onClick=${() => setState({ gearChecking: !gearChecking })}>☑ Check</button>
@@ -190,15 +215,15 @@ export function GearInventoryScreen({ state }) {
         <div class="gear-checking"><span>Checking · ${ticks} ticked</span>
           <button class="btn" disabled=${!ticks} onClick=${() => clearTicks(Object.keys(project.gearChecks || {}))}>Clear</button>
           <button class="btn btn--primary" onClick=${() => setState({ gearChecking: false })}>Done</button></div>`}
-      ${rows.length === 0 && !search && html`<p class="empty">Nothing yet. + Add the first cart or case.</p>`}
-      ${rows.length > 0 && html`
-        <div class=${'gear-tree' + (drag.dragging ? ' gear-tree--dragging' : '')}>
-          ${drag.dragging && html`<div class=${'gear-tree__out' + (drag.target === '' ? ' gear-tree__row--target' : '')} data-drop="">↑ Out of every case</div>`}
-          ${rows.map(row => row.closer ? html`<${TreeCloser} key=${'end-' + row.item.id} project=${project} row=${row} />` : html`<${TreeRow} key=${row.item.id} project=${project} row=${row} open=${isOpen(row.item.id)}
-            toggle=${() => toggle(row.item.id)} edit=${edit} checking=${gearChecking} search=${search} drag=${drag} />`)}
-        </div>`}
+      ${drag.dragging && html`<div class=${'gear-tree__out' + (drag.target === '' ? ' gear-tree__row--target' : '')} data-drop="">↑ Out of every case</div>`}
+      ${query ? html`<${SearchResults} project=${project} query=${query} open=${openPath} edit=${edit} />` : html`
+        ${!items.length && html`<p class="empty">${here ? 'Empty. + Add what goes inside.' : 'Nothing yet. + Add the first cart or case.'}</p>`}
+        ${boxes.length > 0 && html`<p class="gear-label">${here ? 'CASES INSIDE' : 'CARTS AND CASES'} · ${boxes.length}</p>
+          <${CaseRows} project=${project} boxes=${boxes} open=${open} checking=${gearChecking} drag=${drag} />`}
+        ${loose.length > 0 && html`<p class="gear-label">ITEMS · ${loose.length}</p>
+          <${ItemList} project=${project} items=${loose} edit=${edit} checking=${gearChecking} drag=${drag} inside=${here ? here.id : ''} />`}`}
       ${drag.ghost}
-      <div class="toolbar"><button class="btn btn--primary" onClick=${newObject}>+ Add</button></div>
+      <div class="toolbar"><button class="btn btn--primary" onClick=${newObject}>+ Add${here ? ` in ${here.name}` : ''}</button></div>
       ${sheet}
     </div>`;
 }

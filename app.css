@@ -741,3 +741,49 @@ mark.hit--now { background: #f59e0b; box-shadow: 0 0 0 2px #f59e0b; }           
 .gear-dot--none { background: none; box-shadow: inset 0 0 0 1.5px var(--muted-2); }
 .gear-tree__closer { border-bottom: 0; }
 .truck-row, .gear-details__row { border-bottom-color: transparent; }
+
+/* ---- Gear Inventory v127: one case at a time (the study's A + Items 3) ---- */
+.gear-path { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; font-size: 13px; color: var(--muted); margin: 2px 0 6px; }
+.gear-path button { border: 0; background: none; padding: 6px 2px; font: inherit; font-weight: 600; color: var(--ink-soft); }
+.gear-path i { font-style: normal; color: var(--muted-2); padding: 0 3px; }
+.gear-path b { font-weight: 400; color: var(--muted); }
+.gear-here { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+.gear-here__back { width: 44px; height: 44px; flex: none; border: 0; border-radius: 12px; background: var(--card); color: var(--ink);
+  display: flex; align-items: center; justify-content: center; }
+.gear-here__back .icon { width: 22px; height: 22px; }
+.gear-here__text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.gear-here__text strong { font-size: 22px; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gear-here__text small { font-size: 13px; color: var(--muted); }
+.gear-caseicon { flex: none; }
+.gear-label { margin: 16px 4px 6px; font-size: 12px; font-weight: 700; letter-spacing: .06em; color: var(--muted); }
+.gear-cases { background: var(--card); border-radius: 14px; overflow: hidden; }
+.gear-case { display: flex; align-items: center; }
+.gear-case + .gear-case { box-shadow: inset 0 1px 0 var(--line); }
+.gear-case__open { flex: 1; min-width: 0; min-height: 58px; display: flex; align-items: center; gap: 12px; padding: 8px 12px;
+  border: 0; background: none; font: inherit; color: var(--ink); text-align: left; }
+.gear-case__text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.gear-case__name { font-size: 17px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gear-case__type { font-size: 13px; color: var(--muted); }
+.gear-case__count { font-size: 15px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.gear-case__go { font-size: 22px; color: var(--muted-2); line-height: 1; }
+.gear-case--lifted { opacity: .35; }
+.gear-case--target { box-shadow: inset 0 0 0 2px var(--accent); background: var(--accent-soft); }
+.gear-paper { background: var(--paper); border-radius: 14px; padding: 4px 16px 12px; }
+.gear-paper__head { display: flex; justify-content: space-between; align-items: baseline; padding: 14px 0 4px;
+  font-size: 13px; font-weight: 800; letter-spacing: .08em; color: var(--muted); }
+.gear-paper__head small { font-weight: 400; letter-spacing: 0; color: var(--muted-2); }
+.gear-paper__row { display: flex; align-items: center; }
+.gear-paper__item { flex: 1; min-width: 0; min-height: 48px; display: flex; align-items: center; gap: 14px; padding: 0;
+  border: 0; background: none; font: inherit; color: var(--ink); text-align: left; }
+.gear-paper__name { flex: 1; min-width: 0; font-size: 19px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gear-paper__qty { font-size: 18px; font-weight: 600; color: var(--ink-soft); }
+.gear-dot--big { width: 15px; height: 15px; }
+.gear-tick { width: 44px; height: 44px; flex: none; display: flex; align-items: center; justify-content: center; border: 0; background: none; }
+.gear-results { display: flex; flex-direction: column; gap: 8px; }
+.gear-result { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border: 0; border-radius: 14px; background: var(--card);
+  font: inherit; color: var(--ink); text-align: left; }
+.gear-result__top { display: flex; align-items: center; gap: 10px; }
+.gear-result__name { flex: 1; min-width: 0; font-size: 17px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gear-result__path { display: flex; flex-wrap: wrap; gap: 4px; padding-left: 25px; font-size: 13px; color: var(--ink-soft); }
+.gear-result__path span { display: inline-flex; align-items: center; gap: 4px; }
+.gear-result__path i { font-style: normal; color: var(--muted-2); padding-left: 4px; }

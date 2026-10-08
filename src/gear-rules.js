@@ -208,3 +208,41 @@ export function fieldsOfType(project, type) {
   const seen = new Set();
   return labels.filter(label => !seen.has(plain(label)) && seen.add(plain(label)));
 }
+
+// ---- Inventory v127: browse one case at a time (Ana, 8 Oct, the "A" study + Items "3") ----
+
+// a thing's name without its type word, when the group heading already says it: under STRAPS,
+// "Ankle strap beige" → "Ankle beige"; "Pouch big black" (pouches) → "Big black". Never empty.
+export function shortName(item) {
+  const type = plain(item.type || '').trim();
+  if (!type) return item.name;
+  const forms = [...new Set([type, type.replace(/es$/, ''), type.replace(/s$/, '')])].filter(f => f.length > 2);
+  let name = item.name;
+  const escape = text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  for (const form of forms) name = name.replace(new RegExp(`(^|\\s)${escape(form)}(?=\\s|$)`, 'i'), ' ');
+  name = name.replace(/\s+/g, ' ').trim();
+  if (!name || name.length < 2 || plain(name) === plain(item.name)) return item.name;
+  return name[0].toUpperCase() + name.slice(1);
+}
+
+// the things of a case, grouped by type like a hand-made list: [{ title: 'STRAPS', items: [{ item, name }] }]
+// (types A–Z, OTHER last; inside a group A–Z by the short name)
+export function itemGroups(items) {
+  const groups = new Map();
+  for (const item of items) {
+    const key = plain(item.type || '').trim();
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(item);
+  }
+  const title = key => (!key ? 'OTHER' : /s$/.test(key) ? key.toUpperCase() : `${key.toUpperCase()}S`);
+  const byName = (a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true });
+  // a heading over one thing is noise: a type with a single thing goes to OTHER (full name), unless all are single
+  if ([...groups.values()].some(list => list.length > 1)) {
+    for (const [key, list] of [...groups.entries()]) {
+      if (key && list.length === 1) { groups.delete(key); groups.set('', [...(groups.get('') || []), ...list]); }
+    }
+  }
+  return [...groups.entries()]
+    .map(([key, list]) => ({ key, title: title(key), items: list.map(item => ({ item, name: key ? shortName(item) : item.name })).sort(byName) }))
+    .sort((a, b) => (!a.key) - (!b.key) || a.title.localeCompare(b.title));
+}

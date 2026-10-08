@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-10-07 · live version **v126** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-10-07 · live version **v127** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
@@ -81,9 +81,10 @@ Ana's mockup "Gear inventory redesign", 2 Oct):
   searching shows the matches inside the cases they are in; ticks only in ☑ Check mode;
   press, hold and drag a square or name into a case (v97, `parts/gear-drag.js`, `.shots/gear-drag.mjs`);
   a case's sheet lists its cases first with ↑ to reorder them (v108, `moveUpAmongCases`), then the loose things A–Z.
-  v117–v126: cases bold with a big ▶ / ▼, each case's row in its colour; each open case is a box (its colour on both
-  sides and a bar under it; no frame for the top level); inside, a list on paper (`--paper`), no lines, a • of each thing's
-  colour (`Tinted`, gear-form.js — tree, Truck, a case's sheet); squares only for check boxes; 10 px per level.
+  v127 (Ana's pick from the study canvas "Gear inventory — UI study"): Inventory browses ONE case at a time, like
+  Files / Finder — path on top (Gear › Maverick › Lav Acessories #2), ‹ back, ✎ edits the open case; its cases (case icon
+  in their colour, count, ›), then ITEMS on paper grouped by type with short names (`itemGroups`, `shortName`; one-thing
+  types go to OTHER); search lists every match with its path. State `gearPath`. Truck / sheet: dots (`Tinted`).
 - Objects: name, brand, type, qty, colour, nicknames, inside, volume, note + **details** (own fields;
   the type offers the fields others of that type use — `fieldsOfType`). Rules in `src/gear-rules.js`.
 - Manuals by brand (`docs/manuals/<brand>/`, `gear/manuals.json`). Hours / timesheet live in Projects.

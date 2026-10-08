@@ -142,3 +142,17 @@ test('↑ moves a case up among the cases next to it; loose things and other cas
   assert.equal(moveUpAmongCases(project, 'b'), null); // already the first case in the crate
   assert.deepEqual(moveUpAmongCases(project, 'd').map(i => i.id), ['d', 'b', 'x', 'old', 'c', 'a']);
 });
+
+test('Items grouped by type, names without the type word (v127)', async () => {
+  const { itemGroups, shortName } = await import('../src/gear-rules.js');
+  assert.equal(shortName({ name: 'Ankle strap beige', type: 'strap' }), 'Ankle beige');
+  assert.equal(shortName({ name: 'Pouch big black', type: 'pouches' }), 'Big black');
+  assert.equal(shortName({ name: 'Goo Gone', type: 'spray' }), 'Goo Gone');
+  assert.equal(shortName({ name: 'Tape', type: 'tape' }), 'Tape'); // never empty
+  const groups = itemGroups([
+    { name: 'Waist strap beige', type: 'strap' }, { name: 'Ankle strap black', type: 'strap' },
+    { name: 'Scissors' }, { name: 'Pouch big black', type: 'pouches' }, { name: 'Goo Gone', type: 'spray' }]);
+  assert.deepEqual(groups.map(g => g.title), ['STRAPS', 'OTHER']); // one-thing types go to OTHER, full names
+  assert.deepEqual(groups[0].items.map(i => i.name), ['Ankle black', 'Waist beige']);
+  assert.deepEqual(groups[1].items.map(i => i.name), ['Goo Gone', 'Pouch big black', 'Scissors']);
+});
