@@ -5,7 +5,8 @@
 //     enters. Lea screams." — cues-map-rules.js): who enters, leaves, dies, cries, laughs, screams… Each line laid out like the script page — the name centred, the line under it, one phrase per row, each with a tab
 //     (Ana, 7 Oct: "show the entire line" — hands-free while booming, with ▶ auto-scroll)
 //   • 🔍 search: every match highlighted, ↑ ↓ from one to the next (parts/line-search.js)
-//   • tap a line → it opens the mic (🎙 Cues from that line) — the same mic as everywhere
+//   • tap a line → the mic (🎙 Cues from that line) — the same mic as everywhere — and ✎, which edits the line
+//     right here, in the same panel as in Cues (Ana, 9 Oct: "without open another window")
 //   • full screen (a moment to focus): a slim row with Cues · Timeline … ✕ instead of a header
 // Changes made in Cues (✎) show here at once, because the map is made from the same lines (cueLines).
 // Used by: main.js (from the Cues tab, or the map button in Cues)
@@ -19,12 +20,14 @@ import { setState } from '../state.js';
 import { Icon } from '../parts/icons.js';
 import { AutoScroll } from '../parts/auto-scroll.js';
 import { SearchBar, Marked, currentMatch } from '../parts/line-search.js';
+import { CueLineEditor } from '../parts/cue-line-editor.js';
 
 export function CuesMapScreen({ state }) {
   const { project, cuesScene } = state;
   const [open, setOpen] = useState(null); // the line showing its mic
   const [here, setHere] = useState(0);    // the line being read: the ▼ over the colour strip (Ana, 7 Oct)
   const [search, setSearch] = useState(null); // 🔍 { query, at } while the search bar is open
+  const [editor, setEditor] = useState(null); // ✎ { index, adding } while a line is being edited
   const cues = cueLines(project, cuesScene);
   useEffect(() => {
     let frame = 0;
@@ -104,10 +107,16 @@ export function CuesMapScreen({ state }) {
                 ${phrasesOf(cues.lines[row.index].text).map((phrase, k) => html`<span class="map-line__phrase" key=${k}><${Marked} text=${phrase}
                   query=${search?.query} now=${found && found.line === row.index && found.phrase === k ? found.nth : -1} /></span>`)}
                 ${notes.length > 0 && html`<small>${notes.join(' · ')}</small>`}
-                ${isOpen && html`<button class="icon-btn map-line__learn" aria-label="Cues from this line"
-                  onClick=${event => { event.stopPropagation(); learnFrom(row.index); }}><${Icon} name="cues" /></button>`}
+                ${isOpen && html`<span class="map-line__learn">
+                  <button class="icon-btn" aria-label="Cues from this line"
+                    onClick=${event => { event.stopPropagation(); learnFrom(row.index); }}><${Icon} name="cues" /></button>
+                  <button class="icon-btn" aria-label="Edit this line"
+                    onClick=${event => { event.stopPropagation(); setEditor({ index: row.index, adding: null }); }}><${Icon} name="edit" /></button>
+                </span>`}
               </span>
             </div>`;
         })}
-      </section>`)}`;
+      </section>`)}
+    ${editor && html`<${CueLineEditor} key=${`${editor.index}-${editor.adding}`} project=${project} sceneId=${cuesScene}
+      cues=${cues} editor=${editor} setEditor=${setEditor} close=${() => setEditor(null)} goTo=${index => { setOpen(index); jump(index); }} />`}`;
 }

@@ -1,7 +1,7 @@
 // cue-line-editor.js — the panel that slides up over 🎙 Cues when you tap ✎:
 // change who says the line and its words, delete it, or add a new line before / after it.
 // Saved at once (cues-editing.js); works offline, uploaded when there is internet.
-// Used by: screens/cues.js
+// Used by: screens/cues.js, screens/cues-map.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
 import { naturalCompare } from '../model.js';
