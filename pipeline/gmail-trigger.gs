@@ -127,6 +127,76 @@ function checkBedtime() {
   }
 }
 
+// ---- Alarms, automatic ----------------------------------------------------------------------------
+// The iPhone asks this every evening (a Shortcuts automation at 21:00 and 23:00, Ana 9 Oct: she didn't
+// tap ⏰ and the alarm wasn't set): https://script.google.com/macros/s/…/exec?key=<ALARM_KEY>
+// Answer, as plain text:
+//   06:00;06:45  the next morning is a shooting day: wake and leave (the same as the app's ⏰ Set alarms)
+//   none         no shooting tomorrow (weekend, day off): the shortcut deletes the soundcheck alarms
+// "The next morning" = today when asked before noon (after midnight), else tomorrow; a Monday call is
+// never set on Friday (Sunday's run sets it). The times of an ODG not yet reviewed count already, like
+// in the app (hours-rules.js → withWaitingOdgTimes). Several films shooting: the earliest wake.
+// Setup: Script properties → ALARM_KEY = a long random word; Deploy → New deployment → Web app,
+// Execute as: Me, Who has access: Anyone. See docs/HOW_IT_WORKS.md → "Automatic alarms".
+function doGet(e) {
+  const key = PropertiesService.getScriptProperties().getProperty('ALARM_KEY');
+  if (!key || !e || !e.parameter || e.parameter.key !== key) return ContentService.createTextOutput('wrong key');
+  return ContentService.createTextOutput(alarmAnswer(new Date()));
+}
+
+function alarmAnswer(now) {
+  const hour = Number(Utilities.formatDate(now, TIME_ZONE, 'H'));
+  const target = Utilities.formatDate(new Date(now.getTime() + (hour < 12 ? 0 : 24 * 3600 * 1000)), TIME_ZONE, 'yyyy-MM-dd');
+  const plans = [];
+  for (const film of (readRepo('projects') || []).filter(item => item.type === 'dir').map(item => item.name)) {
+    const settings = readRepo(`projects/${film}/settings.json`, true);
+    if (!settings || !settings.commute) continue;
+    const schedule = withWaitingOdgTimes(readRepo(`projects/${film}/schedule.json`, true) || [], openOdgs(film));
+    const day = schedule.filter(row => row.date === target && row.call).sort((a, b) => a.order - b.order)[0];
+    const plan = day && wakeAndLeave(Object.assign({}, COMMUTE, settings.commute), minutesOf(day.call));
+    if (plan) plans.push(plan);
+  }
+  if (!plans.length) return 'none';
+  const first = plans.sort((a, b) => a.wake - b.wake)[0];
+  return `${clockOf(first.wake)};${clockOf(first.leave)}`;
+}
+
+// call → { wake, leave } in minutes (the same sums as hours-rules.js → wakePlan)
+function wakeAndLeave(c, call) {
+  if (call === null || call === undefined) return null;
+  const leave = call - c.meet_before_call - c.travel_max;
+  return { wake: leave - c.get_ready, leave };
+}
+
+const clockOf = m => `${String(Math.floor(((m % 1440) + 1440) % 1440 / 60)).padStart(2, '0')}:${String(((m % 60) + 60) % 60).padStart(2, '0')}`;
+
+// the last few ODG proposals still open (odg-<day>.json)
+function openOdgs(film) {
+  const files = (readRepo(`projects/${film}/proposals`) || []).map(item => item.name).filter(name => /^odg-\d+\.json$/.test(name))
+    .sort((a, b) => Number(a.match(/\d+/)[0]) - Number(b.match(/\d+/)[0])).slice(-3);
+  return files.map(name => readRepo(`projects/${film}/proposals/${name}`, true)).filter(p => p && p.status === 'open');
+}
+
+// the date / call / wrap of the changes not yet decided count (as in the app); the newest ODG wins
+function withWaitingOdgTimes(schedule, odgs) {
+  for (const proposal of odgs.sort((a, b) => (a.day || 0) - (b.day || 0))) {
+    for (const change of proposal.changes || []) {
+      const op = change.op;
+      if ((proposal.decisions || {})[change.id] || !op) continue;
+      const fields = {};
+      for (const k of ['date', 'call', 'wrap']) if (op.fields && op.fields[k]) fields[k] = op.fields[k];
+      if (!Object.keys(fields).length) continue;
+      const known = schedule.some(row => row.day === op.day);
+      if (op.op === 'set_day' || (op.op === 'set_day_scenes' && known)) {
+        schedule = schedule.map(row => (row.day === op.day ? Object.assign({}, row, fields) : row));
+      } else if (op.op === 'set_day_scenes') {
+        schedule = schedule.concat([Object.assign({ day: op.day, order: 1, scene_id: '' }, fields)]);
+      }
+    }
+  }
+  return schedule;
+}
+
 function minutesOf(time) {
   const match = /^(\d{1,2})[:.](\d{2})$/.exec(String(time || '').trim());
   return match ? Number(match[1]) * 60 + Number(match[2]) : null;

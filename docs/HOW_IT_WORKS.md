@@ -84,6 +84,27 @@ Which emails belong to a film: `projects/<film>/inbox.json` in the data repo.
 5. ⏰ Triggers → the timer → ✎ → Failure notification: **Notify me immediately**.
 Check: Executions (☰ list icon) shows each check; GitHub → Actions shows the runs it started.
 
+### Automatic alarms (no tap) — setup once
+Ana, 9 Oct: she didn't tap ⏰ and the alarm wasn't set. The iPhone now asks the robot every evening.
+- The robot (`doGet` → `alarmAnswer` in `pipeline/gmail-trigger.gs`) answers `06:00;06:45` (wake;leave, the
+  same sums as the app's ⏰) when the next morning is a shooting day, or `none` (weekend, day off). Before noon
+  "next morning" = today; else tomorrow — so Friday's run says `none` and Sunday's sets Monday. An ODG not yet
+  reviewed counts already. Tested with a fake Google on the real LBE data (Fri/Sat → none, Sun → 05:30;06:15).
+- In Apps Script: paste the new `gmail-trigger.gs` → Script properties → `ALARM_KEY` = a long random word →
+  Deploy → New deployment → ⚙ Web app → Execute as **Me**, Who has access **Anyone** → copy the URL.
+  Test in Safari: `<URL>?key=<ALARM_KEY>` shows `none` or the times. (A new version of the script needs
+  Deploy → Manage deployments → ✎ → Version: New, or the URL keeps the old code.)
+- Shortcut **soundcheck auto alarms** (Shortcuts app):
+  1. **Get Contents of URL** (Obter Conteúdo do URL): `<URL>?key=<ALARM_KEY>`
+  2. **If** Contents of URL **contains** `;` → **Run Shortcut** (Executar Atalho) *soundcheck alarms*, input =
+     Contents of URL → **Show Notification** "⏰ " + Contents of URL
+  3. **Otherwise** → **Find Alarms** (label contains `soundcheck`) → **Delete Alarms** → **Show Notification**
+     "No shooting tomorrow — no alarm"
+  No internet → step 1 fails and the shortcut stops: the alarms already set stay (tap ⏰ in the app).
+- Automations (Automação → + → Time of Day): **20:00** daily and **22:30** daily, **Run Immediately**, each
+  runs *soundcheck auto alarms*. Running twice is harmless (old soundcheck alarms are deleted first); the
+  second catches a late ODG.
+
 ### ✉ badge in the app (emails checked · Check emails now)
 The top bar shows when Gmail was last checked (variable `LAST_GMAIL_CHECK`, set by the Gmail trigger at
 every check); orange after 30 minutes without a check or when the robot's last run failed. Tap it:

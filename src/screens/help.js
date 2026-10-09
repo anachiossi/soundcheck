@@ -44,6 +44,9 @@ export function HelpScreen() {
           time = that item, label <b>soundcheck · Leave home</b>.</li>
         <li>In the shortcut's settings (ⓘ), turn off "Show When Run" if you like.</li>
       </ol>
+      <p><b>Automatic, without the tap:</b> a second shortcut, <b>soundcheck auto alarms</b>, asks the robot every
+        evening (Shortcuts → Automation, 20:00 and 22:30, Run Immediately). On a shooting eve it sets the alarms;
+        on a weekend or day off it removes the soundcheck alarms. Steps: docs/HOW_IT_WORKS.md → "Automatic alarms".</p>
       <p class="muted">The robot also sends a notification when tomorrow's ODG arrives, and one at bedtime 💤.</p>
 
       <h2 class="section-title">Hearing the lines</h2>
