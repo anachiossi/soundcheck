@@ -814,3 +814,6 @@ mark.hit--now { background: #f59e0b; box-shadow: 0 0 0 2px #f59e0b; }           
 /* an Acc. cell is as tall as a pill even when empty, so its label lines up with CHARACTER · TX · LAV (Ana, 8 Oct) */
 .acc { min-height: var(--pill-h); justify-content: center; }
 .acc--empty { display: flex; align-items: center; justify-content: center; min-height: var(--pill-h); }
+/* accessory words in a smaller font, so "Pouch" fits whole in the narrow edit column (Ana, 9 Oct) */
+.pill--acc { padding-left: 4px; padding-right: 4px; }
+.pill--acc b { font-size: 13px; letter-spacing: 0; }
