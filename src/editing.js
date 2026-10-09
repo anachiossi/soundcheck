@@ -6,7 +6,7 @@
 // Used by: parts/scene-editor.js, parts/picker.js, parts/scene-table.js
 
 import { getState, setState, saveAndShow, showMessage } from './state.js';
-import { emptyRow, newKey, cleanRows } from './preset-rules.js';
+import { emptyRow, newKey, cleanRows, sameDayKit } from './preset-rules.js';
 import { syncNow } from './sync.js';
 import { presetFile } from './store/repo-files.js';
 
@@ -75,7 +75,15 @@ export async function saveEdit() {
   const savedAt = new Date().toISOString();
   const presets = { ...project.presets, [edit.sceneId]: { scene_id: edit.sceneId, updated_at: savedAt, rows } };
   const outbox = { ...project.outbox, [presetFile(edit.sceneId)]: { saved_at: savedAt } };
+  // the same character keeps the same kit in the day's other scenes (preset-rules.js → sameDayKit)
+  const also = sameDayKit(project, edit.sceneId, rows);
+  for (const [id, otherRows] of Object.entries(also)) {
+    presets[id] = { ...presets[id], scene_id: id, updated_at: savedAt, rows: otherRows };
+    outbox[presetFile(id)] = { saved_at: savedAt };
+  }
   await saveAndShow({ ...project, presets, outbox }, { edit: null, picker: null });
-  showMessage('ok', `Scene #${edit.sceneId} saved.` + (navigator.onLine ? '' : ' It will upload when there is signal.'));
+  const others = Object.keys(also).map(id => '#' + id).join(', ');
+  showMessage('ok', `Scene #${edit.sceneId} saved.` + (others ? ` Same kit in ${others}.` : '')
+    + (navigator.onLine ? '' : ' It will upload when there is signal.'));
   syncNow();
 }

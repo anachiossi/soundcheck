@@ -104,7 +104,8 @@ def day_plan(film, settings, scene_ids):
 
     # 3. lav
     loud_model = rules.get("lav_rules", {}).get("loud")
-    lavs = sorted(film["lavaliers"], key=lambda l: natural(l["id"]))
+    not_used = {str(m).lower() for m in rules.get("lav_rules", {}).get("not_used", [])}  # e.g. LBE: no 6061 (Ana, 9 Oct)
+    lavs = sorted((l for l in film["lavaliers"] if str(l.get("model", "")).lower() not in not_used), key=lambda l: natural(l["id"]))
     lav, taken = {}, set()
     for cid in people:
         character = characters.get(cid, {})

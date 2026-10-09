@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-10-07 · live version **v130** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-10-07 · live version **v131** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
@@ -27,6 +27,7 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
 **Mics department** (tabs Schedule · Scenes · Cues · Kit · Projects)
 - Schedule Day / Week / All film; every scene = slate (#, INT/EXT, time, set, location, pages,
   story day, synopsis, notes) + 🔊 sound bar + mic table (character · TX · lav · speaks).
+- Same-day kit (v131, `preset-rules.js` → sameDayKit): Save copies the TX, lav and accessories set for a character to that character's rows in the day's other scenes (an emptied TX doesn't travel; another character holding that TX/lav there is emptied). `settings.presets.lav_rules.not_used` hides lav models from the picker and the generator (LBE: 6061).
 - Acc. column (v128, `src/accessories.js`): the Speaks column's label (Speaks ⇄) swaps that column for accessories, per phone;
   rows get optional `acc: [gear ids]`; ✎ picks from Gear straps / pouches / lav furs / covers / foam mounts (character's
   `usual_acc` first); lav-style pills labelled Waist / Ankle / Pouch (`accLabel`); images keep Speaks. Optional everywhere.

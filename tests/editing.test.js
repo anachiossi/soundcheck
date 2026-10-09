@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { warnings, usedByOtherRows, sameDaySuggestions, cleanRows, preferredFor, scenesUsing } from '../src/preset-rules.js';
+import { warnings, usedByOtherRows, sameDaySuggestions, cleanRows, preferredFor, scenesUsing, sameDayKit, lavNotUsed } from '../src/preset-rules.js';
 import { projectToFiles, applyRemote, filesToDownload, formatJson, emptyProject, sameRows, upgradeOutbox } from '../src/store/repo-files.js';
 
 const row = (char_id, tx_id, lav_id, speaker = 'yes') => ({ char_id, tx_id, lav_id, speaker });
@@ -37,6 +37,22 @@ test('the picker greys out what the other rows already use', () => {
 test('suggestions: what the character wears in the other scenes of that day', () => {
   assert.deepEqual(sameDaySuggestions(project, '2', '2'), { tx: ['1'], lav: ['7'] });
   assert.deepEqual(sameDaySuggestions(project, '3', '1'), { tx: [], lav: [] }); // other day
+});
+
+test('a kit set in one scene stays the same in the other scenes of the day', () => {
+  // ANNA gets TX 1 + lav 7 in scene 1: scene 2 follows; BRUNO's TX 1 there would be emptied; scene 3 (other day) not
+  const p = { ...project, presets: { ...project.presets, 2: { scene_id: '2', rows: [row('1', '2', '8'), row('2', '1', '')] } } };
+  assert.deepEqual(sameDayKit(p, '1', [{ ...row('1', '1', '7'), acc: ['g1'] }, row('2', '', '')]),
+    { 2: [{ ...row('1', '1', '7'), acc: ['g1'] }, row('2', '', '')] });
+  assert.deepEqual(sameDayKit(p, '1', [row('1', '2', '8')]), {}, 'nothing changes, nothing saved');
+  assert.deepEqual(sameDayKit(p, '1', [row('1', '', '')]), {}, 'an emptied TX does not travel');
+});
+
+test('lav models the film does not use', () => {
+  const p = { settings: { presets: { lav_rules: { not_used: ['6061'] } } } };
+  assert.equal(lavNotUsed(p, { model: '6061' }), true);
+  assert.equal(lavNotUsed(p, { model: '6060' }), false);
+  assert.equal(lavNotUsed({}, { model: '6061' }), false);
 });
 
 test('screen-only row keys are not saved', () => {

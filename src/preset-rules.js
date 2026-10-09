@@ -80,6 +80,41 @@ export function scenesUsing(project, list, id) {
     .sort(naturalCompare);
 }
 
+// settings.json → presets.lav_rules.not_used: lav models this film doesn't use (LBE: 6061, Ana 9 Oct)
+export function lavNotUsed(project, lav) {
+  const models = (project.settings?.presets?.lav_rules?.not_used || []).map(m => String(m).toLowerCase());
+  return models.includes(String(lav?.model || '').toLowerCase());
+}
+
+// A kit set in one scene stays the same in the other scenes of that day with the same character (Ana, 9 Oct):
+// the TX, lav and accessories she set are copied to that character's row there. Only what is set travels (an
+// emptied TX — someone who stops speaking — doesn't). If another character there had that TX or lav, theirs
+// is emptied: the thing is on this character all day.
+// Returns { sceneId: rows } for the scenes that change.
+export function sameDayKit(project, sceneId, rows) {
+  const day = shootingDays(project).find(d => d.scenes.some(s => String(s.scene_id) === String(sceneId)));
+  const changed = {};
+  for (const s of day?.scenes || []) {
+    const id = String(s.scene_id);
+    if (id === String(sceneId) || !project.presets[id]) continue;
+    let other = project.presets[id].rows.map(row => ({ ...row }));
+    let touched = false;
+    for (const row of rows) {
+      const there = other.find(r => r.char_id && String(r.char_id) === String(row.char_id));
+      if (!there) continue;
+      for (const field of ['tx_id', 'lav_id']) {
+        if (!row[field] || there[field] === row[field]) continue;
+        for (const r of other) if (r !== there && r[field] === row[field]) r[field] = '';
+        there[field] = row[field];
+        touched = true;
+      }
+      if (row.acc?.length && JSON.stringify(there.acc || []) !== JSON.stringify(row.acc)) { there.acc = [...row.acc]; touched = true; }
+    }
+    if (touched) changed[id] = cleanRows(other);
+  }
+  return changed;
+}
+
 // Rows as stored (without the screen-only `key`).
 export function cleanRows(rows) {
   return rows.map(({ char_id, tx_id, lav_id, speaker, acc }) => ({ char_id, tx_id, lav_id, speaker, ...(acc?.length ? { acc } : {}) }));

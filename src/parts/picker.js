@@ -7,7 +7,7 @@
 
 import { html, useState } from '../../vendor/preact-htm.js';
 import { naturalCompare, byId } from '../model.js';
-import { usedByOtherRows, sameDaySuggestions, preferredFor } from '../preset-rules.js';
+import { usedByOtherRows, sameDaySuggestions, preferredFor, lavNotUsed } from '../preset-rules.js';
 import { warningsFor, warningText } from '../sound-rules.js';
 import { setCell, closePicker, toggleAcc } from '../editing.js';
 import { accessoryPool, usualFor, usedElsewhere } from '../accessories.js';
@@ -36,8 +36,9 @@ export function Picker({ state }) {
   const used = usedByOtherRows(edit.rows, rowIndex, field);
   const preferred = preferredFor(project, row.char_id, field).slice(0, 8);
   const suggestions = field === 'char_id' ? [] : sameDaySuggestions(project, edit.sceneId, row.char_id)[field === 'tx_id' ? 'tx' : 'lav'];
-  const items = [...project[LIST[field]]].sort((a, b) => naturalCompare(a.id, b.id)).filter(item => matches(item, query));
-  const all = byId(project[LIST[field]]);
+  const offered = item => field !== 'lav_id' || !lavNotUsed(project, item) || item.id === row[field];
+  const items = [...project[LIST[field]]].sort((a, b) => naturalCompare(a.id, b.id)).filter(item => matches(item, query) && offered(item));
+  const all = byId(project[LIST[field]].filter(offered));
   const soundWarnings = field === 'char_id' ? [] : warningsFor(project, edit.sceneId, row.char_id);
 
   const pick = id => { setCell(rowIndex, field, id); setQuery(''); };
