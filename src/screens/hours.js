@@ -73,6 +73,8 @@ export function HoursScreen({ state }) {
           </tbody>
           <tfoot><tr><td colspan="5">Overtime this week</td><td class=${total ? 'hours__extra' : ''}>${total ? `+${hm(total)}` : '—'}</td></tr></tfoot>
         </table>`}
+      ${typeof project.settings?.overtime?.double_after === 'number' && days.length > 0 && html`
+        <p class="muted">Extra counts double after its first ${hm(project.settings.overtime.double_after)} each day (1h 15m → 1h 30m).</p>`}
       <div class="hours__alerts"><${WrapAlerts} project=${project} /></div>
     </div>`;
 }

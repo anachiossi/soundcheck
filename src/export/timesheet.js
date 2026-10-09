@@ -39,7 +39,7 @@ export function timesheetBlob(project, days, weekTitle) {
       const r = rows.length + 1;
       rows.push([`D${String(d.day).padStart(2, '0')}`, italianDate(d.date),
         { time: d.call }, { time: d.wrap }, d.real_wrap ? { time: d.real_wrap } : '',
-        { f: `IF(E${r}="","",MOD(E${r}-C${r},1))` }, { f: `IF(F${r}="","",MAX(0,F${r}-TIME(${hours},0,0)))` }]);
+        { f: `IF(E${r}="","",MOD(E${r}-C${r},1))` }, { f: overtimeFormula(project, `F${r}`, hours) }]);
     }
     const last = rows.length;
     rows.push(['', '', '', '', '', { text: 'Totale', bold: true }, { f: `SUM(G${first}:G${last})`, bold: true }]);
@@ -47,4 +47,14 @@ export function timesheetBlob(project, days, weekTitle) {
   }
   if (!soundPeople(project).length) rows.push(['No sound department in the crew list (IFB → Crew).']);
   return xlsxBlob([{ name: 'Foglio ore', rows, bold, freeze: 0 }]);
+}
+
+// the overtime cell: beyond the working day; with settings.overtime.double_after, the minutes after that
+// much overtime count double (hours-rules.js → countedOvertime)
+function overtimeFormula(project, cell, hours) {
+  const after = project.settings?.overtime?.double_after;
+  const over = `MAX(0,${cell}-TIME(${hours},0,0))`;
+  if (typeof after !== 'number') return `IF(${cell}="","",${over})`;
+  const at = `TIME(0,${after},0)`;
+  return `IF(${cell}="","",MIN(${over},${at})+2*MAX(0,${over}-${at}))`;
 }

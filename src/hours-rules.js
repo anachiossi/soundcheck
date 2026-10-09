@@ -40,8 +40,16 @@ export const clockOf = now => ({ date: localTodayIso(now), minute: now.getHours(
 
 export const hoursOf = (project, day) => project.hours?.[String(day)] || null;
 
+// settings.json → "overtime": { "double_after": 60 }: after the first hour of overtime of a day, every minute
+// counts double (LBE, Ana 9 Oct: "1:15 + 1:15 = 3h" — each day's 1h 15m counts 1h 30m). No setting: as worked.
+export function countedOvertime(project, minutes) {
+  const after = project.settings?.overtime?.double_after;
+  if (typeof after !== 'number') return minutes;
+  return Math.min(minutes, after) + 2 * Math.max(0, minutes - after);
+}
+
 // Minutes between call and the real wrap (past midnight counts on), and the overtime beyond the
-// working day. Null when something is missing.
+// working day, as it counts (countedOvertime). Null when something is missing.
 export function workedOf(project, day) {
   const info = shootingDays(project).find(d => String(d.day) === String(day));
   const hours = hoursOf(project, day);
@@ -50,7 +58,7 @@ export function workedOf(project, day) {
   if (call === null || wrap === null) return null;
   const worked = wrap >= call ? wrap - call : wrap + 24 * 60 - call;
   const kind = WORKDAYS[workdayOf(project)];
-  return { worked, extra: kind ? Math.max(0, worked - kind.hours * 60) : null };
+  return { worked, extra: kind ? countedOvertime(project, Math.max(0, worked - kind.hours * 60)) : null };
 }
 
 /*  Today, for the top bar and the question:

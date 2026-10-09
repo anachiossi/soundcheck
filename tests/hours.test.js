@@ -2,7 +2,7 @@
 // hours worked and overtime, the week, and hours/ files in the repo. Run: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { today, workedOf, weekOf, mondayOf, minutesOf, span, nowRounded } from '../src/hours-rules.js';
+import { today, workedOf, weekOf, mondayOf, minutesOf, span, nowRounded, countedOvertime } from '../src/hours-rules.js';
 import { fileContent, setFileContent, emptyProject } from '../src/store/repo-files.js';
 
 // LBE-like: 8h continuate, day 8 on Wed 30 Sep 10:00–18:00, day 9 on Thu 1 Oct
@@ -100,4 +100,12 @@ test('the alarms use the call of an ODG still waiting for review (Ana, 7 Oct)', 
   project.proposals['odg-15'] = { id: 'odg-15', title: 'ODG #15', day: 15, status: 'open', decisions: {}, changes: [
     { id: 'c1', op: { op: 'set_day_scenes', day: 16, scene_ids: ['29'], fields: { date: '2026-10-12', call: '08:00' } } }] };
   assert.equal(nextShootingDay(project, new Date('2026-10-10T20:00:00')).call, '08:00'); // a new day from an ODG
+});
+
+test('overtime after the first hour counts double (LBE: 1h 15m + 1h 15m = 3h)', () => {
+  const lbe = { settings: { overtime: { double_after: 60 } } };
+  assert.equal(countedOvertime(lbe, 75), 90);
+  assert.equal(countedOvertime(lbe, 75) + countedOvertime(lbe, 75), 180);
+  assert.equal(countedOvertime(lbe, 45), 45);
+  assert.equal(countedOvertime({}, 75), 75, 'no rule: as worked');
 });
