@@ -49,6 +49,7 @@ function checkForProductionEmails() {
   reportChecked();
   try { checkWrapAlerts(); } catch (error) { console.warn(`Wrap alerts: ${error.message}`); } // never stops the emails
   try { checkBedtime(); } catch (error) { console.warn(`Bedtime: ${error.message}`); }
+  try { checkAlarmChange(); } catch (error) { console.warn(`Alarm email: ${error.message}`); }
 }
 
 // ---- Wrap alerts ------------------------------------------------------------------------------
@@ -174,6 +175,23 @@ function wakeAndLeave(c, call) {
 }
 
 const clockOf = m => `${String(Math.floor(((m % 1440) + 1440) % 1440 / 60)).padStart(2, '0')}:${String(((m % 60) + 60) % 60).padStart(2, '0')}`;
+
+// When the answer changes (a new ODG, a changed call, a day off), an email "soundcheck alarms" goes to
+// ALARM_MAIL (Script properties; none = off). On the iPhone, a Mail automation (subject contains
+// "soundcheck alarms") runs the same shortcut — so the alarms follow the ODG without waiting for 20:00.
+// An 'error' is never sent; the last answer sent is remembered (ALARM_LAST).
+function checkAlarmChange() {
+  const properties = PropertiesService.getScriptProperties();
+  const to = properties.getProperty('ALARM_MAIL');
+  if (!to) return;
+  const answer = alarmAnswer(new Date());
+  if (answer === properties.getProperty('ALARM_LAST')) return;
+  MailApp.sendEmail(to, 'soundcheck alarms', `${answer}
+
+Sent by the robot when the next morning's alarms change. The iPhone's automation asks the robot itself; this email is only the signal.`);
+  properties.setProperty('ALARM_LAST', answer);
+  console.log(`Alarm email: ${answer}`);
+}
 
 // the last few ODG proposals still open (odg-<day>.json)
 function openOdgs(film) {

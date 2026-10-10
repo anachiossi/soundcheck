@@ -109,6 +109,13 @@ Ana, 9 Oct: she didn't tap ⏰ and the alarm wasn't set. The iPhone now asks the
   runs *soundcheck auto alarms*. Running twice is harmless (old soundcheck alarms are deleted first); the
   second catches a late ODG.
 
+- **On the ODG's arrival** (Ana, 10 Oct): Script property `ALARM_MAIL` = sound.chiossi@gmail.com → at every
+  10-minute check the robot works out the answer and, when it changes, emails itself "soundcheck alarms"
+  (`checkAlarmChange`; never on `error`; last sent in `ALARM_LAST`). Simulated Sat→Tue on real data: one email
+  per day at 12:00 (the answer moves to the next day) plus one per ODG change. iPhone: the Gmail account in the
+  Mail app (Fetch every 15 minutes, Mail notifications off for it) + automation **Email** — subject contains
+  `soundcheck alarms` → Run Immediately → *soundcheck auto alarms*. The 20:00 / 22:30 runs stay as the net.
+
 ### ✉ badge in the app (emails checked · Check emails now)
 The top bar shows when Gmail was last checked (variable `LAST_GMAIL_CHECK`, set by the Gmail trigger at
 every check); orange after 30 minutes without a check or when the robot's last run failed. Tap it:
