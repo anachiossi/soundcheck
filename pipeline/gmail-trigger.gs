@@ -133,6 +133,7 @@ function checkBedtime() {
 // Answer, as plain text:
 //   06:00;06:45  the next morning is a shooting day: wake and leave (the same as the app's ⏰ Set alarms)
 //   none         no shooting tomorrow (weekend, day off): the shortcut deletes the soundcheck alarms
+//   error        something failed: the shortcut keeps the alarms as they are and says so
 // "The next morning" = today when asked before noon (after midnight), else tomorrow; a Monday call is
 // never set on Friday (Sunday's run sets it). The times of an ODG not yet reviewed count already, like
 // in the app (hours-rules.js → withWaitingOdgTimes). Several films shooting: the earliest wake.
@@ -141,7 +142,11 @@ function checkBedtime() {
 function doGet(e) {
   const key = PropertiesService.getScriptProperties().getProperty('ALARM_KEY');
   if (!key || !e || !e.parameter || e.parameter.key !== key) return ContentService.createTextOutput('wrong key');
-  return ContentService.createTextOutput(alarmAnswer(new Date()));
+  // any failure (GitHub down, a bad file) answers 'error', never 'none': the shortcut deletes alarms only on
+  // a clear 'none' (Ana, 10 Oct: "I'm so afraid it could erase a good alarm")
+  let answer;
+  try { answer = alarmAnswer(new Date()); } catch (error) { console.warn(`Alarms: ${error.message}`); answer = 'error'; }
+  return ContentService.createTextOutput(answer);
 }
 
 function alarmAnswer(now) {

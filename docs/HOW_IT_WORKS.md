@@ -98,9 +98,13 @@ Ana, 9 Oct: she didn't tap ⏰ and the alarm wasn't set. The iPhone now asks the
   1. **Get Contents of URL** (Obter Conteúdo do URL): `<URL>?key=<ALARM_KEY>`
   2. **If** Contents of URL **contains** `;` → **Run Shortcut** (Executar Atalho) *soundcheck alarms*, input =
      Contents of URL → **Show Notification** "⏰ " + Contents of URL
-  3. **Otherwise** → **Find Alarms** (label contains `soundcheck`) → **Delete Alarms** → **Show Notification**
-     "No shooting tomorrow — no alarm"
-  No internet → step 1 fails and the shortcut stops: the alarms already set stay (tap ⏰ in the app).
+  3. **Otherwise** → **If** Contents of URL **is** `none` → **Find Alarms** (label contains `soundcheck`) → **If**
+     Alarms **has any value** → **Delete Alarms** → End If → **Show Notification** "No shooting tomorrow — no alarm"
+     → **Otherwise** → **Show Notification** "⚠️ The robot didn't answer — alarms kept. Check ⏰ in the app" → End If
+  Alarms are deleted ONLY on a clear `none`: a failure answers `error` (robot) or an error page (Google), and
+  no internet stops the shortcut at step 1 — the alarms already set stay. (Ana, 10 Oct: afraid a second run
+  could erase a good alarm.) Without the "has any value" check, Delete Alarms with nothing found asks which
+  of ALL alarms to delete.
 - Automations (Automação → + → Time of Day): **20:00** daily and **22:30** daily, **Run Immediately**, each
   runs *soundcheck auto alarms*. Running twice is harmless (old soundcheck alarms are deleted first); the
   second catches a late ODG.
