@@ -184,6 +184,8 @@ function checkAlarmChange() {
   const properties = PropertiesService.getScriptProperties();
   const to = properties.getProperty('ALARM_MAIL');
   if (!to) return;
+  // yesterday's signals go to the trash (inbox and Sent), once the iPhone has surely seen them (Ana, 10 Oct)
+  GmailApp.search('subject:"soundcheck alarms" older_than:1d', 0, 50).forEach(thread => thread.moveToTrash());
   const answer = alarmAnswer(new Date());
   if (answer === properties.getProperty('ALARM_LAST')) return;
   MailApp.sendEmail(to, 'soundcheck alarms', `${answer}
