@@ -123,19 +123,6 @@ test('truck: volumes numbered one by one, Exp. Drums ×3 = 3 volumes', async () 
   assert.deepEqual(countVolumes(ticked, asOne), { numbers: { i: '1', d: '2' }, all: 2, loaded: 1 });
 });
 
-test("truck in the paper list's order: its numbers, a crossed-out one stays a gap, new ones at the end", async () => {
-  const { truckList, countVolumes } = await import('../src/gear-rules.js');
-  const truck = { gearItems: [
-    { id: 'drums', name: 'Exp.', category: 'cables', volume: true, qty: 3, truck: 28 },
-    { id: 'cart', name: 'Main Kart', category: 'carts', volume: true, truck: 1 },
-    { id: 'chain', name: 'Chain', category: 'other', volume: true, truck: 31 },
-    { id: 'new', name: 'New case', category: 'cases', volume: true },
-  ] };
-  const list = truckList(truck);
-  assert.deepEqual(list.map(i => i.id), ['cart', 'drums', 'chain', 'new']);
-  assert.deepEqual(countVolumes(truck, list), { numbers: { cart: '1', drums: '28–30', chain: '31', new: '32' }, all: 6, loaded: 0 });
-});
-
 test('a type naming a case makes a case: Plastic case, soft case', async () => {
   const { isContainer } = await import('../src/gear-rules.js');
   assert.equal(isContainer(film, { id: 'x', category: 'other', type: 'Plastic case' }), true);

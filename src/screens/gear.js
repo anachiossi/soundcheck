@@ -1,7 +1,7 @@
 // gear.js — the Gear department's tabs (gear-rules.js), as Ana chose them on 2 Oct (mockup "Gear inventory redesign"):
-//   • GearTruckScreen: the loading checklist. Every volume in ONE list, numbered like Ana's paper list (Exp. ×3 = '28–30'),
-//     tap a row to tick it (it gets crossed out), "10 / 23 volumes loaded · 13 to go", Clear,
-//     Export (image · text tree · Excel), Categories (change one, + Category), and the History of what entered / left / changed
+//   • GearTruckScreen: the loading checklist. Every volume by category, numbered 1, 2, 3… (Exp. Drums ×3 =
+//     '13–15'), tap a row to tick it (it gets crossed out), "10 / 23 volumes loaded · 13 to go", Clear,
+//     Export (image · text tree · Excel), + Category, and the History of what entered / left / changed
 //   • GearInventoryScreen: where everything is. A search and one tree, like a file explorer: carts and
 //     cases open (▸) to show what they hold: their cases first, then the loose things A–Z (no ▸; Ana 5 Oct:
 //     the "Loose items" fold was visual noise).
@@ -14,7 +14,7 @@
 import { html, useState } from '../../vendor/preact-htm.js';
 import { formatStamp, exportName, shortDate, localTodayIso } from '../model.js';
 import {
-  truckList, categoriesOf, ticked, countVolumes, topItems, childrenOf, splitLoose, isContainer, startsAsVolume, searchGear, itemById, itemGroups,
+  truckOf, ticked, countVolumes, topItems, childrenOf, splitLoose, isContainer, startsAsVolume, searchGear, itemById, itemGroups,
 } from '../gear-rules.js';
 import { toggleTick, clearTicks, moveObject } from '../gear-editing.js';
 import { useGearDrag } from '../parts/gear-drag.js';
@@ -41,7 +41,8 @@ function useSheet(project) {
 export function GearTruckScreen({ state }) {
   const { project } = state;
   const [category, setCategory] = useState(null); // the category being changed (or a new one)
-  const all = truckList(project);
+  const groups = truckOf(project);
+  const all = groups.flatMap(g => g.items);
   const { numbers, all: total, loaded } = countVolumes(project, all);
   return html`
     <div class="gear">
@@ -59,23 +60,23 @@ export function GearTruckScreen({ state }) {
       ${all.length === 0 && html`<p class="empty">No volumes yet. In Inventory, mark carts and cases "Goes on the truck": they come here by themselves.</p>`}
       ${all.length > 0 && html`
         <div class="gear-list">
-          ${all.map(item => html`
-            <button key=${item.id} class=${'truck-row' + (ticked(project, item.id) ? ' truck-row--on' : '')} onClick=${() => toggleTick(item.id)}
-                    aria-pressed=${ticked(project, item.id)}>
-              <span class="truck-row__number">${numbers[item.id]}</span>
-              <${CheckBox} on=${ticked(project, item.id)} />
-              <span class="truck-row__name"><${Tinted} item=${item} /></span>
-              ${item.qty > 1 && html`<small>×${item.qty}</small>`}
-            </button>`)}
+          ${groups.map(({ category: c, items }) => {
+            const count = countVolumes(project, items);
+            return html`
+              <button class="gear-list__head" key=${c.id} onClick=${() => setCategory(c)} aria-label=${`Change ${c.name}`}>
+                <span class="gear-dot" style=${`background:${c.color}`}></span><span>${c.name}</span>
+                <small>${count.loaded} / ${count.all}</small></button>
+              ${items.map(item => html`
+                <button key=${item.id} class=${'truck-row' + (ticked(project, item.id) ? ' truck-row--on' : '')} onClick=${() => toggleTick(item.id)}
+                        aria-pressed=${ticked(project, item.id)}>
+                  <span class="truck-row__number">${numbers[item.id]}</span>
+                  <${CheckBox} on=${ticked(project, item.id)} />
+                  <span class="truck-row__name"><${Tinted} item=${item} /></span>
+                  ${item.qty > 1 && html`<small>×${item.qty}</small>`}
+                </button>`)}`;
+          })}
         </div>`}
-      <details class="more">
-        <summary>Categories</summary>
-        <div class="toolbar">
-          ${categoriesOf(project).map(c => html`<button key=${c.id} class="btn btn--quiet" onClick=${() => setCategory(c)}>
-            <span class="gear-dot" style=${`background:${c.color}`}></span> ${c.name}</button>`)}
-          <button class="btn btn--quiet" onClick=${() => setCategory({})}>+ Category</button>
-        </div>
-      </details>
+      <div class="toolbar"><button class="btn btn--quiet" onClick=${() => setCategory({})}>+ Category</button></div>
       <${History} project=${project} />
       ${category && html`<${CategorySheet} project=${project} category=${category} close=${() => setCategory(null)} />`}
     </div>`;
