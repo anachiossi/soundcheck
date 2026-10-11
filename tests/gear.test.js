@@ -119,6 +119,8 @@ test('truck: volumes numbered one by one, Exp. Drums ×3 = 3 volumes', async () 
   const volumes = intMics.gearItems.filter(i => i.volume);
   const ticked = { ...intMics, gearChecks: { d: true } };
   assert.deepEqual(countVolumes(ticked, volumes), { numbers: { i: '1', d: '2–4' }, all: 4, loaded: 3 });
+  const asOne = volumes.map(i => (i.id === 'd' ? { ...i, volumes: 1 } : i)); // Power drums ×2, one number
+  assert.deepEqual(countVolumes(ticked, asOne), { numbers: { i: '1', d: '2' }, all: 2, loaded: 1 });
 });
 
 test('a type naming a case makes a case: Plastic case, soft case', async () => {

@@ -91,7 +91,8 @@ export function tickCount(project, items) {
 
 // the truck's volumes counted one by one: Exp. Drums ×3 are 3 volumes. Each object gets its numbers
 // (1, 2… or '13–15'), so the loading can be counted aloud: { numbers: { id: '13–15' }, all, loaded }
-const volumes = item => Math.max(1, Number(item.qty) || 1);
+// item.volumes overrides qty when several travel as one (Ana's truck list, 11 Oct: Power drums ×2 = one number)
+const volumes = item => Math.max(1, Number(item.volumes ?? item.qty) || 1);
 export function countVolumes(project, items) {
   const numbers = {};
   let next = 1, loaded = 0;
