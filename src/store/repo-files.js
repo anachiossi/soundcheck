@@ -30,6 +30,8 @@
 //     gear/history.json    [{ at, item, name, what, note }]   what entered / left / changed (not ticks, not moves)
 //     gear/checks.json     { item id: true }                  today's ticks (truck, case contents)
 //     gear/manuals.json    [{ brand, title, date, file: 'docs/manuals/Zaxcom/ZMT4.pdf', models: ['ZMT4', 'ZMT4.5'] }]
+//     calls.json           { '2026-10-12': { 'Ilaria Salgarella': '08:50', … } } everyone's call on each ODG
+//                          (pipeline/run.py file_crew_calls); the alarms follow commute.ride_with's call
 //
 // One file per scene preset: saving scene 12 never touches scene 13.
 
@@ -43,8 +45,8 @@ export const GEAR_FILES = { 'gear/categories.json': 'gearCategories', 'gear/item
 export const IFB_FILES = { 'ifb/crew.json': 'crew', 'ifb/receivers.json': 'ifbReceivers',
   'ifb/headphones.json': 'ifbHeadphones', 'ifb/list.json': 'ifbList' };
 
-// files kept under a name in the device's copy of the film (IFB and Gear lists)
-const NAMED_FILES = { ...IFB_FILES, ...GEAR_FILES };
+// files kept under a name in the device's copy of the film (IFB and Gear lists, crew calls)
+const NAMED_FILES = { ...IFB_FILES, ...GEAR_FILES, 'calls.json': 'crewCalls' };
 
 const filmFile = project => ({ format: FILM_FORMAT, version: 1, id: project.id, name: project.name, ...(project.tag ? { tag: project.tag } : {}) });
 

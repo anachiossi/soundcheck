@@ -136,20 +136,36 @@ export function nowRounded(now = new Date()) {
 //   travel_min / travel_max  from home to the meeting point (75 / 90): the window to leave
 //   get_ready         from waking up to leaving (45) · sleep_hours (8)
 // call 09:00 → meeting 08:15 · leave 06:45–07:00 · wake 06:00 · sleep 22:00 (the night before)
+//   ride_with  riding with someone (Ana, 11 Oct: Ilaria of costumes): the sums start from THAT person's call
+//              on the ODG (calls.json) — the app shows Ana's own call everywhere else. Not known yet →
+//              Ana's call − ride_gap_if_unknown (40: the widest gap seen in the ODGs so far)
 export const COMMUTE = { meet_before_call: 45, travel_min: 75, travel_max: 90, get_ready: 45, sleep_hours: 8 };
 export const commuteOf = project => (project.settings?.commute ? { ...COMMUTE, ...project.settings.commute } : null);
 
 const clock = minutes => timeOf(((minutes % 1440) + 1440) % 1440); // -45 → '23:15'
+const sameName = (a, b) => a.toLowerCase().split(/\s+/).join(' ') === b.toLowerCase().split(/\s+/).join(' ');
 
 export function wakePlan(project, day) {
   const commute = commuteOf(project);
   const call = minutesOf(day?.call);
   if (!commute || call === null) return null;
-  const meet = call - commute.meet_before_call;
+  const ride = rideCall(project, commute, day, call);
+  const meet = ride.minutes - commute.meet_before_call;
   const leaveFrom = meet - commute.travel_max;
   const wake = leaveFrom - commute.get_ready;
-  return { day: day.day, date: day.date, call: day.call, meet: clock(meet), leaveFrom: clock(leaveFrom),
+  return { day: day.day, date: day.date, call: day.call, rideWith: ride.name, rideCall: ride.call,
+    meet: clock(meet), leaveFrom: clock(leaveFrom),
     leaveTo: clock(meet - commute.travel_min), wake: clock(wake), sleep: clock(wake - commute.sleep_hours * 60) };
+}
+
+// { minutes, name, call } — call '' = not known yet (the plan then counts ride_gap_if_unknown before Ana's)
+function rideCall(project, commute, day, call) {
+  const name = (commute.ride_with || '').trim();
+  if (!name) return { minutes: call, name: '', call: '' };
+  const found = Object.entries(project.crewCalls?.[day.date] || {}).find(([who]) => sameName(who, name));
+  const theirs = found ? minutesOf(found[1]) : null;
+  if (theirs === null) return { minutes: call - (commute.ride_gap_if_unknown ?? 40), name, call: '' };
+  return { minutes: theirs, name, call: timeOf(theirs) };
 }
 
 // the next shooting day whose call is still ahead: later today (after midnight, the day you are about

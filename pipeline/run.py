@@ -89,7 +89,8 @@ def run(film_folder, include_past=False):
         if written:
             git(repo, "add", str(proposals))
         if documents:
-            git(repo, "add", str(film / "docs"), str(film / "lines"))
+            git(repo, "add", str(film / "docs"), str(film / "lines"),
+                *([str(film / "calls.json")] if (film / "calls.json").exists() else []))
         titles = ", ".join([p["title"] for p in written] + ([f"{len(documents)} document(s)"] if documents else []))
         git(repo, "commit", "--quiet", "-m", f"From production emails: {titles}")
         git(repo, "push", "--quiet")
@@ -108,10 +109,12 @@ def tell_tomorrow(film, odgs):
     if not odgs or not commute or not os.environ.get("VAPID_PRIVATE_KEY") or not any((film / "push").glob("*.json")):
         return
     from send_push import send
+    calls = json.loads((film / "calls.json").read_text(encoding="utf-8")) if (film / "calls.json").exists() else {}
     for odg in odgs:
-        plan = wake_plan(commute, odg.get("call"))
+        plan = wake_plan(commute, odg.get("call"), calls.get(odg.get("date"), {}))
         if plan:
-            send(film, f"Tomorrow D{odg['day']:02d} · call {plan['call']}",
+            ride = f" · {commute['ride_with'].split()[0]} {plan['ride_call']}" if plan["ride_call"] else ""
+            send(film, f"Tomorrow D{odg['day']:02d} · call {plan['call']}{ride}",
                  f"⏰ wake {plan['wake']} · 🚪 leave {plan['leave_from']}–{plan['leave_to']} · 💤 sleep {plan['sleep']} — tap to set the alarms",
                  "./#hours", tag="tomorrow")
 
@@ -167,7 +170,30 @@ def file_documents(film, other_sides):
                 shutil.copyfile(source, target)
                 changed.append(f"day {day} {name}")
     changed += file_latest_pdl(film)
+    changed += file_crew_calls(film)
     return changed
+
+
+def file_crew_calls(film):
+    """Everyone's call on each ODG → calls.json { "2026-10-12": { "Ilaria Salgarella": "08:50", … } }.
+    The alarms follow the call of the person Ana rides with (settings "commute" → "ride_with"; Ana, 11 Oct:
+    "o alarme agora precisa seguir esse cálculo da Ilaria"); the app keeps Ana's own call everywhere else.
+    Read from the filed ODGs (docs/day-<n>/odg.pdf, the newest of each day), after file_documents."""
+    from read_crew import read_crew
+    from read_odg import as_time, read_odg
+    target = film / "calls.json"
+    calls = json.loads(target.read_text(encoding="utf-8")) if target.exists() else {}
+    for odg in sorted((film / "docs").glob("day-*/odg.pdf")):
+        date = read_odg(odg)["date"]
+        if not date:
+            continue
+        crew = {p["name"]: as_time(p["call"]) for p in read_crew(odg) if as_time(p["call"])}
+        if crew:
+            calls[date] = crew
+    if target.exists() and json.loads(target.read_text(encoding="utf-8")) == calls:
+        return []
+    write_json(target, dict(sorted(calls.items())))
+    return ["crew calls"]
 
 
 def file_latest_pdl(film):

@@ -5,7 +5,8 @@
 // a web app can't set alarms itself. The robot's push "Tomorrow D10 · call 10:00" opens the app here.
 // While the app syncs the button waits: a new ODG may come. The times use the newest ODG even before it
 // is reviewed (hours-rules.js nextShootingDay); an ODG waiting for review is shown above — tap it to review.
-// Also: the five numbers of the film (settings.json → "commute"), editable.
+// Also: the five numbers of the film (settings.json → "commute"), editable. Riding with someone
+// (commute.ride_with): the times follow their call on the ODG, Ana's own call stays on top.
 // Used by: screens/hours.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
@@ -31,11 +32,14 @@ export function Tomorrow({ project }) {
     <section class="tomorrow">
       ${plan ? html`
         <p class="tomorrow__day"><b>Next: D${plan.day}</b> · ${formatDate(plan.date, { weekday: true })} · call <b>${plan.call}</b></p>
+        ${plan.rideWith && html`<p class="muted">🚗 With ${plan.rideWith.split(' ')[0]}: ${plan.rideCall
+          ? html`call <b>${plan.rideCall}</b> — the times below follow it`
+          : `call not known yet (no ODG) — counted ${commuteOf(project).ride_gap_if_unknown ?? 40} min before yours`}</p>`}
         <div class="tomorrow__times">
           <span><small>💤 sleep</small><b>${plan.sleep}</b></span>
           <span><small>⏰ wake</small><b>${plan.wake}</b></span>
           <span><small>🚪 leave</small><b>${plan.leaveFrom}</b><small>to ${plan.leaveTo}</small></span>
-          <span><small>📍 meet</small><b>${plan.meet}</b></span>
+          <span><small>📍 ${plan.rideWith ? 'ride leaves' : 'meet'}</small><b>${plan.meet}</b></span>
         </div>
         ${waiting.map(p => html`<button key=${p.id} class="btn tomorrow__odg" onClick=${() => setState({ screen: 'proposal', proposalId: p.id })}>
           📬 ${p.title} waits for your review — the alarms already use its call</button>`)}
@@ -48,7 +52,7 @@ export function Tomorrow({ project }) {
 }
 
 const FIELDS = [
-  ['meet_before_call', 'Meeting point, minutes before the call'],
+  ['meet_before_call', 'Meeting point, minutes before the call (with a ride: before their call)'],
   ['travel_min', 'Travel to the meeting point, shortest (min)'],
   ['travel_max', 'Travel to the meeting point, longest (min)'],
   ['get_ready', 'From waking up to leaving (min)'],
@@ -61,7 +65,7 @@ function CommuteSettings({ project }) {
   const save = event => {
     event.preventDefault();
     const clean = Object.fromEntries(FIELDS.map(([key]) => [key, Math.max(0, Number(values[key]) || 0)]));
-    saveSettings({ commute: clean }, 'Wake-up plan saved.');
+    saveSettings({ commute: { ...project.settings?.commute, ...clean } }, 'Wake-up plan saved.'); // keeps ride_with
   };
   return html`
     <details class="more tomorrow__settings" open=${!current}>

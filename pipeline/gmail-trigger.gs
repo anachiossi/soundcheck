@@ -114,7 +114,8 @@ function checkBedtime() {
     const c = Object.assign({}, COMMUTE, settings.commute);
     const day = (readRepo(`projects/${film}/schedule.json`, true) || [])
       .filter(row => row.date === tomorrow && row.call).sort((a, b) => a.order - b.order)[0];
-    const call = day && minutesOf(day.call);
+    const calls = c.ride_with ? readRepo(`projects/${film}/calls.json`, true) || {} : {};
+    const call = day && rideStart(c, minutesOf(day.call), calls[day.date]);
     if (call === null || call === undefined) continue;
     const wake = call - c.meet_before_call - c.travel_max - c.get_ready;
     const bedtime = 24 * 60 + wake - c.sleep_hours * 60; // minutes from today's midnight
@@ -159,7 +160,9 @@ function alarmAnswer(now) {
     if (!settings || !settings.commute) continue;
     const schedule = withWaitingOdgTimes(readRepo(`projects/${film}/schedule.json`, true) || [], openOdgs(film));
     const day = schedule.filter(row => row.date === target && row.call).sort((a, b) => a.order - b.order)[0];
-    const plan = day && wakeAndLeave(Object.assign({}, COMMUTE, settings.commute), minutesOf(day.call));
+    const commute = Object.assign({}, COMMUTE, settings.commute);
+    const calls = commute.ride_with ? readRepo(`projects/${film}/calls.json`, true) || {} : {};
+    const plan = day && wakeAndLeave(commute, rideStart(commute, minutesOf(day.call), calls[day.date]));
     if (plan) plans.push(plan);
   }
   if (!plans.length) return 'none';
@@ -172,6 +175,17 @@ function wakeAndLeave(c, call) {
   if (call === null || call === undefined) return null;
   const leave = call - c.meet_before_call - c.travel_max;
   return { wake: leave - c.get_ready, leave };
+}
+
+// Riding with someone (settings commute.ride_with, Ana 11 Oct: Ilaria of costumes): the plan starts from
+// THAT person's call on the ODG (calls.json, written by pipeline/run.py); not known yet → Ana's call −
+// ride_gap_if_unknown (40). Same as hours-rules.js → rideCall.
+function rideStart(c, call, dayCalls) {
+  if (call === null || call === undefined || !c.ride_with) return call;
+  const plain = text => String(text).toLowerCase().split(/\s+/).join(' ');
+  const found = Object.keys(dayCalls || {}).find(name => plain(name) === plain(c.ride_with.trim()));
+  const theirs = found ? minutesOf(dayCalls[found]) : null;
+  return theirs === null || theirs === undefined ? call - (c.ride_gap_if_unknown == null ? 40 : c.ride_gap_if_unknown) : theirs;
 }
 
 const clockOf = m => `${String(Math.floor(((m % 1440) + 1440) % 1440 / 60)).padStart(2, '0')}:${String(((m % 60) + 60) % 60).padStart(2, '0')}`;

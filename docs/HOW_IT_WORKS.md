@@ -108,6 +108,14 @@ Ana, 9 Oct: she didn't tap ⏰ and the alarm wasn't set. The iPhone now asks the
 - Automations (Automação → + → Time of Day): **20:00** daily and **22:30** daily, **Run Immediately**, each
   runs *soundcheck auto alarms*. Running twice is harmless (old soundcheck alarms are deleted first); the
   second catches a late ODG.
+- **Riding with someone** (Ana, 11 Oct: she now goes with Ilaria Salgarella, 2nd costume assistant — "o app
+  precisa ter os meus horários de convocação, mas o alarme agora precisa seguir esse cálculo da Ilaria"):
+  settings `commute.ride_with` = the name as printed in the ODG's TROUPE list. The pipeline writes everyone's
+  call per date to `calls.json` (`file_crew_calls` in `pipeline/run.py`, from `docs/day-<n>/odg.pdf`); wake,
+  leave, sleep (app card, robot answer, bedtime and "Tomorrow" pushes) start from THAT call, Ana's own call
+  stays everywhere else. Ilaria leaves her house 1:15 before her call (`meet_before_call` 75), Ana needs 30–45
+  min to reach her. No ODG yet → Ana's call − `ride_gap_if_unknown` (40, the widest gap in ODGs 1–16).
+  Same sums in `hours-rules.js` → `rideCall`, `gmail-trigger.gs` → `rideStart`, `wake_plan.py` → `ride_call`.
 - Ana, 11 Oct, 20:00 run failed: "requires privacy permissions that cannot be granted while the device is
   locked". Each permission (internet to the robot's URL, alarms, notifications, the inner shortcut) must be
   allowed once by hand: run *soundcheck auto alarms* (and *soundcheck alarms*) from the Shortcuts app with the

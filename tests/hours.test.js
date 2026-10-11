@@ -68,7 +68,7 @@ test('the night before: meeting, leave window, wake, sleep (Ana\'s calculator)',
   const { wakePlan, nextShootingDay } = await import('../src/hours-rules.js');
   const project = { ...film(), settings: { commute: {} } };
   assert.deepEqual(wakePlan(project, { day: 10, date: '2026-10-02', call: '09:00' }),
-    { day: 10, date: '2026-10-02', call: '09:00', meet: '08:15', leaveFrom: '06:45', leaveTo: '07:00', wake: '06:00', sleep: '22:00' });
+    { day: 10, date: '2026-10-02', call: '09:00', rideWith: '', rideCall: '', meet: '08:15', leaveFrom: '06:45', leaveTo: '07:00', wake: '06:00', sleep: '22:00' });
   assert.equal(wakePlan(project, { day: 1, call: '06:00' }).sleep, '19:00');
   assert.equal(wakePlan(project, { day: 1, call: '03:00' }).wake, '00:00');
   assert.equal(wakePlan({ settings: {} }, { call: '09:00' }), null, 'no commute settings: no plan');
@@ -108,4 +108,20 @@ test('overtime after the first hour counts double (LBE: 1h 15m + 1h 15m = 3h)', 
   assert.equal(countedOvertime(lbe, 75) + countedOvertime(lbe, 75), 180);
   assert.equal(countedOvertime(lbe, 45), 45);
   assert.equal(countedOvertime({}, 75), 75, 'no rule: as worked');
+});
+
+test("riding with Ilaria: the alarms follow her call on the ODG, Ana's call stays (Ana, 11 Oct)", async () => {
+  const { wakePlan } = await import('../src/hours-rules.js');
+  const project = emptyProject({ id: 'f', name: 'F' }, 'projects/f');
+  project.settings = { commute: { meet_before_call: 75, travel_min: 30, travel_max: 45, get_ready: 45, sleep_hours: 8,
+    ride_with: 'Ilaria Salgarella' } };
+  setFileContent(project, 'calls.json', { '2026-10-12': { 'Ilaria  Salgarella': '08:50', 'Ana Chiossi': '09:00' } });
+  assert.equal(fileContent(project, 'calls.json')['2026-10-12']['Ana Chiossi'], '09:00');
+  const plan = wakePlan(project, { day: 16, date: '2026-10-12', call: '09:00' });
+  assert.equal(plan.call, '09:00');
+  assert.equal(plan.rideCall, '08:50');
+  assert.deepEqual([plan.meet, plan.leaveFrom, plan.leaveTo, plan.wake], ['07:35', '06:50', '07:05', '06:05']);
+  const unknown = wakePlan(project, { day: 17, date: '2026-10-13', call: '10:00' });
+  assert.equal(unknown.rideCall, '', 'no ODG yet');
+  assert.equal(unknown.wake, '06:35', "40 min before Ana's call, then the same sums");
 });
