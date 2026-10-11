@@ -108,6 +108,10 @@ Ana, 9 Oct: she didn't tap ⏰ and the alarm wasn't set. The iPhone now asks the
 - Automations (Automação → + → Time of Day): **20:00** daily and **22:30** daily, **Run Immediately**, each
   runs *soundcheck auto alarms*. Running twice is harmless (old soundcheck alarms are deleted first); the
   second catches a late ODG.
+- Ana, 11 Oct, 20:00 run failed: "requires privacy permissions that cannot be granted while the device is
+  locked". Each permission (internet to the robot's URL, alarms, notifications, the inner shortcut) must be
+  allowed once by hand: run *soundcheck auto alarms* (and *soundcheck alarms*) from the Shortcuts app with the
+  phone unlocked → **Always Allow** on every question. After that the locked-phone runs work.
 
 - **On the ODG's arrival** (Ana, 10 Oct): Script property `ALARM_MAIL` = sound.chiossi@gmail.com → at every
   10-minute check the robot works out the answer and, when it changes, emails itself "soundcheck alarms"
