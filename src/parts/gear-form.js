@@ -115,7 +115,7 @@ export function ObjectSheet({ project, object, close, open }) {
       </span></label>
       <div class="gear-sheet__grid">
         <label><span>Inside</span>
-          <select value=${values.inside || ''} onChange=${e => set('inside', e.target.value)}>
+          <select value=${values.inside || ''} onChange=${e => { set('inside', e.target.value); if (e.target.value) set('volume', false); }}>
             <option value="">nothing (on its own)</option>
             ${containers.map(c => html`<option key=${c.id} value=${c.id}>${where(c)}</option>`)}
           </select></label>

@@ -77,7 +77,9 @@ export function moveObject(id, inside) {
   const object = items.find(item => item.id === id);
   if (!object || (object.inside || '') === inside) return;
   const where = inside ? `into ${items.find(item => item.id === inside)?.name}` : 'out on its own';
-  return save({ gearItems: items.map(item => (item.id === id ? { ...item, inside } : item)) }, ['gear/items.json'], `${object.name} moved ${where}.`);
+  // into a cart / case: it rides inside, so it stops being its own truck volume (Ana, 11 Oct: nested cases were counted)
+  const moved = inside ? { inside, volume: false } : { inside };
+  return save({ gearItems: items.map(item => (item.id === id ? { ...item, ...moved } : item)) }, ['gear/items.json'], `${object.name} moved ${where}.`);
 }
 
 // ↑ a case one place up among the cases next to it (the tree's order). Not history, like a move.

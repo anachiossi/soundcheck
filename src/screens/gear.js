@@ -14,7 +14,7 @@
 import { html, useState } from '../../vendor/preact-htm.js';
 import { formatStamp, exportName, shortDate, localTodayIso } from '../model.js';
 import {
-  truckOf, ticked, countVolumes, topItems, childrenOf, splitLoose, isContainer, startsAsVolume, searchGear, itemById, itemGroups,
+  truckOf, ticked, countVolumes, topItems, childrenOf, splitLoose, isContainer, searchGear, itemById, itemGroups,
 } from '../gear-rules.js';
 import { toggleTick, clearTicks, moveObject } from '../gear-editing.js';
 import { useGearDrag } from '../parts/gear-drag.js';
@@ -184,7 +184,8 @@ export function GearInventoryScreen({ state }) {
   const items = here ? childrenOf(project, here.id) : topItems(project);
   const { boxes, loose } = splitLoose(project, items);
   const ticks = Object.keys(project.gearChecks || {}).length;
-  const newObject = () => edit(here ? { inside: here.id, category: 'other', volume: false } : { category: 'other', volume: startsAsVolume(project, 'other') });
+  // a new thing never changes the truck count by itself (Ana, 11 Oct: her truck list is 32): tick "Goes on the truck" to add it
+  const newObject = () => edit({ ...(here ? { inside: here.id } : {}), category: 'other', volume: false });
   return html`
     <div class="gear">
       ${!here && html`<div class="gear-search">
