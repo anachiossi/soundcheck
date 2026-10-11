@@ -92,16 +92,27 @@ export function tickCount(project, items) {
 // the truck's volumes counted one by one: Exp. Drums ×3 are 3 volumes. Each object gets its numbers
 // (1, 2… or '13–15'), so the loading can be counted aloud: { numbers: { id: '13–15' }, all, loaded }
 // item.volumes overrides qty when several travel as one (Ana's truck list, 11 Oct: Power drums ×2 = one number)
+// item.truck = its number on Ana's paper truck list (a crossed-out number stays a gap, like on the paper)
 const volumes = item => Math.max(1, Number(item.volumes ?? item.qty) || 1);
 export function countVolumes(project, items) {
   const numbers = {};
-  let next = 1, loaded = 0;
+  let next = 1, all = 0, loaded = 0;
   for (const item of items) {
-    numbers[item.id] = volumes(item) > 1 ? `${next}–${next + volumes(item) - 1}` : String(next);
-    next += volumes(item);
+    const first = Number(item.truck) || next;
+    numbers[item.id] = volumes(item) > 1 ? `${first}–${first + volumes(item) - 1}` : String(first);
+    next = first + volumes(item);
+    all += volumes(item);
     if (ticked(project, item.id)) loaded += volumes(item);
   }
-  return { numbers, all: next - 1, loaded };
+  return { numbers, all, loaded };
+}
+
+// the truck as ONE list in the paper's order (Ana, 11 Oct: "same as paper"): numbered volumes by their
+// number, then any new volume without one (by category, as before)
+export function truckList(project) {
+  const all = truckOf(project).flatMap(group => group.items);
+  const numbered = all.filter(i => Number(i.truck)).sort((a, b) => a.truck - b.truck);
+  return [...numbered, ...all.filter(i => !Number(i.truck))];
 }
 
 // the containers an object can go into (carts and cases, and anything that holds things already) —
