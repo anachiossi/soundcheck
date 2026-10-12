@@ -30,6 +30,8 @@
 //     gear/history.json    [{ at, item, name, what, note }]   what entered / left / changed (not ticks, not moves)
 //     gear/checks.json     { item id: true }                  today's ticks (truck, case contents)
 //     gear/manuals.json    [{ brand, title, date, file: 'docs/manuals/Zaxcom/ZMT4.pdf', models: ['ZMT4', 'ZMT4.5'] }]
+//     gear/batteries.json  { groups: [{ id, name, life_min, charge_min }], batteries: [{ id, group, label, state, since, used_in }] }
+//                          every battery of the film and its state (battery-rules.js)
 //     calls.json           { '2026-10-12': { 'Ilaria Salgarella': '08:50', … } } everyone's call on each ODG
 //                          (pipeline/run.py file_crew_calls); the alarms follow commute.ride_with's call
 //
@@ -41,7 +43,7 @@ export const FILM_FORMAT = 'soundcheck-film';
 const LISTS = ['characters', 'transmitters', 'lavaliers', 'schedule'];
 // IFB files and the name each one has in the device's copy of the film
 export const GEAR_FILES = { 'gear/categories.json': 'gearCategories', 'gear/items.json': 'gearItems',
-  'gear/history.json': 'gearHistory', 'gear/checks.json': 'gearChecks', 'gear/manuals.json': 'gearManuals' };
+  'gear/history.json': 'gearHistory', 'gear/checks.json': 'gearChecks', 'gear/manuals.json': 'gearManuals', 'gear/batteries.json': 'gearBatteries' };
 export const IFB_FILES = { 'ifb/crew.json': 'crew', 'ifb/receivers.json': 'ifbReceivers',
   'ifb/headphones.json': 'ifbHeadphones', 'ifb/list.json': 'ifbList' };
 

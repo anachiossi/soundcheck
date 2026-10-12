@@ -27,6 +27,7 @@ import { HoursScreen } from './screens/hours.js';
 import { HelpScreen } from './screens/help.js';
 import { LavShareScreen } from './screens/lav-share.js';
 import { GearTruckScreen, GearInventoryScreen, GearManualsScreen } from './screens/gear.js';
+import { GearBatteriesScreen } from './screens/gear-batteries.js';
 import { WrapBadge, WrapQuestion } from './parts/wrap-clock.js';
 import { Icon } from './parts/icons.js';
 import { EmailBadge } from './parts/email-robot.js';
@@ -51,6 +52,7 @@ const TABS = {
   gear: [
     ['gear-truck', 'Truck', GearTruckScreen],
     ['gear-inventory', 'Inventory', GearInventoryScreen],
+    ['gear-batteries', 'Batteries', GearBatteriesScreen],
     ['gear-manuals', 'Manuals', GearManualsScreen],
     ['projects', 'Projects', ProjectsScreen],
   ],

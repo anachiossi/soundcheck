@@ -173,3 +173,15 @@ The app's GitHub key needs **Actions: Read and write** and **Variables: Read-onl
 | Crew lookup, Call / WhatsApp, 🚨 Emergency (who comes first) | `src/screens/ifb-crew.js`, rules in `src/ifb-rules.js` |
 | Crew on each ODG → new people proposed next to their role (numbers shift, IFB list follows; nobody removed; PERSONALE AGGIUNTO = daily) | `pipeline/read_crew.py`, `pipeline/compare_crew.py`; applied by `add_crew_member` in `src/proposal-rules.js` |
 | IFB Kit (same forms as the mic Kit) | `src/screens/ifb-kit.js` (uses `Section` from `src/screens/kit.js`) |
+
+## 🔋 Batteries (Gear → Batteries, v144)
+Every battery of the film by group (AA, NP-F970…), always green / yellow / red (Ana, 12 Oct: "charged are green,
+used are red"). Tap a battery: Full · Charging (minutes on that charger) · In use (TX 7, B1…) · Empty; its clock
+starts. In use: green, yellow under 30% of the group's estimated life, red under 10%. Charging past its time: "done?".
+First version (no learning, no notifications yet; next: battery time on the mics' TX pills, chargers, learning).
+| What | File |
+|---|---|
+| Groups and batteries, state and since | `gear/batteries.json` in the data repo |
+| Colours, countdowns, counts | `src/battery-rules.js` (tests: `tests/batteries.test.js`) |
+| Saving | `src/battery-editing.js` |
+| The screen and its sheets | `src/screens/gear-batteries.js` (sheet from `src/parts/gear-form.js`), styles `.battery*` in `app.css` |

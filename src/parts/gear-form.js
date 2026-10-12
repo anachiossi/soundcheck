@@ -21,7 +21,7 @@ export const Tinted = ({ item, noDot = false }) => html`${!noDot && html`<span c
 export const tintOf = () => '';
 
 
-function Sheet({ title, close, children }) {
+export function Sheet({ title, close, children }) {
   return html`
     <div class="sheet-backdrop" onClick=${close}></div>
     <div class="sheet gear-sheet" role="dialog" aria-label=${title}>
