@@ -1,7 +1,7 @@
 """propose_pdl.py — turns a new shooting schedule (PDL + scaletta) into a PROPOSAL:
 a whole review of the film from today on.
     • cast list: numbers and names
-    • every shooting day from today: date, week, call/wrap, which scenes in which order;
+    • every shooting day from today: date, week (from the date, not the PDL's count), call/wrap, which scenes in which order;
       new days, and days that disappeared
     • every scene from today (and scenes with no day yet): INT/EXT, time, set, synopsis, pages…
     • every preset from today: the PDL cast of the scene against its mics (who, how many)
@@ -30,6 +30,24 @@ def odg_days(film_folder):
         proposal = json.loads(path.read_text(encoding="utf-8"))
         covered |= {proposal["day"], proposal["day"] + 1}
     return covered
+
+
+def week_from_date(schedule, date):
+    """A day's shooting week from its DATE, never from the PDL: a new PDL often leaves out the days
+    already shot and counts its "FINE SETTIMANA" from 1 again (Ana, 12 Oct: "a week has 5 working days,
+    so it's impossible to have week 0 or 1 now"). Same Monday–Sunday as a known day → its week;
+    otherwise the nearest earlier day's week + the weeks between. None = nothing to go by (no change).
+    Same as proposal-rules.js → weekFromDate."""
+    def monday(text):
+        d = datetime.date.fromisoformat(text)
+        return d - datetime.timedelta(days=d.weekday())
+    target = monday(date)
+    known = [s for s in schedule if s.get("date") and s.get("week")]
+    same = next((s for s in known if monday(s["date"]) == target), None)
+    if same:
+        return same["week"]
+    before = max((s for s in known if s["date"] < date), key=lambda s: s["date"], default=None)
+    return before["week"] + (target - monday(before["date"])).days // 7 if before else None
 
 
 def as_odg_scene(scene):
@@ -65,7 +83,8 @@ def build_pdl_proposal(film_folder, email_folder, today=None):
             checks.append(f"Day {day['day']}: left as the ODG says")
             continue
         add(check_day(day["day"], day["date"], day["call"], day["wrap"],
-                      [s["scene_id"] for s in day["scenes"]], film["schedule"], f"Day {day['day']}", day["week"]))
+                      [s["scene_id"] for s in day["scenes"]], film["schedule"], f"Day {day['day']}",
+                      week_from_date(film["schedule"], day["date"])))
     pdl_days = {d["day"] for d in pdl["days"]}
     for number in sorted({s["day"] for s in film["schedule"] if s["date"] >= today} - pdl_days - covered):
         changes.append({"text": f"Day {number} is no longer in the PDL: take its scenes off the schedule",
