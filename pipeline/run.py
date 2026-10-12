@@ -7,7 +7,7 @@
        (propose_pdl.py)
     3. file each ODG email's PDFs as projects/<film>/docs/day-<n>/odg.pdf and sides.pdf, so the
        app can open them offline (📄 buttons on each day), and the sides' lines for 🎙 Cues;
-       every email's PDFs, outdated ones too, also go to docs/archive/ (kept forever)
+       the other official PDFs (outdated versions, PDLs, scalette, maps) go to docs/archive/ (kept forever)
     4. commit + push the new proposals and documents to the private data repo
 
 Only proposals are written. The film's data changes only when Ana accepts them in the app.
@@ -220,22 +220,27 @@ def file_latest_pdl(film):
 
 
 def file_archive(film):
-    """EVERY official email's PDFs (ODG, sides, PDL, scaletta…), outdated versions too, kept as they
-    came: docs/archive/<received>_<subject>_<id>/ + email.json (Ana, 12 Oct: "the official docs should
-    always be part of the database of the project, even the outdated ones"). docs/day-<n>/ and
-    docs/pdl.pdf stay the CURRENT copies the app opens; the archive is only in the data repo
-    (the app doesn't download it). Never deleted or overwritten: a corrected email is a new folder."""
+    """Official PDFs NOT already kept as a current copy (docs/day-<n>/odg.pdf, sides.pdf, docs/pdl.pdf):
+    outdated or corrected ODGs and sides, older PDLs, scalette, maps… → docs/archive/<received>_<subject>_<id>/
+    + email.json (Ana, 12 Oct: "the official docs should always be part of the database of the project,
+    even the outdated ones" — "the ODG and the dailies scripts are already there, no need for duplicates").
+    The robot re-downloads every email at each run, so a copy replaced in docs/day-<n>/ lands here at
+    the next run. The app doesn't download the archive. Nothing here is ever deleted."""
     import shutil
+    current = {p.read_bytes() for p in list((film / "docs").glob("day-*/*.pdf")) + [film / "docs" / "pdl.pdf"]
+               if p.exists()}
     changed = []
     for email_folder in sorted((film / "_inbox").iterdir()):
         target = film / "docs" / "archive" / email_folder.name
-        for source in sorted(email_folder.glob("*.pdf")) + [email_folder / "email.json"]:
+        for source in sorted(email_folder.glob("*.pdf")):
             copy = target / source.name
-            if source.exists() and not copy.exists():
-                target.mkdir(parents=True, exist_ok=True)
-                shutil.copyfile(source, copy)
-                if source.suffix == ".pdf":
-                    changed.append(f"archive {source.name}")
+            if copy.exists() or source.read_bytes() in current:
+                continue
+            target.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(source, copy)
+            changed.append(f"archive {source.name}")
+        if target.exists() and not (target / "email.json").exists():
+            shutil.copyfile(email_folder / "email.json", target / "email.json")
     return changed
 
 
