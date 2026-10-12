@@ -25,6 +25,7 @@ import { IfbKitScreen } from './screens/ifb-kit.js';
 import { IfbPicker } from './parts/ifb-picker.js';
 import { HoursScreen } from './screens/hours.js';
 import { HelpScreen } from './screens/help.js';
+import { LavShareScreen } from './screens/lav-share.js';
 import { GearTruckScreen, GearInventoryScreen, GearManualsScreen } from './screens/gear.js';
 import { WrapBadge, WrapQuestion } from './parts/wrap-clock.js';
 import { Icon } from './parts/icons.js';
@@ -105,6 +106,7 @@ function App() {
     : current === 'document' ? DocumentScreen
     : current === 'hours' ? HoursScreen
     : current === 'help' ? HelpScreen
+    : current === 'lav-share' ? LavShareScreen
     : current === 'cues-map' ? CuesMapScreen
     : current === 'cues-timeline' ? CuesTimelineScreen
     : (tabs.find(([id]) => id === current) || tabs[0])[2];
@@ -136,12 +138,14 @@ function App() {
 applyTheme();   // light / dark (Projects → Screen)
 followPhone();
 render(html`<${App} />`, document.getElementById('app'));
-// a link into the app ('#hours', e.g. from the "Tomorrow" notification) opens that screen
+// a link into the app opens that screen: '#hours' (the "Tomorrow" notification),
+// '#lavs-18' (the "Day 18 lavs ready" notification → lav-share.js)
 function openFromLink() {
-  if (location.hash === '#hours') {
-    setState({ screen: 'hours', department: 'mics' });
-    history.replaceState(null, '', location.pathname + location.search);
-  }
+  const lavs = /^#lavs-(\d+)$/.exec(location.hash);
+  if (location.hash === '#hours') setState({ screen: 'hours', department: 'mics' });
+  else if (lavs) setState({ screen: 'lav-share', lavDay: Number(lavs[1]), department: 'mics' });
+  else return;
+  history.replaceState(null, '', location.pathname + location.search);
 }
 start().then(() => { openFromLink(); startAutoSync(); });
 addEventListener('hashchange', openFromLink);

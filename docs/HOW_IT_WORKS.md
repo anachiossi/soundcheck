@@ -65,6 +65,7 @@ Runs in the cloud (GitHub Actions), in Python; the laptop can run it too. Nothin
 | Gmail trigger: Google checks the mailbox every 10 min and starts the robot for a new ODG / sides / PDL | `pipeline/gmail-trigger.gs` (Apps Script in sound.chiossi@, see below) |
 | Sides in a separate email ("Re: … ODG #7") matched to their day | `sides_by_day` in `pipeline/propose.py` |
 | ODG + sides PDFs filed as `docs/day-N/odg.pdf`, `sides.pdf` | `file_documents` in `pipeline/run.py` |
+| New ODG → notification "🎙 D18 lavs ready" (phones with 🔔 on) → tap opens `#lavs-18` → Share the mic list (WhatsApp / Save Image); sent before review, the screen says when it's a draft (Ana, 12 Oct) | `tell_lavs` in `pipeline/run.py`, `src/screens/lav-share.js` |
 | Official PDFs not already kept as a current copy (outdated/corrected ODGs and sides, older PDLs, scalette, maps), kept forever in `docs/archive/<date>_<subject>_<id>/`, no duplicates (repo only, not synced to the phone; Ana, 12 Oct) | `file_archive` in `pipeline/run.py` |
 | ODG notes: visible on the slate only what can impact sound (🔊 notes, and the sound fragments of other departments: shots, engines, generators, water, screams…); 🎬 director / 👗 costume notes → "ⓘ more info"; the rest skipped. "STAND BY:" heading → the scenes under it get "⏸ stand-by on day N" | `note_kind` / `AUDIBLE` in `pipeline/compare.py`, `read_scene_table` in `pipeline/read_odg.py`; scenes.json `notes` (visible) + `info` (more info) |
 

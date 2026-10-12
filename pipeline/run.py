@@ -86,6 +86,7 @@ def run(film_folder, include_past=False):
     if documents:
         print(f"documents: {', '.join(documents)}")
     tell_tomorrow(film, [p for p in written if p["id"].startswith("odg") and p["date"] >= today])
+    tell_lavs(film, [p for p in written if p["id"].startswith("odg") and p["date"] >= today])
     if written or documents:
         if written:
             git(repo, "add", str(proposals))
@@ -118,6 +119,19 @@ def tell_tomorrow(film, odgs):
             send(film, f"Tomorrow D{odg['day']:02d} · call {plan['call']}{ride}",
                  f"⏰ wake {plan['wake']} · 🚪 leave {plan['leave_from']}–{plan['leave_to']} · 💤 sleep {plan['sleep']} — tap to set the alarms",
                  "./#hours", tag="tomorrow")
+
+
+def tell_lavs(film, odgs):
+    """A new ODG → "🎙 D18 lavs ready" to the phones with notifications on; a tap opens the app's
+    Day 18 share screen (screens/lav-share.js): one button → the mic list image → WhatsApp / Save Image.
+    Sent as soon as the ODG lands, before Ana's review (Ana, 12 Oct): the app says when it's a draft."""
+    if not odgs or not os.environ.get("VAPID_PRIVATE_KEY") or not any((film / "push").glob("*.json")):
+        return
+    from send_push import send
+    for odg in odgs:
+        scenes = " · ".join(odg.get("scene_ids") or [])
+        send(film, f"🎙 D{odg['day']:02d} lavs ready", f"Scenes {scenes} — tap to share the mic list (check the draft first)",
+             f"./#lavs-{odg['day']}", tag=f"lavs-{odg['day']}")
 
 
 def add_late_sides(film, other_sides):
