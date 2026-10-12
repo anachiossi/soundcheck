@@ -112,6 +112,7 @@ test('details: the type offers its usual fields and the ones other objects of th
   assert.deepEqual(fieldsOfType(intMics, 'Cable'), ['Connector A', 'Connector B', 'Length', 'Cable type', 'Colour', 'Ferrite']);
   assert.deepEqual(fieldsOfType(intMics, ''), []);
   assert.deepEqual(fieldsOfType(intMics, 'tripod'), []);
+  assert.deepEqual(fieldsOfType(intMics, 'Battery'), ['Size', 'Voltage / capacity', 'Energy', 'Charge current', 'Charge time', 'Charging', 'Fits']);
 });
 
 test('truck: volumes numbered one by one, Exp. Drums ×3 = 3 volumes', async () => {

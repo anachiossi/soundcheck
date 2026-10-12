@@ -201,6 +201,8 @@ const STARTING_FIELDS = {
   mic: ['Model', 'Capsule', 'Pattern', 'Suspension', 'Windshield', 'Accessories'],
   tx: ['Number', 'Model', 'Frequency', 'Serial', 'Connector'],
   lav: ['Model', 'Colour', 'Connector', 'Adaptor', 'Attenuated'],
+  // Ana, 12 Oct: every battery says how to charge it
+  battery: ['Size', 'Voltage / capacity', 'Energy', 'Charge current', 'Charge time', 'Charging', 'Fits'],
 };
 export function fieldsOfType(project, type) {
   if (!plain(type)) return [];
