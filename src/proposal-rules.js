@@ -7,6 +7,18 @@
 
 import { presetFile, soundFile } from './store/repo-files.js';
 
+// a new day's shooting week, from its date: the week of the days in the same Monday–Sunday, or the
+// nearest earlier day's week + the weeks between (0 = no date or no other day to go by)
+const mondayNumber = date => Math.floor((Date.parse(`${date}T12:00:00Z`) / 86400000 + 3) / 7); // weeks since a Monday
+export function weekFromDate(schedule, date) {
+  if (!date) return 0;
+  const target = mondayNumber(date);
+  const same = schedule.find(row => row.date && row.week && mondayNumber(row.date) === target);
+  if (same) return same.week;
+  const before = schedule.filter(row => row.date && row.week && row.date < date).sort((a, b) => b.date.localeCompare(a.date))[0];
+  return before ? before.week + (target - mondayNumber(before.date)) : 0;
+}
+
 const OPS = {
   // date / call / wrap of a shooting day
   set_day(film, { day, fields }) {
@@ -19,6 +31,7 @@ const OPS = {
   set_day_scenes(film, { day, scene_ids, fields = {} }) {
     const existing = film.schedule.find(row => row.day === day);
     const template = { day, date: '', week: 0, call: '', wrap: '', ...existing, ...fields };
+    if (!template.week) template.week = weekFromDate(film.schedule, template.date); // the ODG has no week (Ana, 12 Oct: "Week 0")
     const kept = film.schedule.filter(row => row.day !== day && !scene_ids.includes(String(row.scene_id)));
     const added = scene_ids.map((sceneId, i) => ({ ...template, scene_id: sceneId, order: i + 1 }));
     film.schedule = [...kept, ...added];

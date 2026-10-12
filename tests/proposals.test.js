@@ -103,3 +103,15 @@ test('an ODG note goes to the visible notes, or to "more info" when it is kind i
   assert.equal(after.scenes[2].notes, '🔊 Rumore auto');
   assert.deepEqual(after.scenes[2].info, ['🎬 Mario non mangia la lasagna']);
 });
+
+test('a brand-new day from an ODG gets its week from the date, never 0 (Ana, 12 Oct: "Week 0")', async () => {
+  const { weekFromDate } = await import('../src/proposal-rules.js');
+  const schedule = [
+    { day: 11, date: '2026-10-05', week: 3 }, { day: 12, date: '2026-10-06', week: 3 },
+    { day: 15, date: '2026-10-09', week: 3 }, { day: 16, date: '2026-10-12', week: 4 },
+  ];
+  assert.equal(weekFromDate(schedule, '2026-10-07'), 3, 'same Monday–Sunday');
+  assert.equal(weekFromDate(schedule, '2026-10-11'), 3, 'Sunday still the same week');
+  assert.equal(weekFromDate(schedule, '2026-10-26'), 6, 'later: the earlier day + the weeks between');
+  assert.equal(weekFromDate(schedule, ''), 0);
+});
