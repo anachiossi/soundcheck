@@ -91,8 +91,9 @@ async function downloadDocuments(connection, tree) {
   const dates = Object.fromEntries(shootingDays(project).map(d => [d.day, d.date]));
   const documents = { ...project.documents };
   const dateOf = path => dates[/day-(\d+)\//.exec(path)?.[1]] || '';
+  // docs/archive/ (every official email, outdated too — pipeline/run.py file_archive) stays in the repo only
   const wanted = Object.entries(tree.files)
-    .filter(([path, sha]) => path.startsWith(prefix) && path.endsWith('.pdf') && documents[path] !== sha)
+    .filter(([path, sha]) => path.startsWith(prefix) && !path.startsWith(`${prefix}archive/`) && path.endsWith('.pdf') && documents[path] !== sha)
     .sort(([a], [b]) => (dateOf(a) < yesterday) - (dateOf(b) < yesterday));
   let fetched = 0;
   for (const [path, sha] of wanted) {

@@ -7,8 +7,8 @@ Reads the mailbox with an app password:
 Which emails belong to a film is written in the film's folder (private data repo):
     projects/<film>/inbox.json   { "gmail_search": "subject:ODG has:attachment" }
 
-PDFs are saved in projects/<film>/_inbox/<date>_<subject>_<id>/ (not committed to git:
-scripts are confidential and big). Each email is recognised by its own Message-ID, so a
+PDFs are saved in projects/<film>/_inbox/<date>_<subject>_<id>/ (not committed to git; run.py
+copies every email's PDFs to docs/archive/ in the private data repo, outdated ones too). Each email is recognised by its own Message-ID, so a
 corrected ODG sent again with the same subject is still a new email.
 
     python pipeline/fetch_mail.py D:/sound_check_data/projects/la-buona-educazione

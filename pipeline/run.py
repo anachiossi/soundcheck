@@ -6,7 +6,8 @@
        (propose.py); a PDL (+ scaletta) → a whole review from today on → proposals/pdl-<date>.json
        (propose_pdl.py)
     3. file each ODG email's PDFs as projects/<film>/docs/day-<n>/odg.pdf and sides.pdf, so the
-       app can open them offline (📄 buttons on each day), and the sides' lines for 🎙 Cues
+       app can open them offline (📄 buttons on each day), and the sides' lines for 🎙 Cues;
+       every email's PDFs, outdated ones too, also go to docs/archive/ (kept forever)
     4. commit + push the new proposals and documents to the private data repo
 
 Only proposals are written. The film's data changes only when Ana accepts them in the app.
@@ -170,6 +171,7 @@ def file_documents(film, other_sides):
                 shutil.copyfile(source, target)
                 changed.append(f"day {day} {name}")
     changed += file_latest_pdl(film)
+    changed += file_archive(film)
     changed += file_crew_calls(film)
     return changed
 
@@ -215,6 +217,26 @@ def file_latest_pdl(film):
     shutil.copyfile(pdl, target)
     write_json(film / "docs" / "pdl.json", {"subject": email["subject"], "received": email["date"], "file": pdl.name})
     return ["the latest PDL"]
+
+
+def file_archive(film):
+    """EVERY official email's PDFs (ODG, sides, PDL, scaletta…), outdated versions too, kept as they
+    came: docs/archive/<received>_<subject>_<id>/ + email.json (Ana, 12 Oct: "the official docs should
+    always be part of the database of the project, even the outdated ones"). docs/day-<n>/ and
+    docs/pdl.pdf stay the CURRENT copies the app opens; the archive is only in the data repo
+    (the app doesn't download it). Never deleted or overwritten: a corrected email is a new folder."""
+    import shutil
+    changed = []
+    for email_folder in sorted((film / "_inbox").iterdir()):
+        target = film / "docs" / "archive" / email_folder.name
+        for source in sorted(email_folder.glob("*.pdf")) + [email_folder / "email.json"]:
+            copy = target / source.name
+            if source.exists() and not copy.exists():
+                target.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(source, copy)
+                if source.suffix == ".pdf":
+                    changed.append(f"archive {source.name}")
+    return changed
 
 
 if __name__ == "__main__":
