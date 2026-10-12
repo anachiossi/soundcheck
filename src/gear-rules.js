@@ -22,6 +22,8 @@ export const STARTING_CATEGORIES = [
   { id: 'poles', name: 'Poles', color: '#9333ea' },
   { id: 'tripods', name: 'Tripods', color: '#0891b2' },
   { id: 'other', name: 'Other', color: '#64748b' },
+  // Ana, 12 Oct: pockets hold things too — in a bag, a case, a lid… (a sub-category of Cases, never a truck volume)
+  { id: 'pockets', name: 'Pockets', color: '#f97316', parent: 'cases' },
 ];
 
 // categories that usually go on the truck as volumes (a new object there starts as a volume)
@@ -63,10 +65,10 @@ export const holds = (project, id) => activeItems(project).some(item => item.ins
 
 // a cart or a case (or anything holding things, or whose type is a case: Pelican, wood box…): it opens
 // to show its contents. Things in a sub-category (Cases → Batteries) are contents, not containers.
-export const isContainer = (project, item) => holds(project, item.id) || ['carts', 'cases'].includes(item.category)
+export const isContainer = (project, item) => holds(project, item.id) || ['carts', 'cases', 'pockets'].includes(item.category)
   || CASE_WORDS.test(plain(item.type));
 // a type with one of these words holds things: "Plastic case", "soft case", "wood box", "Pelican"…
-const CASE_WORDS = /\b(case|bag|box|pouch|tube|drawer|rack|pelican|trunk)\b/;
+const CASE_WORDS = /\b(case|bag|box|pouch|pocket|tube|drawer|rack|pelican|trunk)\b/;
 
 // every object in a category tab, wherever it is (e.g. all the cables, also those in cases)
 export function allInCategory(project, topId) {
@@ -130,7 +132,7 @@ export function historyOf(before, after) {
 // ---- search (Ana, 2 Oct): "xlr cable" → every XLR cable with where it is; "wood box" → every wood box ----
 // An object is found when every word of the search is in its name, brand, nicknames, type (Pelican, wood
 // box…), details (BNC, fur…), note or category (and the category's parent): "xlr cable" finds "XLR 3m".
-export const CASE_TYPES = ['Pelican', 'hard case', 'soft bag', 'wood box', 'tube', 'flight case', 'rack', 'drawer', 'box', 'pouch'];
+export const CASE_TYPES = ['Pelican', 'hard case', 'soft bag', 'wood box', 'tube', 'flight case', 'rack', 'drawer', 'box', 'pouch', 'pocket'];
 // the types offered when typing one (the cases' and the usual things'; any other can be typed)
 export const typesOf = project => [...new Set([...CASE_TYPES, 'cable', 'mic', 'cart',
   ...activeItems(project).map(item => item.type).filter(Boolean)])];

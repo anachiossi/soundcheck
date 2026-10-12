@@ -129,6 +129,8 @@ test('a type naming a case makes a case: Plastic case, soft case', async () => {
   assert.equal(isContainer(film, { id: 'x', category: 'other', type: 'Plastic case' }), true);
   assert.equal(isContainer(film, { id: 'y', category: 'other', type: 'soft case' }), true);
   assert.equal(isContainer(film, { id: 'z', category: 'other', type: 'mic' }), false);
+  assert.equal(isContainer(film, { id: 'p', category: 'pockets' }), true, 'a pocket (Cases → Pockets) holds things');
+  assert.equal(isContainer(film, { id: 'q', category: 'other', type: 'mesh pocket' }), true);
 });
 
 test('↑ moves a case up among the cases next to it; loose things and other cases stay', async () => {
