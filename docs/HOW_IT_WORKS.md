@@ -94,6 +94,9 @@ Ana, 9 Oct: she didn't tap ⏰ and the alarm wasn't set. The iPhone now asks the
   Deploy → New deployment → ⚙ Web app → Execute as **Me**, Who has access **Anyone** → copy the URL.
   Test in Safari: `<URL>?key=<ALARM_KEY>` shows `none` or the times. (A new version of the script needs
   Deploy → Manage deployments → ✎ → Version: New, or the URL keeps the old code.)
+  12 Oct 2026: alarms came out 10 min late (06:45;07:30, Ana's own call) because a second "New deployment"
+  made a new link (`…tAnMuA`, new code) while the shortcut kept the first (`…yl_tTQ`, frozen pre-Ilaria).
+  The shortcut now uses `…tAnMuA`. Never "New deployment" again — always ✎ → New version on that one.
 - Shortcut **soundcheck auto alarms** (Shortcuts app):
   1. **Get Contents of URL** (Obter Conteúdo do URL): `<URL>?key=<ALARM_KEY>`
   2. **If** Contents of URL **contains** `;` → **Run Shortcut** (Executar Atalho) *soundcheck alarms*, input =
