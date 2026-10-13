@@ -51,7 +51,7 @@ export function countedOvertime(project, minutes) {
 // Minutes between call and the real wrap (past midnight counts on), and the overtime beyond the
 // working day, as it counts (countedOvertime). Null when something is missing.
 export function workedOf(project, day) {
-  const info = shootingDays(project).find(d => String(d.day) === String(day));
+  const info = workedDays(project).find(d => String(d.day) === String(day));
   const hours = hoursOf(project, day);
   const call = minutesOf(info?.call);
   const wrap = minutesOf(hours?.status === 'wrapped' ? hours.real_wrap : null);
@@ -89,6 +89,18 @@ export function today(project, now = new Date()) {
   return { ...base, phase: 'ask', over };
 }
 
+// The shooting days plus the days that were worked but have no scenes left in schedule.json
+// (a later ODG moved them all away — D17, 13 Oct): their call / wrap come from hours/<day>.json
+// (call, odg_wrap), else "?". No scenes. (v150, Ana: "what happened to today's hours?")
+export function workedDays(project) {
+  const days = shootingDays(project);
+  const known = new Set(days.map(d => String(d.day)));
+  const ghosts = Object.values(project.hours || {})
+    .filter(h => h?.date && !known.has(String(h.day)))
+    .map(h => ({ day: Number(h.day), date: h.date, week: null, call: h.call || '', wrap: h.odg_wrap || '', scenes: [] }));
+  return [...days, ...ghosts].sort((a, b) => a.day - b.day);
+}
+
 // A shooting day with its hours, for the report: { day, date, call, wrap, real_wrap, late, worked, extra }
 function withHours(project, d) {
   const hours = hoursOf(project, d.day);
@@ -100,13 +112,13 @@ function withHours(project, d) {
 export function weekOf(project, monday) {
   const end = new Date(monday); end.setDate(end.getDate() + 7);
   const inWeek = d => { const at = new Date(`${d.date}T12:00`); return at >= monday && at < end; };
-  return shootingDays(project).filter(inWeek).map(d => withHours(project, d));
+  return workedDays(project).filter(inWeek).map(d => withHours(project, d));
 }
 
 // The whole film, week by week: [{ monday, days: [...] }]
 export function filmWeeks(project) {
   const weeks = new Map();
-  for (const d of shootingDays(project)) {
+  for (const d of workedDays(project)) {
     const monday = mondayOf(new Date(`${d.date}T12:00`));
     const key = monday.getTime();
     if (!weeks.has(key)) weeks.set(key, { monday, days: [] });

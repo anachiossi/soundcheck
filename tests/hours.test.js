@@ -125,3 +125,11 @@ test("riding with Ilaria: the alarms follow her call on the ODG, Ana's call stay
   assert.equal(unknown.rideCall, '', 'no ODG yet');
   assert.equal(unknown.wake, '06:35', "40 min before Ana's call, then the same sums");
 });
+
+test('a worked day whose scenes a later ODG moved away stays in the week (D17, 13 Oct)', () => {
+  const p = film({ 7: { day: 7, date: '2026-09-29', status: 'wrapped', real_wrap: '18:00', call: '09:30', odg_wrap: '17:30' } });
+  assert.deepEqual(workedOf(p, 7), { worked: 510, extra: 30 });
+  const week = weekOf(p, mondayOf(at('2026-09-30', '12:00')));
+  assert.deepEqual(week.map(d => d.day), [7, 8, 9]);
+  assert.equal(week[0].real_wrap, '18:00');
+});

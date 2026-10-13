@@ -15,7 +15,9 @@ async function saveHours(day, fields, message) {
   const now = new Date().toISOString();
   const info = shootingDays(project).find(d => String(d.day) === String(day));
   const hours = {
-    ...project.hours?.[day], day: Number(day), date: info?.date || '', ...fields,
+    ...project.hours?.[day], day: Number(day), date: info?.date || project.hours?.[day]?.date || '',
+    // the ODG's call and wrap too, so the day keeps its hours if a later ODG moves all its scenes away (v150)
+    ...(info?.call ? { call: info.call, odg_wrap: info.wrap } : {}), ...fields,
     updated_at: now, updated_by: connection?.device || 'this device',
   };
   const outbox = { ...project.outbox, [hoursFile(day)]: { saved_at: now } };
