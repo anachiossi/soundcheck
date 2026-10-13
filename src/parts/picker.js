@@ -10,7 +10,7 @@ import { naturalCompare, byId } from '../model.js';
 import { usedByOtherRows, sameDaySuggestions, preferredFor, lavNotUsed } from '../preset-rules.js';
 import { warningsFor, warningText } from '../sound-rules.js';
 import { setCell, closePicker, toggleAcc } from '../editing.js';
-import { accessoryPool, usualFor, usedElsewhere } from '../accessories.js';
+import { accessoryPool, usualFor, usedElsewhere, accSide } from '../accessories.js';
 import { itemGroups } from '../gear-rules.js';
 import { CharacterPill, TxPill, LavPill } from './pills.js';
 import { Icon } from './icons.js';
@@ -30,7 +30,7 @@ export function Picker({ state }) {
   if (!edit || !picker) return null;
 
   const { rowIndex, field } = picker;
-  if (field === 'acc') return html`<${AccPicker} project=${project} edit=${edit} rowIndex=${rowIndex} />`;
+  if (field === 'acc') return html`<${AccPicker} project=${project} edit=${edit} rowIndex=${rowIndex} side=${picker.side} />`;
   const row = edit.rows[rowIndex];
   const character = byId(project.characters).get(String(row.char_id));
   const used = usedByOtherRows(edit.rows, rowIndex, field);
@@ -86,11 +86,11 @@ export function Picker({ state }) {
 
 // the Acc. column (accessories.js): straps, pouches, furs and covers from Gear; tap to add or remove (several
 // allowed); the character's usual kit first; "×2 · 1 in use" says how many the other rows already took
-function AccPicker({ project, edit, rowIndex }) {
+function AccPicker({ project, edit, rowIndex, side }) {
   const [query, setQuery] = useState('');
   const row = edit.rows[rowIndex];
   const character = byId(project.characters).get(String(row.char_id));
-  const pool = accessoryPool(project);
+  const pool = accessoryPool(project).filter(item => !side || accSide(item) === side);
   const chosen = new Set(row.acc || []);
   const usual = usualFor(project, character);
   const q = query.trim().toLowerCase();
@@ -109,7 +109,7 @@ function AccPicker({ project, edit, rowIndex }) {
     <div class="sheet-backdrop" onClick=${closePicker}></div>
     <div class="sheet" role="dialog" aria-label="Choose accessories">
       <header class="sheet__head">
-        <b>Acc. · #${edit.sceneId}${character ? ` · ${character.name}` : ''}</b>
+        <b>${{ lav: 'Lav acc.', tx: 'TX acc.' }[side] || 'Acc.'} · #${edit.sceneId}${character ? ` · ${character.name}` : ''}</b>
         <button class="icon-btn" onClick=${closePicker} aria-label="Done"><${Icon} name="close" /></button>
       </header>
       <div class="sheet__tools">

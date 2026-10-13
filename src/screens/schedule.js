@@ -6,7 +6,7 @@
 // Every scene can be edited right here (✎ on its title bar).
 // Day pills (parts/day-strip.js, the same in Cues) turn green when the day is over;
 // tapping the Schedule tab opens the day we are in.
-// Used by: main.js
+// Used by: main.js (shareMics: screens/scenes.js, screens/lav-share.js)
 
 import { html } from '../../vendor/preact-htm.js';
 import { shootingDays, weeks, unscheduledScenes, formatDate, exportName, dayTag, weekTag, shortDate, scheduleFor } from '../model.js';
@@ -19,6 +19,7 @@ import { shareCanvas, shareCanvases } from '../export/share.js';
 import { Icon } from '../parts/icons.js';
 import { ScenePill } from '../parts/scene-pill.js';
 import { DayStrip } from '../parts/day-strip.js';
+import { askImageFor } from '../parts/image-for.js';
 
 const MODES = [['day', 'Day'], ['week', 'Week'], ['all', 'All film']];
 
@@ -52,9 +53,15 @@ async function exportDays(project, dayNumbers, title, fileName) {
 
 const scrollToScene = id => document.getElementById('scene-' + id)?.scrollIntoView({ behavior: 'smooth' });
 
-async function exportScene(project, sceneId) {
-  await shareCanvas(await sceneSheet(project, [sceneId], `Scene ${sceneId}`), exportName(project, sceneFileName(project, sceneId)));
+// a scene's or a day's image: first "Image for: Sound mixer · Sound assistants" (parts/image-for.js)
+export async function shareMics(project, sceneIds, title, fileName) {
+  const audience = await askImageFor();
+  if (!audience) return;
+  const name = audience === 'assistants' ? fileName.replace(/^mics/, 'rig') : fileName;
+  await shareCanvas(await sceneSheet(project, sceneIds, title, audience), exportName(project, name));
 }
+
+const exportScene = (project, sceneId) => shareMics(project, [sceneId], `Scene ${sceneId}`, sceneFileName(project, sceneId));
 
 // 📄 ODG / 📄 Sides: only shown once that day's PDF is on this device.
 function DocumentButtons({ project, day }) {
@@ -79,7 +86,7 @@ function DayView({ project, edit, dayNumber }) {
     <${SceneChips} project=${project} sceneIds=${sceneIds} onPick=${scrollToScene} />
     <div class="toolbar">
       <${DocumentButtons} project=${project} day=${day.day} />
-      <button class="btn" onClick=${async () => shareCanvas(await sceneSheet(project, sceneIds, `Day ${day.day} · mic list`), exportName(project, `mics_${dayTag(day.day)}_${shortDate(day.date)}.png`))}><${Icon} name="image" /> Export</button>
+      <button class="btn" onClick=${() => shareMics(project, sceneIds, `Day ${day.day} · mic list`, `mics_${dayTag(day.day)}_${shortDate(day.date)}.png`)}><${Icon} name="image" /> Export</button>
     </div>
     ${sceneIds.map(id => html`<${SceneTable} key=${id} project=${project} edit=${edit} sceneId=${id} onExport=${id => exportScene(project, id)} />`)}`;
 }

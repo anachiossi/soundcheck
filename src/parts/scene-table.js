@@ -1,16 +1,20 @@
-// scene-table.js — one scene: the grey "slate" title bar and its mic table
-// (Character · TX · Lav · Speaks — or Acc.: the label of the last column swaps it, accessories.js). The slate shows #12, INT/EXT, time of day
+// scene-table.js — one scene: the grey "slate" title bar and its mic table. The slate shows #12, INT/EXT, time of day
 // and the set, then location · pages · story day, the synopsis, the notes that can impact sound
 // (orange) and "ⓘ more info" (director / costume / production notes, closed until tapped).
 // 🎙 opens Cues (learn the lines), ✎ turns the table into the editor.
-// 🔋 under a TX pill: the time left on its battery (Gear → Batteries, battery-tag.js).
+// The mic table (v149, Ana 13 Oct: "the fluidity of horizontal pages to survive adding more columns"): the Character
+// stays pinned on the left; every other column sits in COLUMNS, in Ana's order, and fills pages as wide as the phone
+// allows — swipe sideways for the next page, the dots on the right say which one. A new column = one more entry.
+//   TX (with its frequency) · Speaks · Battery (battery-cell.js) · Lav · Lav acc. · TX acc. · Position
+// Nothing is ever printed under a pill ("I absolutely disgust this lack of alignment"): new info gets its own column.
+// The editor (scene-editor.js) uses the same pages, with its own cells.
 // Under the slate: the sound bar (dificultômetro, flags, lav warnings — sound-bar.js); a
 // character's lav warning is also printed under their mic row.
 // "● not uploaded" = saved on this device, waiting for signal.
 // Column names are printed small above the first row, to save height on phones.
 // Used by: screens/schedule.js, screens/scenes.js
 
-import { html, useState } from '../../vendor/preact-htm.js';
+import { html, useState, useEffect, useRef } from '../../vendor/preact-htm.js';
 import { ScenePill } from './scene-pill.js';
 import { sceneRows, scheduleFor, sceneInfo, formatDate, formatStamp, timeClass } from '../model.js';
 import { startEdit } from '../editing.js';
@@ -22,8 +26,8 @@ import { CharacterPill, TxPill, LavPill, SpeakerBadge, AccPill } from './pills.j
 import { SceneEditor } from './scene-editor.js';
 import { SoundBar, RowWarnings } from './sound-bar.js';
 import { Icon } from './icons.js';
-import { accOn, setAccOn, rowAccessories } from '../accessories.js';
-import { BatteryTag } from './battery-tag.js';
+import { rowAccessories } from '../accessories.js';
+import { BatteryCell } from './battery-cell.js';
 
 // "ⓘ more info (3)": director / costume notes from the ODGs and production notes, closed until tapped
 function MoreInfo({ items }) {
@@ -83,46 +87,93 @@ export function SceneTable({ project, sceneId, edit, showDay = false, onRemove, 
     </section>`;
 }
 
-// the last column's label is a button: Speaks ⇄ Acc. (Ana, 8 Oct: "a button that changes the speaks column to an
-// accessory column"); remembered on this phone, for every scene
-export const SwapLabel = ({ acc }) => html`<button class="mics__label mics__swap" onClick=${() => setAccOn(!acc)}
-  aria-label=${acc ? 'Show who speaks' : 'Show the accessories'}>${acc ? 'Acc.' : 'Speaks'} ⇄</button>`;
 
-// what holds the TX and covers the lav, in the Speaks column's width: a pill like the lav's for each thing, its
-// colour as background and a short word (Waist, Ankle, Pouch — accLabel), one under the other
-export function AccCell({ project, row }) {
-  const things = rowAccessories(project, row);
+// the accessories of a row on one side ('lav': fur, cover, foam · 'tx': strap, pouch), one pill each, stacked
+export function AccCell({ project, row, side }) {
+  const things = rowAccessories(project, row, side);
   if (!things.length) return html`<span class="acc acc--empty">—</span>`;
   return html`<span class="acc">${things.map(t => html`<${AccPill} key=${t.id} thing=${t} />`)}</span>`;
+}
+
+// where the lav goes: chest, collar, hair… (free text)
+export const PositionPill = ({ position }) => (position
+  ? html`<span class="pill pill--lav pill--lav-model pill--position" title=${position}><b>${position}</b></span>`
+  : html`<span class="acc acc--empty">—</span>`);
+
+// the columns after the Character, in Ana's order: key, label, min (px), grow (share of the spare width), view cell.
+// The pages are cut from this list (pagesOf).
+export const COLUMNS = [
+  { key: 'tx', label: 'TX', min: 70, cell: (project, row) => html`<${TxPill} tx=${row.tx} character=${row.character} id=${row.tx_id} withFrequency />` },
+  { key: 'speaks', label: 'Speaks', min: 58, cell: (project, row) => html`<${SpeakerBadge} speaker=${row.speaker} />` },
+  { key: 'battery', label: html`<${Icon} name="battery" label="Battery" />`, min: 74,
+    cell: (project, row) => html`<${BatteryCell} project=${project} txId=${row.tx_id} character=${row.character} />` },
+  { key: 'lav', label: 'Lav', min: 48, cell: (project, row) => html`<${LavPill} lav=${row.lav} id=${row.lav_id} mismatch=${row.connectorMismatch} />` },
+  { key: 'lav_acc', label: 'Lav acc.', min: 60, cell: (project, row) => html`<${AccCell} project=${project} row=${row} side="lav" />` },
+  { key: 'tx_acc', label: 'TX acc.', min: 60, cell: (project, row) => html`<${AccCell} project=${project} row=${row} side="tx" />` },
+  { key: 'position', label: 'Position', min: 64, grow: 1.6, cell: (project, row) => html`<${PositionPill} position=${row.position} />` },
+];
+
+// the columns cut into pages that fit `width` (in order; a column too wide alone still gets its page)
+export function pagesOf(columns, width, gap) {
+  const pages = [];
+  let page = [];
+  let used = 0;
+  for (const column of columns) {
+    const need = column.min + (page.length ? gap : 0);
+    if (page.length && used + need > width) { pages.push(page); page = [column]; used = column.min; } else { page.push(column); used += need; }
+  }
+  if (page.length) pages.push(page);
+  return pages;
+}
+
+// the pinned lead (the Character; in the editor also ↑ ✕) and the pages of columns, row by row.
+// rows: [{ key, lead, cells: { tx, speaks, … }, after (under the row, e.g. its lav warning) }]
+export function PagedMics({ rows, columns = COLUMNS, extraLead = 0 }) {
+  const ref = useRef(null);
+  const [width, setWidth] = useState(() => Math.min(window.innerWidth, 640) - 28);
+  const [page, setPage] = useState(0);
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return undefined;
+    setWidth(element.clientWidth);
+    if (typeof ResizeObserver === 'undefined') return undefined;
+    const observer = new ResizeObserver(() => setWidth(element.clientWidth));
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+  const gap = width < 560 ? 4 : 6;
+  const lead = (width < 560 ? 112 : 220) + extraLead;
+  const pageWidth = Math.max(120, width - lead - gap);
+  const pages = pagesOf(columns, pageWidth, gap);
+  const step = pageWidth + gap;
+  const onScroll = e => setPage(Math.round(e.currentTarget.scrollLeft / step));
+  const goTo = n => ref.current?.scrollTo({ left: n * step, behavior: 'smooth' });
+  const label = (column, i) => i === 0 && html`<span class="mics__label">${column.label}</span>`;
+  return html`
+    ${pages.length > 1 && html`<div class="mics__dots">${pages.map((_, n) => html`<button key=${n} class=${n === page ? 'on' : ''}
+      onClick=${() => goTo(n)} aria-label=${`Columns, page ${n + 1}`}></button>`)}</div>`}
+    <div class="mics mics--pages" ref=${ref} onScroll=${onScroll}
+      style=${`--lead:${lead}px;--pw:${pageWidth}px;--vw:${width}px;--gap:${gap}px;--pages:${pages.length};scroll-padding-left:${lead + gap}px`}>
+      ${rows.map((row, i) => html`
+        <div class="mics__row" key=${row.key}>
+          <div class="mics__lead">${i === 0 && html`<span class="mics__label">Character</span>`}${row.lead}</div>
+          ${pages.map((cols, n) => html`
+            <div class="mics__page" key=${n} style=${`grid-template-columns:${cols.map(c => `minmax(${c.min}px,${c.grow || 1}fr)`).join(' ')}`}>
+              ${cols.map(c => html`<div class="mics__cell" key=${c.key}>${label(c, i)}${row.cells[c.key]}</div>`)}
+            </div>`)}
+          ${row.after}
+        </div>`)}
+    </div>`;
 }
 
 function MicRows({ project, sceneId }) {
   const rows = sceneRows(project, sceneId);
   if (!project.presets[sceneId]) return html`<p class="scene__empty">No preset yet. Tap the pencil to add mics.</p>`;
   if (!rows.length) return html`<p class="scene__empty">No mics in this scene.</p>`;
-  const acc = accOn(); // this phone shows Acc. in the last column instead of Speaks (the label swaps it)
-  return html`
-    <div class=${'mics' + (acc ? ' mics--acc' : '')}>
-      ${rows.map((row, i) => html`
-        <div class="mics__row" key=${i}>
-          <div class="mics__cell">
-            ${i === 0 && html`<span class="mics__label">Character</span>`}
-            <${CharacterPill} character=${row.character} id=${row.char_id} />
-          </div>
-          <div class="mics__cell">
-            ${i === 0 && html`<span class="mics__label">TX</span>`}
-            <${TxPill} tx=${row.tx} character=${row.character} id=${row.tx_id} withFrequency />
-            <${BatteryTag} project=${project} txId=${row.tx_id} />
-          </div>
-          <div class="mics__cell">
-            ${i === 0 && html`<span class="mics__label">Lav</span>`}
-            <${LavPill} lav=${row.lav} id=${row.lav_id} mismatch=${row.connectorMismatch} />
-          </div>
-          <div class="mics__cell">
-            ${i === 0 && html`<${SwapLabel} acc=${acc} />`}
-            ${acc ? html`<${AccCell} project=${project} row=${row} />` : html`<${SpeakerBadge} speaker=${row.speaker} />`}
-          </div>
-          <${RowWarnings} project=${project} sceneId=${sceneId} charId=${row.char_id} />
-        </div>`)}
-    </div>`;
+  return html`<${PagedMics} rows=${rows.map((row, i) => ({
+    key: i,
+    lead: html`<${CharacterPill} character=${row.character} id=${row.char_id} />`,
+    cells: Object.fromEntries(COLUMNS.map(c => [c.key, c.cell(project, row)])),
+    after: html`<${RowWarnings} project=${project} sceneId=${sceneId} charId=${row.char_id} />`,
+  }))} />`;
 }

@@ -5,12 +5,10 @@
 
 import { html, useState } from '../../vendor/preact-htm.js';
 import { ScenePill } from '../parts/scene-pill.js';
-import { allSceneIds, exportName, doneScenes } from '../model.js';
-import { sceneFileName } from './schedule.js';
+import { allSceneIds, doneScenes } from '../model.js';
+import { sceneFileName, shareMics } from './schedule.js';
 import { addLookup, removeLookup, clearLookup } from '../state.js';
 import { SceneTable } from '../parts/scene-table.js';
-import { sceneSheet } from '../export/image.js';
-import { shareCanvas } from '../export/share.js';
 
 export function ScenesScreen({ state }) {
   const { project, lookup } = state;
@@ -41,5 +39,5 @@ export function ScenesScreen({ state }) {
     ${lookup.map(id => html`
       <${SceneTable} key=${id} project=${project} edit=${state.edit} sceneId=${id} showDay
         onRemove=${removeLookup}
-        onExport=${async sceneId => shareCanvas(await sceneSheet(project, [sceneId], `Scene ${sceneId}`), exportName(project, sceneFileName(project, sceneId)))} />`)}`;
+        onExport=${sceneId => shareMics(project, [sceneId], `Scene ${sceneId}`, sceneFileName(project, sceneId))} />`)}`;
 }

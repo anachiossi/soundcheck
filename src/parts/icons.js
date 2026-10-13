@@ -1,7 +1,7 @@
 // icons.js — small drawn icons for buttons (instead of emoji), thin lines in the
 // button's own text colour, so they look the same on every phone.
 //   <${Icon} name="edit" />   names: edit · mic · image · document · close · up · pin ·
-//                              download · inbox · headphones · map · timeline · cues · voice
+//                              download · inbox · headphones · map · timeline · cues · voice · battery
 // Used by: the scene bar, Schedule, Cues, Kit, pickers, the top bar.
 
 import { html } from '../../vendor/preact-htm.js';
@@ -24,6 +24,7 @@ const DRAWINGS = {
   voice: html`<path d="M4 9h4l5-4v14l-5-4H4z" /><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" />`,  // read aloud
   timeline: html`<path d="M2 11h5v6H2zM9 11h6v6H9zM17 11h5v6h-5z" /><path d="M4 3h4l-2 3z" /><path d="M6 6v15" />`,
   gear: html`<rect x="3" y="7" width="18" height="13" rx="2" /><path d="M9 7V5h6v2" /><path d="M3 12h18" />`,  // a case
+  battery: html`<rect x="2" y="7" width="17" height="10" rx="2" /><path d="M21.5 10.5v3" /><path d="M5.5 10v4" />`,  // low: one bar (Ana: not an emoji)
   headphones: html`<path d="M4 14v-2a8 8 0 0 1 16 0v2" /><rect x="3" y="13" width="5" height="8" rx="2" /><rect x="16" y="13" width="5" height="8" rx="2" />`,
 };
 

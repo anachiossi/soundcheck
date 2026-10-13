@@ -1,5 +1,7 @@
 // image.js — makes shareable PNG images from the local data (works offline):
-//   sceneSheet(project, sceneIds, title)  one or more scenes (scene card / day sheet)
+//   sceneSheet(project, sceneIds, title, audience)  one or more scenes (scene card / day sheet)
+// audience (parts/image-for.js asks it): 'mixer' = Character · TX · Lav · Speaks;
+//   'assistants' = Character · TX + MHz · Change at (the battery's change time, no colours) · Lav · Lav acc. · TX acc. · Position
 // (Week / all-film images: schedule-images.js, built from the same pieces.)
 // Every image carries the film name and "data as of …" so an old screenshot
 // is never mistaken for the current plan.
@@ -8,6 +10,8 @@
 import { sceneRows, scheduleFor, sceneInfo, timeClass, formatDate, formatStamp } from '../model.js';
 import { newCanvas, box, text, font, pill, tag, wrapLines } from './draw.js';
 import { LEVELS, soundOf, flagText, warningText, warningsByCharacter } from '../sound-rules.js';
+import { rowAccessories } from '../accessories.js';
+import { txTimer, timeOfDay } from '../battery-rules.js';
 
 export const WIDTH = 1080;
 export const PAD = 40;
@@ -47,7 +51,7 @@ export function footer(ctx, width, y, project) {
   }
 }
 
-export async function sceneSheet(project, sceneIds, title) {
+export async function sceneSheet(project, sceneIds, title, audience = 'mixer') {
   await fontsReady();
   // Draw on a tall canvas, then cut it to the height actually used.
   const roughHeight = 400 + sceneIds.reduce((sum, id) => sum + 520 + sceneRows(project, id).length * ROW
@@ -57,10 +61,10 @@ export async function sceneSheet(project, sceneIds, title) {
   const first = scheduleFor(project, sceneIds[0]);
   const dayPart = title.startsWith('Day') ? '' : `Day ${first?.day} · `;
   const subtitle = first ? `${dayPart}${formatDate(first.date, { weekday: true })} · ${first.call}–${first.wrap}` : '';
-  header(ctx, WIDTH, title, subtitle);
+  header(ctx, WIDTH, audience === 'assistants' ? `${title} · sound assistants` : title, subtitle);
 
   let y = 180;
-  sceneIds.forEach(id => { y = drawScene(ctx, project, id, y); });
+  sceneIds.forEach(id => { y = drawScene(ctx, project, id, y, audience); });
   footer(ctx, WIDTH, y, project);
   return cropHeight(canvas, y + FOOTER_HEIGHT);
 }
@@ -71,7 +75,7 @@ export function cropHeight(canvas, height) {
   return result;
 }
 
-export function drawScene(ctx, project, sceneId, y) {
+export function drawScene(ctx, project, sceneId, y, audience = 'mixer') {
   y = drawSlate(ctx, sceneId, sceneInfo(project, sceneId), y) + 12;
   y = drawSound(ctx, project, sceneId, y);
 
@@ -80,26 +84,54 @@ export function drawScene(ctx, project, sceneId, y) {
     font(ctx, 400, 26); text(ctx, project.presets[sceneId] ? 'Preset has no rows' : 'No preset', PAD + 20, y + 30, 0, '#64748b');
     return y + ROW + 14;
   }
-  // Column titles, so "YES" reads as "this character speaks".
+  if (audience === 'assistants') return drawRigRows(ctx, project, rows, y);
+  // Column titles, so "YES" reads as "this character speaks". The mixer's image: TX numbers, no frequencies (Ana, 13 Oct)
   font(ctx, 600, 20);
   text(ctx, 'CHARACTER', PAD + 24, y + 12, 0, '#64748b');
-  text(ctx, 'TX', PAD + 441, y + 12, 0, '#64748b', 'center');
-  text(ctx, 'MHz', PAD + 561, y + 12, 0, '#64748b', 'center');
-  text(ctx, 'LAV', PAD + 656, y + 12, 0, '#64748b');
+  text(ctx, 'TX', PAD + 516, y + 12, 0, '#64748b', 'center');
+  text(ctx, 'LAV', PAD + 616, y + 12, 0, '#64748b');
   text(ctx, 'SPEAKS', PAD + 940, y + 12, 0, '#64748b', 'center');
   y += 34;
   for (const row of rows) {
     const h = ROW - 16;
     const c = row.character;
-    pill(ctx, PAD, y, 370, h, c?.color, c?.name || `? ${row.char_id}`, c?.actor);
-    pill(ctx, PAD + 386, y, 110, h, c?.color || row.tx?.color, row.tx?.id || '—');
-    if (row.tx?.frequency) { font(ctx, 700, 28); text(ctx, String(row.tx.frequency), PAD + 561, y + h / 2, 0, '#0f172a', 'center'); }
-    pill(ctx, PAD + 632, y, 220, h, row.lav?.color, row.lav?.model || '—', '',
+    pill(ctx, PAD, y, 440, h, c?.color, c?.name || `? ${row.char_id}`, c?.actor);
+    pill(ctx, PAD + 456, y, 120, h, c?.color || row.tx?.color, row.tx?.id || '—');
+    pill(ctx, PAD + 592, y, 260, h, row.lav?.color, row.lav?.model || '—', '',
       { outline: row.lav?.attenuated ? '#dc2626' : null });
     if (row.connectorMismatch) { font(ctx, 800, 34); text(ctx, '!', PAD + 862, y + h / 2, 0, '#ea580c'); }
     const [label, bg, fg] = SPEAKER[row.speaker] || SPEAKER.maybe;
     box(ctx, PAD + 880, y + 10, 120, h - 20, (h - 20) / 2, bg);
     font(ctx, 800, 26); text(ctx, label, PAD + 940, y + h / 2, 0, fg, 'center');
+    y += ROW;
+  }
+  return y + 14;
+}
+
+// the sound assistants' rows: what to rig and when to change the battery (the time, no colours; OFF = not rigged yet)
+function drawRigRows(ctx, project, rows, y) {
+  const now = Date.now();
+  const columns = [['CHARACTER', 0, 250], ['TX', 262, 110], ['CHANGE', 384, 110], ['LAV', 506, 130], ['LAV ACC.', 648, 110],
+    ['TX ACC.', 770, 110], ['POSITION', 892, 108]];
+  font(ctx, 600, 20);
+  columns.forEach(([title, x, w], i) => text(ctx, title, i ? PAD + x + w / 2 : PAD + 24, y + 12, w, '#64748b', i ? 'center' : 'left'));
+  y += 34;
+  const plain = (x, w, h, value, top) => {
+    box(ctx, PAD + x, top, w, h, h / 2, '#f1f5f9');
+    font(ctx, 800, 26); text(ctx, value, PAD + x + w / 2, top + h / 2, w - 16, '#0f172a', 'center');
+  };
+  const things = (row, side) => rowAccessories(project, row, side).map(t => t.label).join(' + ') || '—';
+  for (const row of rows) {
+    const h = ROW - 16;
+    const c = row.character;
+    pill(ctx, PAD, y, 250, h, c?.color, c?.name || `? ${row.char_id}`, c?.actor);
+    pill(ctx, PAD + 262, y, 110, h, c?.color || row.tx?.color, row.tx?.id || '—', row.tx?.frequency ? String(row.tx.frequency) : '');
+    const timer = row.tx_id ? txTimer(project, row.tx_id, now) : null;
+    plain(384, 110, h, timer?.endsAt ? timeOfDay(timer.endsAt) : timer ? 'ON' : row.tx_id ? 'OFF' : '—', y);
+    pill(ctx, PAD + 506, y, 130, h, row.lav?.color, row.lav?.model || '—', '', { outline: row.lav?.attenuated ? '#dc2626' : null });
+    plain(648, 110, h, things(row, 'lav'), y);
+    plain(770, 110, h, things(row, 'tx'), y);
+    plain(892, 108, h, row.position || '—', y);
     y += ROW;
   }
   return y + 14;

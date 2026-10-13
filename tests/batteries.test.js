@@ -120,3 +120,43 @@ test('minutes from the power a model draws: Wh per battery × batteries ÷ W (An
   assert.equal(lifeOf(project, { ...inMars, used_in: 'RX 3' }, aa, noon).minutes, 320, '2 × 2.4 Wh ÷ 0.9 W');
   assert.equal(lifeOf(project, inMars, { ...video, models: { 'Mars 4K TX': 300 } }, noon).minutes, 300, 'the group\'s own minutes win');
 });
+
+// ---- v149: the mic table's battery column (Ana, 13 Oct: "toggle ON… a countdown starts") ----
+import { txTimer, groupsForTx, placeOfTx, timeOfDay, TIMER_STALE_H } from '../src/battery-rules.js';
+
+const rig = {
+  transmitters: [{ id: '7', model: 'ZMT4.5' }, { id: 'B1', model: 'HM_ZMT4' }],
+  gearBatteries: {
+    groups: [{ id: 'n', name: 'new', battery: 'NP-50', wh: 3.33 }, { id: 'f', name: 'Fuji', battery: 'NP-50', wh: 3.4, models: { 'ZMT4.5': 120 } }],
+    devices: [{ model: 'ZMT4.5', watts: 0.525, battery: 'NP-50' }],
+    batteries: [{ id: 'f-15', group: 'f', label: '15', state: 'in_use', used_in: 'TX 7', since: at }],
+    tx_on: { B1: at },
+  },
+};
+
+test('battery column: a numbered battery in the TX counts down from its own minutes; the change time is since + life', () => {
+  const timer = txTimer(rig, '7', minutesAfter(30));
+  assert.equal(timer.battery.label, '15');
+  assert.equal(timer.minutes, 120);
+  assert.equal(timer.left, 90);
+  assert.equal(timer.endsAt, minutesAfter(120));
+});
+
+test('battery column: ON with no number uses the best group of its battery type; unknown draw = ON, no countdown', () => {
+  assert.deepEqual(groupsForTx(rig, '7').map(g => g.id), ['n', 'f']);
+  const plug = txTimer(rig, 'B1', minutesAfter(10));
+  assert.equal(plug.battery, null);
+  assert.equal(plug.left, null, 'HM_ZMT4 has no watts: no estimate');
+  assert.equal(txTimer(rig, '3', minutesAfter(10)), null, 'never switched on: OFF');
+});
+
+test('battery column: a forgotten timer (older than a day of work) shows OFF again', () => {
+  assert.ok(txTimer(rig, '7', minutesAfter(60)));
+  assert.equal(txTimer(rig, '7', minutesAfter(TIMER_STALE_H * 60 + 1)), null);
+});
+
+test('battery column: place names and clock time', () => {
+  assert.equal(placeOfTx('7'), 'TX 7');
+  assert.equal(placeOfTx('B1'), 'B1');
+  assert.match(timeOfDay(Date.parse(at)), /^\d{1,2}:\d{2}$/);
+});

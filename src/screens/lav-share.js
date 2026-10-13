@@ -7,10 +7,9 @@
 
 import { html } from '../../vendor/preact-htm.js';
 import { setState, showScreen } from '../state.js';
-import { shootingDays, formatDate, exportName, dayTag, shortDate } from '../model.js';
+import { shootingDays, formatDate, dayTag, shortDate } from '../model.js';
 import { undecided } from '../proposal-rules.js';
-import { sceneSheet } from '../export/image.js';
-import { shareCanvas } from '../export/share.js';
+import { shareMics } from './schedule.js';
 import { Icon } from '../parts/icons.js';
 
 // the newest ODG proposal of that day (a corrected ODG is 'odg-18-new')
@@ -25,8 +24,7 @@ export function LavShareScreen({ state }) {
   const sceneIds = (odg?.scene_ids || planned?.scenes.map(s => s.scene_id) || []).map(String);
   const date = odg?.date || planned?.date || '';
   const waiting = odg ? undecided(odg).length : 0;
-  const share = async () => shareCanvas(await sceneSheet(project, sceneIds, `Day ${day} · mic list`),
-    exportName(project, `mics_${dayTag(day)}_${shortDate(date)}.png`));
+  const share = () => shareMics(project, sceneIds, `Day ${day} · mic list`, `mics_${dayTag(day)}_${shortDate(date)}.png`);
 
   return html`
     <button class="link back" onClick=${() => showScreen('schedule')}>‹ Back to schedule</button>

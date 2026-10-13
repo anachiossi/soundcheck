@@ -26,7 +26,8 @@ function changeRows(change) {
   setState({ edit: { ...edit, rows: change(edit.rows.slice()) } });
 }
 
-export const openPicker = (rowIndex, field) => setState({ picker: { rowIndex, field } });
+// side: the acc. picker's 'lav' or 'tx' things
+export const openPicker = (rowIndex, field, side) => setState({ picker: { rowIndex, field, side } });
 export const closePicker = () => setState({ picker: null });
 
 // field: 'char_id' | 'tx_id' | 'lav_id'; id '' empties the cell.
@@ -38,7 +39,15 @@ export function setCell(rowIndex, field, id) {
   setState({ picker: null });
 }
 
-// the Acc. column: a gear thing in or out of the row (several allowed; the picker stays open)
+// where the lav goes (Position column): free text, '' empties it
+export function setPosition(rowIndex, position) {
+  changeRows(rows => {
+    rows[rowIndex] = { ...rows[rowIndex], position };
+    return rows;
+  });
+}
+
+// the Acc. columns: a gear thing in or out of the row (several allowed; the picker stays open)
 export function toggleAcc(rowIndex, id) {
   changeRows(rows => {
     const acc = rows[rowIndex].acc || [];

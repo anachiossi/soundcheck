@@ -150,3 +150,18 @@ test('the Acc. column: a row keeps its accessories when saved, none = no field (
   assert.deepEqual(cleanRows([{ char_id: '1', tx_id: '3', lav_id: '', speaker: 'no', acc: [] }]),
     [{ char_id: '1', tx_id: '3', lav_id: '', speaker: 'no' }]);
 });
+
+// v149: the lav's position is kept with the row; the acc. list splits into Lav acc. / TX acc. by the thing's type
+import { cleanRows as cleanRows149 } from '../src/preset-rules.js';
+import { accSide } from '../src/accessories.js';
+test('a row keeps its position (trimmed), an empty one is dropped', () => {
+  const [kept, empty] = cleanRows149([{ char_id: 1, tx_id: '7', lav_id: 'a', speaker: 'yes', position: ' chest ' }, { char_id: 2, position: '  ' }]);
+  assert.equal(kept.position, 'chest');
+  assert.equal('position' in empty, false);
+});
+test('straps and pouches hold the TX; furs, covers and foams go on the lav', () => {
+  assert.equal(accSide({ type: 'ankle strap' }), 'tx');
+  assert.equal(accSide({ type: 'TX pouch' }), 'tx');
+  assert.equal(accSide({ type: 'lav fur' }), 'lav');
+  assert.equal(accSide({ type: 'foam mount' }), 'lav');
+});

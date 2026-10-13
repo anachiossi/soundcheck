@@ -1,9 +1,10 @@
-// battery-editing.js — saves Gear → Batteries (battery-rules.js): a battery's state, a group of batteries.
+// battery-editing.js — saves Gear → Batteries (battery-rules.js): a battery's state, a group of batteries, and the mic
+// table's battery column (a TX ON / swapped / OFF).
 // At once on the device, then uploaded by sync.js (gear/batteries.json).
-// Used by: screens/gear-batteries.js
+// Used by: screens/gear-batteries.js, parts/battery-cell.js
 
 import { getState, saveAndShow, showMessage } from './state.js';
-import { batteryFile, withRun } from './battery-rules.js';
+import { batteryFile, withRun, batteryIn, placeOfTx } from './battery-rules.js';
 import { syncNow } from './sync.js';
 
 const FILE = 'gear/batteries.json';
@@ -81,4 +82,29 @@ export function saveCharger(fields) {
   const charger = { id: fields.id || `c${n}`, name, group: fields.group || undefined, slots: number(fields.slots), charge_min: number(fields.charge_min) };
   const chargers = fields.id ? file.chargers.map(c => (c.id === charger.id ? charger : c)) : [...file.chargers, charger];
   return save({ ...file, chargers }, `${name} saved.`);
+}
+
+// the mic table's battery column: the TX's battery ends (how: dead / low / ok, for learning; it goes to 'empty', to
+// charge), then batteryId goes in (null: ON with no number; off: the TX stays OFF)
+export function switchTx(project, txId, { batteryId = null, end, off = false } = {}) {
+  const file = batteryFile(project);
+  const current = batteryIn(project, txId)?.battery;
+  const at = now();
+  const batteries = file.batteries.map(b => {
+    if (current && b.id === current.id) {
+      const ended = { ...withRun(b, end, project), state: 'empty', since: at };
+      delete ended.used_in;
+      return ended;
+    }
+    if (!off && b.id === batteryId) {
+      const used = { ...b, state: 'in_use', used_in: placeOfTx(txId), since: at };
+      delete used.charger; delete used.charge_min;
+      return used;
+    }
+    return b;
+  });
+  const txOn = { ...file.tx_on };
+  delete txOn[String(txId)];
+  if (!off && !batteryId) txOn[String(txId)] = at;
+  return save({ ...file, batteries, tx_on: txOn }, off ? `${placeOfTx(txId)} OFF.` : `${placeOfTx(txId)} ON.`);
 }

@@ -23,6 +23,7 @@ import { IfbListScreen } from './screens/ifb-list.js';
 import { IfbCrewScreen } from './screens/ifb-crew.js';
 import { IfbKitScreen } from './screens/ifb-kit.js';
 import { IfbPicker } from './parts/ifb-picker.js';
+import { ImageForQuestion } from './parts/image-for.js';
 import { HoursScreen } from './screens/hours.js';
 import { HelpScreen } from './screens/help.js';
 import { LavShareScreen } from './screens/lav-share.js';
@@ -134,6 +135,7 @@ function App() {
     <footer class="footer">© 2025–2026 Ana Chiossi · soundcheck<${AppVersion} /></footer>
     <${Picker} state=${state} />
     <${IfbPicker} state=${state} />
+    <${ImageForQuestion} state=${state} />
     ${busyText && html`<div class="busy">${busyText}</div>`}`;
 }
 
