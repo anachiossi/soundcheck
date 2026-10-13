@@ -534,6 +534,10 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
 .battery--yellow { background: var(--amber-bg); color: var(--amber-ink); }
 .battery--red { background: var(--no-bg); color: var(--no); }
 .battery--plain { background: var(--soft); color: var(--ink-soft); }
+.battery-tag { align-self: flex-start; margin-top: 3px; padding: 1px 7px; border-radius: 999px; font-size: 12px; font-weight: 800;
+  font-variant-numeric: tabular-nums; white-space: nowrap; }
+.kit-item .battery-tag { align-self: center; margin: 0; }
+.battery-chargers { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .chip.battery--green, .chip.battery--yellow, .chip.battery--red, .chip.battery--plain { border-color: transparent; }
 
 /* Dark screen (Projects → Screen: Dark, or Auto with the phone in dark mode) — theme.js.

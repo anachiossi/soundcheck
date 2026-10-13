@@ -174,14 +174,25 @@ The app's GitHub key needs **Actions: Read and write** and **Variables: Read-onl
 | Crew on each ODG → new people proposed next to their role (numbers shift, IFB list follows; nobody removed; PERSONALE AGGIUNTO = daily) | `pipeline/read_crew.py`, `pipeline/compare_crew.py`; applied by `add_crew_member` in `src/proposal-rules.js` |
 | IFB Kit (same forms as the mic Kit) | `src/screens/ifb-kit.js` (uses `Section` from `src/screens/kit.js`) |
 
-## 🔋 Batteries (Gear → Batteries, v144)
+## 🔋 Batteries (Gear → Batteries, v144; estimates, chargers, TX pills v145)
 Every battery of the film by group (AA, NP-F970…), always green / yellow / red (Ana, 12 Oct: "charged are green,
 used are red"). Tap a battery: Full · Charging (minutes on that charger) · In use (TX 7, B1…) · Empty; its clock
 starts. In use: green, yellow under 30% of the group's estimated life, red under 10%. Charging past its time: "done?".
-First version (no learning, no notifications yet; next: battery time on the mics' TX pills, chargers, learning).
+v145 (13 Oct, Ana: "why haven't you done this?"):
+- **🔋 on the TX pills** (Mics scene tables, Kit): the countdown of the battery marked In use in that TX.
+- **Estimate in a TX**, aiming short ("end before!"): the group's minutes for that TX model (group sheet, by model)
+  × the battery's Life % (old ones less) · no more than its last 3 runs that ended Dead/Low in that model (Dead
+  counts 10% shorter; "Still OK" teaches nothing) · −15% if the TX is in a scene of ≥ 3 pages today (the AT's rule).
+  The battery sheet shows who wears it today (character + actor) and the sum (e.g. "ZMT4.5 6:00 × 90% · long scene #12 −15%").
+- **Learning**: taking a battery out of a TX asks "How did it end? Dead · Low · Still OK" (optional); kept in `runs`.
+- **Chargers** ("+ Charger": name, group it charges, slots, minutes for a full charge). Charging asks which charger;
+  minutes = this time's own, else the charger's, else the group's. Each group shows its chargers with load (🔌 5/8).
+- Data: "Video batteries" = the 5 Oyomba NP-F970 (g284), 5 h to charge; life on the Hollyland Mars: ?
+No notifications yet (after the aesthetics, Ana 12 Oct).
 | What | File |
 |---|---|
 | Groups and batteries, state and since | `gear/batteries.json` in the data repo |
-| Colours, countdowns, counts | `src/battery-rules.js` (tests: `tests/batteries.test.js`) |
+| Colours, countdowns, counts, estimates, learning | `src/battery-rules.js` (tests: `tests/batteries.test.js`) |
+| 🔋 next to the TX pills | `src/parts/battery-tag.js` (in `parts/scene-table.js`, `screens/kit.js`) |
 | Saving | `src/battery-editing.js` |
 | The screen and its sheets | `src/screens/gear-batteries.js` (sheet from `src/parts/gear-form.js`), styles `.battery*` in `app.css` |

@@ -3,7 +3,7 @@
 // Used by: screens/gear-batteries.js
 
 import { getState, saveAndShow, showMessage } from './state.js';
-import { batteryFile } from './battery-rules.js';
+import { batteryFile, withRun } from './battery-rules.js';
 import { syncNow } from './sync.js';
 
 const FILE = 'gear/batteries.json';
@@ -16,14 +16,19 @@ async function save(gearBatteries, message) {
   syncNow();
 }
 
-// a battery's new state (full / charging / in use / empty): its clock starts again
-export function setBattery(id, fields) {
-  const file = batteryFile(getState().project);
+// a battery's new state (full / charging / in use / empty): its clock starts again. end: how its run in a TX
+// ended (dead / low / ok), kept for learning (battery-rules.js withRun)
+export function setBattery(id, fields, end) {
+  const project = getState().project;
+  const file = batteryFile(project);
   const batteries = file.batteries.map(b => {
     if (b.id !== id) return b;
-    const changed = { ...b, ...fields };
-    if (fields.state && fields.state !== b.state) changed.since = now();
+    const moved = fields.state && fields.state !== b.state;
+    const changed = { ...(moved ? withRun(b, end, project) : b), ...fields };
+    if (moved) changed.since = now();
     if (changed.state !== 'in_use') delete changed.used_in;
+    if (changed.state !== 'charging') { delete changed.charger; delete changed.charge_min; }
+    for (const key of Object.keys(changed)) if (changed[key] === undefined) delete changed[key];
     return changed;
   });
   return save({ ...file, batteries });
@@ -39,12 +44,27 @@ export function saveGroup(fields) {
   let n = file.groups.length + 1;
   while (used.has(`b${n}`)) n++;
   const id = fields.id || `b${n}`;
-  const group = { id, name, life_min: minutes(fields.life_min), charge_min: minutes(fields.charge_min) };
+  const models = Object.fromEntries(Object.entries(fields.models || {}).map(([m, v]) => [m, minutes(v)]).filter(([, v]) => v));
+  const group = { id, name, life_min: minutes(fields.life_min), charge_min: minutes(fields.charge_min), models: Object.keys(models).length ? models : undefined };
   const groups = fields.id ? file.groups.map(g => (g.id === id ? { ...g, ...group } : g)) : [...file.groups, group];
   const have = file.batteries.filter(b => b.group === id);
   const extra = [];
   for (let label = have.length + 1; label <= Number(fields.count || 0); label++) {
     extra.push({ id: `${id}-${label}`, group: id, label: String(label), state: 'full', since: now() });
   }
-  return save({ groups, batteries: [...file.batteries, ...extra] }, `${name} saved.`);
+  return save({ ...file, groups, batteries: [...file.batteries, ...extra] }, `${name} saved.`);
+}
+
+// add a charger or change one: its name, the group it charges, how many slots, minutes for a full charge
+export function saveCharger(fields) {
+  const file = batteryFile(getState().project);
+  const name = String(fields.name || '').trim();
+  if (!name) return showMessage('error', 'It needs a name.');
+  const used = new Set(file.chargers.map(c => c.id));
+  let n = file.chargers.length + 1;
+  while (used.has(`c${n}`)) n++;
+  const number = value => (value === '' || value == null ? undefined : Math.max(0, Math.round(Number(value) || 0)));
+  const charger = { id: fields.id || `c${n}`, name, group: fields.group || undefined, slots: number(fields.slots), charge_min: number(fields.charge_min) };
+  const chargers = fields.id ? file.chargers.map(c => (c.id === charger.id ? charger : c)) : [...file.chargers, charger];
+  return save({ ...file, chargers }, `${name} saved.`);
 }

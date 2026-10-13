@@ -3,6 +3,7 @@
 // and the set, then location · pages · story day, the synopsis, the notes that can impact sound
 // (orange) and "ⓘ more info" (director / costume / production notes, closed until tapped).
 // 🎙 opens Cues (learn the lines), ✎ turns the table into the editor.
+// 🔋 under a TX pill: the time left on its battery (Gear → Batteries, battery-tag.js).
 // Under the slate: the sound bar (dificultômetro, flags, lav warnings — sound-bar.js); a
 // character's lav warning is also printed under their mic row.
 // "● not uploaded" = saved on this device, waiting for signal.
@@ -22,6 +23,7 @@ import { SceneEditor } from './scene-editor.js';
 import { SoundBar, RowWarnings } from './sound-bar.js';
 import { Icon } from './icons.js';
 import { accOn, setAccOn, rowAccessories } from '../accessories.js';
+import { BatteryTag } from './battery-tag.js';
 
 // "ⓘ more info (3)": director / costume notes from the ODGs and production notes, closed until tapped
 function MoreInfo({ items }) {
@@ -110,6 +112,7 @@ function MicRows({ project, sceneId }) {
           <div class="mics__cell">
             ${i === 0 && html`<span class="mics__label">TX</span>`}
             <${TxPill} tx=${row.tx} character=${row.character} id=${row.tx_id} withFrequency />
+            <${BatteryTag} project=${project} txId=${row.tx_id} />
           </div>
           <div class="mics__cell">
             ${i === 0 && html`<span class="mics__label">Lav</span>`}

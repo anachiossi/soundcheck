@@ -10,6 +10,7 @@ import { scenesUsing } from '../preset-rules.js';
 import { resolveConflict } from '../sync.js';
 import { CharacterPill, TxPill, LavPill } from '../parts/pills.js';
 import { ItemForm } from '../parts/item-form.js';
+import { BatteryTag } from '../parts/battery-tag.js';
 import { manualsForModels, manualPath, openManual } from '../manuals.js';
 
 const distinct = values => [...new Set(values.filter(Boolean))].sort(naturalCompare);
@@ -94,7 +95,7 @@ export function KitScreen({ state }) {
         </small>`} />
     <${Section} ...${shared} list="transmitters" title="Transmitters"
       blank=${{ id: nextId('transmitters'), color: '#e9e9e9', order: project.transmitters.length + 1 }}
-      render=${tx => html`<${TxPill} tx=${tx} /><small>${tx.model}${tx.serial ? ` #${tx.serial}` : ''}<br />${tx.connector}${tx.frequency ? html` · <b>${tx.frequency}</b>` : ''}</small>`} />
+      render=${tx => html`<${TxPill} tx=${tx} /><${BatteryTag} project=${project} txId=${tx.id} /><small>${tx.model}${tx.serial ? ` #${tx.serial}` : ''}<br />${tx.connector}${tx.frequency ? html` · <b>${tx.frequency}</b>` : ''}</small>`} />
     <${TxManuals} project=${project} />
     <${Section} ...${shared} list="lavaliers" title="Lavaliers"
       blank=${{ id: nextId('lavaliers'), color: '#000000', attenuated: false }}
