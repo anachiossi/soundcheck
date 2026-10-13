@@ -73,11 +73,13 @@ export function GearBatteriesScreen({ state }) {
     </div>`;
 }
 
-// where a battery can be in use: the TXs, boom plug-ons and IFB receivers of the film
-const placesOf = project => [
+// where a battery can be in use: the TXs, boom plug-ons and IFB receivers of the film, and the places a
+// group has its own minutes for (Mars 4K TX…)
+const placesOf = (project, group) => [...new Set([
+  ...Object.keys(group?.models || {}).filter(key => !txOf(project, key) && !(project.transmitters || []).some(t => t.model === key)),
   ...(project.transmitters || []).map(t => (/^\d+$/.test(t.id) ? `TX ${t.id}` : t.id)),
   ...(project.ifbReceivers || []).map(r => `RX ${r.id}`),
-];
+])];
 
 function BatterySheet({ project, now, battery, group, close }) {
   const [values, setValues] = useState({ state: battery.state, used_in: battery.used_in || '', charger: battery.charger || '',
@@ -115,7 +117,7 @@ function BatterySheet({ project, now, battery, group, close }) {
         </div>`}
       ${values.state === 'in_use' && html`
         <label><span>In</span><input list="battery-places" value=${values.used_in} placeholder="TX 7, B1, Hollyland…" onInput=${e => set('used_in', e.target.value)} />
-          <datalist id="battery-places">${placesOf(project).map(p => html`<option key=${p} value=${p} />`)}</datalist></label>`}
+          <datalist id="battery-places">${placesOf(project, group).map(p => html`<option key=${p} value=${p} />`)}</datalist></label>`}
       ${values.state === 'charging' && chargers.length > 0 && html`
         <div class="choices">
           ${chargers.map(c => {
@@ -137,7 +139,9 @@ function GroupSheet({ project, group, close }) {
   const [values, setValues] = useState({ name: group.name || '', count: group.count || '', life_min: group.life_min ?? '',
     charge_min: group.charge_min ?? '', models: { ...group.models } });
   const set = (key, value) => setValues({ ...values, [key]: value });
-  const models = [...new Set((project.transmitters || []).map(t => t.model).filter(Boolean))].sort(naturalCompare);
+  // the group's own places (Mars 4K TX…), else the TX models
+  const own = Object.keys(group.models || {});
+  const models = own.length ? own : [...new Set((project.transmitters || []).map(t => t.model).filter(Boolean))].sort(naturalCompare);
   const submit = e => { e.preventDefault(); saveGroup({ ...values, id: group.id }); close(); };
   return html`<${Sheet} title=${group.id ? group.name : 'New group'} close=${close}>
     <form class="item-form" onSubmit=${submit}>
@@ -146,7 +150,7 @@ function GroupSheet({ project, group, close }) {
       <label><span>Minutes in use (estimate)</span><input type="number" min="0" value=${values.life_min} onInput=${e => set('life_min', e.target.value)} /></label>
       <label><span>Minutes to charge (estimate)</span><input type="number" min="0" value=${values.charge_min} onInput=${e => set('charge_min', e.target.value)} /></label>
       ${models.length > 0 && html`
-        <p class="sheet__hint">Minutes in a TX, by model (empty: the group's)</p>
+        <p class="sheet__hint">Minutes by model or place (empty: the group's)</p>
         ${models.map(m => html`<label key=${m}><span>${m}</span><input type="number" min="0" value=${values.models[m] ?? ''}
           onInput=${e => set('models', { ...values.models, [m]: e.target.value })} /></label>`)}`}
       <button class="btn btn--primary">Save</button>

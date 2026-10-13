@@ -102,3 +102,10 @@ test('which battery is in a TX, who wears it today, chargers', () => {
   assert.equal(chargeOf(filmDay, onCharger, aaGroup), 150);
   assert.equal(chargerLoad(filmDay, 'c1'), 1);
 });
+
+test('a place that is not a TX has its own minutes (the video kit)', () => {
+  const video = { id: 'b9', name: 'Video batteries', models: { 'Mars 4K TX': 240 } };
+  const battery = { id: 'b9-1', group: 'b9', label: '1', state: 'in_use', used_in: 'Mars 4K TX', since: new Date(noon).toISOString() };
+  assert.equal(lifeOf(filmDay, battery, video, noon).minutes, 240);
+  assert.equal(withRun(battery, 'low', filmDay, noon + 200 * 60000).runs[0].model, 'Mars 4K TX');
+});

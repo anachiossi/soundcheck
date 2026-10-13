@@ -6,7 +6,8 @@
 //                                        runs: [{ min, end: 'dead'|'low'|'ok', model, pct, at }] }] }
 //   state: 'full' | 'charging' | 'in_use' | 'empty'; since: when it entered that state
 //   item: the Gear inventory item the group is (g284…)
-//   life_min: estimated minutes in use; models: per TX model (Ana: "ZMT4 lasts longer, others 3.5 h")
+//   life_min: estimated minutes in use; models: per TX model (Ana: "ZMT4 lasts longer, others 3.5 h") or per place
+//   that isn't a TX ('Mars 4K TX': the video kit)
 //   charge_min: minutes on the charger — the battery's own, else its charger's, else the group's
 //   life_pct: the battery's rank (old ones less than 100)
 // How long a battery in use lasts (lifeOf), always aiming short (Ana: "end before!"):
@@ -80,15 +81,19 @@ export function longScenesFor(project, txId, now = Date.now()) {
 }
 
 // estimated minutes a battery lasts in use, and why (see the top): { minutes, notes } or null (no estimate)
+// what a battery's minutes depend on: its TX's model, else the place itself ('Mars 4K TX')
+const modelOf = (project, place) => txOf(project, place)?.model || String(place || '').trim() || null;
+
 export function lifeOf(project, battery, group, now = Date.now()) {
   const tx = txOf(project, battery.used_in);
+  const model = modelOf(project, battery.used_in);
   const pct = Number(battery.life_pct ?? 100);
-  const own = tx?.model && group?.models?.[tx.model];
+  const own = model && group?.models?.[model];
   const base = Number(own || group?.life_min) || 0;
   const notes = [];
   let minutes = base * pct / 100;
-  if (base) notes.push(`${own ? tx.model : group.name} ${clock(base)}${pct !== 100 ? ` × ${pct}%` : ''}`);
-  const runs = (battery.runs || []).filter(r => r.end !== 'ok' && (r.model || null) === (tx?.model || null)).slice(-RUNS_LEARNED);
+  if (base) notes.push(`${own ? model : group.name} ${clock(base)}${pct !== 100 ? ` × ${pct}%` : ''}`);
+  const runs = (battery.runs || []).filter(r => r.end !== 'ok' && (r.model || null) === model).slice(-RUNS_LEARNED);
   if (runs.length) {
     const learned = Math.min(...runs.map(r => r.min * (r.end === 'dead' ? DEAD_CUT : 1)));
     if (!minutes || learned < minutes) { minutes = learned; notes.push(`its last runs ${clock(Math.round(learned))}`); }
@@ -135,7 +140,7 @@ export const clock = minutes => `${Math.floor(minutes / 60)}:${String(minutes % 
 export function withRun(battery, end, project, now = Date.now()) {
   if (battery.state !== 'in_use' || !end || !battery.since) return battery;
   const run = { min: Math.round((now - Date.parse(battery.since)) / 60000), end, pct: Number(battery.life_pct ?? 100), at: new Date(now).toISOString() };
-  const model = txOf(project, battery.used_in)?.model;
+  const model = modelOf(project, battery.used_in);
   if (model) run.model = model;
   return { ...battery, runs: [...(battery.runs || []), run].slice(-RUNS_KEPT) };
 }

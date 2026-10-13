@@ -187,7 +187,9 @@ v145 (13 Oct, Ana: "why haven't you done this?"):
 - **Learning**: taking a battery out of a TX asks "How did it end? Dead · Low · Still OK" (optional); kept in `runs`.
 - **Chargers** ("+ Charger": name, group it charges, slots, minutes for a full charge). Charging asks which charger;
   minutes = this time's own, else the charger's, else the group's. Each group shows its chargers with load (🔌 5/8).
-- Data: "Video batteries" = the 5 Oyomba NP-F970 (g284), 5 h to charge; life on the Hollyland Mars: ?
+- Data: "Video batteries" = the 5 Oyomba NP-F970 (g284), 5 h to charge. v146: a group's minutes can be per place that
+  isn't a TX ("Mars 4K TX" 4:00, "Mars 400S Pro TX" 3:10, "Mars 400S Pro RX" 5:00 — ≈ 35 Wh usable ÷ the draw in the
+  manual / retailers' specs, aiming short); those places are offered under "In".
 No notifications yet (after the aesthetics, Ana 12 Oct).
 | What | File |
 |---|---|
