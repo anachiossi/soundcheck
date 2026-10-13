@@ -23,8 +23,8 @@ export function fieldsFor(list, project) {
   ];
   if (list === 'ifbReceivers') return [
     { key: 'id', label: 'Number' }, { key: 'model', label: 'Model' }, { key: 'color', label: 'Colour', type: 'color' },
-    { key: 'connector', label: 'Connector' }, { key: 'frequency', label: 'Frequency (MHz)' },
-    { key: 'serial', label: 'Serial number' },
+    { key: 'connector', label: 'Connector' }, { key: 'band', label: 'Band (e.g. Cw 718–790)' },
+    { key: 'frequency', label: 'Frequency (MHz)' }, { key: 'serial', label: 'Serial number' },
   ];
   if (list === 'characters') return [
     { key: 'id', label: 'Number' }, { key: 'name', label: 'Name' }, { key: 'actor', label: 'Actor' },
