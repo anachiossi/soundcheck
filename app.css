@@ -537,6 +537,11 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
 .battery-tag { align-self: flex-start; margin-top: 3px; padding: 1px 7px; border-radius: 999px; font-size: 12px; font-weight: 800;
   font-variant-numeric: tabular-nums; white-space: nowrap; }
 .kit-item .battery-tag { align-self: center; margin: 0; }
+.battery-devices { margin-top: 14px; }
+.battery-devices summary { font-weight: 800; cursor: pointer; padding: 6px 0; }
+.battery-device { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; width: 100%; padding: 8px 0; border: 0;
+  border-bottom: 1px solid var(--line); background: none; color: var(--ink); font: inherit; text-align: left; }
+.battery-device small { flex-basis: 100%; color: var(--ink-soft); }
 .battery-chargers { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .chip.battery--green, .chip.battery--yellow, .chip.battery--red, .chip.battery--plain { border-color: transparent; }
 

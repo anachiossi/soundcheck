@@ -109,3 +109,14 @@ test('a place that is not a TX has its own minutes (the video kit)', () => {
   assert.equal(lifeOf(filmDay, battery, video, noon).minutes, 240);
   assert.equal(withRun(battery, 'low', filmDay, noon + 200 * 60000).runs[0].model, 'Mars 4K TX');
 });
+
+test('minutes from the power a model draws: Wh per battery × batteries ÷ W (Ana, 13 Oct)', () => {
+  const project = { ...filmDay, ifbReceivers: [{ id: '3', model: 'EK1039' }],
+    gearBatteries: { ...filmDay.gearBatteries, devices: [{ model: 'Mars 4K TX', watts: 8.5 }, { model: 'EK1039', watts: 0.9, takes: 2 }] } };
+  const video = { id: 'b9', name: 'Video batteries', wh: 50 };
+  const aa = { id: 'b8', name: 'AA', wh: 2.4 };
+  const inMars = { id: 'b9-1', group: 'b9', label: '1', state: 'in_use', used_in: 'Mars 4K TX', since: new Date(noon).toISOString() };
+  assert.equal(lifeOf(project, inMars, video, noon).minutes, 353, '50 Wh ÷ 8.5 W = 5:53');
+  assert.equal(lifeOf(project, { ...inMars, used_in: 'RX 3' }, aa, noon).minutes, 320, '2 × 2.4 Wh ÷ 0.9 W');
+  assert.equal(lifeOf(project, inMars, { ...video, models: { 'Mars 4K TX': 300 } }, noon).minutes, 300, 'the group\'s own minutes win');
+});

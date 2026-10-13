@@ -3,12 +3,14 @@
 // Empty; its clock starts. Leaving a TX it asks how it ended (Dead · Low · Still OK): the estimate learns.
 // "+ Group": a name, how many (numbered 1…), the estimated minutes in use (per TX model too) and on the charger.
 // "+ Charger": a name, the group it charges, slots, minutes for a full charge.
+// "Power draw": what each model draws (W) and how many batteries it takes; with the group's Wh per battery it
+// gives the minutes (Ana, 13 Oct: "for all equipment that has batteries, the consumption it has per hour").
 // No notifications yet (Ana, 12 Oct: "once we have the aesthetics right we can think of notification triggering").
 // Used by: main.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
-import { STATES, ENDS, batteryFile, batteryGroups, timeLeft, toneOf, clock, countsOf, lifeOf, chargerLoad, txOf, wearerOf } from '../battery-rules.js';
-import { setBattery, saveGroup, saveCharger } from '../battery-editing.js';
+import { STATES, ENDS, batteryFile, batteryGroups, timeLeft, toneOf, clock, countsOf, lifeOf, chargerLoad, txOf, wearerOf, minutesFromDraw } from '../battery-rules.js';
+import { setBattery, saveGroup, saveCharger, saveDevice } from '../battery-editing.js';
 import { naturalCompare } from '../model.js';
 import { Sheet } from '../parts/gear-form.js';
 import { useMinuteClock } from '../parts/battery-tag.js';
@@ -28,8 +30,9 @@ export function GearBatteriesScreen({ state }) {
   const [battery, setOpenBattery] = useState(null);
   const [group, setOpenGroup] = useState(null);
   const [charger, setOpenCharger] = useState(null);
+  const [device, setOpenDevice] = useState(null);
   const groups = batteryGroups(project);
-  const { chargers } = batteryFile(project);
+  const { chargers, devices } = batteryFile(project);
   return html`
     <div class="gear">
       ${groups.length === 0 && html`<p class="empty">No batteries yet. "+ Group" for each kind: AA ×20, NP-F970 ×5…</p>`}
@@ -67,8 +70,23 @@ export function GearBatteriesScreen({ state }) {
         <button class="btn btn--quiet" onClick=${() => setOpenGroup({})}>+ Group</button>
         <button class="btn btn--quiet" onClick=${() => setOpenCharger({})}>+ Charger</button>
       </div>
+      <details class="battery-devices">
+        <summary>Power draw <small>${devices.length}</small></summary>
+        ${devices.map(d => html`
+          <button key=${d.model} class="battery-device" onClick=${() => setOpenDevice(d)}>
+            <b>${d.model}</b>
+            <span>${d.watts ? `${d.watts} W` : '? W'}${d.battery ? ` · ${d.takes > 1 ? `${d.takes}× ` : ''}${d.battery}` : ''}</span>
+            <small>${groups.filter(g => !g.battery || !d.battery || g.battery.toLowerCase() === d.battery.toLowerCase()).map(g => {
+              const ideal = minutesFromDraw(project, g, d.model);
+              const seen = g.models?.[d.model];
+              return (ideal || seen) && `${g.name}: label ${ideal ? clock(ideal) : '?'}${seen ? ` · seen ${clock(seen)}` : ''}`;
+            }).filter(Boolean).join(' · ')}</small>
+          </button>`)}
+        <button class="btn btn--quiet" onClick=${() => setOpenDevice({})}>+ Model</button>
+      </details>
       ${battery && html`<${BatterySheet} project=${project} now=${now} ...${battery} close=${() => setOpenBattery(null)} />`}
       ${group && html`<${GroupSheet} project=${project} group=${group} close=${() => setOpenGroup(null)} />`}
+      ${device && html`<${DeviceSheet} device=${device} close=${() => setOpenDevice(null)} />`}
       ${charger && html`<${ChargerSheet} groups=${groups} charger=${charger} close=${() => setOpenCharger(null)} />`}
     </div>`;
 }
@@ -76,7 +94,8 @@ export function GearBatteriesScreen({ state }) {
 // where a battery can be in use: the TXs, boom plug-ons and IFB receivers of the film, and the places a
 // group has its own minutes for (Mars 4K TX…)
 const placesOf = (project, group) => [...new Set([
-  ...Object.keys(group?.models || {}).filter(key => !txOf(project, key) && !(project.transmitters || []).some(t => t.model === key)),
+  ...[...Object.keys(group?.models || {}), ...batteryFile(project).devices.map(d => d.model)].filter(key =>
+    !(project.transmitters || []).some(t => t.model === key) && !(project.ifbReceivers || []).some(r => r.model === key)),
   ...(project.transmitters || []).map(t => (/^\d+$/.test(t.id) ? `TX ${t.id}` : t.id)),
   ...(project.ifbReceivers || []).map(r => `RX ${r.id}`),
 ])];
@@ -136,22 +155,32 @@ function BatterySheet({ project, now, battery, group, close }) {
 }
 
 function GroupSheet({ project, group, close }) {
-  const [values, setValues] = useState({ name: group.name || '', count: group.count || '', life_min: group.life_min ?? '',
+  const [values, setValues] = useState({ name: group.name || '', count: group.count || '', battery: group.battery || '', wh: group.wh ?? '', life_min: group.life_min ?? '',
     charge_min: group.charge_min ?? '', models: { ...group.models } });
   const set = (key, value) => setValues({ ...values, [key]: value });
-  // the group's own places (Mars 4K TX…), else the TX models
-  const own = Object.keys(group.models || {});
-  const models = own.length ? own : [...new Set((project.transmitters || []).map(t => t.model).filter(Boolean))].sort(naturalCompare);
+  // the models that take its battery type (Power draw), those already seen, else the TX models
+  const { devices } = batteryFile(project);
+  const typed = values.battery.trim() && devices.filter(d => d.battery?.toLowerCase() === values.battery.trim().toLowerCase()).map(d => d.model);
+  const models = [...new Set([...(typed || []), ...Object.keys(group.models || {})])];
+  if (!models.length) models.push(...new Set((project.transmitters || []).map(t => t.model).filter(Boolean)));
+  models.sort(naturalCompare);
+  const ideal = model => {
+    const minutes = minutesFromDraw({ gearBatteries: { devices } }, { wh: Number(values.wh) }, model);
+    return minutes ? `label ≈ ${clock(minutes)}` : '';
+  };
   const submit = e => { e.preventDefault(); saveGroup({ ...values, id: group.id }); close(); };
   return html`<${Sheet} title=${group.id ? group.name : 'New group'} close=${close}>
     <form class="item-form" onSubmit=${submit}>
       <label><span>Name</span><input value=${values.name} placeholder="AA, NP-F970…" onInput=${e => set('name', e.target.value)} required autofocus=${!group.id} /></label>
       <label><span>How many (numbered 1…)</span><input type="number" min=${group.count || 0} value=${values.count} onInput=${e => set('count', e.target.value)} /></label>
-      <label><span>Minutes in use (estimate)</span><input type="number" min="0" value=${values.life_min} onInput=${e => set('life_min', e.target.value)} /></label>
+      <label><span>Battery type</span><input value=${values.battery} placeholder="NP-F970, NP-50, AA…" onInput=${e => set('battery', e.target.value)} /></label>
+      <label><span>Wh on the label (V × Ah)</span><input type="number" min="0" step="0.1" value=${values.wh}
+        placeholder="7.4 V × 7.8 Ah = 57.7" onInput=${e => set('wh', e.target.value)} /></label>
+      <label><span>Minutes in use (anything else)</span><input type="number" min="0" value=${values.life_min} onInput=${e => set('life_min', e.target.value)} /></label>
       <label><span>Minutes to charge (estimate)</span><input type="number" min="0" value=${values.charge_min} onInput=${e => set('charge_min', e.target.value)} /></label>
       ${models.length > 0 && html`
-        <p class="sheet__hint">Minutes by model or place (empty: the group's)</p>
-        ${models.map(m => html`<label key=${m}><span>${m}</span><input type="number" min="0" value=${values.models[m] ?? ''}
+        <p class="sheet__hint">Minutes you see in practice (empty: the label's)</p>
+        ${models.map(m => html`<label key=${m}><span>${m}</span><input type="number" min="0" value=${values.models[m] ?? ''} placeholder=${ideal(m)}
           onInput=${e => set('models', { ...values.models, [m]: e.target.value })} /></label>`)}`}
       <button class="btn btn--primary">Save</button>
     </form></${Sheet}>`;
@@ -170,6 +199,22 @@ function ChargerSheet({ groups, charger, close }) {
           onClick=${() => set('group', values.group === g.id ? '' : g.id)}>${g.name}</button>`)}</div>`}
       <label><span>Slots</span><input type="number" min="1" value=${values.slots} onInput=${e => set('slots', e.target.value)} /></label>
       <label><span>Minutes for a full charge</span><input type="number" min="0" value=${values.charge_min} onInput=${e => set('charge_min', e.target.value)} /></label>
+      <button class="btn btn--primary">Save</button>
+    </form></${Sheet}>`;
+}
+
+function DeviceSheet({ device, close }) {
+  const [values, setValues] = useState({ model: device.model || '', watts: device.watts ?? '', takes: device.takes ?? '',
+    battery: device.battery || '', source: device.source || '' });
+  const set = (key, value) => setValues({ ...values, [key]: value });
+  const submit = e => { e.preventDefault(); saveDevice(values, device.model); close(); };
+  return html`<${Sheet} title=${device.model || 'New model'} close=${close}>
+    <form class="item-form" onSubmit=${submit}>
+      <label><span>Model (as in Kit, IFB, or a name: Mars 4K TX)</span><input value=${values.model} onInput=${e => set('model', e.target.value)} required autofocus=${!device.model} /></label>
+      <label><span>Draw in W (= Wh per hour)</span><input type="number" min="0" step="0.01" value=${values.watts} onInput=${e => set('watts', e.target.value)} /></label>
+      <label><span>Batteries at once</span><input type="number" min="1" value=${values.takes} placeholder="1" onInput=${e => set('takes', e.target.value)} /></label>
+      <label><span>Battery</span><input value=${values.battery} placeholder="NP-50, AA, NP-F970…" onInput=${e => set('battery', e.target.value)} /></label>
+      <label><span>Where it comes from</span><input value=${values.source} onInput=${e => set('source', e.target.value)} /></label>
       <button class="btn btn--primary">Save</button>
     </form></${Sheet}>`;
 }

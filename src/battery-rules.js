@@ -1,6 +1,7 @@
 // battery-rules.js — every battery of the film, in Gear → Batteries (Ana, 12 Oct: "monitor all the batteries
 // I have on the project": AA for the TXs and plug-ons, NP-F970 for the video kit, built-in ones…).
-//   gear/batteries.json  { groups: [{ id, name, item, life_min, charge_min, models: { 'ZMT4.5': 390 } }],
+//   gear/batteries.json  { groups: [{ id, name, item, battery, wh, life_min, charge_min, models: { 'ZMT4.5': 390 } }],
+//                          devices: [{ model, watts, takes, battery, source }],
 //                          chargers: [{ id, name, group, slots, charge_min }],
 //                          batteries: [{ id, group, label, state, since, used_in, charger, charge_min, life_pct,
 //                                        runs: [{ min, end: 'dead'|'low'|'ok', model, pct, at }] }] }
@@ -10,8 +11,12 @@
 //   that isn't a TX ('Mars 4K TX': the video kit)
 //   charge_min: minutes on the charger — the battery's own, else its charger's, else the group's
 //   life_pct: the battery's rank (old ones less than 100)
+//   wh: one battery's energy AS ON ITS LABEL (Ana, 13 Oct: "use always what they have in the label") · devices: what
+//   each model draws (W = Wh per hour, from the manuals / makers), how many batteries at once, which battery
+//   → the IDEAL minutes = wh × takes ÷ watts. models: the minutes Ana SEES in practice per model — they win.
+//   battery: the group's battery type (NP-F970): the models that take it are the ones its sheet asks about
 // How long a battery in use lasts (lifeOf), always aiming short (Ana: "end before!"):
-//   the model's minutes × the battery's rank, no more than its last runs that ended dead or low
+//   the model's minutes (the group's own for it, else wh ÷ the device's watts, else the group's) × the battery's rank, no more than its last runs that ended dead or low
 //   (dead counts 10% shorter), −15% if its TX is in a long scene today (≥ 3 pages, the AT's rule)
 // Colours, always (Ana, 12 Oct: "green, yellow and red — charged are green, used are red"):
 //   full green · charging yellow (green once its time is up) · empty red ·
@@ -22,7 +27,7 @@ import { naturalCompare, shootingDays, localTodayIso, byId } from './model.js';
 
 export const STATES = [['full', 'Full'], ['charging', 'Charging'], ['in_use', 'In use'], ['empty', 'Empty']];
 
-export const batteryFile = project => ({ groups: [], chargers: [], batteries: [], ...project.gearBatteries });
+export const batteryFile = project => ({ groups: [], chargers: [], devices: [], batteries: [], ...project.gearBatteries });
 
 export const ENDS = [['dead', 'Dead'], ['low', 'Low'], ['ok', 'Still OK']];
 export const LONG_SCENE_PAGES = 3;
@@ -81,18 +86,31 @@ export function longScenesFor(project, txId, now = Date.now()) {
 }
 
 // estimated minutes a battery lasts in use, and why (see the top): { minutes, notes } or null (no estimate)
-// what a battery's minutes depend on: its TX's model, else the place itself ('Mars 4K TX')
-const modelOf = (project, place) => txOf(project, place)?.model || String(place || '').trim() || null;
+// what a battery's minutes depend on: its TX's model, its IFB receiver's model ('RX 3'), else the place itself
+export function modelOf(project, place) {
+  const rx = String(place || '').trim().match(/^RX\s*(.+)$/i);
+  const receiver = rx && (project.ifbReceivers || []).find(r => String(r.id) === rx[1]);
+  return txOf(project, place)?.model || receiver?.model || String(place || '').trim() || null;
+}
+
+// the minutes a battery of the group lasts in a model, from the power it draws (null: not known)
+export function minutesFromDraw(project, group, model) {
+  const device = batteryFile(project).devices.find(d => d.model === model);
+  if (!device?.watts || !group?.wh) return null;
+  return Math.round(group.wh * (device.takes || 1) / device.watts * 60);
+}
 
 export function lifeOf(project, battery, group, now = Date.now()) {
   const tx = txOf(project, battery.used_in);
   const model = modelOf(project, battery.used_in);
   const pct = Number(battery.life_pct ?? 100);
   const own = model && group?.models?.[model];
-  const base = Number(own || group?.life_min) || 0;
+  const drawn = !own && model ? minutesFromDraw(project, group, model) : null;
+  const base = Number(own || drawn || group?.life_min) || 0;
   const notes = [];
   let minutes = base * pct / 100;
-  if (base) notes.push(`${own ? model : group.name} ${clock(base)}${pct !== 100 ? ` × ${pct}%` : ''}`);
+  const kind = own ? ' seen' : drawn ? ' on the label' : '';
+  if (base) notes.push(`${own || drawn ? model : group.name}${kind} ${clock(base)}${pct !== 100 ? ` × ${pct}%` : ''}`);
   const runs = (battery.runs || []).filter(r => r.end !== 'ok' && (r.model || null) === model).slice(-RUNS_LEARNED);
   if (runs.length) {
     const learned = Math.min(...runs.map(r => r.min * (r.end === 'dead' ? DEAD_CUT : 1)));

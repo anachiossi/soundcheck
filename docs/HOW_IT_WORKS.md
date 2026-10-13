@@ -190,6 +190,12 @@ v145 (13 Oct, Ana: "why haven't you done this?"):
 - Data: "Video batteries" = the 5 Oyomba NP-F970 (g284), 5 h to charge. v146: a group's minutes can be per place that
   isn't a TX ("Mars 4K TX" 4:00, "Mars 400S Pro TX" 3:10, "Mars 400S Pro RX" 5:00 — ≈ 35 Wh usable ÷ the draw in the
   manual / retailers' specs, aiming short); those places are offered under "In".
+- v147 (13 Oct, Ana: "for all equipment that has batteries, the consumption it has per hour"; "use always what they
+  have in the label … leave fields for my practical observations"): **Power draw** (under the groups) = what each
+  model draws in W (manuals / makers, "?" when not published), batteries at once, battery type. A group has its
+  battery type and the **Wh on its label** → the IDEAL minutes per model = Wh × batteries ÷ W ("label 6:47"). The
+  group sheet asks the minutes **seen in practice** per model taking its battery type; those win over the label.
+  Order: seen > label > the group's minutes; then the battery's Life %, its Dead/Low runs, the long-scene −15%.
 No notifications yet (after the aesthetics, Ana 12 Oct).
 | What | File |
 |---|---|

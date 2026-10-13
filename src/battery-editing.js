@@ -45,7 +45,9 @@ export function saveGroup(fields) {
   while (used.has(`b${n}`)) n++;
   const id = fields.id || `b${n}`;
   const models = Object.fromEntries(Object.entries(fields.models || {}).map(([m, v]) => [m, minutes(v)]).filter(([, v]) => v));
-  const group = { id, name, life_min: minutes(fields.life_min), charge_min: minutes(fields.charge_min), models: Object.keys(models).length ? models : undefined };
+  const wh = fields.wh === '' || fields.wh == null ? undefined : Math.max(0, Math.round(Number(fields.wh) * 10) / 10) || undefined;
+  const battery = String(fields.battery || '').trim() || undefined;
+  const group = { id, name, battery, wh, life_min: minutes(fields.life_min), charge_min: minutes(fields.charge_min), models: Object.keys(models).length ? models : undefined };
   const groups = fields.id ? file.groups.map(g => (g.id === id ? { ...g, ...group } : g)) : [...file.groups, group];
   const have = file.batteries.filter(b => b.group === id);
   const extra = [];
@@ -53,6 +55,18 @@ export function saveGroup(fields) {
     extra.push({ id: `${id}-${label}`, group: id, label: String(label), state: 'full', since: now() });
   }
   return save({ ...file, groups, batteries: [...file.batteries, ...extra] }, `${name} saved.`);
+}
+
+// what a model draws: watts (Wh per hour), how many batteries at once, which battery, where it comes from
+export function saveDevice(fields, oldModel) {
+  const file = batteryFile(getState().project);
+  const model = String(fields.model || '').trim();
+  if (!model) return showMessage('error', 'It needs a model.');
+  const number = value => (value === '' || value == null ? undefined : Math.max(0, Number(value)) || undefined);
+  const device = { model, watts: number(fields.watts), takes: number(fields.takes), battery: String(fields.battery || '').trim() || undefined,
+    source: String(fields.source || '').trim() || undefined };
+  const devices = oldModel ? file.devices.map(d => (d.model === oldModel ? { ...d, ...device } : d)) : [...file.devices, device];
+  return save({ ...file, devices }, `${model} saved.`);
 }
 
 // add a charger or change one: its name, the group it charges, how many slots, minutes for a full charge
