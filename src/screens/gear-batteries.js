@@ -75,7 +75,8 @@ export function GearBatteriesScreen({ state }) {
         ${devices.map(d => html`
           <button key=${d.model} class="battery-device" onClick=${() => setOpenDevice(d)}>
             <b>${d.model}</b>
-            <span>${d.watts ? `${d.watts} W` : '? W'}${d.battery ? ` · ${d.takes > 1 ? `${d.takes}× ` : ''}${d.battery}` : ''}</span>
+            <span>${d.battery === 'internal' ? `internal · ${d.hours ? `≈ ${d.hours} h` : '? h'} on a full charge`
+              : `${d.watts ? `${d.watts} W` : '? W'}${d.battery ? ` · ${d.takes > 1 ? `${d.takes}× ` : ''}${d.battery}` : ''}`}</span>
             <small>${groups.filter(g => !g.battery || !d.battery || g.battery.toLowerCase() === d.battery.toLowerCase()).map(g => {
               const ideal = minutesFromDraw(project, g, d.model);
               const seen = g.models?.[d.model];
@@ -205,15 +206,17 @@ function ChargerSheet({ groups, charger, close }) {
 
 function DeviceSheet({ device, close }) {
   const [values, setValues] = useState({ model: device.model || '', watts: device.watts ?? '', takes: device.takes ?? '',
-    battery: device.battery || '', source: device.source || '' });
+    battery: device.battery || '', hours: device.hours ?? '', source: device.source || '' });
   const set = (key, value) => setValues({ ...values, [key]: value });
   const submit = e => { e.preventDefault(); saveDevice(values, device.model); close(); };
   return html`<${Sheet} title=${device.model || 'New model'} close=${close}>
     <form class="item-form" onSubmit=${submit}>
       <label><span>Model (as in Kit, IFB, or a name: Mars 4K TX)</span><input value=${values.model} onInput=${e => set('model', e.target.value)} required autofocus=${!device.model} /></label>
       <label><span>Draw in W (= Wh per hour)</span><input type="number" min="0" step="0.01" value=${values.watts} onInput=${e => set('watts', e.target.value)} /></label>
+      <label><span>Hours on a full charge (maker's; for internal batteries)</span><input type="number" min="0" step="0.5" value=${values.hours}
+        onInput=${e => set('hours', e.target.value)} /></label>
       <label><span>Batteries at once</span><input type="number" min="1" value=${values.takes} placeholder="1" onInput=${e => set('takes', e.target.value)} /></label>
-      <label><span>Battery</span><input value=${values.battery} placeholder="NP-50, AA, NP-F970…" onInput=${e => set('battery', e.target.value)} /></label>
+      <label><span>Battery</span><input value=${values.battery} placeholder="NP-50, AA, NP-F970, internal…" onInput=${e => set('battery', e.target.value)} /></label>
       <label><span>Where it comes from</span><input value=${values.source} onInput=${e => set('source', e.target.value)} /></label>
       <button class="btn btn--primary">Save</button>
     </form></${Sheet}>`;

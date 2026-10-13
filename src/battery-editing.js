@@ -63,7 +63,7 @@ export function saveDevice(fields, oldModel) {
   const model = String(fields.model || '').trim();
   if (!model) return showMessage('error', 'It needs a model.');
   const number = value => (value === '' || value == null ? undefined : Math.max(0, Number(value)) || undefined);
-  const device = { model, watts: number(fields.watts), takes: number(fields.takes), battery: String(fields.battery || '').trim() || undefined,
+  const device = { model, watts: number(fields.watts), takes: number(fields.takes), hours: number(fields.hours), battery: String(fields.battery || '').trim() || undefined,
     source: String(fields.source || '').trim() || undefined };
   const devices = oldModel ? file.devices.map(d => (d.model === oldModel ? { ...d, ...device } : d)) : [...file.devices, device];
   return save({ ...file, devices }, `${model} saved.`);

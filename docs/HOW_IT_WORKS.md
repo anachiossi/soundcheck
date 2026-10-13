@@ -196,6 +196,8 @@ v145 (13 Oct, Ana: "why haven't you done this?"):
   battery type and the **Wh on its label** → the IDEAL minutes per model = Wh × batteries ÷ W ("label 6:47"). The
   group sheet asks the minutes **seen in practice** per model taking its battery type; those win over the label.
   Order: seen > label > the group's minutes; then the battery's Life %, its Dead/Low runs, the long-scene −15%.
+- v148: battery "internal" (not swapped — Ana, 13 Oct: the Ambient TC boxes) shows the maker's hours on a full charge
+  (Lockit 17 h, LockitBT 14 h, NanoLockit 25 h, Tentacles 50 / 35 h).
 No notifications yet (after the aesthetics, Ana 12 Oct).
 | What | File |
 |---|---|

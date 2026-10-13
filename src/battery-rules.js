@@ -1,7 +1,7 @@
 // battery-rules.js — every battery of the film, in Gear → Batteries (Ana, 12 Oct: "monitor all the batteries
 // I have on the project": AA for the TXs and plug-ons, NP-F970 for the video kit, built-in ones…).
 //   gear/batteries.json  { groups: [{ id, name, item, battery, wh, life_min, charge_min, models: { 'ZMT4.5': 390 } }],
-//                          devices: [{ model, watts, takes, battery, source }],
+//                          devices: [{ model, watts, takes, battery, hours, source }],
 //                          chargers: [{ id, name, group, slots, charge_min }],
 //                          batteries: [{ id, group, label, state, since, used_in, charger, charge_min, life_pct,
 //                                        runs: [{ min, end: 'dead'|'low'|'ok', model, pct, at }] }] }
@@ -14,6 +14,7 @@
 //   wh: one battery's energy AS ON ITS LABEL (Ana, 13 Oct: "use always what they have in the label") · devices: what
 //   each model draws (W = Wh per hour, from the manuals / makers), how many batteries at once, which battery
 //   → the IDEAL minutes = wh × takes ÷ watts. models: the minutes Ana SEES in practice per model — they win.
+//   battery 'internal': not swapped (Ana: the Ambient TC boxes) — only the maker's hours on a full charge
 //   battery: the group's battery type (NP-F970): the models that take it are the ones its sheet asks about
 // How long a battery in use lasts (lifeOf), always aiming short (Ana: "end before!"):
 //   the model's minutes (the group's own for it, else wh ÷ the device's watts, else the group's) × the battery's rank, no more than its last runs that ended dead or low
