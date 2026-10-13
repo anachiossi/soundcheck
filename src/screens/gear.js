@@ -261,13 +261,19 @@ export function GearManualsScreen({ state }) {
     <div class="gear">
       <h2 class="gear__title" style="--cat:#64748b">Manuals</h2>
       ${Object.keys(brands).length === 0 && html`<p class="empty">No manuals for this film yet.</p>`}
-      ${Object.entries(brands).map(([brand, manuals]) => html`
-        <h3 class="gear__cat" style="--cat:#475569" key=${brand}>${brand} <small>${manuals.length}</small></h3>
-        ${manuals.map(manual => html`
+      ${Object.entries(brands).map(([brand, categories]) => {
+        const names = Object.keys(categories);
+        const count = Object.values(categories).flat().length;
+        return html`
+        <h3 class="gear__cat" style="--cat:#475569" key=${brand}>${brand}${names.length === 1 ? ` — ${names[0]}` : ''} <small>${count}</small></h3>
+        ${names.map(name => html`
+        ${names.length > 1 && html`<h4 class="gear__subcat" key=${`${brand}-${name}`}>${name} <small>${categories[name].length}</small></h4>`}
+        ${categories[name].map(manual => html`
           <button key=${manual.file} class="manual" disabled=${!manualPath(project, manual)} onClick=${() => openManual(project, manual, 'gear-manuals')}>
             <${Icon} name="document" />
             <span><b>${manual.title}</b><small>${[manual.date, (manual.models || []).join(' · ')].filter(Boolean).join(' — ')}</small>
               ${!manualPath(project, manual) && html`<small>⬇ downloads at the next sync</small>`}</span>
-          </button>`)}`)}
+          </button>`)}`)}`;
+      })}
     </div>`;
 }
