@@ -1,6 +1,6 @@
 // manuals.js — the equipment manuals of a film (Ana, 2 Oct): PDFs in the film's data
 // (docs/manuals/<brand>/…, kept on the device for offline reading like the ODGs) and the list
-// gear/manuals.json [{ brand, category, title, date, file, models }] that says which models each one covers.
+// gear/manuals.json [{ brand, category, title, nickname, date, file, models }] (nickname: what we call it on set — "NP-1 charger") that says which models each one covers.
 // category (v150, Ana 13 Oct): "Schoeps — Microphones"; a brand with several gets one sub-heading each
 // (Sennheiser: Wireless, Headphones, Microphones…).
 // Used by: screens/gear.js (Gear → Manuals, by brand), screens/kit.js (📄 under the transmitters)

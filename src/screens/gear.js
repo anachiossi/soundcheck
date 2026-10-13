@@ -271,7 +271,7 @@ export function GearManualsScreen({ state }) {
         ${categories[name].map(manual => html`
           <button key=${manual.file} class="manual" disabled=${!manualPath(project, manual)} onClick=${() => openManual(project, manual, 'gear-manuals')}>
             <${Icon} name="document" />
-            <span><b>${manual.title}</b><small>${[manual.date, (manual.models || []).join(' · ')].filter(Boolean).join(' — ')}</small>
+            <span><b>${manual.title}</b>${manual.nickname && html`<small class="manual__nick">${manual.nickname}</small>`}<small>${[manual.date, (manual.models || []).join(' · ')].filter(Boolean).join(' — ')}</small>
               ${!manualPath(project, manual) && html`<small>⬇ downloads at the next sync</small>`}</span>
           </button>`)}`)}`;
       })}

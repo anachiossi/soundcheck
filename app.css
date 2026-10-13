@@ -666,6 +666,7 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
   border: 1px solid var(--line); background: var(--card); color: var(--ink); font: inherit; text-align: left; }
 .manual span { display: grid; flex: 1; min-width: 0; }
 .manual small { color: var(--muted); font-size: 13px; }
+.manual .manual__nick { color: var(--ink); font-weight: 600; }
 .manual:disabled { opacity: .6; }
 .kit-manuals { margin-top: 8px; flex-wrap: wrap; }
 /* 🔍 gear search */
