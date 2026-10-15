@@ -92,6 +92,8 @@ Ana's mockup "Gear inventory redesign", 2 Oct):
 - Objects: name, brand, type, qty, colour, nicknames, inside, volume, note + **details** (own fields;
   the type offers the fields others of that type use — `fieldsOfType`). Rules in `src/gear-rules.js`.
 - Manuals by brand (`docs/manuals/<brand>/`, `gear/manuals.json`). Hours / timesheet live in Projects.
+- **Gear to check (TODO)**: `D:\sound_check_data\projects\<film>\docs\gear-todo.md` (data repo, private) — every "?" in
+  the gear list, grouped by case; remake with `python tools/gear_todo.py projects/<film>` (data repo). See its README.
 - LBE gear = Angelo Bonanni's kit, dictated by Ana from photos and written by Claude in the data
   (`.shots/lbe-*.mjs`): Inf. Mic's, Maverick → Lav Acessories #1 (TX, lavs, …) and #2 (straps, pouches) done.
   Next: Maverick crates 3–4, Furs / Various / Lectro boxes, the other carts and cases.
