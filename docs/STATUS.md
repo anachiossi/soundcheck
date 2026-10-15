@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-10-13 · live version **v151** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-10-15 · live version **v152** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
@@ -91,6 +91,8 @@ Ana's mockup "Gear inventory redesign", 2 Oct):
   types go to OTHER); search lists every match with its path. State `gearPath`. Truck / sheet: dots (`Tinted`).
 - Objects: name, brand, type, qty, colour, nicknames, inside, volume, note + **details** (own fields;
   the type offers the fields others of that type use — `fieldsOfType`). Rules in `src/gear-rules.js`.
+- Rough counts (v152, Ana 15 Oct, RF Spare case): `qty_about: true` shows ×~15 everywhere (`quantityText`);
+  tick "About that many" in the object's sheet. For repair cases full of cables / connectors nobody counts.
 - Manuals by brand (`docs/manuals/<brand>/`, `gear/manuals.json`). Hours / timesheet live in Projects.
 - LBE gear = Angelo Bonanni's kit, dictated by Ana from photos and written by Claude in the data
   (`.shots/lbe-*.mjs`): Inf. Mic's, Maverick → Lav Acessories #1 (TX, lavs, …) and #2 (straps, pouches) done.

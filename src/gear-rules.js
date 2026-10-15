@@ -118,12 +118,21 @@ export function containersOf(project, exceptId) {
   return activeItems(project).filter(item => item.id !== exceptId && !within(item.id) && isContainer(project, item));
 }
 
+// How many, as shown next to the name: '×6', or '×~15' when it's a rough count (qty_about: Ana, 15 Oct —
+// the RF Spare case's cables and connectors, nobody counts them one by one). Nothing for a single one.
+export function quantityText(item) {
+  const qty = Number(item.qty) || 1;
+  if (item.qty_about) return `×~${qty}`;
+  return qty > 1 ? `×${qty}` : '';
+}
+
 // What a change to an object means for the history (moves and ticks: nothing).
 export function historyOf(before, after) {
   if (!before) return { what: 'added' };
   const changes = [];
+  const howMany = item => `${item.qty_about ? '~' : ''}${Number(item.qty) || 1}`; // '16', or '~15'
   if (before.name !== after.name) changes.push(`name: ${before.name} → ${after.name}`);
-  if ((before.qty || 1) !== (after.qty || 1)) changes.push(`quantity: ${before.qty || 1} → ${after.qty || 1}`);
+  if (howMany(before) !== howMany(after)) changes.push(`quantity: ${howMany(before)} → ${howMany(after)}`);
   if ((before.brand || '') !== (after.brand || '')) changes.push(`brand: ${before.brand || '—'} → ${after.brand || '—'}`);
   if (before.category !== after.category) changes.push('category changed');
   return changes.length ? { what: 'changed', note: changes.join(', ') } : null;

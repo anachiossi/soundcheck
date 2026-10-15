@@ -4,12 +4,12 @@
 //   'inventory'   the whole tree, with each object's brand and details (BNC · SMA · 3 m)
 // Used by: screens/gear.js
 
-import { categoriesOf, truckOf, topItems, contentsOf, ticked, holds, itemById } from '../gear-rules.js';
+import { categoriesOf, truckOf, topItems, contentsOf, ticked, holds, itemById, quantityText } from '../gear-rules.js';
 
 const label = (project, item) => {
   const parts = [`${ticked(project, item.id) ? '☑' : '☐'} ${item.name}`];
   if (item.brand) parts.push(item.brand);
-  if (item.qty > 1) parts.push(`×${item.qty}`);
+  if (quantityText(item)) parts.push(quantityText(item));
   const details = (item.details || []).filter(d => d.value).map(d => d.value);
   if (details.length) parts.push(`[${details.join(' · ')}]`);
   if (item.note) parts.push(`— ${item.note}`);

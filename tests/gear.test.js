@@ -2,7 +2,7 @@
 // and which edits go in the history (not moves, not ticks). Run: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { STARTING_CATEGORIES, topOf, contentsOf, truckOf, allInCategory, historyOf, tickCount, containersOf, isContainer } from '../src/gear-rules.js';
+import { STARTING_CATEGORIES, topOf, contentsOf, truckOf, allInCategory, historyOf, tickCount, containersOf, isContainer, quantityText } from '../src/gear-rules.js';
 import { fileContent, setFileContent } from '../src/store/repo-files.js';
 
 const film = {
@@ -39,6 +39,14 @@ test('history: added, changed name / quantity — a move between cases is not hi
   assert.deepEqual(historyOf(null, { name: 'AA' }), { what: 'added' });
   assert.equal(historyOf({ name: 'AA', qty: 16, inside: 'g1' }, { name: 'AA', qty: 16, inside: 'g9' }), null);
   assert.deepEqual(historyOf({ name: 'AA', qty: 16 }, { name: 'AA', qty: 12 }), { what: 'changed', note: 'quantity: 16 → 12' });
+  assert.deepEqual(historyOf({ name: 'BNC', qty: 15 }, { name: 'BNC', qty: 15, qty_about: true }), { what: 'changed', note: 'quantity: 15 → ~15' });
+});
+
+test('a rough count shows ×~15; an exact one ×6; a single one nothing', () => {
+  assert.equal(quantityText({ qty: 15, qty_about: true }), '×~15');
+  assert.equal(quantityText({ qty: 6 }), '×6');
+  assert.equal(quantityText({ qty: 1 }), '');
+  assert.equal(quantityText({}), '');
 });
 
 test('gear files travel with the film', () => {

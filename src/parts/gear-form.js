@@ -8,7 +8,7 @@
 // Used by: screens/gear.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
-import { categoriesOf, topCategories, topOf, containersOf, isContainer, childrenOf, pathOf, fieldsOfType, typesOf, splitLoose, CASE_COLOURS } from '../gear-rules.js';
+import { categoriesOf, topCategories, topOf, containersOf, isContainer, childrenOf, pathOf, fieldsOfType, typesOf, splitLoose, CASE_COLOURS, quantityText } from '../gear-rules.js';
 import { textColourFor } from '../colour.js';
 import { saveObject, removeObject, saveCategory, moveCaseUp } from '../gear-editing.js';
 import { Icon } from './icons.js';
@@ -99,9 +99,9 @@ export function ObjectSheet({ project, object, close, open }) {
         <div class="gear-details">
           <span class="gear-details__title">Inside it <small>${holds.length}</small></span>
           ${inside.boxes.map((item, i) => html`<div class="gear-details__row" key=${item.id} style=${tintOf(item)}>
-            <button type="button" class="gear-details__link" onClick=${() => open(item)}><b>▸</b> <${Tinted} item=${item} />${item.qty > 1 ? html`<small class="gear-qty">×${item.qty}</small>` : ''}</button>
+            <button type="button" class="gear-details__link" onClick=${() => open(item)}><b>▸</b> <${Tinted} item=${item} />${quantityText(item) ? html`<small class="gear-qty">${quantityText(item)}</small>` : ''}</button>
             <button type="button" class="icon-btn" disabled=${i === 0} onClick=${() => moveCaseUp(item.id)} aria-label=${`Move ${item.name} up`}><${Icon} name="up" /></button></div>`)}
-          ${[...inside.loose].sort(byName).map(item => html`<button type="button" key=${item.id} class="gear-details__row gear-details__link" style=${tintOf(item)} onClick=${() => open(item)}><${Tinted} item=${item} />${item.qty > 1 ? html`<small class="gear-qty">×${item.qty}</small>` : ''}</button>`)}
+          ${[...inside.loose].sort(byName).map(item => html`<button type="button" key=${item.id} class="gear-details__row gear-details__link" style=${tintOf(item)} onClick=${() => open(item)}><${Tinted} item=${item} />${quantityText(item) ? html`<small class="gear-qty">${quantityText(item)}</small>` : ''}</button>`)}
           <div class="gear-details__add"><button type="button" class="choice" onClick=${addInside}>+ Add inside</button></div>
         </div>`}
       <label><span>Nicknames (other names it goes by, for the search; commas between)</span>
@@ -126,6 +126,8 @@ export function ObjectSheet({ project, object, close, open }) {
       </div>
       <label class="item-form__check"><span>Goes on the truck (a volume)</span>
         <input type="checkbox" checked=${!!values.volume} onChange=${e => set('volume', e.target.checked)} /></label>
+      <label class="item-form__check"><span>About that many (a rough count, shows ×~${Number(values.qty) || 1})</span>
+        <input type="checkbox" checked=${!!values.qty_about} onChange=${e => set('qty_about', e.target.checked)} /></label>
       <label><span>Note</span><input value=${values.note || ''} onInput=${e => set('note', e.target.value)} /></label>
       <div class="edit-actions">
         ${values.id && html`<button type="button" class="btn btn--quiet text-danger" onClick=${() => setRemoving('')}>Remove</button>`}
