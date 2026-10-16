@@ -66,7 +66,7 @@ test('sending creates one suggestion issue with the marker, and never writes a f
   assert.deepEqual(suggestion.changes, [{ op: 'set', id: 'g3', value: sandbag }]);
   assert.deepEqual(writesToFiles(asked), []);
 
-  assert.deepEqual(store.project.crewSuggestions.sent, { [PATH]: { issue: 8, saved_at: SAVED } });
+  assert.deepEqual(store.project.crewSuggestions.sent, { [PATH]: { issue: 8, saved_at: SAVED, lines: ['Gear: + Sandbag'] } });
   assert.deepEqual(store.project.outbox, { [PATH]: { saved_at: SAVED } }, 'the change stays on the phone');
   assert.deepEqual(proposedPaths(store.project), [PATH]);
 });
@@ -92,7 +92,7 @@ test('a file changed again replaces its older suggestion, which is closed', asyn
   assert.equal(await sendSuggestions(connection, store), 1);
   assert.deepEqual(asked.find(call => call.path === '/issues/8/comments').body, { body: 'Replaced by #9' });
   assert.equal(asked.find(call => call.path === '/issues/8').body.state, 'closed');
-  assert.deepEqual(store.project.crewSuggestions.sent[PATH], { issue: 9, saved_at: later });
+  assert.deepEqual(store.project.crewSuggestions.sent[PATH], { issue: 9, saved_at: later, lines: ['Gear: + Sandbag'] });
   assert.deepEqual(store.project.crewSuggestions.log, [], 'a replaced suggestion is not a decision');
 });
 

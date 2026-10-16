@@ -6,6 +6,7 @@
 //   • 📊 Timesheet → the week as an editable Excel for production, one block per person of the sound department
 //   • 🔔 Wrap alerts: a notification at the wrap, even with the app closed (parts/wrap-alerts.js)
 //   • on top, the night before the next day: sleep · wake · leave · meet, ⏰ Set alarms (parts/tomorrow.js)
+// On a crew phone (for now not reachable) the wake plan and wrap alerts never show: crew-link.js crewHides.
 // Used by: main.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
@@ -18,9 +19,10 @@ import { shareCanvas, shareFile } from '../export/share.js';
 import { Icon } from '../parts/icons.js';
 import { WrapAlerts } from '../parts/wrap-alerts.js';
 import { Tomorrow } from '../parts/tomorrow.js';
+import { crewHides } from '../crew-link.js';
 
 export function HoursScreen({ state }) {
-  const { project } = state;
+  const { project, connection } = state;
   const [monday, setMonday] = useState(() => mondayOf(new Date()));
   const [editing, setEditing] = useState(null); // { day, time }
   const days = weekOf(project, monday);
@@ -33,7 +35,7 @@ export function HoursScreen({ state }) {
 
   return html`
     <div class="hours">
-      <${Tomorrow} project=${project} />
+      ${!crewHides(connection, 'tomorrow') && html`<${Tomorrow} project=${project} />`}
       <div class="hours__week">
         <button class="btn" onClick=${() => move(-1)} aria-label="Week before">‹</button>
         <b>${title}</b>
@@ -75,6 +77,6 @@ export function HoursScreen({ state }) {
         </table>`}
       ${typeof project.settings?.overtime?.double_after === 'number' && days.length > 0 && html`
         <p class="muted">Extra counts double after its first ${hm(project.settings.overtime.double_after)} each day (1h 15m → 1h 30m).</p>`}
-      <div class="hours__alerts"><${WrapAlerts} project=${project} /></div>
+      ${!crewHides(connection, 'wrap-alerts') && html`<div class="hours__alerts"><${WrapAlerts} project=${project} /></div>`}
     </div>`;
 }

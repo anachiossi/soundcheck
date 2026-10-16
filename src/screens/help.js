@@ -1,11 +1,14 @@
 // help.js — the Help page (Projects → Help): how to set things up and the tips that used to sit
 // on the screens themselves, so those keep only their controls.
+// A crew phone doesn't see Wrap hours and Alarms (Ana's personal setup: crew-link.js crewHides).
 // Used by: main.js
 
 import { html } from '../../vendor/preact-htm.js';
 import { setState } from '../state.js';
+import { crewHides } from '../crew-link.js';
 
-export function HelpScreen() {
+export function HelpScreen({ state }) {
+  const personal = !crewHides(state.connection, 'help-hours');
   return html`
     <div class="help-page">
       <button class="btn" onClick=${() => setState({ screen: 'projects' })}>‹ Projects</button>
@@ -20,6 +23,7 @@ export function HelpScreen() {
       <h2 class="section-title">Screen</h2>
       <p>Projects → Screen: <b>Auto</b> follows the phone's own light / dark setting. <b>Dark</b> is easier on the eyes on night sets.</p>
 
+      ${personal && html`
       <h2 class="section-title">Wrap hours</h2>
       <ul class="help">
         <li>The ⏱ in the top bar counts down to the ODG's wrap, then counts the overtime (+0h 35m).</li>
@@ -47,7 +51,7 @@ export function HelpScreen() {
       <p><b>Automatic, without the tap:</b> a second shortcut, <b>soundcheck auto alarms</b>, asks the robot every
         evening (Shortcuts → Automation, 20:00 and 22:30, Run Immediately). On a shooting eve it sets the alarms;
         on a weekend or day off it removes the soundcheck alarms. Steps: docs/HOW_IT_WORKS.md → "Automatic alarms".</p>
-      <p class="muted">The robot also sends a notification when tomorrow's ODG arrives, and one at bedtime 💤.</p>
+      <p class="muted">The robot also sends a notification when tomorrow's ODG arrives, and one at bedtime 💤.</p>`}
 
       <h2 class="section-title">Hearing the lines</h2>
       <ul class="help">

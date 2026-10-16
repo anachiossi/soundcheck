@@ -5,7 +5,7 @@
 // link (base64url). It holds: owner, repo, branch, the crew key, the person's name, the film folder.
 // The part after # never leaves the phone. The link IS a key: it must be sent privately.
 // Only words here, no screens. Used by: parts/crew-share.js (making), main.js (joining),
-// sync.js, screens/projects.js (is this a crew phone?)
+// sync.js, screens/projects.js, screens/help.js, screens/hours.js (is this a crew phone? what it hides)
 
 // The message a crew phone shows when the crew key has expired or was replaced.
 export const CREW_ACCESS_ENDED = "This link no longer works (the film's crew access has ended).";
@@ -13,6 +13,18 @@ export const CREW_ACCESS_ENDED = "This link no longer works (the film's crew acc
 // A crew phone: connected with a crew link. No role = Ana's own devices (the owner).
 export function isCrew(connection) {
   return connection?.role === 'crew';
+}
+
+// Parts of the app that are Ana's personal setup, not the film's: not shown on crew phones.
+//   'wrap-clock'   the ⏱ countdown in the top bar and "Did today finish on time?" / "Is this a wrap?"
+//   'wrap-alerts'  🔔 Wrap alerts (her phones on the robot's push list)
+//   'tomorrow'     the wake-up plan card and ⏰ Set alarms (the "soundcheck alarms" shortcut)
+//   'help-hours'   Help → Wrap hours and Help → Alarms for the next day
+//   'hours'        the Hours screen, also from a '#hours' link (crew hours come later)
+export const PERSONAL_PARTS = ['wrap-clock', 'wrap-alerts', 'tomorrow', 'help-hours', 'hours'];
+
+export function crewHides(connection, part) {
+  return isCrew(connection) && PERSONAL_PARTS.includes(part);
 }
 
 export function makeCrewLink({ owner, repo, branch, token, name, folder, baseUrl }) {

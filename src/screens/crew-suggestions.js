@@ -1,41 +1,58 @@
 // crew-suggestions.js — on Ana's own devices: the changes the crew suggest from their phones
 // (crew-inbox.js lists them at each sync). Looks and works like a 📬 proposal from an email:
 // each suggestion in plain words, with ✕ Don't approve (+ an optional reason) or ✓ Approve.
-// Also: the banner "Davide suggests 2 changes", one per person, while any wait.
-// The data changes in crew-approve.js, never here. Used by: main.js
+// Also: the banner "Davide suggests 2 changes", one per person, while any wait, and
+// "Feedback from the crew" with the crew's feedback (read-only; ✓ Mark as read closes it).
+// The data changes in crew-approve.js and crew-inbox-sync.js, never here. Used by: main.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
 import { setState, showScreen } from '../state.js';
-import { suggestionsByPerson, decisionFor } from '../crew-decisions.js';
+import { suggestionsByPerson, decisionFor, feedbackToRead } from '../crew-decisions.js';
 import { approveSuggestion, dontApprove } from '../crew-approve.js';
+import { markFeedbackRead } from '../crew-inbox-sync.js';
 import { Icon } from '../parts/icons.js';
 
 const changesWord = count => (count === 1 ? '1 change' : `${count} changes`);
 const undecidedOf = (state, suggestions) => suggestions.filter(suggestion => !decisionFor(state, suggestion.issue));
 
 export function CrewSuggestionsBanner({ state }) {
-  return suggestionsByPerson(state).map(([by, suggestions]) => {
+  const feedback = feedbackToRead(state).length;
+  return [...suggestionsByPerson(state).map(([by, suggestions]) => {
     const waiting = undecidedOf(state, suggestions).length;
     return waiting > 0 && html`
       <button class="proposal-banner" key=${by} onClick=${() => setState({ screen: 'crew-suggestions', crewBy: by })}>
         <b class="with-icon"><${Icon} name="inbox" /> ${by} suggests ${changesWord(waiting)}</b>
         <span>${waiting} to review ›</span>
       </button>`;
-  });
+  }), feedback > 0 && html`
+      <button class="proposal-banner" key="feedback" onClick=${() => setState({ screen: 'crew-suggestions', crewBy: null })}>
+        <b class="with-icon"><${Icon} name="inbox" /> Feedback from the crew</b>
+        <span>${feedback} to read ›</span>
+      </button>`];
 }
 
 export function CrewSuggestionsScreen({ state }) {
   const groups = suggestionsByPerson(state).filter(([by]) => !state.crewBy || by === state.crewBy);
+  const feedback = feedbackToRead(state).filter(item => !state.crewBy || item.by === state.crewBy);
   return html`
     <button class="link back" onClick=${() => showScreen('schedule')}>‹ Back to schedule</button>
-    ${groups.length === 0 && html`<p class="empty">Nothing waiting: every suggestion has an answer.</p>`}
+    ${groups.length === 0 && feedback.length === 0 && html`<p class="empty">Nothing waiting: every suggestion has an answer.</p>`}
     ${groups.map(([by, suggestions]) => html`
       <h2 class="section-title" key=${'title-' + by}>Suggestions from ${by} <small>${undecidedOf(state, suggestions).length} to decide</small></h2>
       <p class="muted" key=${'note-' + by}>Approving changes the film as it is now: your own edits stay.</p>
       <ul class="changes" key=${'list-' + by}>
         ${suggestions.map(suggestion => html`
           <${Suggestion} key=${suggestion.issue} suggestion=${suggestion} decision=${decisionFor(state, suggestion.issue)} />`)}
-      </ul>`)}`;
+      </ul>`)}
+    ${feedback.length > 0 && html`
+      <h2 class="section-title">Feedback <small>${feedback.length} to read</small></h2>
+      <ul class="changes">
+        ${feedback.map(item => html`
+          <li class="change" key=${item.issue}>
+            <span class="change__text"><b>${item.by}</b>${item.lines.map(line => html`<br />${line}`)}</span>
+            <button class="btn btn--small" onClick=${() => markFeedbackRead(item)}>✓ Mark as read</button>
+          </li>`)}
+      </ul>`}`;
 }
 
 function Suggestion({ suggestion, decision }) {

@@ -7,7 +7,7 @@
 // back to the app, and right after every Save. With no signal nothing happens:
 // changes wait safely in the outbox.
 // A crew phone (crew-link.js) never commits: its changes stay on the phone, "proposed", and
-// are sent as suggestions (crew-sync.js). Ana's devices then list those suggestions (crew-inbox.js).
+// are sent as suggestions (crew-sync.js). Ana's devices then list those (crew-inbox-sync.js).
 // Used by: main.js, editing.js, films.js, screens/projects.js, parts/scene-table.js
 
 import { getState, setState, saveAndShow, showMessage } from './state.js';
@@ -17,7 +17,8 @@ import { localTodayIso, shootingDays } from './model.js';
 import * as github from './store/github.js';
 import * as crew from './crew-sync.js';
 import * as inbox from './crew-inbox.js';
-import { forgetDecisions } from './crew-decisions.js';
+import { ownerInbox } from './crew-inbox-sync.js';
+import { sendWaitingFeedback } from './crew-feedback.js';
 import { refreshEmailRobot } from './email-robot.js';
 import { applyRemote, filesToDownload, fileContent, setFileContent, formatJson } from './store/repo-files.js';
 
@@ -70,7 +71,7 @@ const deviceStore = { read: () => getState().project, save: project => saveAndSh
 // (exported for tests/crew-approve.test.js)
 export async function syncAsOwner(connection, store) {
   const uploaded = await downloadAndUpload(connection, store);
-  await crewInbox(connection, store);
+  await ownerInbox(connection, store); // the crew's suggestions and feedback (crew-inbox-sync.js)
   return uploaded;
 }
 
@@ -90,23 +91,14 @@ async function downloadAndUpload(connection, store) {
   return 0;
 }
 
-// Crew suggestions (crew-inbox.js): Ana's decisions go out once their file is uploaded, then the
-// open suggestions are listed for the 📬 banner. Never stops the sync: they wait for the next one.
-async function crewInbox(connection, store) {
-  try {
-    const project = store.read();
-    forgetDecisions(await inbox.sendDecisions(connection, project, getState().crewDecisions));
-    setState({ crewSuggestions: await inbox.loadSuggestions(connection, project.folder) });
-  } catch { /* no signal, GitHub busy…: the next sync tries again */ }
-}
-
 // A crew phone (crew-sync.js): closed suggestions first (so their files are downloaded again
-// now), then download, then send the outbox as suggestions. Never commits.
+// now), then download, then send the outbox as suggestions and any feedback. Never commits.
 async function syncAsCrew(connection, store) {
   await crew.takeBackClosed(connection, store);
   const tree = await github.readTree(connection);
   await download(connection, tree, store);
   const sent = await crew.sendSuggestions(connection, store);
+  await sendWaitingFeedback(connection, store); // never throws (crew-feedback.js)
   await downloadDocuments(connection, tree, store);
   return sent;
 }

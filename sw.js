@@ -17,6 +17,7 @@ const FILES = [
   'src/ifb-editing.js', 'src/ifb-rules.js',
   'src/crew-link.js', 'src/parts/crew-share.js', 'src/crew-changes.js', 'src/crew-describe.js', 'src/crew-sync.js', 'src/films.js',
   'src/crew-inbox.js', 'src/crew-decisions.js', 'src/crew-approve.js', 'src/screens/crew-suggestions.js',
+  'src/crew-device.js', 'src/crew-feedback.js', 'src/crew-messages.js', 'src/crew-inbox-sync.js', 'src/parts/crew-log.js', 'src/parts/crew-feedback-form.js',
   'src/store/local.js', 'src/store/github.js', 'src/store/repo-files.js',
   'src/parts/pills.js', 'src/parts/scene-table.js', 'src/parts/scene-editor.js', 'src/parts/picker.js', 'src/parts/banners.js', 'src/parts/item-form.js', 'src/parts/ifb-picker.js', 'src/parts/icons.js',
   'src/screens/schedule.js', 'src/screens/scenes.js', 'src/screens/kit.js', 'src/screens/projects.js', 'src/screens/proposal.js', 'src/screens/document.js', 'src/screens/cues.js', 'src/screens/cues-picker.js',

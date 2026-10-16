@@ -1,7 +1,8 @@
 // state.js — the ONE place where the app's data lives.
 // Screens read `state` and call actions; they never change data themselves.
 // Actions live here (navigation, films on the device), in editing.js (changing
-// presets) and in sync.js (GitHub). After every change the screen is redrawn.
+// presets) and in sync.js (GitHub); the crew lists kept on this device only in crew-device.js.
+// After every change the screen is redrawn.
 // Used by: main.js, editing.js, sync.js and every screen.
 
 import { useEffect, useState } from '../vendor/preact-htm.js';
@@ -29,8 +30,13 @@ let state = {
   online: navigator.onLine,
   message: null,            // { kind: 'ok' | 'error', text }
   connection: loadJson('sc_github', null), // GitHub: { owner, repo, branch, token, device } (+ role: 'crew', name, folder on a crew phone)
-  crewKey: loadJson('sc_crew_key', ''),     // Share with crew: the film's crew key (this device only, never synced)
+  crewKey: loadJson('sc_crew_key', ''),     // Share with crew: the film's crew key (this device only, never synced; crew-device.js)
   crewNames: loadJson('sc_crew_names', []), // names crew links were made for (this device only)
+  crewRemoved: loadJson('sc_crew_removed', []), // names removed: their suggestions are ignored (crew-device.js)
+  crewFeedback: [],         // owner: the crew's unread feedback, from the last sync (crew-inbox.js)
+  feedbackWaiting: loadJson('sc_crew_feedback', []),    // crew phone: feedback not sent yet (crew-feedback.js)
+  feedbackOffered: loadJson('sc_feedback_offered', []), // crew phone: films whose feedback line was offered
+  feedbackOpen: false,      // crew phone: the feedback form is open (Projects)
   crewSuggestions: [],      // owner: the crew's open suggestions, from the last sync (crew-inbox.js)
   crewDecisions: loadJson('sc_crew_decisions', []), // owner: decisions not sent yet (crew-decisions.js)
   crewBy: null,             // the person whose suggestions the 'crew-suggestions' screen shows
@@ -102,18 +108,6 @@ export function joinAsCrew(link) {
   const { owner, repo, branch, token, name, folder } = link;
   saveConnection({ owner, repo, branch, token, device: name, role: 'crew', name, folder }); // folder: the only film it sees
   return true;
-}
-
-// Share with crew (parts/crew-share.js): the crew key and the names, on this device only.
-export function rememberCrewKey(crewKey) {
-  try { localStorage.setItem('sc_crew_key', JSON.stringify(crewKey)); } catch { /* ignore */ }
-  setState({ crewKey });
-}
-export function rememberCrewName(name) {
-  if (state.crewNames.includes(name)) return;
-  const crewNames = [...state.crewNames, name];
-  try { localStorage.setItem('sc_crew_names', JSON.stringify(crewNames)); } catch { /* ignore */ }
-  setState({ crewNames });
 }
 
 export function forgetConnection() {

@@ -4,9 +4,11 @@
 // • The open film: sync status, "Sync now", backup file; its documents (📄 script, 📄 latest PDL,
 //   offline) and ⏱ Hours (the week / whole film for production, fix any day's wrap).
 // • Share with crew (Ana's devices, film open): a link per person (parts/crew-share.js).
-//   A crew phone sees "Connected as Davide (crew)" and no Connect, Share with crew or ⏱ Hours.
+//   A crew phone sees "Connected as Davide (crew)" and no Connect, Share with crew or ⏱ Hours;
+//   instead: "My suggestions" (parts/crew-log.js) and "Enjoyed soundcheck? Share some feedback"
+//   (parts/crew-feedback-form.js).
 // • Screen: Auto / Light / Dark (parts/theme-switch.js).
-// • ? Help → the Help page (screens/help.js): offline use, wrap alerts, hearing the lines…
+// • ? Help → the Help page (screens/help.js): offline use, wrap hours, hearing the lines…
 // Each film has its own database on the device; old films are kept.
 // Used by: main.js
 
@@ -23,6 +25,8 @@ import { tagOf } from '../model.js';
 import { saveTag } from '../kit-editing.js';
 import { isCrew } from '../crew-link.js';
 import { ShareWithCrew } from '../parts/crew-share.js';
+import { MySuggestions } from '../parts/crew-log.js';
+import { FeedbackButton } from '../parts/crew-feedback-form.js';
 
 export function ProjectsScreen({ state }) {
   const { project, projects, connection, films, online } = state;
@@ -49,7 +53,8 @@ export function ProjectsScreen({ state }) {
       </button>`)}
 
     ${connection && isCrew(connection) && html`
-      <p class="muted connection">Connected as <b>${connection.name}</b> (crew). <button class="link" onClick=${forgetConnection}>Disconnect</button></p>`}
+      <p class="muted connection">Connected as <b>${connection.name}</b> (crew). <button class="link" onClick=${forgetConnection}>Disconnect</button></p>
+      ${project && html`<${MySuggestions} state=${state} /><${FeedbackButton} state=${state} />`}`}
     ${connection && !isCrew(connection) && html`
       <p class="muted connection">Connected to ${connection.owner}/${connection.repo}${connection.branch !== 'main' ? ` (${connection.branch})` : ''}
         ${' '}as <b>${connection.device}</b>. <button class="link" onClick=${forgetConnection}>Disconnect</button></p>`}

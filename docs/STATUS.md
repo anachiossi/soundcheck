@@ -63,6 +63,12 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   (warns "Changed meanwhile" first, then "Approve anyway") and uploads as a normal save ("— proposed by
   Davide, approved"); ✕ Don't approve takes an optional reason. The answer is written on the issue only
   after the upload; offline it waits. No crew issues (or a key that can't read issues) → app as before.
+- v153 (crew sharing step 5, branch only): **crew screens** — crew phones hide Ana's personal parts (wrap
+  clock and wrap question, 🔔 wrap alerts, wake plan / alarms, Help → Wrap hours and Alarms, Hours and `#hours`).
+  Projects (crew): "My suggestions" with neutral answers, and "Enjoyed soundcheck? Share some feedback" (stars,
+  helped, annoyed, text; kept on the phone offline, sent at sync as a `crew-feedback` issue); offered once by
+  itself from 3 days before the last shooting day. Ana: "Feedback from the crew" banner + Mark as read; Remove /
+  Restore names in Share with crew (their suggestions and feedback are ignored).
 - Cues is Speak Screen friendly (v62–63, iPhone's own Siri reading, started only by a two-finger swipe):
   only the dialogue is readable (the rest aria-hidden), "Prince John." before each line, and the
   following lines are there invisibly (.sr-only) so Speak Screen reads to the end of the scene.

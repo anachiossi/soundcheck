@@ -2,11 +2,13 @@
 // device only (not in the film data), so they survive a reload and wait while there's no signal:
 //   state.crewDecisions = [{ issue, decision: 'approved' | 'not approved', reason, by, path, film }]
 // saved in localStorage as 'sc_crew_decisions' (state.js reads it back at start).
-// sync.js sends them (crew-inbox.js) and forgets them.
-// Also the list of open suggestions shown in the inbox (state.crewSuggestions, filled by sync.js).
-// Used by: crew-approve.js, sync.js, screens/crew-suggestions.js
+// crew-inbox-sync.js sends them (crew-inbox.js) and forgets them.
+// Also the lists shown in the inbox: open suggestions and feedback (state.crewSuggestions,
+// state.crewFeedback, filled at each sync by crew-inbox-sync.js), without removed names.
+// Used by: crew-approve.js, crew-inbox-sync.js, screens/crew-suggestions.js
 
 import { getState, setState } from './state.js';
+import { isRemovedName } from './crew-inbox.js';
 
 const KEY = 'sc_crew_decisions';
 
@@ -30,12 +32,19 @@ export function forgetDecisions(issues) {
 export const decisionFor = (state, issue) => state.crewDecisions.find(item => item.issue === issue);
 
 // The open suggestions of the open film, grouped by person: [[name, [suggestions]], …]
+// (a name removed since the last sync is left out at once)
 export function suggestionsByPerson(state) {
   const groups = new Map();
   for (const suggestion of state.crewSuggestions) {
-    if (suggestion.film !== state.project?.folder) continue;
+    if (suggestion.film !== state.project?.folder || isRemovedName(state.crewRemoved, suggestion.by)) continue;
     if (!groups.has(suggestion.by)) groups.set(suggestion.by, []);
     groups.get(suggestion.by).push(suggestion);
   }
   return [...groups.entries()];
+}
+
+// The crew's feedback still to read, of the open film: [{ issue, by, stars, lines, … }]
+export function feedbackToRead(state) {
+  return state.crewFeedback.filter(feedback => feedback.film === state.project?.folder
+    && !isRemovedName(state.crewRemoved, feedback.by));
 }

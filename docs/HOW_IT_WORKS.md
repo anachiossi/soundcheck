@@ -258,7 +258,7 @@ never sent and never counted as "waiting" or "proposed" (`staysOnPhone` in `src/
 
 ## Approving crew suggestions (crew sharing step 4)
 On Ana's own devices only (crew phones unchanged). After the normal sync (download, upload, PDFs),
-`crewInbox` in `src/sync.js` runs inside a try/catch, so it can never stop or fail the sync:
+`ownerInbox` in `src/crew-inbox-sync.js` (called by `syncAsOwner` in `src/sync.js`) runs inside a try/catch, so it can never stop or fail the sync:
 1. **Decisions** taken on this device are sent: a comment `approved` or `not approved: <reason>` on the
    suggestion's issue, then it's closed. An approval is sent only once its file has been uploaded (not in
    the outbox any more); a "not approved" goes at the next sync. With no signal they wait. Crew phones read
@@ -281,3 +281,39 @@ Decisions not sent yet are kept on this device only: localStorage `sc_crew_decis
 | Approve / Don't approve (the actions) | `src/crew-approve.js` |
 | Decisions waiting on this device; suggestions grouped by person | `src/crew-decisions.js` |
 | The banner and the screen | `src/screens/crew-suggestions.js`, registered in `src/main.js` |
+
+## Crew screens (crew sharing step 5)
+**Hidden on crew phones** (Ana's personal setup, not the film's): `crewHides(connection, part)` in
+`src/crew-link.js` with the list `PERSONAL_PARTS`: the ⏱ wrap clock and "Did today finish on time?" /
+"Is this a wrap?" (`src/main.js`), 🔔 Wrap alerts and the wake-up plan / ⏰ Set alarms card (`src/screens/hours.js`),
+Help → Wrap hours and Alarms (`src/screens/help.js`), the Hours screen and the `#hours` link (`src/main.js`).
+Ana's devices see everything as before.
+
+**My suggestions** (Projects, crew only, `<details class="more">`): what waits first ("Waiting for approval",
+"Feedback waiting to send"), then the answers newest first ("Change approved", "Change not approved — <reason>",
+"Closed", "Feedback sent"). Never a name. Each sent suggestion now also keeps its lines
+(`crewSuggestions.sent[path].lines`).
+
+**Feedback** (crew only): Projects → "Enjoyed soundcheck? Share some feedback" → stars 1–5, What helped, What
+annoyed you, Anything else. Send keeps it on the phone (localStorage `sc_crew_feedback`); the crew sync sends it
+(`sendWaitingFeedback`, never throws) as an issue "Feedback from Davide": readable lines + a JSON block
+`{ soundcheck: 'crew-feedback', version: 1, film, by, stars, helped, annoyed, text, at }`, label `crew-feedback`
+(not trusted). Then a "Feedback sent" line in the film's `crewSuggestions.log` (`kind: 'feedback'`).
+Offered once by itself: from 3 days before the film's last shooting day (to a week after), a banner "The film
+is wrapping. Enjoyed soundcheck? Share some feedback ›"; the film is remembered in `sc_feedback_offered` at once.
+
+**Ana's side**: the owner sync also lists open feedback of the film (`state.crewFeedback`): a 📬 banner
+"Feedback from the crew · n to read ›" → a Feedback section on the `crew-suggestions` screen; ✓ Mark as read
+comments "thanks" and closes the issue. **Remove / Restore** next to each name in Projects → Share with crew
+(localStorage `sc_crew_removed`): a removed name's suggestions and feedback are not shown and never closed
+(their link still opens the film; to lock someone out, make a new crew key).
+
+| What | File |
+|---|---|
+| What a crew phone hides | `crewHides` in `src/crew-link.js` |
+| Lists kept on this device only (crew key, names, removed names, waiting feedback, offered) | `src/crew-device.js` |
+| Feedback issue, reading it back, when to offer it, sending at sync | `src/crew-feedback.js` |
+| The words of "My suggestions" | `src/crew-messages.js`; shown by `src/parts/crew-log.js` |
+| Feedback form and the wrap offer | `src/parts/crew-feedback-form.js` |
+| Owner sync: decisions, suggestions, feedback, removed names; Mark as read | `src/crew-inbox-sync.js`, `src/crew-inbox.js` |
+| Tests | `tests/crew-screens.test.js` (fake GitHub) |

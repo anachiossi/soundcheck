@@ -2,24 +2,35 @@
 //   1. decisions taken on this device (crew-decisions.js) are written on their suggestion
 //      (a comment "approved" / "not approved: <reason>", then closed). An approved one waits
 //      until its file has been uploaded; a "not approved" one goes at once.
-//   2. the open suggestions of the film are listed (only the newest per person and file).
+//   2. the open suggestions of the film are listed (only the newest per person and file),
+//      and the crew's open feedback (crew-feedback.js); "Mark as read" closes it with "thanks".
+// Names Ana removed (Projects → Share with crew, crew-device.js) are ignored: their suggestions
+// and feedback are not shown and not closed.
 // Crew phones read those comments (crew-changes.js readDecision): they must start exactly with
 // "approved" / "not approved", and never name Ana.
-// No screens, no saving here. Used by: sync.js (owner devices only), crew-approve.js.
+// No screens, no saving here. Used by: crew-inbox-sync.js (owner devices only), sync.js, crew-decisions.js.
 
 import * as github from './store/github.js';
 import { readSuggestion } from './crew-changes.js';
+import { readFeedback } from './crew-feedback.js';
 
 // Errors that mean "this key can't see issues" (or the repo has none): no suggestions, no message.
 const NO_ACCESS = [401, 403, 404, 410];
 
 // Open suggestions for this film → [{ issue, by, path, changes, base_sha, lines, created_at, film }]
 // Only the newest per person and file: an older one for the same file counts as replaced.
-export function newestSuggestions(issues, folder) {
+// Removed by Ana? (the same name with other capitals or spaces counts too)
+export function isRemovedName(removed, name) {
+  const plain = text => String(text || '').trim().toLowerCase();
+  return (removed || []).some(item => plain(item) === plain(name));
+}
+
+export function newestSuggestions(issues, folder, removed = []) {
   const found = [];
   for (const issue of issues) {
     const suggestion = readSuggestion(issue);
     if (!suggestion || issue.state !== 'open' || suggestion.film !== folder) continue;
+    if (isRemovedName(removed, suggestion.by)) continue;
     found.push({ issue: suggestion.number, by: suggestion.by, path: suggestion.path, changes: suggestion.changes,
       base_sha: suggestion.base_sha, lines: suggestion.lines, created_at: issue.created_at || '', film: folder });
   }
@@ -36,13 +47,28 @@ export function newestSuggestions(issues, folder) {
   return newest.reverse(); // oldest first, as they came in
 }
 
-export async function loadSuggestions(connection, folder) {
+// The crew's open feedback for this film, oldest first.
+export function openFeedback(issues, folder, removed = []) {
+  return issues.map(readFeedback)
+    .filter(feedback => feedback && feedback.state === 'open' && feedback.film === folder && !isRemovedName(removed, feedback.by))
+    .sort((a, b) => a.issue - b.issue);
+}
+
+// One look at the open issues → { suggestions, feedback }
+export async function loadInbox(connection, folder, removed = []) {
   try {
-    return newestSuggestions(await github.listIssues(connection, { state: 'open' }), folder);
+    const issues = await github.listIssues(connection, { state: 'open' });
+    return { suggestions: newestSuggestions(issues, folder, removed), feedback: openFeedback(issues, folder, removed) };
   } catch (error) {
-    if (NO_ACCESS.includes(error.status)) return [];
+    if (NO_ACCESS.includes(error.status)) return { suggestions: [], feedback: [] };
     throw error;
   }
+}
+
+// "Mark as read": a short thank-you (no name), then closed.
+export async function closeFeedback(connection, number) {
+  await github.commentIssue(connection, number, 'thanks');
+  await github.closeIssue(connection, number, 'completed');
 }
 
 // The comment a suggestion is closed with (crew phones read its first words).

@@ -2,15 +2,19 @@
 // Ana pastes the film's crew key once (kept on THIS device only, never synced, never in the
 // film), types a person's name and taps "Copy link": the link (crew-link.js) opens this film on
 // their phone. If the phone can't copy, the link is shown to copy by hand.
-// Below: the names links were made for (this device only).
-// Used by: screens/projects.js
+// Below: the names links were made for (this device only), each with Remove / Restore: a removed
+// name's suggestions and feedback are ignored (crew-inbox.js). Their link still opens the film:
+// to lock someone out completely, make a new crew key and send new links.
+// The lists change in crew-device.js, never here. Used by: screens/projects.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
 import { makeCrewLink } from '../crew-link.js';
-import { rememberCrewKey, rememberCrewName, showMessage } from '../state.js';
+import { showMessage } from '../state.js';
+import { rememberCrewKey, rememberCrewName, removeCrewName, restoreCrewName } from '../crew-device.js';
+import { isRemovedName } from '../crew-inbox.js';
 
 export function ShareWithCrew({ state }) {
-  const { project, connection, crewKey, crewNames } = state;
+  const { project, connection, crewKey, crewNames, crewRemoved } = state;
   const [key, setKey] = useState(crewKey);
   const [name, setName] = useState('');
   const [linkToCopy, setLinkToCopy] = useState('');
@@ -45,6 +49,19 @@ export function ShareWithCrew({ state }) {
           <label>Link for ${name.trim()} (copy it by hand)<input readonly value=${linkToCopy} onFocus=${e => e.target.select()} /></label>`}
       </form>
       <p class="muted">Send it privately: the link opens this film on their phone.</p>
-      ${crewNames.length > 0 && html`<p class="muted">Links made for: ${crewNames.join(', ')}</p>`}
+      ${crewNames.length > 0 && html`
+        <p class="muted">Links made for:</p>
+        <ul class="changes">
+          ${crewNames.map(person => {
+            const removed = isRemovedName(crewRemoved, person);
+            return html`
+              <li key=${person} class=${removed ? 'change change--decided' : 'change'}>
+                <span class="change__text">${person}${removed && ' — removed: what they send is ignored'}</span>
+                <button class="btn btn--small" onClick=${() => (removed ? restoreCrewName(person) : removeCrewName(person))}>
+                  ${removed ? 'Restore' : 'Remove'}</button>
+              </li>`;
+          })}
+        </ul>
+        <p class="muted">To lock someone out completely: make a new crew key and send new links to the others.</p>`}
     </details>`;
 }

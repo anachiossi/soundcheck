@@ -8,9 +8,10 @@
 // The bookkeeping lives in the film on this phone:
 //   project.crewSuggestions = {
 //     base: { path: sha }                   the film's version each change started from
-//     sent: { path: { issue, saved_at } }   the open suggestion of each file (issue number)
+//     sent: { path: { issue, saved_at, lines } }   the open suggestion of each file (issue number)
 //     log:  [{ issue, path, lines, state, reason, at }]   what happened to each suggestion
-//   }   state: 'approved' | 'not approved' | 'closed'
+//   }   state: 'approved' | 'not approved' | 'closed' | 'feedback sent' (kind: 'feedback', crew-feedback.js)
+// "My suggestions" in Projects shows them (crew-messages.js).
 // (`project.crew` is already the IFB crew list, hence the longer name.)
 // store = { read: () => the latest project, save: async project => … } (sync.js gives it).
 // Hours (hours/…) and wrap alerts (push/…) are personal: on a crew phone they stay on the phone,
@@ -131,7 +132,7 @@ export async function sendSuggestions(connection, store) {
     const lines = describeChanges(path, changes, project, base);
     const details = { by: connection.name, film: project.folder, path, base_sha: baseSha, changes, saved_at: entry.saved_at };
     const issue = await github.createIssue(connection, suggestionIssue(details, lines));
-    await remember(store, path, baseSha, { issue: issue.number, saved_at: entry.saved_at });
+    await remember(store, path, baseSha, { issue: issue.number, saved_at: entry.saved_at, lines });
     if (previous) await closeOld(connection, previous.issue, `Replaced by #${issue.number}`);
     count++;
   }
