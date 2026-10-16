@@ -5,7 +5,7 @@
 // link (base64url). It holds: owner, repo, branch, the crew key, the person's name, the film folder.
 // The part after # never leaves the phone. The link IS a key: it must be sent privately.
 // Only words here, no screens. Used by: parts/crew-share.js (making), main.js (joining),
-// sync.js, screens/projects.js, screens/help.js, screens/hours.js (is this a crew phone? what it hides)
+// sync.js, crew-join.js, screens/projects.js, screens/help.js, screens/hours.js (is this a crew phone? what it hides)
 
 // The message a crew phone shows when the crew key has expired or was replaced.
 export const CREW_ACCESS_ENDED = "This link no longer works (the film's crew access has ended).";
@@ -23,8 +23,12 @@ export function isCrew(connection) {
 // hours, kept on the phone only (crew-sync.js), with "Export my timesheet" (screens/hours.js).
 export const PERSONAL_PARTS = ['wrap-alerts', 'tomorrow', 'help-alarms'];
 
+// Parts that are Ana's job on the film, not the crew's: not shown on crew phones either.
+//   'email-proposals'  the 📬 banner of a production email (ODG, sides…) and its proposal screen
+export const OWNER_ONLY_PARTS = ['email-proposals'];
+
 export function crewHides(connection, part) {
-  return isCrew(connection) && PERSONAL_PARTS.includes(part);
+  return isCrew(connection) && (PERSONAL_PARTS.includes(part) || OWNER_ONLY_PARTS.includes(part));
 }
 
 export function makeCrewLink({ owner, repo, branch, token, name, folder, baseUrl }) {

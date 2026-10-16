@@ -2,14 +2,15 @@
 // (with the sync badge), the tabs, the current screen and, when open, the
 // picker. Starts automatic syncing, and registers sw.js so the app itself is
 // stored on the device and opens with no signal (and updates itself).
-// A crew phone sees the ⏱ wrap clock and Hours too: the person's own hours (crew-link.js crewHides).
+// A crew phone sees the ⏱ wrap clock and Hours too: the person's own hours (crew-link.js crewHides),
+// but not the 📬 production-email proposals (Ana's job). Crew links: crew-join.js.
 // Used by: index.html
 
 import { html, render, useState, useEffect } from '../vendor/preact-htm.js';
-import { useAppState, start, showScreen, clearMessage, setState, showMessage, joinAsCrew } from './state.js';
+import { useAppState, start, showScreen, clearMessage, setState } from './state.js';
 import { startAutoSync, syncNow } from './sync.js';
-import { downloadCrewFilm } from './films.js';
-import { readCrewLink, isCrew } from './crew-link.js';
+import { joinFromLink, watchPendingJoin } from './crew-join.js';
+import { isCrew, crewHides } from './crew-link.js';
 import { proposedPaths, staysOnPhone } from './crew-sync.js';
 import { formatStamp } from './model.js';
 import { ScheduleScreen } from './screens/schedule.js';
@@ -115,7 +116,8 @@ function App() {
   if (current === 'cues-map') return html`<main class="focus"><${CuesMapScreen} state=${state} /></main>`;
   if (current === 'cues-timeline') return html`<main class="focus"><${CuesTimelineScreen} state=${state} /></main>`;
   const tabs = tabsOf(state.department);
-  const Screen = current === 'proposal' ? ProposalScreen
+  const emailProposals = !crewHides(connection, 'email-proposals'); // a crew phone: never (Ana's job)
+  const Screen = current === 'proposal' && emailProposals ? ProposalScreen
     : current === 'crew-suggestions' ? CrewSuggestionsScreen
     : current === 'document' ? DocumentScreen
     : current === 'hours' ? HoursScreen
@@ -142,7 +144,7 @@ function App() {
       <div class=${'message message--' + message.kind} onClick=${clearMessage}>${message.text} <span>✕</span></div>`}
     ${project && html`<${WrapQuestion} project=${project} myCall=${state.myCall} />`}
     ${project && isCrew(connection) && html`<${FeedbackOffer} key=${project.folder} state=${state} />`}
-    ${project && !['proposal', 'document', 'crew-suggestions'].includes(current) && html`<${ProposalBanner} project=${project} />`}
+    ${project && emailProposals && !['proposal', 'document', 'crew-suggestions'].includes(current) && html`<${ProposalBanner} project=${project} />`}
     ${project && !['proposal', 'document', 'crew-suggestions'].includes(current) && html`<${CrewSuggestionsBanner} state=${state} />`}
     <main class="page"><${Screen} state=${state} /></main>
     <footer class="footer">© 2025–2026 Ana Chiossi · soundcheck<${AppVersion} /></footer>
@@ -166,18 +168,9 @@ function openFromLink() {
   history.replaceState(null, '', location.pathname + location.search);
 }
 
-// A crew link (crew-link.js): connect this phone as that person, then download the film.
-// The address bar is cleared first: the key must not stay there.
-async function joinFromLink() {
-  const link = readCrewLink(location.hash);
-  history.replaceState(null, '', location.pathname + location.search);
-  if (!link) return showMessage('error', 'This link is not complete: ask for it again.');
-  if (!joinAsCrew(link)) return showMessage('error', 'This device is connected as the owner. To open a crew link here, Disconnect first (Projects).');
-  setState({ screen: 'projects' });
-  showMessage('ok', `Welcome, ${link.name}. Downloading the film…`);
-  await downloadCrewFilm(link.folder);
-}
-start().then(openFromLink).then(startAutoSync);
+// In this order: the saved film first, then a link (a crew link downloads the film before the
+// first sync), then automatic syncing, then a crew film still waiting for signal (crew-join.js).
+start().then(openFromLink).then(startAutoSync).then(watchPendingJoin);
 addEventListener('hashchange', openFromLink);
 
 // Updates: look for a new version at start and whenever you come back to the

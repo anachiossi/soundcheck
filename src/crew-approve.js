@@ -2,7 +2,8 @@
 // Approve: the suggested changes are put into the film as it is NOW on this device (so Ana's own
 // later edits of other records are kept), then saved and uploaded like any edit by hand.
 // If someone changed the same thing meanwhile, it says so first ("Changed meanwhile: …") and
-// needs a second tap ("Approve anyway").
+// needs a second tap ("Approve anyway"). A whole-file suggestion (a file without records) whose
+// file changed meanwhile can't be approved at all: it would undo the other changes ("stale").
 // Either way the decision waits on this device (crew-decisions.js) until sync.js sends it:
 // an approval after its file is uploaded, a "not approved" at the next sync.
 // Used by: screens/crew-suggestions.js
@@ -25,6 +26,7 @@ export function approvedFilm(project, suggestion, base, now = new Date().toISOSt
 }
 
 // Returns { clashes: ['Gear: Sandbag — quantity changed', …] } when it needs "Approve anyway",
+// { stale: true } when the whole file changed meanwhile (only "Don't approve"),
 // { done: true } when approved, {} when it couldn't (a message says why).
 export async function approveSuggestion(suggestion, { anyway = false } = {}) {
   let base = null;
@@ -38,9 +40,11 @@ export async function approveSuggestion(suggestion, { anyway = false } = {}) {
   }
   const latest = getState().project; // read after the download: Ana may have saved meanwhile
   const { project, clashes } = approvedFilm(latest, suggestion, base);
+  if (clashes.some(change => change.op === 'replace')) return { stale: true };
   if (clashes.length && !anyway) return { clashes: describeChanges(suggestion.path, clashes, latest, base) };
-  addDecision(decisionOf(suggestion, 'approved', ''));
+  // the file goes into the outbox FIRST: a decision must never be sent before its file
   await saveAndShow(project);
+  addDecision(decisionOf(suggestion, 'approved', ''));
   syncNow();
   return { done: true };
 }

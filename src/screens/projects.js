@@ -40,7 +40,7 @@ export function ProjectsScreen({ state }) {
     ${!connection && html`<${Connect} />`}
     ${connection && html`
       <h2 class="section-title">Films</h2>
-      ${films === null && html`<p class="muted">${online ? 'Looking for films…' : 'No signal: showing films on this device.'}</p>`}
+      ${films === null && filmsNote(state) && html`<p class="muted">${filmsNote(state)}</p>`}
       <div class="project-list">
         ${(films || []).filter(f => f.id !== project?.id).map(film => {
           const here = projects.some(p => p.id === film.id);
@@ -75,6 +75,13 @@ export function ProjectsScreen({ state }) {
     <${ThemeSwitch} />
 
     <button class="btn help-link" onClick=${() => setState({ screen: 'help' })}>? Help</button>`;
+}
+
+// While the film list is not read yet. A crew phone has one film: once it's here, nothing to say;
+// before, it waits for signal (crew-join.js tries again by itself).
+function filmsNote({ connection, online, project }) {
+  if (isCrew(connection)) return project ? '' : 'Waiting for signal to download the film.';
+  return online ? 'Looking for films…' : 'No signal: showing films on this device.';
 }
 
 function OpenFilm({ state }) {

@@ -40,6 +40,7 @@ let state = {
   myCall: loadJson('sc_my_call', { mode: 'general', name: '' }), // Projects → My call: whose call my hours count from (my-call.js)
   crewSuggestions: [],      // owner: the crew's open suggestions, from the last sync (crew-inbox.js)
   crewDecisions: loadJson('sc_crew_decisions', []), // owner: decisions not sent yet (crew-decisions.js)
+  crewCantAnswer: false,    // owner: the key can't comment on / close issues (crew-inbox-sync.js)
   crewBy: null,             // the person whose suggestions the 'crew-suggestions' screen shows
   films: null,              // films in the repo (null = not looked yet)
   sync: { running: false, error: null },

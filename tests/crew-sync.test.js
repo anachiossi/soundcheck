@@ -143,12 +143,24 @@ test('a suggestion closed as not approved is logged with its reason', async () =
   assert.equal(entry.reason, 'we have enough sandbags');
 });
 
-test('someone else\'s closed suggestion, or an open one, changes nothing', async () => {
-  fakeGitHub((method, path) => (path.startsWith('/issues?') ? [closedIssue(8, 'Marta'), { ...closedIssue(9), state: 'open' }] : 404));
+test('someone else\'s closed suggestion, another film\'s, or an open one, changes nothing', async () => {
+  const otherFilm = { ...closedIssue(8), body: closedIssue(8).body.replace('projects/test-film', 'projects/other-film') };
+  fakeGitHub((method, path) => (path.startsWith('/issues?') ? [closedIssue(20, 'Marta'), otherFilm, { ...closedIssue(9), state: 'open' }] : 404));
   const start = crewProject({ crewSuggestions: { base: {}, sent: { [PATH]: { issue: 8, saved_at: SAVED }, 'scenes.json': { issue: 9, saved_at: SAVED } }, log: [] } });
   const store = memoryStore(start);
   assert.equal(await takeBackClosed(connection, store), 0);
   assert.equal(store.project, start);
+});
+
+test('our closed suggestion is found by its number even when the name is written otherwise', async () => {
+  fakeGitHub((method, path) => {
+    if (path.startsWith('/issues?')) return [closedIssue(8, 'davide ')];
+    if (path.startsWith('/issues/8/comments?')) return [{ body: 'approved' }];
+    return 404;
+  });
+  const store = memoryStore(crewProject({ crewSuggestions: { base: {}, sent: { [PATH]: { issue: 8, saved_at: SAVED } }, log: [] } }));
+  assert.equal(await takeBackClosed(connection, store), 1);
+  assert.equal(store.project.crewSuggestions.log[0].state, 'approved');
 });
 
 test('with nothing sent, closed suggestions are not even looked for', async () => {

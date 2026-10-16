@@ -1,5 +1,6 @@
 // crew-inbox-sync.js — on Ana's own devices: the crew part of each sync, and "Mark as read".
-//   1. Ana's decisions go out once their file is uploaded (crew-inbox.js sendDecisions)
+//   1. Ana's decisions go out once their file is uploaded (crew-inbox.js sendDecisions); when her
+//      key can't answer issues they wait, and state.crewCantAnswer shows one line on the screen
 //   2. the crew's open suggestions and feedback are listed for the 📬 banners
 //      (state.crewSuggestions, state.crewFeedback), without the names Ana removed.
 // Never stops the sync: with no signal (GitHub busy…) everything waits for the next one.
@@ -12,7 +13,10 @@ import { forgetDecisions } from './crew-decisions.js';
 export async function ownerInbox(connection, store) {
   try {
     const project = store.read();
-    forgetDecisions(await inbox.sendDecisions(connection, project, getState().crewDecisions));
+    const { done, cantAnswer } = await inbox.sendDecisions(connection, project, getState().crewDecisions);
+    forgetDecisions(done);
+    // the key can't answer: the decisions wait, and one quiet line says why (no message each sync)
+    if (cantAnswer !== undefined) setState({ crewCantAnswer: cantAnswer });
     const { suggestions, feedback } = await inbox.loadInbox(connection, project.folder, getState().crewRemoved);
     setState({ crewSuggestions: suggestions, crewFeedback: feedback });
   } catch { /* the next sync tries again */ }

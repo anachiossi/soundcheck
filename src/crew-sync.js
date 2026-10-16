@@ -92,8 +92,9 @@ export async function takeBackClosed(connection, store) {
   // a day early: the phone's clock may be wrong
   const since = times.length ? new Date(Math.min(...times) - DAY).toISOString() : undefined;
   const issues = await github.listIssues(connection, { state: 'all', since });
+  // ours = an issue number this phone sent, for this film (not the name: a new link may spell it otherwise)
   const closed = issues.map(readSuggestion).filter(suggestion => suggestion && suggestion.state === 'closed'
-    && numbers.includes(suggestion.number) && suggestion.by === connection.name && suggestion.film === start.folder);
+    && numbers.includes(suggestion.number) && suggestion.film === start.folder);
   if (!closed.length) return 0;
 
   const decisions = [];

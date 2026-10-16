@@ -54,8 +54,25 @@ test('a file the film did not have yet is sent whole (replace)', () => {
 
 test('a list without ids (or with an id twice) is sent whole', () => {
   assert.deepEqual(changesBetween('gear/history.json', [{ at: 'a' }], [{ at: 'b' }]), [{ op: 'replace', value: [{ at: 'b' }] }]);
-  const twice = [{ scene_id: '12', day: 3 }, { scene_id: '12', day: 4 }];
-  assert.deepEqual(changesBetween('schedule.json', twice, [twice[0]]), [{ op: 'replace', value: [twice[0]] }]);
+  const twice = [{ id: 'g1', qty: 1 }, { id: 'g1', qty: 2 }];
+  assert.deepEqual(changesBetween('gear/items.json', twice, [twice[0]]), [{ op: 'replace', value: [twice[0]] }]);
+});
+
+test('a scene shot on two days is compared by scene and day, not sent whole', () => {
+  const base = [{ scene_id: '12', day: 3, order: 1 }, { scene_id: '12', day: 4, order: 1 }, { scene_id: '13', day: 3, order: 2 }];
+  const mine = [{ scene_id: '12', day: 3, order: 1 }, { scene_id: '12', day: 4, order: 2 }, { scene_id: '13', day: 3, order: 2 }];
+  assert.deepEqual(changesBetween('schedule.json', base, mine), [{ op: 'set', id: '12', day: 4, value: mine[1] }]);
+  assert.deepEqual(changesBetween('schedule.json', base, [base[0], base[2]]), [{ op: 'remove', id: '12', day: 4 }]);
+  assert.deepEqual(describeChanges('schedule.json', [{ op: 'remove', id: '12', day: 4 }], {}, base), ['Schedule: − scene 12, day 4']);
+});
+
+test('a scene shot on two days is applied to the right day, the other day untouched', () => {
+  const base = [{ scene_id: '12', day: 3, order: 1 }, { scene_id: '12', day: 4, order: 1 }];
+  const current = [{ scene_id: '12', day: 3, order: 5 }, { scene_id: '12', day: 4, order: 1 }]; // day 3 changed meanwhile
+  const change = { op: 'set', id: '12', day: 4, value: { scene_id: '12', day: 4, order: 2 } };
+  const { content, clashes } = applyChanges('schedule.json', current, [change], base);
+  assert.deepEqual(content, [{ scene_id: '12', day: 3, order: 5 }, { scene_id: '12', day: 4, order: 2 }]);
+  assert.deepEqual(clashes, [], 'the other day changed: no clash');
 });
 
 test('an unchanged file gives no changes at all', () => {
@@ -174,6 +191,14 @@ test('a suggestion issue reads back with everything needed to apply it (labels n
   const { body } = suggestionIssue(details, ['Gear: + Sandbag']);
   const read = readSuggestion({ number: 7, state: 'open', body, labels: [] });
   assert.deepEqual(read, { number: 7, state: 'open', ...details, lines: ['Gear: + Sandbag'] });
+});
+
+test('three backticks in a line cannot break the suggestion, which still reads back', () => {
+  const { body } = suggestionIssue(details, ['Gear: + Sandbag ```json {"x":1}']);
+  assert.equal((body.match(/```/g) || []).length, 2, 'only the details block has backticks');
+  const read = readSuggestion({ number: 7, state: 'open', body });
+  assert.deepEqual(read.changes, details.changes);
+  assert.deepEqual(read.lines, ["Gear: + Sandbag '''json {\"x\":1}"]);
 });
 
 test('other issues, broken JSON or another marker are not suggestions', () => {

@@ -5,9 +5,10 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { crewHides, PERSONAL_PARTS, CREW_ACCESS_ENDED } from '../src/crew-link.js';
+import { crewHides, PERSONAL_PARTS, OWNER_ONLY_PARTS, CREW_ACCESS_ENDED } from '../src/crew-link.js';
+import { downloadCrewFilm, retryPendingJoin, pendingJoin, NO_SIGNAL_JOIN } from '../src/crew-join.js';
 import { feedbackIssue, readFeedback, sendWaitingFeedback, feedbackDue, daysBetween, lastShootingDate } from '../src/crew-feedback.js';
-import { myMessages, STATUS } from '../src/crew-messages.js';
+import { myMessages, STATUS, NEWER_NOTE } from '../src/crew-messages.js';
 import { newestSuggestions, openFeedback, isRemovedName } from '../src/crew-inbox.js';
 import { ownerInbox, markFeedbackRead } from '../src/crew-inbox-sync.js';
 import { suggestionsByPerson, feedbackToRead } from '../src/crew-decisions.js';
@@ -54,6 +55,12 @@ test('a crew phone hides the wrap alerts, wake plan and Help → Alarms, and sho
   assert.deepEqual(PERSONAL_PARTS.filter(part => crewHides(owner, part)), [], 'Ana\'s devices hide nothing');
   assert.equal(crewHides(null, 'tomorrow'), false, 'not connected: nothing hidden');
   assert.equal(crewHides(crew, 'schedule'), false, 'the film itself is never hidden');
+});
+
+test('a crew phone never sees the production-email proposals: that is Ana\'s job', () => {
+  assert.ok(crewHides(crew, 'email-proposals'));
+  assert.equal(crewHides(owner, 'email-proposals'), false);
+  assert.deepEqual(OWNER_ONLY_PARTS.filter(part => crewHides(owner, part)), []);
 });
 
 // ---- feedback -------------------------------------------------------------------
@@ -190,4 +197,40 @@ test('Mark as read thanks the person and closes the feedback', async () => {
   assert.deepEqual(asked.find(call => call.path === '/issues/4/comments').body, { body: 'thanks' });
   assert.equal(asked.find(call => call.method === 'PATCH' && call.path === '/issues/4').body.state, 'closed');
   assert.deepEqual(getState().crewFeedback, []);
+});
+
+test('My suggestions says when the film has a newer version of a proposed file', () => {
+  const sent = { 'gear/items.json': { issue: 3, saved_at: 'a', lines: ['Gear: + Sandbag'] }, 'scenes.json': { issue: 4, saved_at: 'a', lines: ['Scene 12: night'] } };
+  const project = film({ shas: { 'gear/items.json': 'sha-new', 'scenes.json': 'sha-same' },
+    crewSuggestions: { base: { 'gear/items.json': 'sha-base', 'scenes.json': 'sha-same' }, sent, log: [] } });
+  const notes = Object.fromEntries(myMessages(project).map(message => [message.key, message.note]));
+  assert.equal(notes['sent-3'], NEWER_NOTE);
+  assert.equal(notes['sent-4'], '', 'the film did not change it');
+});
+
+// ---- joining with no signal -----------------------------------------------------------
+
+test('a crew link opened with no signal says it will download when online, and is tried again later', async () => {
+  const memory = {};
+  globalThis.localStorage = { getItem: key => memory[key] ?? null, setItem: (key, value) => { memory[key] = value; },
+    removeItem: key => { delete memory[key]; } };
+  const wasOnline = Object.getOwnPropertyDescriptor(globalThis.navigator, 'onLine');
+  Object.defineProperty(globalThis.navigator, 'onLine', { value: false, configurable: true });
+  setState({ connection: crew, projects: [], message: null });
+  await downloadCrewFilm(FOLDER);
+  assert.deepEqual(getState().message, { kind: 'error', text: NO_SIGNAL_JOIN });
+  assert.ok(!/github|films/i.test(NO_SIGNAL_JOIN), 'crew words only');
+  assert.equal(pendingJoin(), FOLDER, 'remembered on the phone');
+
+  // signal back, but the key has expired: "crew access has ended", and no more trying
+  Object.defineProperty(globalThis.navigator, 'onLine', { value: true, configurable: true });
+  fakeGitHub(() => 401);
+  retryPendingJoin();
+  await new Promise(resolve => setTimeout(resolve, 10));
+  assert.deepEqual(getState().message, { kind: 'error', text: CREW_ACCESS_ENDED });
+  assert.equal(pendingJoin(), '');
+
+  if (wasOnline) Object.defineProperty(globalThis.navigator, 'onLine', wasOnline);
+  else delete globalThis.navigator.onLine;
+  delete globalThis.localStorage;
 });

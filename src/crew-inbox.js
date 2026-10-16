@@ -84,20 +84,28 @@ export function readyDecisions(decisions, project) {
     && (decision.decision !== 'approved' || (!project.outbox?.[decision.path] && !project.conflicts?.[decision.path])));
 }
 
-// Comments on and closes each ready suggestion. Returns the issue numbers that are done
-// (sent, or the issue is gone). Stops at the first other error: the rest wait for the next sync.
+// Comments on and closes each ready suggestion. Returns { done: the issue numbers that are done
+// (sent, or the issue is gone), cantAnswer }. Stops at the first other error: the rest wait for the
+// next sync. cantAnswer: true = the key may not comment / close (401, 403: it needs Issues: read and
+// write), false = one went through, undefined = nothing was tried.
 export async function sendDecisions(connection, project, decisions) {
   const done = [];
+  let cantAnswer;
   for (const decision of readyDecisions(decisions, project)) {
     try {
       await github.commentIssue(connection, decision.issue, decisionComment(decision));
       await github.closeIssue(connection, decision.issue, decision.decision === 'approved' ? 'completed' : 'not_planned');
+      cantAnswer = false;
     } catch (error) {
+      if (error.status === 401 || error.status === 403) {
+        cantAnswer = true;
+        break;
+      }
       if (error.status !== 404 && error.status !== 410) break;
     }
     done.push(decision.issue);
   }
-  return done;
+  return { done, cantAnswer };
 }
 
 // The end of the upload's commit message when an uploaded file holds an approved suggestion:

@@ -220,7 +220,8 @@ repo, branch, the film's crew key, the person's name and the film folder, after 
 |---|---|
 | Making / reading the link, "is this a crew phone?" | `src/crew-link.js` (tests: `tests/crew.test.js`) |
 | Share with crew (crew key + name → Copy link; key and names stay on Ana's device only) | `src/parts/crew-share.js`, shown by `src/screens/projects.js` |
-| Opening a link: connect as crew, clear the address bar, download the film | `src/main.js` (`joinFromLink`) → `joinAsCrew` in `src/state.js` → `downloadCrewFilm` in `src/films.js` |
+| Opening a link: connect as crew, clear the address bar, download the film | `joinFromLink` in `src/crew-join.js` (from `src/main.js`) → `joinAsCrew` in `src/state.js` → `downloadCrewFilm` in `src/crew-join.js` |
+| No signal when joining: "the film will download as soon as you're online", remembered on the phone and tried again (signal back, app in front, next start) | `src/crew-join.js` (tests: `tests/crew-screens.test.js`) |
 | Finding the film by its folder (`film.json`); a crew phone lists only that film | `readFilm` in `src/store/github.js`, `loadFilmList` in `src/films.js` |
 | Crew phones never commit (the outbox stays on the phone) | `upload()` in `src/sync.js` |
 

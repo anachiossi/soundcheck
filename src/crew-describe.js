@@ -5,6 +5,7 @@
 // No network, no screens. Used by: crew-changes.js (re-exported), crew-sync.js, later Ana's inbox.
 
 import { fileContent } from './store/repo-files.js';
+import { findRecord } from './crew-changes.js';
 
 // What each film file is called for people. Files not listed: "<file> changed".
 const FILE_NAMES = {
@@ -55,9 +56,9 @@ export function describeChanges(path, changes, project, base) {
 
 // A record of a list (a character, a gear item, a day in the schedule…).
 function recordLine(path, file, change, base) {
-  const field = path === 'schedule.json' ? 'scene_id' : 'id';
-  const before = Array.isArray(base) ? base.find(item => String(item?.[field]) === String(change.id)) : undefined;
-  const label = recordName(path, change.value || before, change.id);
+  const before = findRecord(path, base, change);
+  // a scene shot on two days: "scene 12, day 4"
+  const label = recordName(path, change.value || before, change.id) + (change.day != null ? `, day ${change.day}` : '');
   if (change.op === 'remove') return `${file}: − ${label}`;
   if (!before) return `${file}: + ${label}`;
   const fields = changedFields(before, change.value);

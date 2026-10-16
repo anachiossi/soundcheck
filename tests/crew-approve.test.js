@@ -5,7 +5,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { newestSuggestions, approvalNote, decisionComment, readyDecisions } from '../src/crew-inbox.js';
-import { approvedFilm } from '../src/crew-approve.js';
+import { approvedFilm, approveSuggestion } from '../src/crew-approve.js';
+import { ownerInbox } from '../src/crew-inbox-sync.js';
 import { rememberDecisions } from '../src/crew-decisions.js';
 import { syncAsOwner } from '../src/sync.js';
 import { getState, setState } from '../src/state.js';
@@ -177,4 +178,81 @@ test('owner sync: a key not allowed to read issues (403) leaves the sync working
   assert.equal(await syncAsOwner(connection, store), 1);
   assert.deepEqual(store.project.outbox, {}, 'uploaded as usual');
   assert.deepEqual(getState().crewSuggestions, []);
+});
+
+// ---- approving on the device: the order of saving and deciding ---------------------
+
+// A fake device: the film database (indexedDB) and the small memory (localStorage) write what
+// happens into `timeline`, in order.
+function fakeDevice(timeline) {
+  globalThis.localStorage = { getItem: () => null, removeItem() {},
+    setItem: key => { if (key === 'sc_crew_decisions') timeline.push('decision'); } };
+  const db = { close() {}, objectStoreNames: { contains: () => true },
+    transaction: () => {
+      const transaction = {};
+      transaction.objectStore = () => ({ put: () => { timeline.push('film saved'); setTimeout(() => transaction.oncomplete()); return {}; } });
+      return transaction;
+    } };
+  globalThis.indexedDB = { open: () => {
+    const request = {};
+    setTimeout(() => { request.result = db; request.onsuccess(); });
+    return request;
+  } };
+}
+
+const forgetDevice = () => { delete globalThis.localStorage; delete globalThis.indexedDB; };
+
+test('approving saves the film into the outbox first, and only then remembers the decision', async () => {
+  const timeline = [];
+  fakeDevice(timeline);
+  rememberDecisions([]);
+  timeline.length = 0;
+  setState({ connection: null, project: ownerProject() }); // no connection: the sync after it does nothing
+  const suggestion = { issue: 9, by: 'Davide', path: PATH, film: FOLDER, base_sha: null, changes: [{ op: 'set', id: 'g3', value: sandbag }] };
+  assert.deepEqual(await approveSuggestion(suggestion), { done: true });
+  assert.deepEqual(timeline, ['film saved', 'decision']);
+  assert.ok(getState().project.outbox[PATH], 'the file waits in the outbox');
+  assert.equal(getState().crewDecisions[0].decision, 'approved');
+  forgetDevice();
+});
+
+test('an approval whose film could not be saved is never remembered as a decision', async () => {
+  rememberDecisions([]);
+  setState({ connection: null, project: ownerProject() }); // no database on this "device": saving fails
+  const suggestion = { issue: 9, by: 'Davide', path: PATH, film: FOLDER, base_sha: null, changes: [{ op: 'set', id: 'g3', value: sandbag }] };
+  await assert.rejects(approveSuggestion(suggestion));
+  assert.deepEqual(getState().crewDecisions, []);
+});
+
+test('a whole-file suggestion whose file changed since the crew started cannot be approved, not even "anyway"', async () => {
+  const timeline = [];
+  fakeDevice(timeline);
+  rememberDecisions([]);
+  timeline.length = 0;
+  const path = 'gear/history.json';
+  const blob = { content: Buffer.from(JSON.stringify([{ at: 'a' }])).toString('base64') };
+  fakeGitHub((method, url) => (url.startsWith('/git/blobs/') ? blob : 404));
+  setState({ connection, project: { ...ownerProject(), gearHistory: [{ at: 'z' }] } });
+  const suggestion = { issue: 9, by: 'Davide', path, film: FOLDER, base_sha: 'sha-base', changes: [{ op: 'replace', value: [{ at: 'b' }] }] };
+  assert.deepEqual(await approveSuggestion(suggestion), { stale: true });
+  assert.deepEqual(await approveSuggestion(suggestion, { anyway: true }), { stale: true });
+  assert.deepEqual(timeline, [], 'nothing saved, no decision');
+  forgetDevice();
+});
+
+test('owner sync: a key that may not answer issues (403) keeps the decisions and says so once, quietly', async () => {
+  rememberDecisions([decision(9, 'not approved')]);
+  setState({ message: null, crewCantAnswer: false });
+  fakeGitHub((method, path) => (method === 'GET' ? [] : 403));
+  const store = memoryStore(ownerProject());
+  await ownerInbox(connection, store);
+  await ownerInbox(connection, store);
+  assert.equal(getState().crewDecisions.length, 1, 'the decision waits');
+  assert.equal(getState().crewCantAnswer, true);
+  assert.equal(getState().message, null, 'no message at each sync');
+
+  fakeGitHub((method, path) => (method === 'GET' ? [] : {}));
+  await ownerInbox(connection, store);
+  assert.deepEqual(getState().crewDecisions, [], 'sent once the key may');
+  assert.equal(getState().crewCantAnswer, false);
 });

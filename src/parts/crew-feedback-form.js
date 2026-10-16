@@ -5,6 +5,7 @@
 //   • FeedbackOffer (under the top bar): once per film, when its last shooting day is 3 days away
 //     or less: "The film is wrapping. Enjoyed soundcheck? Share some feedback ›". Offered = remembered
 //     on the phone at once, so it never comes back; it stays until tapped or the app is closed.
+// The button and the form's buttons sit in a "toolbar" row: the same gaps as the other Projects rows.
 // The data changes in crew-device.js, never here. Used by: screens/projects.js, main.js
 
 import { html, useEffect, useState } from '../../vendor/preact-htm.js';
@@ -15,7 +16,7 @@ import { syncNow } from '../sync.js';
 
 export function FeedbackButton({ state }) {
   if (!state.feedbackOpen) {
-    return html`<button class="btn" onClick=${() => setState({ feedbackOpen: true })}>Enjoyed soundcheck? Share some feedback</button>`;
+    return html`<div class="toolbar"><button class="btn" onClick=${() => setState({ feedbackOpen: true })}>Enjoyed soundcheck? Share some feedback</button></div>`;
   }
   return html`<${FeedbackForm} state=${state} />`;
 }
@@ -50,7 +51,7 @@ function FeedbackForm({ state }) {
       <label>What helped<input value=${helped} onInput=${e => setHelped(e.target.value)} /></label>
       <label>What annoyed you<input value=${annoyed} onInput=${e => setAnnoyed(e.target.value)} /></label>
       <label>Anything else<input value=${text} onInput=${e => setText(e.target.value)} /></label>
-      <div class="decision-buttons">
+      <div class="toolbar">
         <button type="button" class="btn" onClick=${() => setState({ feedbackOpen: false })}>Cancel</button>
         <button class="btn btn--primary" disabled=${empty}>Send feedback</button>
       </div>

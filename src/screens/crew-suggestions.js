@@ -1,6 +1,8 @@
 // crew-suggestions.js — on Ana's own devices: the changes the crew suggest from their phones
 // (crew-inbox.js lists them at each sync). Looks and works like a 📬 proposal from an email:
 // each suggestion in plain words, with ✕ Don't approve (+ an optional reason) or ✓ Approve.
+// A whole-file suggestion whose file changed meanwhile: only ✕ Don't approve (ask again).
+// When Ana's key can't comment on / close issues: one muted line says so (decisions wait).
 // Also: the banner "Davide suggests 2 changes", one per person, while any wait, and
 // "Feedback from the crew" with the crew's feedback (read-only; ✓ Mark as read closes it).
 // The data changes in crew-approve.js and crew-inbox-sync.js, never here. Used by: main.js
@@ -36,6 +38,7 @@ export function CrewSuggestionsScreen({ state }) {
   const feedback = feedbackToRead(state).filter(item => !state.crewBy || item.by === state.crewBy);
   return html`
     <button class="link back" onClick=${() => showScreen('schedule')}>‹ Back to schedule</button>
+    ${state.crewCantAnswer && html`<p class="muted">Your key can't answer suggestions (it needs Issues: read and write).</p>`}
     ${groups.length === 0 && feedback.length === 0 && html`<p class="empty">Nothing waiting: every suggestion has an answer.</p>`}
     ${groups.map(([by, suggestions]) => html`
       <h2 class="section-title" key=${'title-' + by}>Suggestions from ${by} <small>${undecidedOf(state, suggestions).length} to decide</small></h2>
@@ -57,6 +60,7 @@ export function CrewSuggestionsScreen({ state }) {
 
 function Suggestion({ suggestion, decision }) {
   const [clashes, setClashes] = useState(null); // what changed meanwhile: needs "Approve anyway"
+  const [stale, setStale] = useState(false);    // the whole file changed meanwhile: only "Don't approve"
   const [reason, setReason] = useState(null);   // typing why not (null = not asked)
   const [busy, setBusy] = useState(false);
   const lines = suggestion.lines.length ? suggestion.lines : [suggestion.path];
@@ -66,6 +70,7 @@ function Suggestion({ suggestion, decision }) {
     const result = await approveSuggestion(suggestion, { anyway: Boolean(clashes) });
     setBusy(false);
     if (result.clashes) setClashes(result.clashes);
+    if (result.stale) setStale(true);
   };
 
   let buttons;
@@ -82,7 +87,7 @@ function Suggestion({ suggestion, decision }) {
     buttons = html`
       <span class="decision-buttons">
         <button class="btn btn--small" onClick=${() => setReason('')}>✕ Don't approve</button>
-        <button class="btn btn--small btn--primary" disabled=${busy} onClick=${approve}>${clashes ? '✓ Approve anyway' : '✓ Approve'}</button>
+        ${!stale && html`<button class="btn btn--small btn--primary" disabled=${busy} onClick=${approve}>${clashes ? '✓ Approve anyway' : '✓ Approve'}</button>`}
       </span>`;
   }
 
@@ -90,7 +95,8 @@ function Suggestion({ suggestion, decision }) {
     <li class=${decision ? 'change change--decided' : 'change'}>
       <span class="change__text">
         ${lines.map((line, index) => html`${index > 0 && html`<br />`}${line}`)}
-        ${clashes && !decision && html`<br /><span class="warn-text">Changed meanwhile: ${clashes.join('; ')}</span>`}
+        ${clashes && !stale && !decision && html`<br /><span class="warn-text">Changed meanwhile: ${clashes.join('; ')}</span>`}
+        ${stale && !decision && html`<br /><span class="warn-text">This file changed since ${suggestion.by} started: ask them to make the change again.</span>`}
       </span>
       ${buttons}
     </li>`;

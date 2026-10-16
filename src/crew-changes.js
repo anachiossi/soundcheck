@@ -7,7 +7,8 @@
 //
 // How a file is compared, by its shape:
 //   a list where every item has an id      → one change per id     { op: 'set', id, value } / { op: 'remove', id }
-//   schedule.json                           → the same, by scene_id
+//   schedule.json                           → the same, by scene_id; when a scene is shot on two
+//                                             days (scene_id twice), by scene_id + day  { …, id, day }
 //   an object (scenes.json, a preset, …)    → one change per key    { op: 'set', key, value } / { op: 'remove', key }
 //   anything else, or no earlier version    → the whole file        { op: 'replace', value }
 
@@ -36,25 +37,37 @@ function sortedText(value) {
 const isPlainObject = value => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
 // A list whose records can be told apart: every item has the id field, and no id appears twice.
-function isRecordList(list, field) {
+// withDay: tell them apart by id + day (the schedule, when a scene is shot on two days).
+function isRecordList(list, field, withDay = false) {
   if (!Array.isArray(list)) return false;
   const ids = list.map(item => (isPlainObject(item) ? item[field] : undefined));
   if (ids.some(id => id === undefined || id === null)) return false;
-  return new Set(ids.map(String)).size === ids.length;
+  const keys = list.map(item => (withDay ? `${item[field]}\n${item.day ?? ''}` : String(item[field])));
+  return new Set(keys).size === keys.length;
 }
 
-const findRecord = (list, field, id) => (list || []).find(item => String(item[field]) === String(id));
+// The record a change is about: by its id, and by its day too when the change has one.
+export function findRecord(path, list, change) {
+  const field = idField(path);
+  return (Array.isArray(list) ? list : []).find(item => isPlainObject(item) && String(item[field]) === String(change.id)
+    && (!('day' in change) || String(item.day ?? '') === String(change.day ?? '')));
+}
 
 export function changesBetween(path, base, mine) {
   const field = idField(path);
   if (base === undefined || base === null) return [{ op: 'replace', value: mine }];
-  if (isRecordList(base, field) && isRecordList(mine, field)) {
+  const byId = isRecordList(base, field) && isRecordList(mine, field);
+  const byDay = !byId && path === 'schedule.json' && isRecordList(base, field, true) && isRecordList(mine, field, true);
+  if (byId || byDay) {
+    const changeOf = record => (byDay ? { id: record[field], day: record.day ?? null } : { id: record[field] });
     const changes = [];
     for (const record of mine) {
-      if (!same(findRecord(base, field, record[field]), record)) changes.push({ op: 'set', id: record[field], value: record });
+      const change = changeOf(record);
+      if (!same(findRecord(path, base, change), record)) changes.push({ op: 'set', ...change, value: record });
     }
     for (const record of base) {
-      if (!findRecord(mine, field, record[field])) changes.push({ op: 'remove', id: record[field] });
+      const change = changeOf(record);
+      if (!findRecord(path, mine, change)) changes.push({ op: 'remove', ...change });
     }
     return changes;
   }
@@ -72,8 +85,8 @@ export function changesBetween(path, base, mine) {
 // Puts the changes into `current` (the film's data now). A clash = that record was changed by
 // someone else since `base` (the version the suggestion started from), and differently.
 // Returns { content, clashes: [the changes that clashed] }.
+// A clashing 'replace' (the whole file) can't be approved: it would undo the other changes.
 export function applyChanges(path, current, changes, base) {
-  const field = idField(path);
   const clashes = [];
   let content = current;
   for (const change of changes) {
@@ -83,8 +96,8 @@ export function applyChanges(path, current, changes, base) {
       content = change.value;
     } else if ('id' in change) {
       const list = Array.isArray(content) ? [...content] : [];
-      const now = findRecord(list, field, change.id);
-      const before = findRecord(Array.isArray(base) ? base : [], field, change.id);
+      const now = findRecord(path, list, change);
+      const before = findRecord(path, base, change);
       const wanted = change.op === 'set' ? change.value : undefined;
       if (!same(now, before) && !same(now, wanted)) clashes.push(change);
       const at = list.indexOf(now);
@@ -111,7 +124,9 @@ export function applyChanges(path, current, changes, base) {
 export function suggestionIssue(details, lines) {
   const data = { soundcheck: SUGGESTION_MARKER, version: 1, film: details.film, path: details.path,
     base_sha: details.base_sha || null, changes: details.changes, by: details.by, saved_at: details.saved_at };
-  const body = [...lines.map(line => `- ${line}`), '', '```json', JSON.stringify(data, null, 2), '```', ''].join('\n');
+  // three backticks in a line (a name, a note) would look like the start of the details: made harmless
+  const readable = lines.map(line => `- ${String(line).replace(/`{3,}/g, "'''")}`);
+  const body = [...readable, '', '```json', JSON.stringify(data, null, 2), '```', ''].join('\n');
   return { title: `Suggestion from ${details.by}: ${lines[0] || details.path}`, body, labels: [SUGGESTION_LABEL] };
 }
 
