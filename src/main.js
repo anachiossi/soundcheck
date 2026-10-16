@@ -5,8 +5,9 @@
 // Used by: index.html
 
 import { html, render, useState, useEffect } from '../vendor/preact-htm.js';
-import { useAppState, start, showScreen, clearMessage, setState } from './state.js';
-import { startAutoSync, syncNow } from './sync.js';
+import { useAppState, start, showScreen, clearMessage, setState, showMessage, joinAsCrew } from './state.js';
+import { startAutoSync, syncNow, downloadCrewFilm } from './sync.js';
+import { readCrewLink, isCrew } from './crew-link.js';
 import { formatStamp } from './model.js';
 import { ScheduleScreen } from './screens/schedule.js';
 import { ScenesScreen } from './screens/scenes.js';
@@ -119,7 +120,7 @@ function App() {
       <div class="topbar__title">
         <span class="topbar__film">${project ? project.name : 'soundcheck'}</span>
       </div>
-      <div class="topbar__status"><${SyncBadge} state=${state} /> <${EmailBadge} state=${state} /> <${WrapBadge} project=${project} /></div>
+      <div class="topbar__status"><${SyncBadge} state=${state} /> ${!isCrew(state.connection) && html`<${EmailBadge} state=${state} />`} <${WrapBadge} project=${project} /></div>
       ${project && html`<${DepartmentSwitch} department=${state.department} />`}
     </header>
     <nav class="tabs">
@@ -143,15 +144,28 @@ applyTheme();   // light / dark (Projects → Screen)
 followPhone();
 render(html`<${App} />`, document.getElementById('app'));
 // a link into the app opens that screen: '#hours' (the "Tomorrow" notification),
-// '#lavs-18' (the "Day 18 lavs ready" notification → lav-share.js)
+// '#lavs-18' (the "Day 18 lavs ready" notification → lav-share.js), '#join=…' (a crew link)
 function openFromLink() {
   const lavs = /^#lavs-(\d+)$/.exec(location.hash);
+  if (location.hash.startsWith('#join=')) return joinFromLink();
   if (location.hash === '#hours') setState({ screen: 'hours', department: 'mics' });
   else if (lavs) setState({ screen: 'lav-share', lavDay: Number(lavs[1]), department: 'mics' });
   else return;
   history.replaceState(null, '', location.pathname + location.search);
 }
-start().then(() => { openFromLink(); startAutoSync(); });
+
+// A crew link (crew-link.js): connect this phone as that person, then download the film.
+// The address bar is cleared first: the key must not stay there.
+async function joinFromLink() {
+  const link = readCrewLink(location.hash);
+  history.replaceState(null, '', location.pathname + location.search);
+  if (!link) return showMessage('error', 'This link is not complete: ask for it again.');
+  if (!joinAsCrew(link)) return showMessage('error', 'This device is connected as the owner. To open a crew link here, Disconnect first (Projects).');
+  setState({ screen: 'projects' });
+  showMessage('ok', `Welcome, ${link.name}. Downloading the film…`);
+  await downloadCrewFilm(link.folder);
+}
+start().then(openFromLink).then(startAutoSync);
 addEventListener('hashchange', openFromLink);
 
 // Updates: look for a new version at start and whenever you come back to the

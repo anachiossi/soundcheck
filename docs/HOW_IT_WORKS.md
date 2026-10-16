@@ -210,3 +210,17 @@ No notifications yet (after the aesthetics, Ana 12 Oct).
 | 🔋 next to the TX pills | `src/parts/battery-tag.js` (in `parts/scene-table.js`, `screens/kit.js`) |
 | Saving | `src/battery-editing.js` |
 | The screen and its sheets | `src/screens/gear-batteries.js` (sheet from `src/parts/gear-form.js`), styles `.battery*` in `app.css` |
+
+## Crew link (Projects → Share with crew; plan: `docs/CREW_SHARING.md`)
+One link per crew person opens the film on their phone, with no GitHub account. The link holds owner,
+repo, branch, the film's crew key, the person's name and the film folder, after `#join=` (never sent anywhere).
+
+| What | File |
+|---|---|
+| Making / reading the link, "is this a crew phone?" | `src/crew-link.js` (tests: `tests/crew.test.js`) |
+| Share with crew (crew key + name → Copy link; key and names stay on Ana's device only) | `src/parts/crew-share.js`, shown by `src/screens/projects.js` |
+| Opening a link: connect as crew, clear the address bar, download the film | `src/main.js` (`joinFromLink`) → `joinAsCrew` in `src/state.js` → `downloadCrewFilm` in `src/sync.js` |
+| Finding the film by its folder (`film.json`) | `readFilm` in `src/store/github.js` |
+| Crew phones never commit (the outbox stays on the phone) | `upload()` in `src/sync.js` |
+
+A crew connection is `{ …, device: name, role: 'crew', name }`; no role = Ana's devices (as before).

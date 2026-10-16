@@ -1,6 +1,7 @@
 // github.js — the only file that talks to GitHub: reads and writes the film
 // files in the private soundcheck-data repo.
 // connection = { owner, repo, branch, token, device }   (saved on this device only)
+//   a crew phone (crew-link.js) also has role: 'crew' and name: 'Davide'; it never writes.
 // Used by: sync.js, screens/projects.js, email-robot.js
 
 const API = 'https://api.github.com';
@@ -113,6 +114,15 @@ export async function commitFiles(connection, base, files, message) {
     body: JSON.stringify({ sha: commit.sha }),
   });
   return commit.sha;
+}
+
+// One film, by its folder (a crew link knows only the folder): { id, name, folder }
+export async function readFilm(connection, folder) {
+  const tree = await readTree(connection);
+  const sha = tree.files[`${folder}/film.json`];
+  if (!sha) throw new Error('the film is not in the repo (or the key cannot see it)');
+  const film = await readJsonFile(connection, sha);
+  return { id: film.id, name: film.name, folder };
 }
 
 // Every film in the repo: [{ id, name, folder }]

@@ -8,6 +8,7 @@ import { useEffect, useState } from '../vendor/preact-htm.js';
 import * as local from './store/local.js';
 import { defaultDay } from './model.js';
 import { upgradeOutbox } from './store/repo-files.js';
+import { isCrew } from './crew-link.js';
 
 let state = {
   project: null,            // the open film (see model.js)
@@ -27,7 +28,9 @@ let state = {
   lookup: [],               // scene ids chosen in the Scenes screen
   online: navigator.onLine,
   message: null,            // { kind: 'ok' | 'error', text }
-  connection: loadJson('sc_github', null), // GitHub: { owner, repo, branch, token, device }
+  connection: loadJson('sc_github', null), // GitHub: { owner, repo, branch, token, device } (+ role: 'crew', name on a crew phone)
+  crewKey: loadJson('sc_crew_key', ''),     // Share with crew: the film's crew key (this device only, never synced)
+  crewNames: loadJson('sc_crew_names', []), // names crew links were made for (this device only)
   films: null,              // films in the repo (null = not looked yet)
   sync: { running: false, error: null },
   emailRobot: null,         // ✉ { checkedAt, run, noAccess, starting } (email-robot.js)
@@ -87,6 +90,27 @@ function loadJson(key, fallback) {
 export function saveConnection(connection) {
   try { localStorage.setItem('sc_github', JSON.stringify(connection)); } catch { /* ignore */ }
   setState({ connection, films: null });
+}
+
+// A crew link opened on this phone (main.js): connect as that person. A newer link replaces an
+// older crew connection; a device connected as the owner is never replaced (returns false).
+export function joinAsCrew(link) {
+  if (state.connection && !isCrew(state.connection)) return false;
+  const { owner, repo, branch, token, name } = link;
+  saveConnection({ owner, repo, branch, token, device: name, role: 'crew', name });
+  return true;
+}
+
+// Share with crew (parts/crew-share.js): the crew key and the names, on this device only.
+export function rememberCrewKey(crewKey) {
+  try { localStorage.setItem('sc_crew_key', JSON.stringify(crewKey)); } catch { /* ignore */ }
+  setState({ crewKey });
+}
+export function rememberCrewName(name) {
+  if (state.crewNames.includes(name)) return;
+  const crewNames = [...state.crewNames, name];
+  try { localStorage.setItem('sc_crew_names', JSON.stringify(crewNames)); } catch { /* ignore */ }
+  setState({ crewNames });
 }
 
 export function forgetConnection() {

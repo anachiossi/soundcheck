@@ -50,6 +50,9 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
 - v153 (Ana, 16 Oct): **read aloud removed** — the app never speaks (a phone talking by accident on set
   is the worst case; hard to set up, poor on other phones). `src/read-aloud.js` and the 🔊 buttons in
   Cues and Timeline are gone; an old `voices` key in settings.json / `voice` in characters.json is ignored.
+- v153 (crew sharing step 2, branch only): **crew link** — Projects → Share with crew (Ana) copies a
+  `#join=` link per person; opening it connects that phone as crew (name, read only) and downloads the film.
+  Crew phones never commit (outbox stays on the phone); no Connect, Share with crew, ✉ badge or ⏱ Hours.
 - Cues is Speak Screen friendly (v62–63, iPhone's own Siri reading, started only by a two-finger swipe):
   only the dialogue is readable (the rest aria-hidden), "Prince John." before each line, and the
   following lines are there invisibly (.sr-only) so Speak Screen reads to the end of the scene.

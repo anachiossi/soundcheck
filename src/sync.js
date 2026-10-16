@@ -6,9 +6,11 @@
 // Runs by itself when the app opens, when signal comes back, when you come
 // back to the app, and right after every Save. With no signal nothing happens:
 // changes wait safely in the outbox.
+// A crew phone (crew-link.js) only downloads: its changes stay on the phone, never committed.
 // Used by: main.js, editing.js, screens/projects.js, parts/scene-table.js
 
-import { getState, setState, saveAndShow, showMessage } from './state.js';
+import { getState, setState, saveAndShow, showMessage, openProject } from './state.js';
+import { isCrew, CREW_ACCESS_ENDED } from './crew-link.js';
 import { saveDocument } from './store/local.js';
 import { defaultDay, localTodayIso, shootingDays } from './model.js';
 import * as github from './store/github.js';
@@ -49,11 +51,13 @@ export async function syncNow({ loud = false } = {}) {
       }
     }
     setState({ sync: { running: false, error: null, at: new Date().toISOString() } });
-    refreshEmailRobot().catch(() => {}); // the ✉ badge (never blocks the sync)
+    if (!isCrew(connection)) refreshEmailRobot().catch(() => {}); // the ✉ badge (never blocks the sync)
     if (loud) showMessage('ok', uploaded ? `Uploaded ${uploaded} change(s).` : 'Everything is up to date.');
   } catch (error) {
-    setState({ sync: { running: false, error: error.message } });
-    if (loud) showMessage('error', `Couldn't sync: ${error.message}. Your changes are safe on this device.`);
+    const accessEnded = error.status === 401 && isCrew(connection); // the crew key expired
+    setState({ sync: { running: false, error: accessEnded ? CREW_ACCESS_ENDED : error.message } });
+    if (loud && accessEnded) showMessage('error', CREW_ACCESS_ENDED);
+    else if (loud) showMessage('error', `Couldn't sync: ${error.message}. Your changes are safe on this device.`);
   }
   if (runAgain) {
     runAgain = false;
@@ -105,6 +109,7 @@ async function downloadDocuments(connection, tree) {
 }
 
 async function upload(connection, tree) {
+  if (isCrew(connection)) return 0; // crew never commit: the outbox stays on the phone
   const project = getState().project;
   const paths = Object.keys(project.outbox || {}).filter(path => !project.conflicts?.[path]);
   if (!paths.length) return 0;
@@ -154,6 +159,22 @@ export async function downloadFilm(film) {
   await saveAndShow(emptyProject(film, film.folder), { screen: 'schedule', lookup: [], edit: null });
   await syncNow({ loud: true });
   setState({ day: defaultDay(getState().project) });
+}
+
+// A crew phone just opened its link (main.js): find the film in its folder, then open it
+// (already on the phone: its unsent changes are kept) or download it.
+export async function downloadCrewFilm(folder) {
+  try {
+    const film = await github.readFilm(getState().connection, folder);
+    if (getState().projects.some(project => project.id === film.id)) {
+      await openProject(film.id);
+      await syncNow({ loud: true });
+    } else {
+      await downloadFilm(film);
+    }
+  } catch (error) {
+    showMessage('error', error.status === 401 ? CREW_ACCESS_ENDED : `Couldn't download the film: ${error.message}.`);
+  }
 }
 
 export async function loadFilmList() {

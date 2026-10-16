@@ -3,6 +3,8 @@
 // • Films: the ones in the repo (tap to download) and the ones on this device.
 // • The open film: sync status, "Sync now", backup file; its documents (📄 script, 📄 latest PDL,
 //   offline) and ⏱ Hours (the week / whole film for production, fix any day's wrap).
+// • Share with crew (Ana's devices, film open): a link per person (parts/crew-share.js).
+//   A crew phone sees "Connected as Davide (crew)" and no Connect, Share with crew or ⏱ Hours.
 // • Screen: Auto / Light / Dark (parts/theme-switch.js).
 // • ? Help → the Help page (screens/help.js): offline use, wrap alerts, hearing the lines…
 // Each film has its own database on the device; old films are kept.
@@ -18,6 +20,8 @@ import { ThemeSwitch } from '../parts/theme-switch.js';
 import { cuesSummary } from '../cues-rules.js';
 import { tagOf } from '../model.js';
 import { saveTag } from '../kit-editing.js';
+import { isCrew } from '../crew-link.js';
+import { ShareWithCrew } from '../parts/crew-share.js';
 
 export function ProjectsScreen({ state }) {
   const { project, projects, connection, films, online } = state;
@@ -43,9 +47,13 @@ export function ProjectsScreen({ state }) {
         <b>${p.name}</b><small>on this device · data as of ${formatStamp(p.data_as_of)}</small>
       </button>`)}
 
-    ${connection && html`
+    ${connection && isCrew(connection) && html`
+      <p class="muted connection">Connected as <b>${connection.name}</b> (crew). <button class="link" onClick=${forgetConnection}>Disconnect</button></p>`}
+    ${connection && !isCrew(connection) && html`
       <p class="muted connection">Connected to ${connection.owner}/${connection.repo}${connection.branch !== 'main' ? ` (${connection.branch})` : ''}
         ${' '}as <b>${connection.device}</b>. <button class="link" onClick=${forgetConnection}>Disconnect</button></p>`}
+
+    ${connection && !isCrew(connection) && project && html`<${ShareWithCrew} state=${state} />`}
 
     <details class="more"><summary>Backup files</summary>
       ${project && html`<button class="btn" onClick=${downloadProjectFile}><${Icon} name="download" /> Save backup file of ${project.name}</button>`}
@@ -74,7 +82,7 @@ function OpenFilm({ state }) {
     ${connection && html`
       <button class="btn" disabled=${!online || sync.running} onClick=${() => syncNow({ loud: true })}>↻ Sync now</button>
       ${!online && html`<small class="muted"> No signal: changes wait on this device.</small>`}`}
-    <${FilmDocuments} project=${project} />`;
+    <${FilmDocuments} project=${project} crew=${isCrew(connection)} />`;
 }
 
 // the film's tag ('LBE'): tap to change it — every exported file starts with it
@@ -88,8 +96,8 @@ function FilmTag({ project }) {
   return html`<button class="film-tag" onClick=${() => setTyping(tagOf(project))} title="The film's tag: exported files start with it">${tagOf(project)}</button>`;
 }
 
-// 📄 Script · 📄 PDL (when they are on the device) · ⏱ Hours
-function FilmDocuments({ project }) {
+// 📄 Script · 📄 PDL (when they are on the device) · ⏱ Hours (not on crew phones, for now)
+function FilmDocuments({ project, crew }) {
   const script = cuesSummary(project);
   const doc = (file, title) => {
     const path = `${project.folder}/docs/${file}`;
@@ -101,7 +109,7 @@ function FilmDocuments({ project }) {
     <div class="toolbar film-docs">
       ${doc('script.pdf', `Script${script.version ? ` ${script.version}` : ''}`)}
       ${doc('pdl.pdf', 'PDL')}
-      <button class="btn" onClick=${() => setState({ screen: 'hours' })}>⏱ Hours</button>
+      ${!crew && html`<button class="btn" onClick=${() => setState({ screen: 'hours' })}>⏱ Hours</button>`}
     </div>
     ${script.script > 0 && html`<p class="muted with-icon"><${Icon} name="cues" /> Cues for ${script.script} scenes${script.sides ? `, ${script.sides} updated from the sides` : ''}</p>`}`;
 }
