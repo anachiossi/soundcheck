@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-10-16 · live **v151** · branch `claude/crew-sharing` = **v158** (v152 rough counts + crew sharing, not merged yet) · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-10-16 · live version **v158** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
