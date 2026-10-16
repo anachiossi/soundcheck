@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-10-13 · live version **v151** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-10-16 · live **v151** · branch `claude/crew-sharing` = **v158** (v152 rough counts + crew sharing, not merged yet) · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
@@ -47,19 +47,61 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   person speaking — `cues-timeline-rules.js`). Map and Timeline open full screen (`main.js` focus).
 - 🔍 **Search the lines** (v112, `parts/line-search.js`) in Cues, Dialogue map and Timeline: words and speakers (v116), every match highlighted
   (capitals / accents ignored), "2 / 7" with ↑ ↓ — on set "we start from WORD".
-- 🔊 **Read aloud** (Timeline and Cues): the phone's own voices (`src/read-aloud.js`); two per film,
-  female + male, in `settings.json` → `voices`; each character's `voice` in
-  characters.json. iOS quirks handled in v58: extra end/interrupted events, voices list empty at
-  start (asked at each line), no word positions (cursor paced by itself, waits at the line end);
-  v60: a listed-but-silent voice falls back to the default one, Kit ▶ shows what the voice did. No Siri voices (not given to web pages).
-  Test with a fake iPhone voice: `.shots/voice-ios.mjs`.
-- v66: 0.8 s silence between lines in 🔊 (LINE_PAUSE); Speak Screen hears "Prince John." before each line.
-- Cues is Speak Screen friendly (v62–63): only the dialogue is readable (the rest aria-hidden), and the
+- v153 (Ana, 16 Oct): **read aloud removed** — the app never speaks (a phone talking by accident on set
+  is the worst case; hard to set up, poor on other phones). `src/read-aloud.js` and the 🔊 buttons in
+  Cues and Timeline are gone; an old `voices` key in settings.json / `voice` in characters.json is ignored.
+- v153 (crew sharing step 2, branch only): **crew link** — Projects → Share with crew (Ana) copies a
+  `#join=` link per person; opening it connects that phone as crew (name, read only) and downloads the film.
+  Crew phones never commit (outbox stays on the phone); no Connect, Share with crew, ✉ badge or ⏱ Hours.
+- v153 (crew sharing step 3, branch only): **crew suggestions** — a crew phone's saved changes are sent as
+  GitHub issues ("Suggestion from Davide: Gear: + Sandbag", what changed + a JSON block), badge
+  "● n proposed"; when Ana closes one ("approved" / "not approved: reason") the phone takes the film's
+  version back and logs the answer. A crew phone lists only its own film. Ana's inbox (approve) is step 4.
+  Crew hours / wrap alerts (`hours/`, `push/`) stay on the phone, never sent.
+- v153 (crew sharing step 4, branch only): **approving crew suggestions** — on Ana's devices a 📬 banner per
+  person ("Davide suggests 2 changes") opens the suggestions: ✓ Approve applies them to the current film
+  (warns "Changed meanwhile" first, then "Approve anyway") and uploads as a normal save ("— proposed by
+  Davide, approved"); ✕ Don't approve takes an optional reason. The answer is written on the issue only
+  after the upload; offline it waits. No crew issues (or a key that can't read issues) → app as before.
+- v153 (crew sharing step 5, branch only): **crew screens** — crew phones hide Ana's personal parts (wrap
+  clock and wrap question, 🔔 wrap alerts, wake plan / alarms, Help → Wrap hours and Alarms, Hours and `#hours`).
+  Projects (crew): "My suggestions" with neutral answers, and "Enjoyed soundcheck? Share some feedback" (stars,
+  helped, annoyed, text; kept on the phone offline, sent at sync as a `crew-feedback` issue); offered once by
+  itself from 3 days before the last shooting day. Ana: "Feedback from the crew" banner + Mark as read; Remove /
+  Restore names in Share with crew (their suggestions and feedback are ignored).
+- v153 (crew sharing step 6, branch only): **My call + crew hours** — Projects → My call (every device, kept
+  on the device): General crew call (default, as before) or Personal call = your name as printed on the call
+  sheet, matched in `calls.json` (no capitals/accents/extra spaces); not on that day's sheet → crew call + a
+  muted note on Hours. Hours, ⏱ wrap clock, timesheet and the wake plan use it; the Schedule keeps the crew call.
+  Crew phones get Hours and the wrap clock back (their OWN hours, phone only): they never download the
+  film's `hours/` and `push/` (an old copy is dropped at the next sync) and get "📊 Export my timesheet" (their
+  block only). Still hidden on crew: wake plan / alarms, 🔔 wrap alerts, Help → Alarms.
+- v154 (branch only, 16 Oct): review fixes — a whole-file suggestion that clashes can't be approved anyway;
+  decisions sent only after the save; crew phones don't see production-email proposals; joining with no
+  signal waits and retries. Checked in Chromium (owner + crew, phone/iPad/laptop, offline). Kit grid overflow
+  and cut lav labels at phone size are older (also on main), still to fix.
+- v155 (branch only, 16 Oct): **Kit grid fixed** — nothing runs off a phone screen any more (B1's 🔋 tag sits above
+  its model), lav pills show the full "6060 10", long names wrap; wider columns on iPad/laptop (`--kit-col`).
+- v156 (branch only, 16 Oct): **notifications per person + robots follow My call** — push files say whose phone
+  (`person`, `role`); `send_push.py` audience `owner` (all current alerts, Ana's phones only) / `all`. Ana's
+  Personal call is saved as `commute.my_name`; Tomorrow push, bedtime and automatic alarms start from her own
+  call (else the general call). Needs the Apps Script pasted + ✎ New version after the merge. Python tests in
+  `tests/test_*.py`.
+- v157 (crew sharing step 8, branch only, 16 Oct): **one private repo per film** — Projects → Film repos (Ana's
+  devices): extra repos her ONE key reads (`connection.repos`, checked on Add). The films list reads every repo;
+  each downloaded film remembers its repo (`project.source`) and sync, documents, crew suggestions, ✉ robot and
+  crew links all use it (`connectionFor` in `src/film-source.js`). Films without a source (LBE today) = the main
+  repo, unchanged. Same film id in two repos: both listed with the repo name, the second refused.
+  `tools/new-film-repo.mjs` prepares the next film's folder; Apps Script reads the `REPO` script property
+  (default soundcheck-data). Setup steps: `docs/CREW_SHARING.md` → "Setting up the next film".
+- v158 (review fixes, branch only, 16 Oct): opening another film during a sync stops it quietly (no
+  upload, the other film untouched: `src/sync-store.js`); owner/repo compared ignoring capitals; a backup
+  file keeps the film's repo; films of the main repo get no `source` (follow the main connection, as
+  before v157); "Personal call" with no name yet leaves the robots' `my_name` alone; a failed film-list
+  read says "No signal: showing films on this device." instead of "Looking for films…".
+- Cues is Speak Screen friendly (v62–63, iPhone's own Siri reading, started only by a two-finger swipe):
+  only the dialogue is readable (the rest aria-hidden), "Prince John." before each line, and the
   following lines are there invisibly (.sr-only) so Speak Screen reads to the end of the scene.
-- iPhone gives web pages only ONE Italian voice (Alice · Standard, in Safari, Chrome and the home-screen app)
-  although Emma Premium + Luca are downloaded: no male voice in-app on iOS. Options: Speak Screen (Siri),
-  or cloud voices recorded per scene (offered to Ana, not decided).
-  v64: Kit voice menu and the character voice field removed (Ana: one voice, no choices, no warnings).
 - Cues text priority (`cues-rules.js`): on-set edit (`lines/set/`) → newest sides → script;
   a newer paper after an edit is flagged, never overwrites it.
 - Scenes tab: scenes already shot are dark grey (v114, `doneScenes`: every day they're on is over) — the film's progress.
@@ -91,6 +133,8 @@ Ana's mockup "Gear inventory redesign", 2 Oct):
   types go to OTHER); search lists every match with its path. State `gearPath`. Truck / sheet: dots (`Tinted`).
 - Objects: name, brand, type, qty, colour, nicknames, inside, volume, note + **details** (own fields;
   the type offers the fields others of that type use — `fieldsOfType`). Rules in `src/gear-rules.js`.
+- Rough counts (v152, Ana 15 Oct, RF Spare case): `qty_about: true` shows ×~15 everywhere (`quantityText`);
+  tick "About that many" in the object's sheet. For repair cases full of cables / connectors nobody counts.
 - Manuals by brand (`docs/manuals/<brand>/`, `gear/manuals.json`). Hours / timesheet live in Projects.
 - **Gear to check (TODO)**: `D:\sound_check_data\projects\<film>\docs\gear-todo.md` (data repo, private) — every "?" in
   the gear list, grouped by case; remake with `python tools/gear_todo.py projects/<film>` (data repo). See its README.
@@ -136,7 +180,6 @@ film before November.
   warning be quieter too?
 - Analyzer for a NEW film writing schedule.json / scenes.json / sound/ directly (today: one-off
   scripts in `D:\script_read_claude\projects\<film>\work\`).
-- Read aloud on the Scene Map (mentioned, not started). Verify v58 read-aloud on the real iPhone.
 - Scene order comes from the ODG only (sides are used for speakers). Day 5 ODG said 23·4, sides and
   app 4·23 — asked Ana which wins when they differ; no answer yet.
 - ODG reader: a location can swallow the next column ("PIANO NOBILE (2°) STAND BY:").

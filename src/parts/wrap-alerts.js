@@ -2,6 +2,8 @@
 // the ODG's wrap ("Did today finish on time?") and every hour after a "Not yet" — even with the
 // app closed. The phone's address for notifications is saved in the film (push/<phone>.json);
 // the robot sends them (pipeline/gmail-trigger.gs decides when, pipeline/send_push.py sends).
+// The file also says whose phone it is: person (the name, else the device) and role ('owner' or
+// 'crew'); a file without a role is Ana's (older phones).
 // iPhone: only works in the app added to the Home Screen (iOS 16.4 or later); the first tap
 // asks permission.
 // Used by: screens/hours.js
@@ -10,6 +12,7 @@ import { html, useEffect, useState } from '../../vendor/preact-htm.js';
 import { getState, saveAndShow, showMessage } from '../state.js';
 import { pushFile } from '../store/repo-files.js';
 import { syncNow } from '../sync.js';
+import { isCrew } from '../crew-link.js';
 
 // the robot's public key (its private half is the GitHub secret VAPID_PRIVATE_KEY)
 const PUBLIC_KEY = 'BFURnXwP5mMRXSfiVDnlE1ba072XKL2orndqkSXsb84fc0-_f2ReXOBcOvErAb0KzyhBZccApj-p6ZssRjtlbF0';
@@ -21,6 +24,14 @@ const phoneId = name => String(name || 'this-device').toLowerCase().normalize('N
 
 const bytesOf = base64 => Uint8Array.from(atob(base64.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
 
+// What push/<phone>.json holds: the phone's address for notifications, and whose phone it is
+// (the robot sends Ana's personal alerts only to role 'owner': pipeline/send_push.py).
+export function pushEntry(address, connection, now) {
+  return { ...address, device: connection?.device || 'this device',
+    person: connection?.name || connection?.device || 'this device',
+    role: isCrew(connection) ? 'crew' : 'owner', saved_at: now };
+}
+
 async function turnOn() {
   if (await Notification.requestPermission() !== 'granted') {
     return showMessage('error', 'Notifications are off for soundcheck: Settings → Notifications → soundcheck.');
@@ -30,7 +41,7 @@ async function turnOn() {
   const { project, connection } = getState();
   const phone = phoneId(connection?.device);
   const now = new Date().toISOString();
-  const entry = { ...subscription.toJSON(), device: connection?.device || 'this device', saved_at: now };
+  const entry = pushEntry(subscription.toJSON(), connection, now);
   await saveAndShow({ ...project, push: { ...project.push, [phone]: entry }, outbox: { ...project.outbox, [pushFile(phone)]: { saved_at: now } } });
   showMessage('ok', 'Wrap alerts on: this phone will be asked at the wrap.');
   syncNow();

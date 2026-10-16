@@ -29,8 +29,12 @@
 | Editing a scene (draft, save) | `src/editing.js`, the editor table `src/parts/scene-editor.js` |
 | The picker that slides up | `src/parts/picker.js` |
 | Warnings (TX twice), "same as other scenes today", preferred TX/lav | `src/preset-rules.js` |
-| Uploading / downloading, "Keep mine" | `src/sync.js` (logic), `src/store/github.js` (talks to GitHub) |
+| Uploading / downloading, "Keep mine" | `src/sync.js` (logic), `src/sync-store.js` (the one film a sync works on), `src/store/github.js` (talks to GitHub) |
 | How a film is split into files | `src/store/repo-files.js` |
+| The films list in Projects, downloading a film the first time | `src/films.js` |
+| One repo per film: which repo a film lives in (`project.source`), `connectionFor(project, connection)` used by everything that talks to GitHub about a film | `src/film-source.js` (tests: `tests/film-repos.test.js`) |
+| Projects → Film repos: the extra repos Ana's key reads (`connection.repos`), Add (checks the key can read it) / Remove | `src/film-repos.js` (actions), `src/parts/film-repos.js` (the panel) |
+| Preparing the next film's own data repo (local folder, never pushes) | `tools/new-film-repo.mjs` (tests: `tests/new-film-repo.test.js`) |
 | Week / all-film images | `src/export/schedule-images.js` |
 
 ## Recipes
@@ -45,8 +49,9 @@ installed devices keep showing the old version.
 **Fix something by hand:** edit the JSON file on github.com (e.g. `presets/12.json`), commit.
 Devices pick it up at their next sync.
 
-**New film:** make a folder `projects/<film-id>/` in soundcheck-data with the same files as an
-existing film (the analyzer pipeline will write these). It appears in Projects on every device.
+**New film:** one private repo per film: `node tools/new-film-repo.mjs …`, then the steps in
+`docs/CREW_SHARING.md` → "Setting up the next film". (Old way, still works: a folder `projects/<film-id>/`
+in soundcheck-data with the same files as an existing film.) It appears in Projects on every device.
 
 ## Production emails → proposals (pipeline/)
 Runs in the cloud (GitHub Actions), in Python; the laptop can run it too. Nothing in the film changes until you accept it in the app.
@@ -81,7 +86,9 @@ Which emails belong to a film: `projects/<film>/inbox.json` in the data repo.
 1. GitHub → Settings → Developer settings → Fine-grained tokens → Generate: repository access **only
    soundcheck-data**, permissions **Actions: Read and write** + **Variables: Read and write**.
 2. script.google.com, logged in as the production mailbox → New project → paste `pipeline/gmail-trigger.gs`.
-3. ⚙ Project settings → Script properties → add `GITHUB_TOKEN` = the token.
+3. ⚙ Project settings → Script properties → add `GITHUB_TOKEN` = the token. For a film with its own repo,
+   also `REPO` = `owner/name` of that repo (empty = `anachiossi/soundcheck-data`, as before); the token must
+   cover that repo.
 4. Choose `setup` in the function menu → Run → allow access. This creates the 10-minute timer.
 5. ⏰ Triggers → the timer → ✎ → Failure notification: **Notify me immediately**.
 Check: Executions (☰ list icon) shows each check; GitHub → Actions shows the runs it started.
@@ -148,10 +155,9 @@ The app's GitHub key needs **Actions: Read and write** and **Variables: Read-onl
 | Which lines a scene shows (sides → script → base scene for 7fin) | `src/cues-rules.js` |
 | The full-screen mode (one speech per page, scrolls when long) | `src/screens/cues.js` + section 11 of `app.css` |
 | One phrase per line (after , ; : . ? ! …) | `src/cues-phrases.js` |
-| 🔊 Read aloud with the phone's voice (the iPhone gives web pages only one per language: Alice, so no voice menu); Timeline follows the voice, Cues turns pages by itself. `settings.json` → `voices` and each character's `voice` stay in the data, used only where a device has more voices | `src/read-aloud.js` |
 | Scene Map: colour strip, beats, each line's last words (tap a line → the whole line + Learn from here); made from the same lines, so ✎ edits show at once | `src/cues-map-rules.js`, `src/screens/cues-map.js` |
 | Scene Map auto-scroll (pinned at the top with the colour strip): ▶/■, speed − / + (remembered), a touch pauses, carries on after you let go | `src/parts/auto-scroll.js` |
-| Scene Timeline (Pro Tools-style): blocks back to back in the speakers' colours, width ∝ speaking time (syllables at ~5.5/s at 1×, pauses after , . ? ! … and a breath when the speaker changes) (long speeches capped "⋯" so the next lines stay in view), fixed ▼ cursor, ▶ / speed 0.5–2× / drag to scrub / tap to jump; above the track, the whole scene as a script scrolling by itself like Spotify lyrics (name centred, dialogue left-aligned with an indent; said lines fade, the current line turns black word by word; scroll by hand / tap a line to jump); the track + controls are the play bar; Aa and 🔊 in the top row | `src/cues-timeline-rules.js`, `src/screens/cues-timeline.js`, `src/parts/scene-script.js` |
+| Scene Timeline (Pro Tools-style): blocks back to back in the speakers' colours, width ∝ speaking time (syllables at ~5.5/s at 1×, pauses after , . ? ! … and a breath when the speaker changes) (long speeches capped "⋯" so the next lines stay in view), fixed ▼ cursor, ▶ / speed 0.5–2× / drag to scrub / tap to jump; above the track, the whole scene as a script scrolling by itself like Spotify lyrics (name centred, dialogue left-aligned with an indent; said lines fade, the current line turns black word by word; scroll by hand / tap a line to jump); the track + controls are the play bar; Aa in the top row | `src/cues-timeline-rules.js`, `src/screens/cues-timeline.js`, `src/parts/scene-script.js` |
 | ✎ Changed on set (edit / delete / + New line before or after, undo all) → `lines/set/<scene>.json`, wins over sides and script; the pipeline never writes it; newer paper is offered (Use it / Keep my changes) | `src/cues-editing.js`, panel `src/parts/cue-line-editor.js` |
 
 ## 🔊 Sound breakdown (dificultômetro + lav warnings)
@@ -201,6 +207,8 @@ v145 (13 Oct, Ana: "why haven't you done this?"):
 - v150 (Ana, 13 Oct): IFB receivers get a BAND field (ifb/receivers.json `band`, e.g. "Cw 718–790") — the EK1039s come in 2 frequency groups; shown in the IFB Kit and in the receiver picker. No serial numbers needed.
 - v151 (Ana, 13 Oct): Gear → Manuals grouped by BRAND then CATEGORY (gear/manuals.json `category`): one category → "Schoeps — Microphones" on the brand line; several → a small sub-heading each (Sennheiser: Headphones, Wireless…). Brands and categories A–Z. Also v150: Hours keeps a worked day whose scenes a later ODG moved away (hours/<day>.json keeps call + odg_wrap).
   (Lockit 17 h, LockitBT 14 h, NanoLockit 25 h, Tentacles 50 / 35 h).
+- v153 (Ana, 16 Oct): read aloud removed — the app never speaks (no `src/read-aloud.js`, no 🔊 in Cues or the
+  Timeline); an old `voices` key in settings.json and `voice` in characters.json are ignored.
 No notifications yet (after the aesthetics, Ana 12 Oct).
 | What | File |
 |---|---|
@@ -209,3 +217,166 @@ No notifications yet (after the aesthetics, Ana 12 Oct).
 | 🔋 next to the TX pills | `src/parts/battery-tag.js` (in `parts/scene-table.js`, `screens/kit.js`) |
 | Saving | `src/battery-editing.js` |
 | The screen and its sheets | `src/screens/gear-batteries.js` (sheet from `src/parts/gear-form.js`), styles `.battery*` in `app.css` |
+
+## Crew link (Projects → Share with crew; plan: `docs/CREW_SHARING.md`)
+One link per crew person opens the film on their phone, with no GitHub account. The link holds owner,
+repo, branch, the film's crew key, the person's name and the film folder, after `#join=` (never sent anywhere).
+
+| What | File |
+|---|---|
+| Making / reading the link, "is this a crew phone?" | `src/crew-link.js` (tests: `tests/crew.test.js`) |
+| Share with crew (crew key + name → Copy link; key and names stay on Ana's device only) | `src/parts/crew-share.js`, shown by `src/screens/projects.js` |
+| Opening a link: connect as crew, clear the address bar, download the film | `joinFromLink` in `src/crew-join.js` (from `src/main.js`) → `joinAsCrew` in `src/state.js` → `downloadCrewFilm` in `src/crew-join.js` |
+| No signal when joining: "the film will download as soon as you're online", remembered on the phone and tried again (signal back, app in front, next start) | `src/crew-join.js` (tests: `tests/crew-screens.test.js`) |
+| Finding the film by its folder (`film.json`); a crew phone lists only that film | `readFilm` in `src/store/github.js`, `loadFilmList` in `src/films.js` |
+| Crew phones never commit (the outbox stays on the phone) | `upload()` in `src/sync.js` |
+
+A crew connection is `{ …, device: name, role: 'crew', name, folder }`; no role = Ana's devices (as before).
+The link's owner/repo are the film's own repo (`connectionFor` in `src/film-source.js`); the film downloaded
+from it remembers that repo (`project.source`).
+
+## Crew suggestions (crew sharing step 3)
+On a crew phone, Save works as usual (the file goes into the outbox), but sync never commits:
+`syncAsCrew` in `src/sync.js` runs, in this order:
+1. **Closed suggestions** (`takeBackClosed`): the phone looks at the repo's issues; for each of its own
+   suggestions now closed it drops its version (out of the outbox) so the film's version is downloaded
+   again in this same sync, and writes a line in its log: approved / not approved (+ reason) / closed,
+   read from the last comment ("approved", "not approved: reason").
+2. **Download** as usual, except: a file the phone has changed is never overwritten and never becomes a
+   conflict while it is proposed. The version each change started from is remembered (`noteBases`).
+3. **Send** (`sendSuggestions`): each changed file not sent yet → one GitHub issue "Suggestion from
+   Davide: Gear: + Sandbag". The body has the lines for people, then a ```json block with the marker
+   `"soundcheck": "crew-suggestion"`, the film folder, the file, the version it started from and the
+   changes. Changed again → a new issue, the old one is closed "Replaced by #n". Changed back to the
+   film's version → nothing to suggest, out of the outbox. Label `crew-proposal` (may be dropped by
+   GitHub: suggestions are recognised by the marker, never by the label).
+
+The top badge shows "● n proposed" for files already sent, "● n waiting" for those not sent yet.
+Bookkeeping in the film on the phone: `project.crewSuggestions = { base, sent, log }`
+(`project.crew` is the IFB crew list).
+
+| What | File |
+|---|---|
+| What changed in a file (by id, by scene_id in the schedule, by key, or the whole file), applying it to the film's current data (clashes), the issue text and reading it back, the closing comment | `src/crew-changes.js` (tests: `tests/crew-changes.test.js`) |
+| The lines for people ("Scene 12: preset changed", "Characters: Ines — lav changed") | `src/crew-describe.js` |
+| Closed → back to the film's version; sending; the "proposed" count | `src/crew-sync.js` (tests: `tests/crew-sync.test.js`, fake GitHub) |
+| Issues on GitHub (create, list, comment, close) | `src/store/github.js` |
+
+Hours (`hours/…`) and wrap alerts (`push/…`) are personal: on a crew phone they stay on the phone, are
+never sent and never counted as "waiting" or "proposed" (`staysOnPhone` in `src/crew-sync.js`).
+
+## Approving crew suggestions (crew sharing step 4)
+On Ana's own devices only (crew phones unchanged). After the normal sync (download, upload, PDFs),
+`ownerInbox` in `src/crew-inbox-sync.js` (called by `syncAsOwner` in `src/sync.js`) runs inside a try/catch, so it can never stop or fail the sync:
+1. **Decisions** taken on this device are sent: a comment `approved` or `not approved: <reason>` on the
+   suggestion's issue, then it's closed. An approval is sent only once its file has been uploaded (not in
+   the outbox any more); a "not approved" goes at the next sync. With no signal they wait. Crew phones read
+   these words, so they always start with "approved" / "not approved" and never name anyone.
+2. **Open suggestions** of the open film are listed (only the newest per person and file: an older one for
+   the same file counts as replaced). A key not allowed to read issues (401/403) → an empty list, no message.
+
+The list lives in `state.crewSuggestions` (not in the film data). A 📬 banner per person, like the email
+one: "Davide suggests 2 changes · 2 to review ›" → screen `crew-suggestions`: each suggestion in plain
+lines with ✕ Don't approve (optional reason) / ✓ Approve. **Approve** reads the version it started from,
+puts the changes into the film as it is NOW (Ana's later edits of other records stay) and saves like a
+normal edit (outbox → upload). If the same record changed meanwhile it shows "Changed meanwhile: …" and
+needs "✓ Approve anyway". The upload's commit message ends "— proposed by Davide, approved".
+Decisions not sent yet are kept on this device only: localStorage `sc_crew_decisions`
+(`[{ issue, decision, reason, by, path, film }]`), so they survive a reload.
+
+| What | File |
+|---|---|
+| Listing (newest per person and file), sending decisions, the closing words, the commit message ending | `src/crew-inbox.js` (tests: `tests/crew-approve.test.js`) |
+| Approve / Don't approve (the actions) | `src/crew-approve.js` |
+| Decisions waiting on this device; suggestions grouped by person | `src/crew-decisions.js` |
+| The banner and the screen | `src/screens/crew-suggestions.js`, registered in `src/main.js` |
+
+## Crew screens (crew sharing step 5)
+**Hidden on crew phones** (Ana's personal setup, not the film's): `crewHides(connection, part)` in
+`src/crew-link.js` with the list `PERSONAL_PARTS`: 🔔 Wrap alerts and the wake-up plan / ⏰ Set alarms card
+(`src/screens/hours.js`), Help → Alarms and the wrap alerts line of Help → Wrap hours (`src/screens/help.js`).
+(Since step 6 the Hours screen, `#hours` and the ⏱ wrap clock show on crew phones: see "Crew hours".)
+Ana's devices see everything as before.
+
+**My suggestions** (Projects, crew only, `<details class="more">`): what waits first ("Waiting for approval",
+"Feedback waiting to send"), then the answers newest first ("Change approved", "Change not approved — <reason>",
+"Closed", "Feedback sent"). Never a name. Each sent suggestion now also keeps its lines
+(`crewSuggestions.sent[path].lines`).
+
+**Feedback** (crew only): Projects → "Enjoyed soundcheck? Share some feedback" → stars 1–5, What helped, What
+annoyed you, Anything else. Send keeps it on the phone (localStorage `sc_crew_feedback`); the crew sync sends it
+(`sendWaitingFeedback`, never throws) as an issue "Feedback from Davide": readable lines + a JSON block
+`{ soundcheck: 'crew-feedback', version: 1, film, by, stars, helped, annoyed, text, at }`, label `crew-feedback`
+(not trusted). Then a "Feedback sent" line in the film's `crewSuggestions.log` (`kind: 'feedback'`).
+Offered once by itself: from 3 days before the film's last shooting day (to a week after), a banner "The film
+is wrapping. Enjoyed soundcheck? Share some feedback ›"; the film is remembered in `sc_feedback_offered` at once.
+
+**Ana's side**: the owner sync also lists open feedback of the film (`state.crewFeedback`): a 📬 banner
+"Feedback from the crew · n to read ›" → a Feedback section on the `crew-suggestions` screen; ✓ Mark as read
+comments "thanks" and closes the issue. **Remove / Restore** next to each name in Projects → Share with crew
+(localStorage `sc_crew_removed`): a removed name's suggestions and feedback are not shown and never closed
+(their link still opens the film; to lock someone out, make a new crew key).
+
+| What | File |
+|---|---|
+| What a crew phone hides | `crewHides` in `src/crew-link.js` |
+| Lists kept on this device only (crew key, names, removed names, waiting feedback, offered) | `src/crew-device.js` |
+| Feedback issue, reading it back, when to offer it, sending at sync | `src/crew-feedback.js` |
+| The words of "My suggestions" | `src/crew-messages.js`; shown by `src/parts/crew-log.js` |
+| Feedback form and the wrap offer | `src/parts/crew-feedback-form.js` |
+| Owner sync: decisions, suggestions, feedback, removed names; Mark as read | `src/crew-inbox-sync.js`, `src/crew-inbox.js` |
+| Tests | `tests/crew-screens.test.js` (fake GitHub) |
+
+## My call (crew sharing step 6)
+Every device (Ana's and crew) chooses in Projects → **My call** (segmented, like Screen): **General crew call**
+(the default: exactly as before) or **Personal call** + "Your name as printed on the call sheet". Kept on the
+device only: localStorage `sc_my_call` = `{ mode: 'general' | 'personal', name }` → `state.myCall`
+(`rememberMyCall` in `src/state.js`).
+`myCallFor(project, day, setting)` → `{ call, source: 'general' | 'personal' | 'fallback', note }`: Personal
+looks the name up in `calls.json` (`project.crewCalls[date]`), matching with no capitals, accents or extra
+spaces (`sameName`, also used by the wake plan's `ride_with`). Not on that day's sheet → the crew call, source
+`fallback`, note "Your name wasn't on this day's call sheet: using the crew call." (a muted line on Hours).
+`withMyCalls(project, setting)` gives the Hours screen, the ⏱ wrap clock / question and the timesheet a copy of
+the film where each day's call is "my call" (General → the very same film). The wake plan (Tomorrow card)
+starts from my call; `ride_with` still follows the colleague's call. The Schedule always shows the crew call.
+Nothing is saved from it on crew phones.
+
+**The robots follow Ana's My call (v156).** On Ana's own devices (not crew), picking Personal with a name
+also saves it in the film's `settings.json` → `commute.my_name` (`followMyCall` in `src/hours-editing.js`,
+outbox + sync like any settings change); picking General removes `my_name`. Only for a film that already has
+a `commute` (a wake-up plan): the app never adds one just for the name. The last choice on any of Ana's
+devices wins. The robots then use: her name found in that day's `calls.json` (same matching: no capitals,
+accents or extra spaces) → her own call; else the day's general call. `ride_with` unchanged (it starts from
+the colleague's call; not known → 40 min before HER call). Same rule in three places:
+`wake_plan.py` → `own_call` (the "Tomorrow" push, `tell_tomorrow` in `run.py`), `gmail-trigger.gs` →
+`ownCall` (bedtime and the automatic alarms) and the app (`myCallFor` + `wakePlan`). Tests with the same fixed
+times on both sides: `tests/robots-my-call.test.js` and `tests/test_wake_plan.py`.
+**After changing `gmail-trigger.gs`:** paste it in Apps Script, save, then Deploy → Manage deployments →
+✎ → Version: **New version** (never "New deployment"), or the alarms link keeps the old code.
+
+| What | File |
+|---|---|
+| The rules (`myCallFor`, `withMyCalls`, `sameName`, `daysNotOnSheet`) | `src/my-call.js` |
+| Projects → My call | `src/parts/my-call-switch.js` |
+| Saving it for the robots (`followMyCall`, `robotsMyNameAfter`) | `src/hours-editing.js` |
+| Tests | `tests/my-call.test.js`, `tests/robots-my-call.test.js`, `tests/test_wake_plan.py` |
+
+## Notifications per person (v156)
+Each `push/<phone>.json` (🔔 Wrap alerts, `pushEntry` in `src/parts/wrap-alerts.js`) also says whose phone it
+is: `person` (the link's name, else the device name) and `role` (`owner` or `crew`). A file without `role`
+(older phones) counts as Ana's. `send(film, title, body, url, tag, audience='owner')` in
+`pipeline/send_push.py`: `owner` → only Ana's phones (wrap question, bedtime, Tomorrow, lavs ready — every
+current caller); `all` → every phone (for film alerts later: change approved, new call sheet).
+Command line: `send_push.py <film> "<title>" "<text>" [url] [tag] [owner|all]`.
+(Crew phones don't send their push file yet: `push/…` stays on a crew phone, `staysOnPhone`.)
+Python tests: `python3 -I -m unittest discover -s tests -p "test_*.py"` (no network; `tests/test_send_push.py`).
+
+## Crew hours (crew sharing step 6)
+Hours are per person. On a crew phone the Hours screen, `#hours` and the ⏱ wrap clock / "Did today finish on
+time?" show again, counting the person's OWN hours (from My call). Their `hours/<day>.json` stay in the outbox
+on the phone, never sent (`staysOnPhone`). The film's `hours/` and `push/` files are Ana's: the crew download
+skips them (`download()` in `src/sync.js`), and `ownHoursOnly` in `src/crew-sync.js` keeps only hours / wrap
+alerts that are in the phone's outbox, so a copy of Ana's hours downloaded by an older version is dropped at
+the next sync. Hours → **📊 Export my timesheet**: the same Excel as Ana's, with only the person's block
+(`timesheetPeople(project, name)` in `src/export/timesheet.js`; their job from the IFB crew list when the name
+is there). Still hidden on crew: wake plan / alarms, 🔔 wrap alerts, Help → Alarms.

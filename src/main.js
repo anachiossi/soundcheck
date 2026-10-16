@@ -2,11 +2,16 @@
 // (with the sync badge), the tabs, the current screen and, when open, the
 // picker. Starts automatic syncing, and registers sw.js so the app itself is
 // stored on the device and opens with no signal (and updates itself).
+// A crew phone sees the ⏱ wrap clock and Hours too: the person's own hours (crew-link.js crewHides),
+// but not the 📬 production-email proposals (Ana's job). Crew links: crew-join.js.
 // Used by: index.html
 
 import { html, render, useState, useEffect } from '../vendor/preact-htm.js';
 import { useAppState, start, showScreen, clearMessage, setState } from './state.js';
 import { startAutoSync, syncNow } from './sync.js';
+import { joinFromLink, watchPendingJoin } from './crew-join.js';
+import { isCrew, crewHides } from './crew-link.js';
+import { proposedPaths, staysOnPhone } from './crew-sync.js';
 import { formatStamp } from './model.js';
 import { ScheduleScreen } from './screens/schedule.js';
 import { ScenesScreen } from './screens/scenes.js';
@@ -14,6 +19,7 @@ import { KitScreen } from './screens/kit.js';
 import { ProjectsScreen } from './screens/projects.js';
 import { Picker } from './parts/picker.js';
 import { ProposalScreen, ProposalBanner } from './screens/proposal.js';
+import { CrewSuggestionsScreen, CrewSuggestionsBanner } from './screens/crew-suggestions.js';
 import { DocumentScreen } from './screens/document.js';
 import { CuesScreen } from './screens/cues.js';
 import { CuesPickerScreen } from './screens/cues-picker.js';
@@ -33,6 +39,7 @@ import { WrapBadge, WrapQuestion } from './parts/wrap-clock.js';
 import { Icon } from './parts/icons.js';
 import { EmailBadge } from './parts/email-robot.js';
 import { ConflictBadge } from './parts/conflicts.js';
+import { FeedbackOffer } from './parts/crew-feedback-form.js';
 import { applyTheme, followPhone } from './theme.js';
 
 // Three departments, each with its own big tabs. Projects is shared.
@@ -74,12 +81,16 @@ function DepartmentSwitch({ department }) {
 function SyncBadge({ state }) {
   const { project, online, connection, sync } = state;
   if (!project) return null;
-  const waiting = Object.keys(project.outbox || {}).length;
+  // a crew phone's hours stay on the phone: never "waiting" (crew-sync.js)
+  const waiting = Object.keys(project.outbox || {}).filter(path => !isCrew(connection) || !staysOnPhone(path)).length;
   const conflicts = Object.keys(project.conflicts || {}).length;
   if (conflicts) return html`<${ConflictBadge} project=${project} />`;
   if (!online) return html`<span class="badge badge--offline">✈ Offline${waiting ? ` · ${waiting} waiting` : ''}</span>`;
   if (sync.running) return html`<span class="badge">↻ Syncing…</span>`;
-  if (waiting) return html`<button class="badge badge--warn" onClick=${() => syncNow({ loud: true })}>● ${waiting} waiting</button>`;
+  // a crew phone: changes already sent as suggestions are "proposed" (crew-sync.js)
+  const proposed = isCrew(connection) ? proposedPaths(project).length : 0;
+  if (waiting > proposed) return html`<button class="badge badge--warn" onClick=${() => syncNow({ loud: true })}>● ${waiting - proposed} waiting</button>`;
+  if (proposed) return html`<span class="badge">● ${proposed} proposed</span>`;
   if (!connection) return html`<span class="badge">data ${formatStamp(project.data_as_of)}</span>`;
   return html`<span class="badge">✓ ${formatStamp(project.data_as_of)}</span>`;
 }
@@ -98,14 +109,16 @@ function AppVersion() {
 
 function App() {
   const state = useAppState();
-  const { project, screen, message, busyText } = state;
+  const { project, screen, message, busyText, connection } = state;
   const current = project ? screen : 'projects';
   if (current === 'cues') return html`<${CuesScreen} key=${state.cuesScene} state=${state} />`; // full screen
   // the Scene Map and Timeline are moments to focus: full screen too, no title, badges or tabs
   if (current === 'cues-map') return html`<main class="focus"><${CuesMapScreen} state=${state} /></main>`;
   if (current === 'cues-timeline') return html`<main class="focus"><${CuesTimelineScreen} state=${state} /></main>`;
   const tabs = tabsOf(state.department);
-  const Screen = current === 'proposal' ? ProposalScreen
+  const emailProposals = !crewHides(connection, 'email-proposals'); // a crew phone: never (Ana's job)
+  const Screen = current === 'proposal' && emailProposals ? ProposalScreen
+    : current === 'crew-suggestions' ? CrewSuggestionsScreen
     : current === 'document' ? DocumentScreen
     : current === 'hours' ? HoursScreen
     : current === 'help' ? HelpScreen
@@ -119,7 +132,7 @@ function App() {
       <div class="topbar__title">
         <span class="topbar__film">${project ? project.name : 'soundcheck'}</span>
       </div>
-      <div class="topbar__status"><${SyncBadge} state=${state} /> <${EmailBadge} state=${state} /> <${WrapBadge} project=${project} /></div>
+      <div class="topbar__status"><${SyncBadge} state=${state} /> ${!isCrew(connection) && html`<${EmailBadge} state=${state} />`} <${WrapBadge} project=${project} myCall=${state.myCall} /></div>
       ${project && html`<${DepartmentSwitch} department=${state.department} />`}
     </header>
     <nav class="tabs">
@@ -129,8 +142,10 @@ function App() {
     </nav>
     ${message && html`
       <div class=${'message message--' + message.kind} onClick=${clearMessage}>${message.text} <span>✕</span></div>`}
-    ${project && html`<${WrapQuestion} project=${project} />`}
-    ${project && !['proposal', 'document'].includes(current) && html`<${ProposalBanner} project=${project} />`}
+    ${project && html`<${WrapQuestion} project=${project} myCall=${state.myCall} />`}
+    ${project && isCrew(connection) && html`<${FeedbackOffer} key=${project.folder} state=${state} />`}
+    ${project && emailProposals && !['proposal', 'document', 'crew-suggestions'].includes(current) && html`<${ProposalBanner} project=${project} />`}
+    ${project && !['proposal', 'document', 'crew-suggestions'].includes(current) && html`<${CrewSuggestionsBanner} state=${state} />`}
     <main class="page"><${Screen} state=${state} /></main>
     <footer class="footer">© 2025–2026 Ana Chiossi · soundcheck<${AppVersion} /></footer>
     <${Picker} state=${state} />
@@ -143,15 +158,19 @@ applyTheme();   // light / dark (Projects → Screen)
 followPhone();
 render(html`<${App} />`, document.getElementById('app'));
 // a link into the app opens that screen: '#hours' (the "Tomorrow" notification),
-// '#lavs-18' (the "Day 18 lavs ready" notification → lav-share.js)
+// '#lavs-18' (the "Day 18 lavs ready" notification → lav-share.js), '#join=…' (a crew link)
 function openFromLink() {
   const lavs = /^#lavs-(\d+)$/.exec(location.hash);
+  if (location.hash.startsWith('#join=')) return joinFromLink();
   if (location.hash === '#hours') setState({ screen: 'hours', department: 'mics' });
   else if (lavs) setState({ screen: 'lav-share', lavDay: Number(lavs[1]), department: 'mics' });
   else return;
   history.replaceState(null, '', location.pathname + location.search);
 }
-start().then(() => { openFromLink(); startAutoSync(); });
+
+// In this order: the saved film first, then a link (a crew link downloads the film before the
+// first sync), then automatic syncing, then a crew film still waiting for signal (crew-join.js).
+start().then(openFromLink).then(startAutoSync).then(watchPendingJoin);
 addEventListener('hashchange', openFromLink);
 
 // Updates: look for a new version at start and whenever you come back to the

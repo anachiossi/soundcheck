@@ -4,7 +4,7 @@
 //                 (a case in a cart: its contents one step further in)
 // Used by: screens/gear.js
 
-import { truckOf, topItems, contentsOf, colourOf, ticked, holds } from '../gear-rules.js';
+import { truckOf, topItems, contentsOf, colourOf, ticked, holds, quantityText } from '../gear-rules.js';
 import { newCanvas, box, text, font } from './draw.js';
 import { textColourFor } from '../colour.js';
 import { WIDTH, PAD, fontsReady, header, footer, FOOTER_HEIGHT, cropHeight } from './image.js';
@@ -36,7 +36,7 @@ export async function gearImage(project, what) {
       box(ctx, x + 62, y + 12, pillWidth, ROW - 22, (ROW - 22) / 2, item.color || '#e2e8f0', item.color ? null : '#cbd5e1', 2);
       text(ctx, name, x + 78, y + 31, pillWidth - 28, item.color ? textColourFor(item.color) : '#0f172a');
       font(ctx, 400, 22);
-      text(ctx, [item.brand, item.qty > 1 ? `×${item.qty}` : ''].filter(Boolean).join(' · '), WIDTH - PAD - 16, y + 31, 220, '#475569', 'right');
+      text(ctx, [item.brand, quantityText(item)].filter(Boolean).join(' · '), WIDTH - PAD - 16, y + 31, 220, '#475569', 'right');
     }
     y += ROW;
   }

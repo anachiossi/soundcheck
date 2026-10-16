@@ -13,10 +13,16 @@
 //   1. script.google.com (logged in as the production mailbox) → New project → paste this file
 //   2. Project settings → Script properties → GITHUB_TOKEN = the GitHub key (only the soundcheck-data
 //      repository; Actions: read and write, Variables: read and write, Contents: read-only)
+//      (optional) REPO = owner/name of the film's own data repo; empty = anachiossi/soundcheck-data
 //   3. Run setup() once and allow access to Gmail → it creates the 10-minute timer
 //   4. Triggers (clock icon) → the timer → Failure notifications: "Notify me immediately"
 
-const REPO = 'anachiossi/soundcheck-data';
+// The data repo it watches. One repo per film (docs/CREW_SHARING.md → "Setting up the next film"):
+// set the script property REPO = 'owner/name' of the film's repo; without it, soundcheck-data as before.
+const DEFAULT_REPO = 'anachiossi/soundcheck-data';
+function repo() {
+  return PropertiesService.getScriptProperties().getProperty('REPO') || DEFAULT_REPO;
+}
 const WORKFLOW = 'emails.yml';
 const SEARCH = 'has:attachment filename:pdf (subject:ODG OR subject:STRALCI OR subject:PDL) newer_than:3d';
 const REMEMBER = 300; // how many message ids to remember (already seen = no new run)
@@ -114,15 +120,16 @@ function checkBedtime() {
     const c = Object.assign({}, COMMUTE, settings.commute);
     const day = (readRepo(`projects/${film}/schedule.json`, true) || [])
       .filter(row => row.date === tomorrow && row.call).sort((a, b) => a.order - b.order)[0];
-    const calls = c.ride_with ? readRepo(`projects/${film}/calls.json`, true) || {} : {};
-    const call = day && rideStart(c, minutesOf(day.call), calls[day.date]);
+    const calls = c.ride_with || c.my_name ? readRepo(`projects/${film}/calls.json`, true) || {} : {};
+    const own = day ? ownCall(c, day.call, calls[day.date]) : null;
+    const call = day && rideStart(c, own, calls[day.date]);
     if (call === null || call === undefined) continue;
     const wake = call - c.meet_before_call - c.travel_max - c.get_ready;
     const bedtime = 24 * 60 + wake - c.sleep_hours * 60; // minutes from today's midnight
     if (minute < bedtime || minute > bedtime + 180) continue;
     const clock = m => `${String(Math.floor(((m % 1440) + 1440) % 1440 / 60)).padStart(2, '0')}:${String(((m % 60) + 60) % 60).padStart(2, '0')}`;
     startWorkflow(ALERTS, { film, title: '💤 Time to sleep', url: './#hours', tag: 'sleep',
-      body: `Tomorrow D${String(day.day).padStart(2, '0')}: wake ${clock(wake)} · call ${day.call}` });
+      body: `Tomorrow D${String(day.day).padStart(2, '0')}: wake ${clock(wake)} · call ${clock(own)}` });
     sent.push(key);
     properties.setProperty('WRAP_SENT', JSON.stringify(sent.slice(-100)));
     console.log(`Bedtime for ${film}: wake ${clock(wake)}`);
@@ -161,8 +168,8 @@ function alarmAnswer(now) {
     const schedule = withWaitingOdgTimes(readRepo(`projects/${film}/schedule.json`, true) || [], openOdgs(film));
     const day = schedule.filter(row => row.date === target && row.call).sort((a, b) => a.order - b.order)[0];
     const commute = Object.assign({}, COMMUTE, settings.commute);
-    const calls = commute.ride_with ? readRepo(`projects/${film}/calls.json`, true) || {} : {};
-    const plan = day && wakeAndLeave(commute, rideStart(commute, minutesOf(day.call), calls[day.date]));
+    const calls = commute.ride_with || commute.my_name ? readRepo(`projects/${film}/calls.json`, true) || {} : {};
+    const plan = day && wakeAndLeave(commute, rideStart(commute, ownCall(commute, day.call, calls[day.date]), calls[day.date]));
     if (plan) plans.push(plan);
   }
   if (!plans.length) return 'none';
@@ -182,10 +189,27 @@ function wakeAndLeave(c, call) {
 // ride_gap_if_unknown (40). Same as hours-rules.js → rideCall.
 function rideStart(c, call, dayCalls) {
   if (call === null || call === undefined || !c.ride_with) return call;
-  const plain = text => String(text).toLowerCase().split(/\s+/).join(' ');
-  const found = Object.keys(dayCalls || {}).find(name => plain(name) === plain(c.ride_with.trim()));
-  const theirs = found ? minutesOf(dayCalls[found]) : null;
-  return theirs === null || theirs === undefined ? call - (c.ride_gap_if_unknown == null ? 40 : c.ride_gap_if_unknown) : theirs;
+  const theirs = callOf(c.ride_with, dayCalls);
+  return theirs === null ? call - (c.ride_gap_if_unknown == null ? 40 : c.ride_gap_if_unknown) : theirs;
+}
+
+// Ana's own call (settings commute.my_name, saved by the app when she picks "Personal call" in My call,
+// Ana 16 Oct): her name's call on that day's calls.json; not there (or no my_name) → the day's general call.
+// Same as the app (my-call.js) and pipeline/wake_plan.py → own_call.
+// After changing this file: script.google.com → Deploy → Manage deployments → ✎ → Version: New version,
+// or the alarms web app keeps running the old code (the 10-minute timer picks up the saved file by itself).
+function ownCall(c, generalCall, dayCalls) {
+  const mine = c.my_name ? callOf(c.my_name, dayCalls) : null;
+  return mine === null ? minutesOf(generalCall) : mine;
+}
+
+// The call printed next to this name that day, in minutes, or null. Names match with no capitals, accents
+// or extra spaces ('Inês  Rossi' = 'ines rossi'), like the app's plainName (my-call.js).
+function callOf(name, dayCalls) {
+  const plain = text => String(text || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim().split(/\s+/).join(' ');
+  if (!plain(name)) return null;
+  const found = Object.keys(dayCalls || {}).find(who => plain(who) === plain(name));
+  return found ? minutesOf(dayCalls[found]) : null;
 }
 
 const clockOf = m => `${String(Math.floor(((m % 1440) + 1440) % 1440 / 60)).padStart(2, '0')}:${String(((m % 60) + 60) % 60).padStart(2, '0')}`;
@@ -243,7 +267,7 @@ function minutesOf(time) {
 
 // A file of the data repo (json = true: parsed) or a folder's list; null when it isn't there.
 function readRepo(path, json) {
-  const response = UrlFetchApp.fetch(`https://api.github.com/repos/${REPO}/contents/${encodeURI(path)}`, {
+  const response = UrlFetchApp.fetch(`https://api.github.com/repos/${repo()}/contents/${encodeURI(path)}`, {
     headers: { Authorization: `Bearer ${PropertiesService.getScriptProperties().getProperty('GITHUB_TOKEN')}`,
                Accept: json ? 'application/vnd.github.raw+json' : 'application/vnd.github+json' },
     muteHttpExceptions: true,
@@ -256,7 +280,7 @@ function readRepo(path, json) {
 }
 
 function startWorkflow(workflow, inputs) {
-  const response = UrlFetchApp.fetch(`https://api.github.com/repos/${REPO}/actions/workflows/${workflow}/dispatches`, {
+  const response = UrlFetchApp.fetch(`https://api.github.com/repos/${repo()}/actions/workflows/${workflow}/dispatches`, {
     method: 'post',
     contentType: 'application/json',
     headers: { Authorization: `Bearer ${PropertiesService.getScriptProperties().getProperty('GITHUB_TOKEN')}`,
@@ -270,7 +294,7 @@ function startWorkflow(workflow, inputs) {
 // "Gmail was checked now" → GitHub variable LAST_GMAIL_CHECK (read by the app's ✉ badge).
 // Never fails the check: without the Variables permission the robot still starts.
 function reportChecked() {
-  const url = `https://api.github.com/repos/${REPO}/actions/variables`;
+  const url = `https://api.github.com/repos/${repo()}/actions/variables`;
   const body = { name: 'LAST_GMAIL_CHECK', value: new Date().toISOString() };
   let code = github(`${url}/LAST_GMAIL_CHECK`, 'patch', body).getResponseCode();
   if (code === 404) code = github(url, 'post', body).getResponseCode(); // the first time: create it
@@ -291,7 +315,7 @@ function github(url, method, body) {
 function startRobot(reason) {
   const token = PropertiesService.getScriptProperties().getProperty('GITHUB_TOKEN');
   if (!token) throw new Error('GITHUB_TOKEN is missing (Project settings → Script properties).');
-  const response = UrlFetchApp.fetch(`https://api.github.com/repos/${REPO}/actions/workflows/${WORKFLOW}/dispatches`, {
+  const response = UrlFetchApp.fetch(`https://api.github.com/repos/${repo()}/actions/workflows/${WORKFLOW}/dispatches`, {
     method: 'post',
     contentType: 'application/json',
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' },

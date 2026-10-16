@@ -1,23 +1,38 @@
 // projects.js — the Projects screen.
 // • Connect this device to the data (the private soundcheck-data repo), once.
-// • Films: the ones in the repo (tap to download) and the ones on this device.
+// • Films: the ones in the repos (tap to download) and the ones on this device.
+//   Film repos (Ana's devices): the extra repos, one per film, her key reads (parts/film-repos.js).
 // • The open film: sync status, "Sync now", backup file; its documents (📄 script, 📄 latest PDL,
 //   offline) and ⏱ Hours (the week / whole film for production, fix any day's wrap).
+// • Share with crew (Ana's devices, film open): a link per person (parts/crew-share.js).
+//   A crew phone sees "Connected as Davide (crew)" and no Connect or Share with crew (⏱ Hours = its own);
+//   instead: "My suggestions" (parts/crew-log.js) and "Enjoyed soundcheck? Share some feedback"
+//   (parts/crew-feedback-form.js).
+// • My call: General crew call / Personal call (parts/my-call-switch.js, every device).
 // • Screen: Auto / Light / Dark (parts/theme-switch.js).
-// • ? Help → the Help page (screens/help.js): offline use, wrap alerts, hearing the lines…
+// • ? Help → the Help page (screens/help.js): offline use, wrap hours, hearing the lines…
 // Each film has its own database on the device; old films are kept.
 // Used by: main.js
 
 import { html, useState, useEffect } from '../../vendor/preact-htm.js';
 import { formatStamp } from '../model.js';
 import { openProject, importProjectFile, downloadProjectFile, saveConnection, forgetConnection, showMessage, setState } from '../state.js';
-import { syncNow, downloadFilm, loadFilmList } from '../sync.js';
+import { syncNow } from '../sync.js';
+import { downloadFilm, loadFilmList, filmsNote } from '../films.js';
 import { checkConnection } from '../store/github.js';
 import { Icon } from '../parts/icons.js';
 import { ThemeSwitch } from '../parts/theme-switch.js';
 import { cuesSummary } from '../cues-rules.js';
 import { tagOf } from '../model.js';
 import { saveTag } from '../kit-editing.js';
+import { isCrew } from '../crew-link.js';
+import { ShareWithCrew } from '../parts/crew-share.js';
+import { MySuggestions } from '../parts/crew-log.js';
+import { FeedbackButton } from '../parts/crew-feedback-form.js';
+import { MyCallSwitch } from '../parts/my-call-switch.js';
+import { staysOnPhone } from '../crew-sync.js';
+import { FilmRepos } from '../parts/film-repos.js';
+import { onDevice } from '../film-source.js';
 
 export function ProjectsScreen({ state }) {
   const { project, projects, connection, films, online } = state;
@@ -28,24 +43,31 @@ export function ProjectsScreen({ state }) {
     ${!connection && html`<${Connect} />`}
     ${connection && html`
       <h2 class="section-title">Films</h2>
-      ${films === null && html`<p class="muted">${online ? 'Looking for films…' : 'No signal: showing films on this device.'}</p>`}
+      ${films === null && filmsNote(state) && html`<p class="muted">${filmsNote(state)}</p>`}
       <div class="project-list">
-        ${(films || []).filter(f => f.id !== project?.id).map(film => {
-          const here = projects.some(p => p.id === film.id);
+        ${(films || []).filter(f => !(f.id === project?.id && onDevice(f, [project], connection) === 'here')).map(film => {
+          const here = onDevice(film, projects, connection) === 'here'; // same id AND same repo (film-source.js)
+          const from = film.showRepo ? ` · ${film.owner}/${film.repo}` : ''; // two films with the same id
           return html`
-            <button key=${film.id} class="project" onClick=${() => (here ? openProject(film.id) : downloadFilm(film))}>
-              <b>${film.name}</b><small>${here ? 'on this device · open' : 'download to this device'}</small>
+            <button key=${`${film.owner}/${film.repo}/${film.id}`} class="project" onClick=${() => (here ? openProject(film.id) : downloadFilm(film))}>
+              <b>${film.name}</b><small>${here ? 'on this device · open' : film.clash ? "same id as another film: can't download" : 'download to this device'}${from}</small>
             </button>`;
         })}
       </div>`}
-    ${projects.filter(p => p.id !== project?.id && !(films || []).some(f => f.id === p.id)).map(p => html`
+    ${projects.filter(p => p.id !== project?.id && !(films || []).some(f => onDevice(f, [p], connection) === 'here')).map(p => html`
       <button key=${p.id} class="project" onClick=${() => openProject(p.id)}>
         <b>${p.name}</b><small>on this device · data as of ${formatStamp(p.data_as_of)}</small>
       </button>`)}
 
-    ${connection && html`
+    ${connection && isCrew(connection) && html`
+      <p class="muted connection">Connected as <b>${connection.name}</b> (crew). <button class="link" onClick=${forgetConnection}>Disconnect</button></p>
+      ${project && html`<${MySuggestions} state=${state} /><${FeedbackButton} state=${state} />`}`}
+    ${connection && !isCrew(connection) && html`
       <p class="muted connection">Connected to ${connection.owner}/${connection.repo}${connection.branch !== 'main' ? ` (${connection.branch})` : ''}
-        ${' '}as <b>${connection.device}</b>. <button class="link" onClick=${forgetConnection}>Disconnect</button></p>`}
+        ${' '}as <b>${connection.device}</b>. <button class="link" onClick=${forgetConnection}>Disconnect</button></p>
+      <${FilmRepos} connection=${connection} />`}
+
+    ${connection && !isCrew(connection) && project && html`<${ShareWithCrew} state=${state} />`}
 
     <details class="more"><summary>Backup files</summary>
       ${project && html`<button class="btn" onClick=${downloadProjectFile}><${Icon} name="download" /> Save backup file of ${project.name}</button>`}
@@ -54,6 +76,7 @@ export function ProjectsScreen({ state }) {
       </label>
     </details>
 
+    <${MyCallSwitch} state=${state} />
     <${ThemeSwitch} />
 
     <button class="btn help-link" onClick=${() => setState({ screen: 'help' })}>? Help</button>`;
@@ -61,7 +84,8 @@ export function ProjectsScreen({ state }) {
 
 function OpenFilm({ state }) {
   const { project, connection, sync, online } = state;
-  const waiting = Object.keys(project.outbox || {}).length;
+  // a crew phone's own hours stay on the phone: never "waiting to upload" (crew-sync.js)
+  const waiting = Object.keys(project.outbox || {}).filter(path => !isCrew(connection) || !staysOnPhone(path)).length;
   const conflicts = Object.keys(project.conflicts || {}).length;
   const status = sync.running ? 'Syncing…'
     : conflicts ? `⚠ ${conflicts} change(s) made on two devices: open them to choose`
@@ -88,7 +112,7 @@ function FilmTag({ project }) {
   return html`<button class="film-tag" onClick=${() => setTyping(tagOf(project))} title="The film's tag: exported files start with it">${tagOf(project)}</button>`;
 }
 
-// 📄 Script · 📄 PDL (when they are on the device) · ⏱ Hours
+// 📄 Script · 📄 PDL (when they are on the device) · ⏱ Hours (on a crew phone: the person's own)
 function FilmDocuments({ project }) {
   const script = cuesSummary(project);
   const doc = (file, title) => {

@@ -105,7 +105,9 @@ def run(film_folder, include_past=False):
 def tell_tomorrow(film, odgs):
     """A new ODG for an upcoming day → a notification to the phones with "🔔 Wrap alerts" on:
     "Tomorrow D10 · call 10:00 / ⏰ wake 07:00 · 🚪 leave 07:45–08:00 · 💤 sleep 23:00"; a tap opens the
-    app's Hours screen with ⏰ Set alarms. Only for films with a wake-up plan (settings "commute")."""
+    app's Hours screen with ⏰ Set alarms. Only for films with a wake-up plan (settings "commute").
+    The call is Ana's own (commute "my_name" found in calls.json that day), else the ODG's general call
+    (wake_plan.py). Only to Ana's phones (audience 'owner'): it is her plan, not the crew's."""
     from wake_plan import commute_of, wake_plan
     commute = commute_of(film)
     if not odgs or not commute or not os.environ.get("VAPID_PRIVATE_KEY") or not any((film / "push").glob("*.json")):
@@ -118,7 +120,7 @@ def tell_tomorrow(film, odgs):
             ride = f" · {commute['ride_with'].split()[0]} {plan['ride_call']}" if plan["ride_call"] else ""
             send(film, f"Tomorrow D{odg['day']:02d} · call {plan['call']}{ride}",
                  f"⏰ wake {plan['wake']} · 🚪 leave {plan['leave_from']}–{plan['leave_to']} · 💤 sleep {plan['sleep']} — tap to set the alarms",
-                 "./#hours", tag="tomorrow")
+                 "./#hours", tag="tomorrow", audience="owner")
 
 
 def tell_lavs(film, odgs):
@@ -131,7 +133,7 @@ def tell_lavs(film, odgs):
     for odg in odgs:
         scenes = " · ".join(odg.get("scene_ids") or [])
         send(film, f"🎙 D{odg['day']:02d} lavs ready", f"Scenes {scenes} — tap to share the mic list (check the draft first)",
-             f"./#lavs-{odg['day']}", tag=f"lavs-{odg['day']}")
+             f"./#lavs-{odg['day']}", tag=f"lavs-{odg['day']}", audience="owner")
 
 
 def add_late_sides(film, other_sides):

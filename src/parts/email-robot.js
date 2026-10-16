@@ -7,6 +7,7 @@ import { html, useEffect, useState } from '../../vendor/preact-htm.js';
 import { formatStamp } from '../model.js';
 import { robotHealth, ago, checkEmailsNow, refreshEmailRobot } from '../email-robot.js';
 import { Icon } from './icons.js';
+import { connectionFor } from '../film-source.js';
 
 const RUN_TEXT = { success: '✓ finished', failure: '✗ failed', cancelled: 'cancelled' };
 
@@ -36,7 +37,8 @@ export function EmailBadge({ state }) {
 }
 
 function EmailPanel({ state, robot, health, close }) {
-  const { connection, online } = state;
+  const { online } = state;
+  const connection = connectionFor(state.project, state.connection); // the open film's repo
   const run = robot.run;
   const actions = `https://github.com/${connection.owner}/${connection.repo}/actions/workflows/emails.yml`;
   return html`

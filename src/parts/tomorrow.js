@@ -7,6 +7,8 @@
 // is reviewed (hours-rules.js nextShootingDay); an ODG waiting for review is shown above — tap it to review.
 // Also: the five numbers of the film (settings.json → "commute"), editable. Riding with someone
 // (commute.ride_with): the times follow their call on the ODG, Ana's own call stays on top.
+// "My call" (my-call.js): with Personal, the plan starts from the person's own call on the call sheet
+// (also when riding with someone and their call isn't known yet).
 // Used by: screens/hours.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
@@ -15,6 +17,7 @@ import { COMMUTE, commuteOf, wakePlan, nextShootingDay } from '../hours-rules.js
 import { saveSettings } from '../kit-editing.js';
 import { getState, setState } from '../state.js';
 import { undecided } from '../proposal-rules.js';
+import { myCallFor } from '../my-call.js';
 
 export const SHORTCUT = 'soundcheck alarms';
 
@@ -23,9 +26,9 @@ export const SHORTCUT = 'soundcheck alarms';
 export const alarmsLink = (project, plan) => `shortcuts://run-shortcut?name=${encodeURIComponent(SHORTCUT)}&input=text&text=${
   encodeURIComponent(`${plan.wake};${plan.leaveFrom}`)}`;
 
-export function Tomorrow({ project }) {
+export function Tomorrow({ project, myCall }) {
   const day = nextShootingDay(project);
-  const plan = day && wakePlan(project, day);
+  const plan = day && wakePlan(project, { ...day, call: myCallFor(project, day, myCall).call });
   const waiting = Object.values(project.proposals || {}).filter(p => p.id.startsWith('odg-') && p.status === 'open' && undecided(p).length);
   if (!commuteOf(project)) return html`<${CommuteSettings} project=${project} />`;
   return html`

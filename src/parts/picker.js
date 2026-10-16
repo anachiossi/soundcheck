@@ -11,7 +11,7 @@ import { usedByOtherRows, sameDaySuggestions, preferredFor, lavNotUsed } from '.
 import { warningsFor, warningText } from '../sound-rules.js';
 import { setCell, closePicker, toggleAcc } from '../editing.js';
 import { accessoryPool, usualFor, usedElsewhere, accSide } from '../accessories.js';
-import { itemGroups } from '../gear-rules.js';
+import { itemGroups, quantityText } from '../gear-rules.js';
 import { CharacterPill, TxPill, LavPill } from './pills.js';
 import { Icon } from './icons.js';
 
@@ -102,7 +102,7 @@ function AccPicker({ project, edit, rowIndex, side }) {
         onClick=${() => toggleAcc(rowIndex, item.id)} aria-pressed=${chosen.has(item.id)}>
       <span class=${'gear-dot' + (item.color ? '' : ' gear-dot--none')} style=${item.color ? `background:${item.color}` : ''}></span>
       <span class="acc-option__name">${item.name}</span>
-      <small>${item.qty > 1 ? `×${item.qty}` : ''}${used ? ` · ${full ? 'all in use' : `${used} in use`}` : ''}</small>
+      <small>${quantityText(item)}${used ? ` · ${full ? 'all in use' : `${used} in use`}` : ''}</small>
     </button>`;
   };
   return html`

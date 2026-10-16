@@ -1,13 +1,15 @@
 // state.js — the ONE place where the app's data lives.
 // Screens read `state` and call actions; they never change data themselves.
-// Actions live here (navigation, films on the device), in editing.js (changing
-// presets) and in sync.js (GitHub). After every change the screen is redrawn.
+// Actions live here (navigation, films on the device; the extra film repos in film-repos.js), in editing.js (changing
+// presets) and in sync.js (GitHub); the crew lists kept on this device only in crew-device.js.
+// After every change the screen is redrawn.
 // Used by: main.js, editing.js, sync.js and every screen.
 
 import { useEffect, useState } from '../vendor/preact-htm.js';
 import * as local from './store/local.js';
 import { defaultDay } from './model.js';
 import { upgradeOutbox } from './store/repo-files.js';
+import { isCrew } from './crew-link.js';
 
 let state = {
   project: null,            // the open film (see model.js)
@@ -27,8 +29,20 @@ let state = {
   lookup: [],               // scene ids chosen in the Scenes screen
   online: navigator.onLine,
   message: null,            // { kind: 'ok' | 'error', text }
-  connection: loadJson('sc_github', null), // GitHub: { owner, repo, branch, token, device }
-  films: null,              // films in the repo (null = not looked yet)
+  connection: loadJson('sc_github', null), // GitHub: { owner, repo, branch, token, device, repos? } (+ role: 'crew', name, folder on a crew phone)
+  crewKey: loadJson('sc_crew_key', ''),     // Share with crew: the film's crew key (this device only, never synced; crew-device.js)
+  crewNames: loadJson('sc_crew_names', []), // names crew links were made for (this device only)
+  crewRemoved: loadJson('sc_crew_removed', []), // names removed: their suggestions are ignored (crew-device.js)
+  crewFeedback: [],         // owner: the crew's unread feedback, from the last sync (crew-inbox.js)
+  feedbackWaiting: loadJson('sc_crew_feedback', []),    // crew phone: feedback not sent yet (crew-feedback.js)
+  feedbackOffered: loadJson('sc_feedback_offered', []), // crew phone: films whose feedback line was offered
+  feedbackOpen: false,      // crew phone: the feedback form is open (Projects)
+  myCall: loadJson('sc_my_call', { mode: 'general', name: '' }), // Projects → My call: whose call my hours count from (my-call.js)
+  crewSuggestions: [],      // owner: the crew's open suggestions, from the last sync (crew-inbox.js)
+  crewDecisions: loadJson('sc_crew_decisions', []), // owner: decisions not sent yet (crew-decisions.js)
+  crewCantAnswer: false,    // owner: the key can't comment on / close issues (crew-inbox-sync.js)
+  crewBy: null,             // the person whose suggestions the 'crew-suggestions' screen shows
+  films: null, filmsFailed: false, // films in the repos (null = not looked yet); filmsFailed: the last look failed
   sync: { running: false, error: null },
   emailRobot: null,         // ✉ { checkedAt, run, noAccess, starting } (email-robot.js)
   edit: null,               // scene being edited: { sceneId, rows }
@@ -89,6 +103,21 @@ export function saveConnection(connection) {
   setState({ connection, films: null });
 }
 
+// A crew link opened on this phone (main.js): connect as that person. A newer link replaces an
+// older crew connection; a device connected as the owner is never replaced (returns false).
+export function joinAsCrew(link) {
+  if (state.connection && !isCrew(state.connection)) return false;
+  const { owner, repo, branch, token, name, folder } = link;
+  saveConnection({ owner, repo, branch, token, device: name, role: 'crew', name, folder }); // folder: the only film it sees
+  return true;
+}
+
+// Projects → My call (my-call.js): the general crew call or the person's own; this device only.
+export function rememberMyCall(myCall) {
+  try { localStorage.setItem('sc_my_call', JSON.stringify(myCall)); } catch { /* not remembered after a reload */ }
+  setState({ myCall });
+}
+
 export function forgetConnection() {
   try { localStorage.removeItem('sc_github'); } catch { /* ignore */ }
   setState({ connection: null, films: null });
@@ -109,7 +138,8 @@ export async function start() {
 
   const { projectId: _, ...choices } = prefs;
   // A screen that needs a scene / document / proposal it doesn't have → the Schedule.
-  const needs = { cues: choices.cuesScene, 'cues-map': choices.cuesScene, 'cues-timeline': choices.cuesScene, document: choices.documentPath, proposal: choices.proposalId };
+  const needs = { cues: choices.cuesScene, 'cues-map': choices.cuesScene, 'cues-timeline': choices.cuesScene, document: choices.documentPath, proposal: choices.proposalId,
+    'crew-suggestions': null }; // the crew's suggestions come back with the next sync
   if (choices.screen in needs && !needs[choices.screen]) Object.assign(choices, { screen: 'schedule', department: 'mics' });
   const draft = loadJson('sc_edit', null);
   const edit = draft?.projectId === project.id ? { sceneId: draft.sceneId, rows: draft.rows } : null;
@@ -139,7 +169,7 @@ export async function openProject(projectId) {
   if (!saved) return showMessage('error', 'That film is not on this device.');
   const project = upgradeOutbox(saved);
   setState({ project, screen: 'schedule', lookup: [], edit: null, picker: null,
-    day: defaultDay(project), week: null });
+    day: defaultDay(project), week: null, emailRobot: null }); // ✉ of this film comes with its sync
 }
 
 // Backup file → device. Unsent changes already on the device are kept.
@@ -149,7 +179,7 @@ export async function importProjectFile(file) {
     const existing = await local.loadProject(incoming.id);
     const kept = existing && upgradeOutbox(existing);
     const project = upgradeOutbox({ outbox: {}, conflicts: {}, shas: {}, ...incoming,
-      ...(kept && { outbox: kept.outbox, conflicts: kept.conflicts }) });
+      ...(kept && { outbox: kept.outbox, conflicts: kept.conflicts }), source: incoming.source ?? kept?.source });
     await local.saveProject(project);
     await openProject(project.id);
     showMessage('ok', `${project.name} is now saved on this device.`);

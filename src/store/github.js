@@ -1,7 +1,10 @@
 // github.js — the only file that talks to GitHub: reads and writes the film
 // files in the private soundcheck-data repo.
 // connection = { owner, repo, branch, token, device }   (saved on this device only)
-// Used by: sync.js, screens/projects.js, email-robot.js
+//   a crew phone (crew-link.js) also has role: 'crew', name: 'Davide' and its film's folder;
+//   it never writes files, only issues (its suggestions, crew-sync.js).
+// Each film may live in its own repo: the connection for a film comes from film-source.js.
+// Used by: sync.js, crew-sync.js, films.js, film-repos.js, screens/projects.js, email-robot.js
 
 const API = 'https://api.github.com';
 
@@ -72,6 +75,12 @@ export async function checkConnection(connection) {
   return repo.full_name;
 }
 
+// Projects → Film repos: can the key read this repo? Returns its full name (or throws).
+export async function checkCanRead(connection) {
+  const repo = await call(connection, '');
+  return repo.full_name;
+}
+
 // Where the repo is now: the latest commit, and every file path → sha (a fingerprint
 // of the file's content: same sha = same content, nothing to download).
 export async function readTree(connection) {
@@ -115,14 +124,56 @@ export async function commitFiles(connection, base, files, message) {
   return commit.sha;
 }
 
-// Every film in the repo: [{ id, name, folder }]
+// ---- issues: crew suggestions (crew-sync.js) -----------------------------------------
+// A crew key may write issues but never files: a crew phone's changes go here as suggestions.
+
+// Returns the new issue: { number, … }
+export const createIssue = (connection, { title, body, labels = [] }) => call(connection, '/issues',
+  { method: 'POST', body: JSON.stringify({ title, body, labels }) });
+
+// Issues (no pull requests), newest first, at most 5 pages of 100.
+// state: 'open' | 'closed' | 'all'; since: only issues updated after this time (ISO), optional.
+export async function listIssues(connection, { state = 'all', since } = {}) {
+  const issues = [];
+  for (let page = 1; page <= 5; page++) {
+    const query = `state=${state}&per_page=100&page=${page}${since ? `&since=${encodeURIComponent(since)}` : ''}`;
+    const batch = await call(connection, `/issues?${query}`);
+    issues.push(...batch.filter(issue => !issue.pull_request));
+    if (batch.length < 100) break;
+  }
+  return issues;
+}
+
+// The comments of one issue, oldest first (the last one says why it was closed).
+export const listComments = (connection, number) => call(connection, `/issues/${number}/comments?per_page=100`);
+
+export const commentIssue = (connection, number, text) => call(connection, `/issues/${number}/comments`,
+  { method: 'POST', body: JSON.stringify({ body: text }) });
+
+// reason: 'completed' (done) or 'not_planned' (replaced, not wanted)
+export const closeIssue = (connection, number, reason = 'completed') => call(connection, `/issues/${number}`,
+  { method: 'PATCH', body: JSON.stringify({ state: 'closed', state_reason: reason }) });
+
+// Where a film was found (film-source.js): it remembers its repo.
+const whereFrom = connection => ({ owner: connection.owner, repo: connection.repo, branch: connection.branch });
+
+// One film, by its folder (a crew link knows only the folder): { id, name, folder, owner, repo, branch }
+export async function readFilm(connection, folder) {
+  const tree = await readTree(connection);
+  const sha = tree.files[`${folder}/film.json`];
+  if (!sha) throw new Error('the film is not in the repo (or the key cannot see it)');
+  const film = await readJsonFile(connection, sha);
+  return { id: film.id, name: film.name, folder, ...whereFrom(connection) };
+}
+
+// Every film in the repo: [{ id, name, folder, owner, repo, branch }]
 export async function listFilms(connection, tree) {
   const films = [];
   for (const [path, sha] of Object.entries(tree.files)) {
     const match = /^(projects\/[^/]+)\/film\.json$/.exec(path);
     if (!match) continue;
     const film = await readJsonFile(connection, sha);
-    films.push({ id: film.id, name: film.name, folder: match[1] });
+    films.push({ id: film.id, name: film.name, folder: match[1], ...whereFrom(connection) });
   }
   return films.sort((a, b) => a.name.localeCompare(b.name));
 }

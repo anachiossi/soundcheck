@@ -1,11 +1,14 @@
 // help.js — the Help page (Projects → Help): how to set things up and the tips that used to sit
 // on the screens themselves, so those keep only their controls.
+// A crew phone doesn't see Alarms and wrap alerts (Ana's personal setup: crew-link.js crewHides).
 // Used by: main.js
 
 import { html } from '../../vendor/preact-htm.js';
 import { setState } from '../state.js';
+import { crewHides } from '../crew-link.js';
 
-export function HelpScreen() {
+export function HelpScreen({ state }) {
+  const alarms = !crewHides(state.connection, 'help-alarms');
   return html`
     <div class="help-page">
       <button class="btn" onClick=${() => setState({ screen: 'projects' })}>‹ Projects</button>
@@ -25,9 +28,11 @@ export function HelpScreen() {
         <li>The ⏱ in the top bar counts down to the ODG's wrap, then counts the overtime (+0h 35m).</li>
         <li>After the wrap: "Did today finish on time?" — No asks again every hour ("Is this a wrap?") until you type the real wrap.</li>
         <li>Tap ⏱ (or Projects → ⏱ Hours, any day) for the week, the overtime, and the images for production (week or whole film). Tap a day's wrap to correct it.</li>
-        <li><b>Notifications</b> at the wrap, even with the app closed: Hours → 🔔 Wrap alerts → Allow (Home Screen app, iOS 16.4 or later). They can come up to 10 minutes late.</li>
+        ${alarms && html`<li><b>Notifications</b> at the wrap, even with the app closed: Hours → 🔔 Wrap alerts → Allow (Home Screen app, iOS 16.4 or later). They can come up to 10 minutes late.</li>`}
+        <li>Projects → <b>My call</b>: your hours count from the crew call, or from your own call on the call sheet (your name as printed there).</li>
       </ul>
 
+      ${alarms && html`
       <h2 class="section-title">Alarms for the next day</h2>
       <p>Projects → ⏱ Hours shows, for the next shooting day: when to sleep, wake up, leave and be at the meeting
         point (the numbers are set per film, under "Wake-up plan"). <b>⏰ Set alarms</b> creates the wake-up and
@@ -47,13 +52,11 @@ export function HelpScreen() {
       <p><b>Automatic, without the tap:</b> a second shortcut, <b>soundcheck auto alarms</b>, asks the robot every
         evening (Shortcuts → Automation, 20:00 and 22:30, Run Immediately). On a shooting eve it sets the alarms;
         on a weekend or day off it removes the soundcheck alarms. Steps: docs/HOW_IT_WORKS.md → "Automatic alarms".</p>
-      <p class="muted">The robot also sends a notification when tomorrow's ODG arrives, and one at bedtime 💤.</p>
+      <p class="muted">The robot also sends a notification when tomorrow's ODG arrives, and one at bedtime 💤.</p>`}
 
       <h2 class="section-title">Hearing the lines</h2>
       <ul class="help">
-        <li>🔊 in Cues and the Timeline reads the scene with the phone's voice, a short pause between lines.
-          The iPhone gives web apps one voice per language; no sound? Check the silent switch.</li>
-        <li>With Siri's voice: open Cues on the first line and swipe down with two fingers from the top (Speak Screen,
+        <li>soundcheck never speaks by itself. To hear a scene with Siri's voice: open Cues on the first line and swipe down with two fingers from the top (Speak Screen,
           turn it on in Settings → Accessibility → Spoken Content). It reads each character's name, then the line,
           to the end of the scene. Don't tap while it reads.</li>
       </ul>

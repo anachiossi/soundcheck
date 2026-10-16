@@ -9,6 +9,7 @@
 // Rules from Ana (1 Oct 2026). Used by: parts/wrap-clock.js, screens/hours.js, hours-editing.js
 
 import { shootingDays, localTodayIso } from './model.js';
+import { callOnSheet } from './my-call.js';
 
 export const WORKDAYS = {
   '10h-lunch': { label: '10h (9 + lunch)', hours: 10 },
@@ -151,11 +152,11 @@ export function nowRounded(now = new Date()) {
 //   ride_with  riding with someone (Ana, 11 Oct: a colleague from costumes): the sums start from THAT person's call
 //              on the ODG (calls.json) — the app shows Ana's own call everywhere else. Not known yet →
 //              Ana's call − ride_gap_if_unknown (40: the widest gap seen in the ODGs so far)
+//   day.call = the person's own call ("My call", my-call.js: the crew call unless they chose Personal)
 export const COMMUTE = { meet_before_call: 45, travel_min: 75, travel_max: 90, get_ready: 45, sleep_hours: 8 };
 export const commuteOf = project => (project.settings?.commute ? { ...COMMUTE, ...project.settings.commute } : null);
 
 const clock = minutes => timeOf(((minutes % 1440) + 1440) % 1440); // -45 → '23:15'
-const sameName = (a, b) => a.toLowerCase().split(/\s+/).join(' ') === b.toLowerCase().split(/\s+/).join(' ');
 
 export function wakePlan(project, day) {
   const commute = commuteOf(project);
@@ -174,8 +175,7 @@ export function wakePlan(project, day) {
 function rideCall(project, commute, day, call) {
   const name = (commute.ride_with || '').trim();
   if (!name) return { minutes: call, name: '', call: '' };
-  const found = Object.entries(project.crewCalls?.[day.date] || {}).find(([who]) => sameName(who, name));
-  const theirs = found ? minutesOf(found[1]) : null;
+  const theirs = minutesOf(callOnSheet(project, day.date, name)); // same name matching as "My call"
   if (theirs === null) return { minutes: call - (commute.ride_gap_if_unknown ?? 40), name, call: '' };
   return { minutes: theirs, name, call: timeOf(theirs) };
 }

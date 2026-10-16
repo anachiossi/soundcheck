@@ -14,7 +14,7 @@
 import { html, useState } from '../../vendor/preact-htm.js';
 import { formatStamp, exportName, shortDate, localTodayIso } from '../model.js';
 import {
-  truckOf, ticked, countVolumes, topItems, childrenOf, splitLoose, isContainer, searchGear, itemById, itemGroups,
+  truckOf, ticked, countVolumes, topItems, childrenOf, splitLoose, isContainer, searchGear, itemById, itemGroups, quantityText,
 } from '../gear-rules.js';
 import { toggleTick, clearTicks, moveObject } from '../gear-editing.js';
 import { useGearDrag } from '../parts/gear-drag.js';
@@ -72,7 +72,7 @@ export function GearTruckScreen({ state }) {
                   <span class="truck-row__number">${numbers[item.id]}</span>
                   <${CheckBox} on=${ticked(project, item.id)} />
                   <span class="truck-row__name"><${Tinted} item=${item} /></span>
-                  ${item.qty > 1 && html`<small>×${item.qty}</small>`}
+                  ${quantityText(item) && html`<small>${quantityText(item)}</small>`}
                 </button>`)}`;
           })}
         </div>`}
@@ -145,7 +145,7 @@ function ItemList({ project, items, edit, checking, drag, inside }) {
           <div key=${item.id} class=${'gear-paper__row' + (drag.dragging?.id === item.id ? ' gear-case--lifted' : '')} data-drop=${inside}>
             <button class="gear-paper__item" ...${drag.hold(item)} onClick=${() => !drag.wasDrag() && edit(item)}>
               <${Dot} item=${item} /><span class="gear-paper__name">${name}</span>
-              ${item.qty > 1 && html`<span class="gear-paper__qty">×${item.qty}</span>`}
+              ${quantityText(item) && html`<span class="gear-paper__qty">${quantityText(item)}</span>`}
             </button>
             ${checking && html`<${Tick} project=${project} item=${item} />`}
           </div>`)}
@@ -162,7 +162,7 @@ function SearchResults({ project, query, open, edit }) {
       const box = isContainer(project, item);
       return html`<button key=${item.id} class="gear-result" onClick=${() => (box ? open([...path.map(p => p.id), item.id]) : edit(item))}>
         <span class="gear-result__top">${box ? html`<${CaseIcon} color=${item.color} size=${22} />` : html`<${Dot} item=${item} />`}
-          <span class="gear-result__name">${item.name}</span>${item.qty > 1 && html`<span class="gear-paper__qty">×${item.qty}</span>`}</span>
+          <span class="gear-result__name">${item.name}</span>${quantityText(item) && html`<span class="gear-paper__qty">${quantityText(item)}</span>`}</span>
         ${path.length > 0 && html`<span class="gear-result__path">${path.map((p, i) => html`<span key=${p.id}>
           <${CaseIcon} color=${p.color} size=${14} /> ${p.name}${i < path.length - 1 ? html`<i>›</i>` : ''}</span>`)}</span>`}
       </button>`;
