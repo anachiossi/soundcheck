@@ -95,7 +95,7 @@ export function KitScreen({ state }) {
         </small>`} />
     <${Section} ...${shared} list="transmitters" title="Transmitters"
       blank=${{ id: nextId('transmitters'), color: '#e9e9e9', order: project.transmitters.length + 1 }}
-      render=${tx => html`<${TxPill} tx=${tx} /><${BatteryTag} project=${project} txId=${tx.id} /><small>${tx.model}${tx.serial ? ` #${tx.serial}` : ''}<br />${tx.connector}${tx.frequency ? html` · <b>${tx.frequency}</b>` : ''}</small>`} />
+      render=${tx => html`<${TxPill} tx=${tx} /><small><${BatteryTag} project=${project} txId=${tx.id} />${tx.model}${tx.serial ? ` #${tx.serial}` : ''}<br />${tx.connector}${tx.frequency ? html` · <b>${tx.frequency}</b>` : ''}</small>`} />
     <${TxManuals} project=${project} />
     <${Section} ...${shared} list="lavaliers" title="Lavaliers"
       blank=${{ id: nextId('lavaliers'), color: '#000000', attenuated: false }}
