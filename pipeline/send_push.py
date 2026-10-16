@@ -3,8 +3,11 @@
 Started by the "Wrap alerts" workflow (wrap-alerts.yml in soundcheck-data), which the Gmail trigger
 (pipeline/gmail-trigger.gs) runs when a question is due. A phone that no longer accepts
 notifications (app deleted, permission off) has its file removed.
+Who gets it (audience): 'owner' (the default) = only Ana's own phones (a file with no "role", or role
+"owner") — her personal alerts (wrap question, bedtime, tomorrow, lavs ready); 'all' = every phone of
+the film, crew too (film alerts). Each file says whose phone it is ("person", "role": 'crew' or 'owner').
 
-    VAPID_PRIVATE_KEY=… python pipeline/send_push.py <film folder> "<title>" "<text>"
+    VAPID_PRIVATE_KEY=… python pipeline/send_push.py <film folder> "<title>" "<text>" [url] [tag] [owner|all]
 """
 
 import json
@@ -18,10 +21,17 @@ CONTACT = os.environ.get("PUSH_CONTACT", "https://anachiossi.github.io/soundchec
 # ask for a contact: a mailto: or a web address; set PUSH_CONTACT in the workflow for a private address)
 
 
-def send(film, title, body, url="./", tag="wrap"):
+def is_for(phone, audience):
+    """Does this phone get a message meant for `audience`? Old files (no role) are Ana's."""
+    return audience == "all" or phone.get("role", "owner") == "owner"
+
+
+def send(film, title, body, url="./", tag="wrap", audience="owner"):
     sent, gone = 0, []
     for path in sorted((Path(film) / "push").glob("*.json")):
         phone = json.loads(path.read_text(encoding="utf-8"))
+        if not is_for(phone, audience):
+            continue
         try:
             webpush({"endpoint": phone["endpoint"], "keys": phone["keys"]},
                     data=json.dumps({"title": title, "body": body, "tag": tag, "url": url}),
@@ -38,5 +48,5 @@ def send(film, title, body, url="./", tag="wrap"):
 
 
 if __name__ == "__main__":
-    args = sys.argv[1:] + [""] * 5
-    send(args[0], args[1], args[2], args[3] or "./", args[4] or "wrap")
+    args = sys.argv[1:] + [""] * 6
+    send(args[0], args[1], args[2], args[3] or "./", args[4] or "wrap", args[5] or "owner")

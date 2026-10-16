@@ -114,15 +114,16 @@ function checkBedtime() {
     const c = Object.assign({}, COMMUTE, settings.commute);
     const day = (readRepo(`projects/${film}/schedule.json`, true) || [])
       .filter(row => row.date === tomorrow && row.call).sort((a, b) => a.order - b.order)[0];
-    const calls = c.ride_with ? readRepo(`projects/${film}/calls.json`, true) || {} : {};
-    const call = day && rideStart(c, minutesOf(day.call), calls[day.date]);
+    const calls = c.ride_with || c.my_name ? readRepo(`projects/${film}/calls.json`, true) || {} : {};
+    const own = day ? ownCall(c, day.call, calls[day.date]) : null;
+    const call = day && rideStart(c, own, calls[day.date]);
     if (call === null || call === undefined) continue;
     const wake = call - c.meet_before_call - c.travel_max - c.get_ready;
     const bedtime = 24 * 60 + wake - c.sleep_hours * 60; // minutes from today's midnight
     if (minute < bedtime || minute > bedtime + 180) continue;
     const clock = m => `${String(Math.floor(((m % 1440) + 1440) % 1440 / 60)).padStart(2, '0')}:${String(((m % 60) + 60) % 60).padStart(2, '0')}`;
     startWorkflow(ALERTS, { film, title: '💤 Time to sleep', url: './#hours', tag: 'sleep',
-      body: `Tomorrow D${String(day.day).padStart(2, '0')}: wake ${clock(wake)} · call ${day.call}` });
+      body: `Tomorrow D${String(day.day).padStart(2, '0')}: wake ${clock(wake)} · call ${clock(own)}` });
     sent.push(key);
     properties.setProperty('WRAP_SENT', JSON.stringify(sent.slice(-100)));
     console.log(`Bedtime for ${film}: wake ${clock(wake)}`);
@@ -161,8 +162,8 @@ function alarmAnswer(now) {
     const schedule = withWaitingOdgTimes(readRepo(`projects/${film}/schedule.json`, true) || [], openOdgs(film));
     const day = schedule.filter(row => row.date === target && row.call).sort((a, b) => a.order - b.order)[0];
     const commute = Object.assign({}, COMMUTE, settings.commute);
-    const calls = commute.ride_with ? readRepo(`projects/${film}/calls.json`, true) || {} : {};
-    const plan = day && wakeAndLeave(commute, rideStart(commute, minutesOf(day.call), calls[day.date]));
+    const calls = commute.ride_with || commute.my_name ? readRepo(`projects/${film}/calls.json`, true) || {} : {};
+    const plan = day && wakeAndLeave(commute, rideStart(commute, ownCall(commute, day.call, calls[day.date]), calls[day.date]));
     if (plan) plans.push(plan);
   }
   if (!plans.length) return 'none';
@@ -182,10 +183,27 @@ function wakeAndLeave(c, call) {
 // ride_gap_if_unknown (40). Same as hours-rules.js → rideCall.
 function rideStart(c, call, dayCalls) {
   if (call === null || call === undefined || !c.ride_with) return call;
-  const plain = text => String(text).toLowerCase().split(/\s+/).join(' ');
-  const found = Object.keys(dayCalls || {}).find(name => plain(name) === plain(c.ride_with.trim()));
-  const theirs = found ? minutesOf(dayCalls[found]) : null;
-  return theirs === null || theirs === undefined ? call - (c.ride_gap_if_unknown == null ? 40 : c.ride_gap_if_unknown) : theirs;
+  const theirs = callOf(c.ride_with, dayCalls);
+  return theirs === null ? call - (c.ride_gap_if_unknown == null ? 40 : c.ride_gap_if_unknown) : theirs;
+}
+
+// Ana's own call (settings commute.my_name, saved by the app when she picks "Personal call" in My call,
+// Ana 16 Oct): her name's call on that day's calls.json; not there (or no my_name) → the day's general call.
+// Same as the app (my-call.js) and pipeline/wake_plan.py → own_call.
+// After changing this file: script.google.com → Deploy → Manage deployments → ✎ → Version: New version,
+// or the alarms web app keeps running the old code (the 10-minute timer picks up the saved file by itself).
+function ownCall(c, generalCall, dayCalls) {
+  const mine = c.my_name ? callOf(c.my_name, dayCalls) : null;
+  return mine === null ? minutesOf(generalCall) : mine;
+}
+
+// The call printed next to this name that day, in minutes, or null. Names match with no capitals, accents
+// or extra spaces ('Inês  Rossi' = 'ines rossi'), like the app's plainName (my-call.js).
+function callOf(name, dayCalls) {
+  const plain = text => String(text || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim().split(/\s+/).join(' ');
+  if (!plain(name)) return null;
+  const found = Object.keys(dayCalls || {}).find(who => plain(who) === plain(name));
+  return found ? minutesOf(dayCalls[found]) : null;
 }
 
 const clockOf = m => `${String(Math.floor(((m % 1440) + 1440) % 1440 / 60)).padStart(2, '0')}:${String(((m % 60) + 60) % 60).padStart(2, '0')}`;

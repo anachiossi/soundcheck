@@ -331,13 +331,37 @@ spaces (`sameName`, also used by the wake plan's `ride_with`). Not on that day's
 `withMyCalls(project, setting)` gives the Hours screen, the ⏱ wrap clock / question and the timesheet a copy of
 the film where each day's call is "my call" (General → the very same film). The wake plan (Tomorrow card)
 starts from my call; `ride_with` still follows the colleague's call. The Schedule always shows the crew call.
-Nothing is saved from it. (The robots' automatic alarms and pushes still use the crew call.)
+Nothing is saved from it on crew phones.
+
+**The robots follow Ana's My call (v156).** On Ana's own devices (not crew), picking Personal with a name
+also saves it in the film's `settings.json` → `commute.my_name` (`followMyCall` in `src/hours-editing.js`,
+outbox + sync like any settings change); picking General removes `my_name`. Only for a film that already has
+a `commute` (a wake-up plan): the app never adds one just for the name. The last choice on any of Ana's
+devices wins. The robots then use: her name found in that day's `calls.json` (same matching: no capitals,
+accents or extra spaces) → her own call; else the day's general call. `ride_with` unchanged (it starts from
+the colleague's call; not known → 40 min before HER call). Same rule in three places:
+`wake_plan.py` → `own_call` (the "Tomorrow" push, `tell_tomorrow` in `run.py`), `gmail-trigger.gs` →
+`ownCall` (bedtime and the automatic alarms) and the app (`myCallFor` + `wakePlan`). Tests with the same fixed
+times on both sides: `tests/robots-my-call.test.js` and `tests/test_wake_plan.py`.
+**After changing `gmail-trigger.gs`:** paste it in Apps Script, save, then Deploy → Manage deployments →
+✎ → Version: **New version** (never "New deployment"), or the alarms link keeps the old code.
 
 | What | File |
 |---|---|
 | The rules (`myCallFor`, `withMyCalls`, `sameName`, `daysNotOnSheet`) | `src/my-call.js` |
 | Projects → My call | `src/parts/my-call-switch.js` |
-| Tests | `tests/my-call.test.js` |
+| Saving it for the robots (`followMyCall`, `robotsMyNameAfter`) | `src/hours-editing.js` |
+| Tests | `tests/my-call.test.js`, `tests/robots-my-call.test.js`, `tests/test_wake_plan.py` |
+
+## Notifications per person (v156)
+Each `push/<phone>.json` (🔔 Wrap alerts, `pushEntry` in `src/parts/wrap-alerts.js`) also says whose phone it
+is: `person` (the link's name, else the device name) and `role` (`owner` or `crew`). A file without `role`
+(older phones) counts as Ana's. `send(film, title, body, url, tag, audience='owner')` in
+`pipeline/send_push.py`: `owner` → only Ana's phones (wrap question, bedtime, Tomorrow, lavs ready — every
+current caller); `all` → every phone (for film alerts later: change approved, new call sheet).
+Command line: `send_push.py <film> "<title>" "<text>" [url] [tag] [owner|all]`.
+(Crew phones don't send their push file yet: `push/…` stays on a crew phone, `staysOnPhone`.)
+Python tests: `python3 -I -m unittest discover -s tests -p "test_*.py"` (no network; `tests/test_send_push.py`).
 
 ## Crew hours (crew sharing step 6)
 Hours are per person. On a crew phone the Hours screen, `#hours` and the ⏱ wrap clock / "Did today finish on

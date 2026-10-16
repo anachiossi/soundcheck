@@ -69,8 +69,11 @@ Closed with a comment: `approved` or `not approved: <reason>`.
 4. Ana's inbox: approve / don't approve.
 5. Crew screens: hidden personal parts, neutral words, message log, feedback.
 6. "My call" + crew hours on the phone. (Done 16 Oct: Projects → My call; crew Hours + Export my timesheet.)
-Later (needs the next film's setup): one repo per film; per-person notifications in the robots; wake plan
-per person.
+7. (Done 16 Oct, v156) Push files say whose phone (`person`, `role`); the robot sends Ana's personal alerts
+   only to her phones (`send_push.py` audience `owner`, `all` for film alerts). The robots follow Ana's My call
+   (`commute.my_name`).
+Later (needs the next film's setup): one repo per film; crew phones sending their own push file; film alerts
+to all; wake plan per person.
 
 ## Prep for a new film (Ana)
 1. GitHub → Settings → Developer settings → Fine-grained tokens → "Crew – <film>": only that film's repo;

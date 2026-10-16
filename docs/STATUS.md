@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-10-16 · live **v151** · branch `claude/crew-sharing` = **v155** (v152 rough counts + crew sharing, not merged yet) · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-10-16 · live **v151** · branch `claude/crew-sharing` = **v156** (v152 rough counts + crew sharing, not merged yet) · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
@@ -82,6 +82,11 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   and cut lav labels at phone size are older (also on main), still to fix.
 - v155 (branch only, 16 Oct): **Kit grid fixed** — nothing runs off a phone screen any more (B1's 🔋 tag sits above
   its model), lav pills show the full "6060 10", long names wrap; wider columns on iPad/laptop (`--kit-col`).
+- v156 (branch only, 16 Oct): **notifications per person + robots follow My call** — push files say whose phone
+  (`person`, `role`); `send_push.py` audience `owner` (all current alerts, Ana's phones only) / `all`. Ana's
+  Personal call is saved as `commute.my_name`; Tomorrow push, bedtime and automatic alarms start from her own
+  call (else the general call). Needs the Apps Script pasted + ✎ New version after the merge. Python tests in
+  `tests/test_*.py`.
 - Cues is Speak Screen friendly (v62–63, iPhone's own Siri reading, started only by a two-finger swipe):
   only the dialogue is readable (the rest aria-hidden), "Prince John." before each line, and the
   following lines are there invisibly (.sr-only) so Speak Screen reads to the end of the scene.
