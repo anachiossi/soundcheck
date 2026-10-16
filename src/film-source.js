@@ -25,8 +25,14 @@ export function sourceOf(project, connection) {
   return { owner: used.owner, repo: used.repo, branch: used.branch };
 }
 
+// GitHub ignores capitals in owner/repo: 'AnaChiossi/Film-X' is the same repo as 'anachiossi/film-x'.
+export function sameRepo(first, second) {
+  const name = source => `${source.owner}/${source.repo}`.toLowerCase();
+  return name(first) === name(second);
+}
+
 export function sameSource(first, second) {
-  return first.owner === second.owner && first.repo === second.repo && (first.branch || 'main') === (second.branch || 'main');
+  return sameRepo(first, second) && (first.branch || 'main') === (second.branch || 'main');
 }
 
 // 'anachiossi/film-x' → { owner, repo, branch: 'main' }, or null when it isn't owner/name.
@@ -40,9 +46,11 @@ export function readRepoName(text) {
 export function filmRepos(connection) {
   if (!connection) return [];
   const main = { owner: connection.owner, repo: connection.repo, branch: connection.branch };
-  const extra = (connection.repos || []).map(readRepoName).filter(Boolean)
-    .filter(source => !(source.owner === main.owner && source.repo === main.repo));
-  return [main, ...extra];
+  const repos = [main];
+  for (const source of (connection.repos || []).map(readRepoName).filter(Boolean)) {
+    if (!repos.some(repo => sameRepo(repo, source))) repos.push(source); // each repo once
+  }
+  return repos;
 }
 
 // Two films with the same id in different repos (rare): both are shown with their repo name

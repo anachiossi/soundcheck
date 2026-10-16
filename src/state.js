@@ -42,7 +42,7 @@ let state = {
   crewDecisions: loadJson('sc_crew_decisions', []), // owner: decisions not sent yet (crew-decisions.js)
   crewCantAnswer: false,    // owner: the key can't comment on / close issues (crew-inbox-sync.js)
   crewBy: null,             // the person whose suggestions the 'crew-suggestions' screen shows
-  films: null,              // films in the repo (null = not looked yet)
+  films: null, filmsFailed: false, // films in the repos (null = not looked yet); filmsFailed: the last look failed
   sync: { running: false, error: null },
   emailRobot: null,         // ✉ { checkedAt, run, noAccess, starting } (email-robot.js)
   edit: null,               // scene being edited: { sceneId, rows }
@@ -179,7 +179,7 @@ export async function importProjectFile(file) {
     const existing = await local.loadProject(incoming.id);
     const kept = existing && upgradeOutbox(existing);
     const project = upgradeOutbox({ outbox: {}, conflicts: {}, shas: {}, ...incoming,
-      ...(kept && { outbox: kept.outbox, conflicts: kept.conflicts }) });
+      ...(kept && { outbox: kept.outbox, conflicts: kept.conflicts }), source: incoming.source ?? kept?.source });
     await local.saveProject(project);
     await openProject(project.id);
     showMessage('ok', `${project.name} is now saved on this device.`);

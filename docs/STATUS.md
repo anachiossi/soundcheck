@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-10-16 · live **v151** · branch `claude/crew-sharing` = **v157** (v152 rough counts + crew sharing, not merged yet) · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-10-16 · live **v151** · branch `claude/crew-sharing` = **v158** (v152 rough counts + crew sharing, not merged yet) · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
@@ -94,6 +94,11 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   repo, unchanged. Same film id in two repos: both listed with the repo name, the second refused.
   `tools/new-film-repo.mjs` prepares the next film's folder; Apps Script reads the `REPO` script property
   (default soundcheck-data). Setup steps: `docs/CREW_SHARING.md` → "Setting up the next film".
+- v158 (review fixes, branch only, 16 Oct): opening another film during a sync stops it quietly (no
+  upload, the other film untouched: `src/sync-store.js`); owner/repo compared ignoring capitals; a backup
+  file keeps the film's repo; films of the main repo get no `source` (follow the main connection, as
+  before v157); "Personal call" with no name yet leaves the robots' `my_name` alone; a failed film-list
+  read says "No signal: showing films on this device." instead of "Looking for films…".
 - Cues is Speak Screen friendly (v62–63, iPhone's own Siri reading, started only by a two-finger swipe):
   only the dialogue is readable (the rest aria-hidden), "Prince John." before each line, and the
   following lines are there invisibly (.sr-only) so Speak Screen reads to the end of the scene.

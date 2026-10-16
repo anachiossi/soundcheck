@@ -11,72 +11,12 @@ import { addFilmRepo, removeFilmRepo } from '../src/film-repos.js';
 import { downloadCrewFilm } from '../src/crew-join.js';
 import { syncNow } from '../src/sync.js';
 import { getState, setState } from '../src/state.js';
+import { fakeGitHub, fakeDevice, forgetDevice, film } from './fake-github.js';
 
 const main = { owner: 'someone', repo: 'all-films', branch: 'main', token: 'x', device: 'Office laptop' };
 const withExtra = { ...main, repos: ['someone/film-x'] };
 const filmX = { owner: 'someone', repo: 'film-x', branch: 'main' };
 
-// A fake GitHub with several repos: repos = { 'someone/all-films': { 'projects/a/film.json': { id, name } } }.
-// Every address asked is kept (whole), to check which repo was used.
-function fakeGitHub(repos, { issues = [] } = {}) {
-  const asked = [];
-  const blobs = {};
-  globalThis.fetch = async (url, options = {}) => {
-    asked.push(url);
-    const match = /^https:\/\/api\.github\.com\/repos\/([^/]+\/[^/]+)(.*)$/.exec(url);
-    const files = repos[match[1]];
-    const path = match[2];
-    const answer = value => ({ ok: true, status: 200, json: async () => value });
-    if (!files) return { ok: false, status: 404 };
-    if (path === '') return answer({ full_name: match[1], permissions: { push: true } });
-    if (path.startsWith('/git/ref/heads/')) return answer({ object: { sha: `c-${match[1]}` } });
-    if (path.startsWith('/git/commits/')) return answer({ tree: { sha: `t-${match[1]}` } });
-    if (path.startsWith('/git/trees/')) {
-      return answer({ tree: Object.keys(files).map(file => {
-        const sha = `${match[1]}:${file}`;
-        blobs[sha] = files[file];
-        return { type: 'blob', path: file, sha };
-      }) });
-    }
-    if (path.startsWith('/git/blobs/')) {
-      const content = blobs[decodeURIComponent(path.slice('/git/blobs/'.length))];
-      return answer({ content: Buffer.from(JSON.stringify(content)).toString('base64') });
-    }
-    if (path.startsWith('/issues?')) return answer(issues);
-    if (options.method === 'POST' && path === '/git/trees') return answer({ sha: 't-new' });
-    if (options.method === 'POST' && path === '/git/commits') return answer({ sha: 'c-new' });
-    if (options.method === 'PATCH' && path.startsWith('/git/refs/heads/')) return answer({});
-    return { ok: false, status: 404 };
-  };
-  return asked;
-}
-
-// A fake device: the film database (indexedDB) and the small memory (localStorage), in memory.
-function fakeDevice() {
-  const memory = {};
-  globalThis.localStorage = { getItem: key => memory[key] ?? null, setItem: (key, value) => { memory[key] = value; },
-    removeItem: key => { delete memory[key]; } };
-  const db = { close() {}, objectStoreNames: { contains: () => true },
-    transaction: () => {
-      const transaction = {};
-      transaction.objectStore = () => ({ put: () => { setTimeout(() => transaction.oncomplete()); return {}; } });
-      return transaction;
-    } };
-  globalThis.indexedDB = { open: () => {
-    const request = {};
-    setTimeout(() => { request.result = db; request.onsuccess(); });
-    return request;
-  } };
-  Object.defineProperty(globalThis.navigator, 'onLine', { value: true, configurable: true });
-}
-
-function forgetDevice() {
-  delete globalThis.localStorage;
-  delete globalThis.indexedDB;
-  delete globalThis.navigator.onLine;
-}
-
-const film = (id, name) => ({ format: 'soundcheck-film', version: 1, id, name });
 
 test('a film with a source talks to its own repo, with the device\'s key, name and role', () => {
   const project = { id: 'film-x', source: filmX };

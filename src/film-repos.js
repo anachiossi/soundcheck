@@ -7,7 +7,7 @@
 
 import { getState, saveConnection, showMessage } from './state.js';
 import { checkCanRead } from './store/github.js';
-import { readRepoName, filmRepos } from './film-source.js';
+import { readRepoName, filmRepos, sameRepo } from './film-source.js';
 
 // Returns true when added (the film list is read again by itself).
 export async function addFilmRepo(text) {
@@ -18,7 +18,7 @@ export async function addFilmRepo(text) {
     return false;
   }
   const name = `${source.owner}/${source.repo}`;
-  if (filmRepos(connection).some(repo => `${repo.owner}/${repo.repo}` === name)) {
+  if (filmRepos(connection).some(repo => sameRepo(repo, source))) { // capitals don't count
     showMessage('ok', `${name} is already in the list.`);
     return false;
   }

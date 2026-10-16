@@ -4,6 +4,7 @@
 // remembers the repo it came from (project.source). Two films with the same id in different
 // repos: only one can be on the device, the other is refused with a message.
 // A crew phone (crew-link.js) sees only the film its link was made for (joining: crew-join.js).
+// Also the line shown while the list is not read yet (filmsNote).
 // Used by: screens/projects.js, crew-join.js
 
 import { getState, setState, saveAndShow, showMessage } from './state.js';
@@ -12,7 +13,7 @@ import { defaultDay } from './model.js';
 import * as github from './store/github.js';
 import { emptyProject } from './store/repo-files.js';
 import { syncNow } from './sync.js';
-import { filmRepos, markClashes, onDevice, clashMessage } from './film-source.js';
+import { filmRepos, markClashes, onDevice, clashMessage, sameRepo } from './film-source.js';
 
 // First time on this device: create the film locally and download everything.
 // film = { id, name, folder, owner, repo, branch } (github.js listFilms / readFilm)
@@ -21,7 +22,11 @@ export async function downloadFilm(film) {
     return showMessage('error', clashMessage(film));
   }
   const project = emptyProject(film, film.folder);
-  if (film.owner && film.repo) project.source = { owner: film.owner, repo: film.repo, branch: film.branch || 'main' };
+  // a film of an extra repo remembers it; a film of the main repo keeps following the main connection.
+  // A crew phone's film always remembers the repo of its link (a later link may be another repo).
+  const { connection } = getState();
+  const remember = isCrew(connection) || !sameRepo(film, connection);
+  if (film.owner && film.repo && remember) project.source = { owner: film.owner, repo: film.repo, branch: film.branch || 'main' };
   await saveAndShow(project, { screen: 'schedule', lookup: [], edit: null });
   await syncNow({ loud: true });
   setState({ day: defaultDay(getState().project) });
@@ -30,6 +35,7 @@ export async function downloadFilm(film) {
 export async function loadFilmList() {
   const { connection } = getState();
   if (!connection || !navigator.onLine) return;
+  setState({ filmsFailed: false });
   try {
     // a crew phone sees only the film its link was made for
     if (isCrew(connection) && connection.folder) return setState({ films: [await github.readFilm(connection, connection.folder)] });
@@ -37,8 +43,17 @@ export async function loadFilmList() {
   } catch (error) {
     // a crew phone: no message (crew-join.js retries the download), unless its access has ended
     if (isCrew(connection)) return error.status === 401 && showMessage('error', CREW_ACCESS_ENDED);
+    setState({ filmsFailed: true }); // Projects then says "No signal: showing films on this device."
     showMessage('error', `Couldn't read the films: ${error.message}`);
   }
+}
+
+// The line shown while the film list is not read yet. A crew phone has one film: once it's here,
+// nothing to say; before, it waits for signal (crew-join.js tries again by itself).
+// Ana's devices: once the look failed, the same line as with no signal. (state = the app state)
+export function filmsNote({ connection, online, project, filmsFailed }) {
+  if (isCrew(connection)) return project ? '' : 'Waiting for signal to download the film.';
+  return online && !filmsFailed ? 'Looking for films…' : 'No signal: showing films on this device.';
 }
 
 // Films from every repo, sorted by name. The main repo must answer; an extra repo that doesn't

@@ -22,6 +22,7 @@ import { ownerInbox } from './crew-inbox-sync.js';
 import { sendWaitingFeedback } from './crew-feedback.js';
 import { refreshEmailRobot } from './email-robot.js';
 import { connectionFor } from './film-source.js';
+import { filmStore } from './sync-store.js';
 import { applyRemote, filesToDownload, fileContent, setFileContent, formatJson } from './store/repo-files.js';
 
 let lastSync = 0;
@@ -44,6 +45,7 @@ export async function syncNow({ loud = false } = {}) {
   if (!project.folder) await saveAndShow({ ...project, folder: `projects/${project.id}` });
   lastSync = Date.now();
   setState({ sync: { running: true, error: null } });
+  const deviceStore = filmStore(project.id); // only this film: another one opened meanwhile stops the sync
   try {
     if (isCrew(connection)) {
       const sent = await syncAsCrew(connection, deviceStore);
@@ -57,18 +59,16 @@ export async function syncNow({ loud = false } = {}) {
     }
   } catch (error) {
     const accessEnded = error.status === 401 && isCrew(connection); // the crew key expired
-    setState({ sync: { running: false, error: accessEnded ? CREW_ACCESS_ENDED : error.message } });
+    const switched = error.filmSwitched; // another film was opened (sync-store.js): stop quietly
+    setState({ sync: { running: false, error: switched ? null : accessEnded ? CREW_ACCESS_ENDED : error.message } });
     if (loud && accessEnded) showMessage('error', CREW_ACCESS_ENDED);
-    else if (loud) showMessage('error', `Couldn't sync: ${error.message}. Your changes are safe on this device.`);
+    else if (loud && !switched) showMessage('error', `Couldn't sync: ${error.message}. Your changes are safe on this device.`);
   }
   if (runAgain) {
     runAgain = false;
     syncNow();
   }
 }
-
-// The film on this device: read the latest, save and show. (Tests give a store in memory.)
-const deviceStore = { read: () => getState().project, save: project => saveAndShow(project) };
 
 // Ana's devices: download, then upload the outbox as one commit, then the crew's suggestions.
 // (exported for tests/crew-approve.test.js)

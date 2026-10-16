@@ -29,7 +29,7 @@
 | Editing a scene (draft, save) | `src/editing.js`, the editor table `src/parts/scene-editor.js` |
 | The picker that slides up | `src/parts/picker.js` |
 | Warnings (TX twice), "same as other scenes today", preferred TX/lav | `src/preset-rules.js` |
-| Uploading / downloading, "Keep mine" | `src/sync.js` (logic), `src/store/github.js` (talks to GitHub) |
+| Uploading / downloading, "Keep mine" | `src/sync.js` (logic), `src/sync-store.js` (the one film a sync works on), `src/store/github.js` (talks to GitHub) |
 | How a film is split into files | `src/store/repo-files.js` |
 | The films list in Projects, downloading a film the first time | `src/films.js` |
 | One repo per film: which repo a film lives in (`project.source`), `connectionFor(project, connection)` used by everything that talks to GitHub about a film | `src/film-source.js` (tests: `tests/film-repos.test.js`) |

@@ -8,7 +8,7 @@
 import { html, useState } from '../../vendor/preact-htm.js';
 import { rememberMyCall, showMessage } from '../state.js';
 import { isCrew } from '../crew-link.js';
-import { GENERAL_CALL } from '../my-call.js';
+import { GENERAL_CALL, robotsFollow } from '../my-call.js';
 import { followMyCall } from '../hours-editing.js';
 
 const CHOICES = [['general', 'General crew call'], ['personal', 'Personal call']];
@@ -21,7 +21,7 @@ export function MyCallSwitch({ state }) {
   const choose = mode => {
     const chosen = { mode, name: setting.name || name.trim() };
     rememberMyCall(chosen);
-    followMyCall(chosen);
+    if (robotsFollow(chosen)) followMyCall(chosen); // Personal with no name yet: the robots wait for it
   };
   const save = event => {
     event.preventDefault();

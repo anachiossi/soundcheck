@@ -18,7 +18,7 @@ import { html, useState, useEffect } from '../../vendor/preact-htm.js';
 import { formatStamp } from '../model.js';
 import { openProject, importProjectFile, downloadProjectFile, saveConnection, forgetConnection, showMessage, setState } from '../state.js';
 import { syncNow } from '../sync.js';
-import { downloadFilm, loadFilmList } from '../films.js';
+import { downloadFilm, loadFilmList, filmsNote } from '../films.js';
 import { checkConnection } from '../store/github.js';
 import { Icon } from '../parts/icons.js';
 import { ThemeSwitch } from '../parts/theme-switch.js';
@@ -80,13 +80,6 @@ export function ProjectsScreen({ state }) {
     <${ThemeSwitch} />
 
     <button class="btn help-link" onClick=${() => setState({ screen: 'help' })}>? Help</button>`;
-}
-
-// While the film list is not read yet. A crew phone has one film: once it's here, nothing to say;
-// before, it waits for signal (crew-join.js tries again by itself).
-function filmsNote({ connection, online, project }) {
-  if (isCrew(connection)) return project ? '' : 'Waiting for signal to download the film.';
-  return online ? 'Looking for films…' : 'No signal: showing films on this device.';
 }
 
 function OpenFilm({ state }) {

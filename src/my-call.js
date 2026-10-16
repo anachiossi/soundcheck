@@ -37,6 +37,13 @@ export function isPersonal(setting) {
   return setting?.mode === 'personal' && plainName(setting.name) !== '';
 }
 
+// Should the robots follow this choice (hours-editing.js followMyCall)? General: yes.
+// Personal: only once a name is typed — "Personal call" tapped with no name yet must not
+// remove the name another device saved for the robots.
+export function robotsFollow(setting) {
+  return setting?.mode === 'general' || isPersonal(setting);
+}
+
 // day = { date, call } (call = the day's crew call)
 // → { call, source: 'general' | 'personal' | 'fallback', note }
 export function myCallFor(project, day, setting) {
