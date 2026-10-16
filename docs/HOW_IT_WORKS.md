@@ -31,6 +31,7 @@
 | Warnings (TX twice), "same as other scenes today", preferred TX/lav | `src/preset-rules.js` |
 | Uploading / downloading, "Keep mine" | `src/sync.js` (logic), `src/store/github.js` (talks to GitHub) |
 | How a film is split into files | `src/store/repo-files.js` |
+| The films list in Projects, downloading a film the first time | `src/films.js` |
 | Week / all-film images | `src/export/schedule-images.js` |
 
 ## Recipes
@@ -219,8 +220,35 @@ repo, branch, the film's crew key, the person's name and the film folder, after 
 |---|---|
 | Making / reading the link, "is this a crew phone?" | `src/crew-link.js` (tests: `tests/crew.test.js`) |
 | Share with crew (crew key + name → Copy link; key and names stay on Ana's device only) | `src/parts/crew-share.js`, shown by `src/screens/projects.js` |
-| Opening a link: connect as crew, clear the address bar, download the film | `src/main.js` (`joinFromLink`) → `joinAsCrew` in `src/state.js` → `downloadCrewFilm` in `src/sync.js` |
-| Finding the film by its folder (`film.json`) | `readFilm` in `src/store/github.js` |
+| Opening a link: connect as crew, clear the address bar, download the film | `src/main.js` (`joinFromLink`) → `joinAsCrew` in `src/state.js` → `downloadCrewFilm` in `src/films.js` |
+| Finding the film by its folder (`film.json`); a crew phone lists only that film | `readFilm` in `src/store/github.js`, `loadFilmList` in `src/films.js` |
 | Crew phones never commit (the outbox stays on the phone) | `upload()` in `src/sync.js` |
 
-A crew connection is `{ …, device: name, role: 'crew', name }`; no role = Ana's devices (as before).
+A crew connection is `{ …, device: name, role: 'crew', name, folder }`; no role = Ana's devices (as before).
+
+## Crew suggestions (crew sharing step 3)
+On a crew phone, Save works as usual (the file goes into the outbox), but sync never commits:
+`syncAsCrew` in `src/sync.js` runs, in this order:
+1. **Closed suggestions** (`takeBackClosed`): the phone looks at the repo's issues; for each of its own
+   suggestions now closed it drops its version (out of the outbox) so the film's version is downloaded
+   again in this same sync, and writes a line in its log: approved / not approved (+ reason) / closed,
+   read from the last comment ("approved", "not approved: reason").
+2. **Download** as usual, except: a file the phone has changed is never overwritten and never becomes a
+   conflict while it is proposed. The version each change started from is remembered (`noteBases`).
+3. **Send** (`sendSuggestions`): each changed file not sent yet → one GitHub issue "Suggestion from
+   Davide: Gear: + Sandbag". The body has the lines for people, then a ```json block with the marker
+   `"soundcheck": "crew-suggestion"`, the film folder, the file, the version it started from and the
+   changes. Changed again → a new issue, the old one is closed "Replaced by #n". Changed back to the
+   film's version → nothing to suggest, out of the outbox. Label `crew-proposal` (may be dropped by
+   GitHub: suggestions are recognised by the marker, never by the label).
+
+The top badge shows "● n proposed" for files already sent, "● n waiting" for those not sent yet.
+Bookkeeping in the film on the phone: `project.crewSuggestions = { base, sent, log }`
+(`project.crew` is the IFB crew list).
+
+| What | File |
+|---|---|
+| What changed in a file (by id, by scene_id in the schedule, by key, or the whole file), applying it to the film's current data (clashes), the issue text and reading it back, the closing comment | `src/crew-changes.js` (tests: `tests/crew-changes.test.js`) |
+| The lines for people ("Scene 12: preset changed", "Characters: Ines — lav changed") | `src/crew-describe.js` |
+| Closed → back to the film's version; sending; the "proposed" count | `src/crew-sync.js` (tests: `tests/crew-sync.test.js`, fake GitHub) |
+| Issues on GitHub (create, list, comment, close) | `src/store/github.js` |

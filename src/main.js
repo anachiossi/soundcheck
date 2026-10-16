@@ -6,8 +6,10 @@
 
 import { html, render, useState, useEffect } from '../vendor/preact-htm.js';
 import { useAppState, start, showScreen, clearMessage, setState, showMessage, joinAsCrew } from './state.js';
-import { startAutoSync, syncNow, downloadCrewFilm } from './sync.js';
+import { startAutoSync, syncNow } from './sync.js';
+import { downloadCrewFilm } from './films.js';
 import { readCrewLink, isCrew } from './crew-link.js';
+import { proposedPaths } from './crew-sync.js';
 import { formatStamp } from './model.js';
 import { ScheduleScreen } from './screens/schedule.js';
 import { ScenesScreen } from './screens/scenes.js';
@@ -80,7 +82,10 @@ function SyncBadge({ state }) {
   if (conflicts) return html`<${ConflictBadge} project=${project} />`;
   if (!online) return html`<span class="badge badge--offline">✈ Offline${waiting ? ` · ${waiting} waiting` : ''}</span>`;
   if (sync.running) return html`<span class="badge">↻ Syncing…</span>`;
-  if (waiting) return html`<button class="badge badge--warn" onClick=${() => syncNow({ loud: true })}>● ${waiting} waiting</button>`;
+  // a crew phone: changes already sent as suggestions are "proposed" (crew-sync.js)
+  const proposed = isCrew(connection) ? proposedPaths(project).length : 0;
+  if (waiting > proposed) return html`<button class="badge badge--warn" onClick=${() => syncNow({ loud: true })}>● ${waiting - proposed} waiting</button>`;
+  if (proposed) return html`<span class="badge">● ${proposed} proposed</span>`;
   if (!connection) return html`<span class="badge">data ${formatStamp(project.data_as_of)}</span>`;
   return html`<span class="badge">✓ ${formatStamp(project.data_as_of)}</span>`;
 }

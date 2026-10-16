@@ -28,7 +28,7 @@ let state = {
   lookup: [],               // scene ids chosen in the Scenes screen
   online: navigator.onLine,
   message: null,            // { kind: 'ok' | 'error', text }
-  connection: loadJson('sc_github', null), // GitHub: { owner, repo, branch, token, device } (+ role: 'crew', name on a crew phone)
+  connection: loadJson('sc_github', null), // GitHub: { owner, repo, branch, token, device } (+ role: 'crew', name, folder on a crew phone)
   crewKey: loadJson('sc_crew_key', ''),     // Share with crew: the film's crew key (this device only, never synced)
   crewNames: loadJson('sc_crew_names', []), // names crew links were made for (this device only)
   films: null,              // films in the repo (null = not looked yet)
@@ -96,8 +96,8 @@ export function saveConnection(connection) {
 // older crew connection; a device connected as the owner is never replaced (returns false).
 export function joinAsCrew(link) {
   if (state.connection && !isCrew(state.connection)) return false;
-  const { owner, repo, branch, token, name } = link;
-  saveConnection({ owner, repo, branch, token, device: name, role: 'crew', name });
+  const { owner, repo, branch, token, name, folder } = link;
+  saveConnection({ owner, repo, branch, token, device: name, role: 'crew', name, folder }); // folder: the only film it sees
   return true;
 }
 

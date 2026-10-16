@@ -1,8 +1,9 @@
 // github.js — the only file that talks to GitHub: reads and writes the film
 // files in the private soundcheck-data repo.
 // connection = { owner, repo, branch, token, device }   (saved on this device only)
-//   a crew phone (crew-link.js) also has role: 'crew' and name: 'Davide'; it never writes.
-// Used by: sync.js, screens/projects.js, email-robot.js
+//   a crew phone (crew-link.js) also has role: 'crew', name: 'Davide' and its film's folder;
+//   it never writes files, only issues (its suggestions, crew-sync.js).
+// Used by: sync.js, crew-sync.js, screens/projects.js, email-robot.js
 
 const API = 'https://api.github.com';
 
@@ -115,6 +116,36 @@ export async function commitFiles(connection, base, files, message) {
   });
   return commit.sha;
 }
+
+// ---- issues: crew suggestions (crew-sync.js) -----------------------------------------
+// A crew key may write issues but never files: a crew phone's changes go here as suggestions.
+
+// Returns the new issue: { number, … }
+export const createIssue = (connection, { title, body, labels = [] }) => call(connection, '/issues',
+  { method: 'POST', body: JSON.stringify({ title, body, labels }) });
+
+// Issues (no pull requests), newest first, at most 5 pages of 100.
+// state: 'open' | 'closed' | 'all'; since: only issues updated after this time (ISO), optional.
+export async function listIssues(connection, { state = 'all', since } = {}) {
+  const issues = [];
+  for (let page = 1; page <= 5; page++) {
+    const query = `state=${state}&per_page=100&page=${page}${since ? `&since=${encodeURIComponent(since)}` : ''}`;
+    const batch = await call(connection, `/issues?${query}`);
+    issues.push(...batch.filter(issue => !issue.pull_request));
+    if (batch.length < 100) break;
+  }
+  return issues;
+}
+
+// The comments of one issue, oldest first (the last one says why it was closed).
+export const listComments = (connection, number) => call(connection, `/issues/${number}/comments?per_page=100`);
+
+export const commentIssue = (connection, number, text) => call(connection, `/issues/${number}/comments`,
+  { method: 'POST', body: JSON.stringify({ body: text }) });
+
+// reason: 'completed' (done) or 'not_planned' (replaced, not wanted)
+export const closeIssue = (connection, number, reason = 'completed') => call(connection, `/issues/${number}`,
+  { method: 'PATCH', body: JSON.stringify({ state: 'closed', state_reason: reason }) });
 
 // One film, by its folder (a crew link knows only the folder): { id, name, folder }
 export async function readFilm(connection, folder) {

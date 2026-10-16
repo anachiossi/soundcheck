@@ -53,6 +53,10 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
 - v153 (crew sharing step 2, branch only): **crew link** — Projects → Share with crew (Ana) copies a
   `#join=` link per person; opening it connects that phone as crew (name, read only) and downloads the film.
   Crew phones never commit (outbox stays on the phone); no Connect, Share with crew, ✉ badge or ⏱ Hours.
+- v153 (crew sharing step 3, branch only): **crew suggestions** — a crew phone's saved changes are sent as
+  GitHub issues ("Suggestion from Davide: Gear: + Sandbag", what changed + a JSON block), badge
+  "● n proposed"; when Ana closes one ("approved" / "not approved: reason") the phone takes the film's
+  version back and logs the answer. A crew phone lists only its own film. Ana's inbox (approve) is step 4.
 - Cues is Speak Screen friendly (v62–63, iPhone's own Siri reading, started only by a two-finger swipe):
   only the dialogue is readable (the rest aria-hidden), "Prince John." before each line, and the
   following lines are there invisibly (.sr-only) so Speak Screen reads to the end of the scene.

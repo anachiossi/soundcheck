@@ -13,7 +13,8 @@
 import { html, useState, useEffect } from '../../vendor/preact-htm.js';
 import { formatStamp } from '../model.js';
 import { openProject, importProjectFile, downloadProjectFile, saveConnection, forgetConnection, showMessage, setState } from '../state.js';
-import { syncNow, downloadFilm, loadFilmList } from '../sync.js';
+import { syncNow } from '../sync.js';
+import { downloadFilm, loadFilmList } from '../films.js';
 import { checkConnection } from '../store/github.js';
 import { Icon } from '../parts/icons.js';
 import { ThemeSwitch } from '../parts/theme-switch.js';

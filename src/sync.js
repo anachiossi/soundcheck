@@ -6,16 +6,18 @@
 // Runs by itself when the app opens, when signal comes back, when you come
 // back to the app, and right after every Save. With no signal nothing happens:
 // changes wait safely in the outbox.
-// A crew phone (crew-link.js) only downloads: its changes stay on the phone, never committed.
-// Used by: main.js, editing.js, screens/projects.js, parts/scene-table.js
+// A crew phone (crew-link.js) never commits: its changes stay on the phone, "proposed", and
+// are sent as suggestions (crew-sync.js).
+// Used by: main.js, editing.js, films.js, screens/projects.js, parts/scene-table.js
 
-import { getState, setState, saveAndShow, showMessage, openProject } from './state.js';
+import { getState, setState, saveAndShow, showMessage } from './state.js';
 import { isCrew, CREW_ACCESS_ENDED } from './crew-link.js';
 import { saveDocument } from './store/local.js';
-import { defaultDay, localTodayIso, shootingDays } from './model.js';
+import { localTodayIso, shootingDays } from './model.js';
 import * as github from './store/github.js';
+import * as crew from './crew-sync.js';
 import { refreshEmailRobot } from './email-robot.js';
-import { applyRemote, filesToDownload, emptyProject, fileContent, setFileContent, formatJson } from './store/repo-files.js';
+import { applyRemote, filesToDownload, fileContent, setFileContent, formatJson } from './store/repo-files.js';
 
 let lastSync = 0;
 let runAgain = false; // a save happened while syncing: sync once more right after
@@ -37,22 +39,16 @@ export async function syncNow({ loud = false } = {}) {
   lastSync = Date.now();
   setState({ sync: { running: true, error: null } });
   try {
-    let uploaded = 0;
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      const tree = await github.readTree(connection);
-      await download(connection, tree);
-      try {
-        uploaded = await upload(connection, tree);
-        await downloadDocuments(connection, tree);
-        break;
-      } catch (error) {
-        if (error.status !== 422 && error.status !== 409) throw error;
-        // someone else saved at the same moment: download again, then retry
-      }
+    if (isCrew(connection)) {
+      const sent = await syncAsCrew(connection);
+      setState({ sync: { running: false, error: null, at: new Date().toISOString() } });
+      if (loud) showMessage('ok', sent ? `Sent ${sent} suggestion(s).` : 'Everything is up to date.');
+    } else {
+      const uploaded = await syncAsOwner(connection);
+      setState({ sync: { running: false, error: null, at: new Date().toISOString() } });
+      refreshEmailRobot().catch(() => {}); // the ✉ badge (never blocks the sync)
+      if (loud) showMessage('ok', uploaded ? `Uploaded ${uploaded} change(s).` : 'Everything is up to date.');
     }
-    setState({ sync: { running: false, error: null, at: new Date().toISOString() } });
-    if (!isCrew(connection)) refreshEmailRobot().catch(() => {}); // the ✉ badge (never blocks the sync)
-    if (loud) showMessage('ok', uploaded ? `Uploaded ${uploaded} change(s).` : 'Everything is up to date.');
   } catch (error) {
     const accessEnded = error.status === 401 && isCrew(connection); // the crew key expired
     setState({ sync: { running: false, error: accessEnded ? CREW_ACCESS_ENDED : error.message } });
@@ -63,6 +59,35 @@ export async function syncNow({ loud = false } = {}) {
     runAgain = false;
     syncNow();
   }
+}
+
+// Ana's devices: download, then upload the outbox as one commit.
+async function syncAsOwner(connection) {
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const tree = await github.readTree(connection);
+    await download(connection, tree);
+    try {
+      const uploaded = await upload(connection, tree);
+      await downloadDocuments(connection, tree);
+      return uploaded;
+    } catch (error) {
+      if (error.status !== 422 && error.status !== 409) throw error;
+      // someone else saved at the same moment: download again, then retry
+    }
+  }
+  return 0;
+}
+
+// A crew phone (crew-sync.js): closed suggestions first (so their files are downloaded again
+// now), then download, then send the outbox as suggestions. Never commits.
+async function syncAsCrew(connection) {
+  const store = { read: () => getState().project, save: project => saveAndShow(project) };
+  await crew.takeBackClosed(connection, store);
+  const tree = await github.readTree(connection);
+  await download(connection, tree);
+  const sent = await crew.sendSuggestions(connection, store);
+  await downloadDocuments(connection, tree);
+  return sent;
 }
 
 async function download(connection, tree) {
@@ -81,7 +106,9 @@ async function download(connection, tree) {
     }));
   }
   const latest = getState().project; // the user may have saved meanwhile
-  const merged = applyRemote(latest, changed, remote);
+  let merged;
+  if (isCrew(connection)) merged = crew.keepProposed(applyRemote(crew.noteBases(latest), changed, remote));
+  else merged = applyRemote(latest, changed, remote);
   merged.data_as_of = new Date().toISOString();
   await saveAndShow(merged);
 }
@@ -152,38 +179,4 @@ export async function resolveConflict(path, keep) {
   }
   await saveAndShow(project);
   syncNow();
-}
-
-// First time on this device: create the film locally and download everything.
-export async function downloadFilm(film) {
-  await saveAndShow(emptyProject(film, film.folder), { screen: 'schedule', lookup: [], edit: null });
-  await syncNow({ loud: true });
-  setState({ day: defaultDay(getState().project) });
-}
-
-// A crew phone just opened its link (main.js): find the film in its folder, then open it
-// (already on the phone: its unsent changes are kept) or download it.
-export async function downloadCrewFilm(folder) {
-  try {
-    const film = await github.readFilm(getState().connection, folder);
-    if (getState().projects.some(project => project.id === film.id)) {
-      await openProject(film.id);
-      await syncNow({ loud: true });
-    } else {
-      await downloadFilm(film);
-    }
-  } catch (error) {
-    showMessage('error', error.status === 401 ? CREW_ACCESS_ENDED : `Couldn't download the film: ${error.message}.`);
-  }
-}
-
-export async function loadFilmList() {
-  const { connection } = getState();
-  if (!connection || !navigator.onLine) return;
-  try {
-    const tree = await github.readTree(connection);
-    setState({ films: await github.listFilms(connection, tree) });
-  } catch (error) {
-    showMessage('error', `Couldn't read the films: ${error.message}`);
-  }
 }
