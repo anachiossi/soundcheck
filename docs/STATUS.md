@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-10-16 · version **v153** (branch `claude/crew-sharing`; live may still be v152) · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-10-16 · live **v151** · branch `claude/crew-sharing` = **v154** (v152 rough counts + crew sharing, not merged yet) · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
@@ -76,6 +76,10 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   Crew phones get Hours and the wrap clock back (their OWN hours, phone only): they never download the
   film's `hours/` and `push/` (an old copy is dropped at the next sync) and get "📊 Export my timesheet" (their
   block only). Still hidden on crew: wake plan / alarms, 🔔 wrap alerts, Help → Alarms.
+- v154 (branch only, 16 Oct): review fixes — a whole-file suggestion that clashes can't be approved anyway;
+  decisions sent only after the save; crew phones don't see production-email proposals; joining with no
+  signal waits and retries. Checked in Chromium (owner + crew, phone/iPad/laptop, offline). Kit grid overflow
+  and cut lav labels at phone size are older (also on main), still to fix.
 - Cues is Speak Screen friendly (v62–63, iPhone's own Siri reading, started only by a two-finger swipe):
   only the dialogue is readable (the rest aria-hidden), "Prince John." before each line, and the
   following lines are there invisibly (.sr-only) so Speak Screen reads to the end of the scene.
