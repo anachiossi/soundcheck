@@ -1,4 +1,4 @@
-// gmail-trigger.gs — Google Apps Script that lives in the production mailbox (sound.chiossi@).
+// gmail-trigger.gs — Google Apps Script that lives in the production mailbox.
 // Every 10 minutes Google runs checkForProductionEmails(): when a NEW email with an ODG, sides
 // or PDL has arrived, it starts the "Production emails" robot on GitHub right away
 // (GitHub's own timetable in emails.yml is only the backup — it often starts late or not at all).
@@ -10,7 +10,7 @@
 // which sends the notification to her phone ("Did today finish on time?", then hourly "Is this a wrap?").
 //
 // Setup (once, see docs/HOW_IT_WORKS.md → "Email robot trigger"):
-//   1. script.google.com (logged in as sound.chiossi@) → New project → paste this file
+//   1. script.google.com (logged in as the production mailbox) → New project → paste this file
 //   2. Project settings → Script properties → GITHUB_TOKEN = the GitHub key (only the soundcheck-data
 //      repository; Actions: read and write, Variables: read and write, Contents: read-only)
 //   3. Run setup() once and allow access to Gmail → it creates the 10-minute timer
@@ -177,7 +177,7 @@ function wakeAndLeave(c, call) {
   return { wake: leave - c.get_ready, leave };
 }
 
-// Riding with someone (settings commute.ride_with, Ana 11 Oct: Ilaria of costumes): the plan starts from
+// Riding with someone (settings commute.ride_with, Ana 11 Oct: a colleague from costumes): the plan starts from
 // THAT person's call on the ODG (calls.json, written by pipeline/run.py); not known yet → Ana's call −
 // ride_gap_if_unknown (40). Same as hours-rules.js → rideCall.
 function rideStart(c, call, dayCalls) {

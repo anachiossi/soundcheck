@@ -99,7 +99,7 @@ Ana's mockup "Gear inventory redesign", 2 Oct):
   Next: Maverick crates 3–4, Furs / Various / Lectro boxes, the other carts and cases.
 
 ## Email robot (runs in the cloud, no laptop needed)
-Gmail (sound.chiossi@) ← production forwards → **Apps Script trigger every 10 min**
+Gmail (the production mailbox) ← production forwards → **Apps Script trigger every 10 min**
 (`pipeline/gmail-trigger.gs`, installed in that Google account) → starts GitHub Actions
 `emails.yml` in soundcheck-data → `pipeline/run.py`: downloads ODG/sides/PDL by IMAP, writes
 proposals + PDFs + Cues lines, commits. Backup: GitHub cron every 30 min (unreliable on its own).

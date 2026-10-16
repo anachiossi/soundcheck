@@ -191,9 +191,9 @@ def file_documents(film, other_sides):
 
 
 def file_crew_calls(film):
-    """Everyone's call on each ODG → calls.json { "2026-10-12": { "Ilaria Salgarella": "08:50", … } }.
-    The alarms follow the call of the person Ana rides with (settings "commute" → "ride_with"; Ana, 11 Oct:
-    "o alarme agora precisa seguir esse cálculo da Ilaria"); the app keeps Ana's own call everywhere else.
+    """Everyone's call on each ODG → calls.json { "2026-10-12": { "Maria Rossi": "08:50", … } }.
+    The alarms follow the call of the person Ana rides with (settings "commute" → "ride_with",
+    Ana, 11 Oct); the app keeps Ana's own call everywhere else.
     Read from the filed ODGs (docs/day-<n>/odg.pdf, the newest of each day), after file_documents."""
     from read_crew import read_crew
     from read_odg import as_time, read_odg
