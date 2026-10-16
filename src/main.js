@@ -9,7 +9,7 @@ import { useAppState, start, showScreen, clearMessage, setState, showMessage, jo
 import { startAutoSync, syncNow } from './sync.js';
 import { downloadCrewFilm } from './films.js';
 import { readCrewLink, isCrew } from './crew-link.js';
-import { proposedPaths } from './crew-sync.js';
+import { proposedPaths, staysOnPhone } from './crew-sync.js';
 import { formatStamp } from './model.js';
 import { ScheduleScreen } from './screens/schedule.js';
 import { ScenesScreen } from './screens/scenes.js';
@@ -17,6 +17,7 @@ import { KitScreen } from './screens/kit.js';
 import { ProjectsScreen } from './screens/projects.js';
 import { Picker } from './parts/picker.js';
 import { ProposalScreen, ProposalBanner } from './screens/proposal.js';
+import { CrewSuggestionsScreen, CrewSuggestionsBanner } from './screens/crew-suggestions.js';
 import { DocumentScreen } from './screens/document.js';
 import { CuesScreen } from './screens/cues.js';
 import { CuesPickerScreen } from './screens/cues-picker.js';
@@ -77,7 +78,8 @@ function DepartmentSwitch({ department }) {
 function SyncBadge({ state }) {
   const { project, online, connection, sync } = state;
   if (!project) return null;
-  const waiting = Object.keys(project.outbox || {}).length;
+  // a crew phone's hours stay on the phone: never "waiting" (crew-sync.js)
+  const waiting = Object.keys(project.outbox || {}).filter(path => !isCrew(connection) || !staysOnPhone(path)).length;
   const conflicts = Object.keys(project.conflicts || {}).length;
   if (conflicts) return html`<${ConflictBadge} project=${project} />`;
   if (!online) return html`<span class="badge badge--offline">✈ Offline${waiting ? ` · ${waiting} waiting` : ''}</span>`;
@@ -112,6 +114,7 @@ function App() {
   if (current === 'cues-timeline') return html`<main class="focus"><${CuesTimelineScreen} state=${state} /></main>`;
   const tabs = tabsOf(state.department);
   const Screen = current === 'proposal' ? ProposalScreen
+    : current === 'crew-suggestions' ? CrewSuggestionsScreen
     : current === 'document' ? DocumentScreen
     : current === 'hours' ? HoursScreen
     : current === 'help' ? HelpScreen
@@ -136,7 +139,8 @@ function App() {
     ${message && html`
       <div class=${'message message--' + message.kind} onClick=${clearMessage}>${message.text} <span>✕</span></div>`}
     ${project && html`<${WrapQuestion} project=${project} />`}
-    ${project && !['proposal', 'document'].includes(current) && html`<${ProposalBanner} project=${project} />`}
+    ${project && !['proposal', 'document', 'crew-suggestions'].includes(current) && html`<${ProposalBanner} project=${project} />`}
+    ${project && !['proposal', 'document', 'crew-suggestions'].includes(current) && html`<${CrewSuggestionsBanner} state=${state} />`}
     <main class="page"><${Screen} state=${state} /></main>
     <footer class="footer">© 2025–2026 Ana Chiossi · soundcheck<${AppVersion} /></footer>
     <${Picker} state=${state} />

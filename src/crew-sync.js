@@ -13,6 +13,8 @@
 //   }   state: 'approved' | 'not approved' | 'closed'
 // (`project.crew` is already the IFB crew list, hence the longer name.)
 // store = { read: () => the latest project, save: async project => … } (sync.js gives it).
+// Hours (hours/…) and wrap alerts (push/…) are personal: on a crew phone they stay on the phone,
+// never sent and never "proposed".
 
 import * as github from './store/github.js';
 import { fileContent } from './store/repo-files.js';
@@ -22,6 +24,11 @@ import { changesBetween, describeChanges, suggestionIssue, readSuggestion, readD
 // (and a scene preset the film doesn't have is removed, as when it's deleted in the repo).
 export const DOWNLOAD_AGAIN = 'download-again';
 const DAY = 24 * 3600 * 1000;
+
+// Files that stay on a crew phone only (personal, not the film's).
+export function staysOnPhone(path) {
+  return path.startsWith('hours/') || path.startsWith('push/');
+}
 
 export function crewBook(project) {
   const book = project.crewSuggestions || {};
@@ -40,6 +47,7 @@ export function proposedPaths(project) {
 export function noteBases(project) {
   const book = crewBook(project);
   for (const path of Object.keys(project.outbox || {})) {
+    if (staysOnPhone(path)) continue;
     const sha = project.shas?.[path];
     if (!(path in book.base)) book.base[path] = sha && sha !== DOWNLOAD_AGAIN ? sha : null;
   }
@@ -105,7 +113,8 @@ export async function takeBackClosed(connection, store) {
 export async function sendSuggestions(connection, store) {
   const project = store.read();
   const book = crewBook(project);
-  const waiting = Object.entries(project.outbox || {}).filter(([path, entry]) => book.sent[path]?.saved_at !== entry.saved_at);
+  const waiting = Object.entries(project.outbox || {})
+    .filter(([path, entry]) => !staysOnPhone(path) && book.sent[path]?.saved_at !== entry.saved_at);
   let count = 0;
   for (const [path, entry] of waiting) {
     const shaNow = project.shas?.[path] !== DOWNLOAD_AGAIN ? project.shas?.[path] : null;

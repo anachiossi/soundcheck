@@ -252,3 +252,32 @@ Bookkeeping in the film on the phone: `project.crewSuggestions = { base, sent, l
 | The lines for people ("Scene 12: preset changed", "Characters: Ines — lav changed") | `src/crew-describe.js` |
 | Closed → back to the film's version; sending; the "proposed" count | `src/crew-sync.js` (tests: `tests/crew-sync.test.js`, fake GitHub) |
 | Issues on GitHub (create, list, comment, close) | `src/store/github.js` |
+
+Hours (`hours/…`) and wrap alerts (`push/…`) are personal: on a crew phone they stay on the phone, are
+never sent and never counted as "waiting" or "proposed" (`staysOnPhone` in `src/crew-sync.js`).
+
+## Approving crew suggestions (crew sharing step 4)
+On Ana's own devices only (crew phones unchanged). After the normal sync (download, upload, PDFs),
+`crewInbox` in `src/sync.js` runs inside a try/catch, so it can never stop or fail the sync:
+1. **Decisions** taken on this device are sent: a comment `approved` or `not approved: <reason>` on the
+   suggestion's issue, then it's closed. An approval is sent only once its file has been uploaded (not in
+   the outbox any more); a "not approved" goes at the next sync. With no signal they wait. Crew phones read
+   these words, so they always start with "approved" / "not approved" and never name anyone.
+2. **Open suggestions** of the open film are listed (only the newest per person and file: an older one for
+   the same file counts as replaced). A key not allowed to read issues (401/403) → an empty list, no message.
+
+The list lives in `state.crewSuggestions` (not in the film data). A 📬 banner per person, like the email
+one: "Davide suggests 2 changes · 2 to review ›" → screen `crew-suggestions`: each suggestion in plain
+lines with ✕ Don't approve (optional reason) / ✓ Approve. **Approve** reads the version it started from,
+puts the changes into the film as it is NOW (Ana's later edits of other records stay) and saves like a
+normal edit (outbox → upload). If the same record changed meanwhile it shows "Changed meanwhile: …" and
+needs "✓ Approve anyway". The upload's commit message ends "— proposed by Davide, approved".
+Decisions not sent yet are kept on this device only: localStorage `sc_crew_decisions`
+(`[{ issue, decision, reason, by, path, film }]`), so they survive a reload.
+
+| What | File |
+|---|---|
+| Listing (newest per person and file), sending decisions, the closing words, the commit message ending | `src/crew-inbox.js` (tests: `tests/crew-approve.test.js`) |
+| Approve / Don't approve (the actions) | `src/crew-approve.js` |
+| Decisions waiting on this device; suggestions grouped by person | `src/crew-decisions.js` |
+| The banner and the screen | `src/screens/crew-suggestions.js`, registered in `src/main.js` |

@@ -57,6 +57,12 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   GitHub issues ("Suggestion from Davide: Gear: + Sandbag", what changed + a JSON block), badge
   "● n proposed"; when Ana closes one ("approved" / "not approved: reason") the phone takes the film's
   version back and logs the answer. A crew phone lists only its own film. Ana's inbox (approve) is step 4.
+  Crew hours / wrap alerts (`hours/`, `push/`) stay on the phone, never sent.
+- v153 (crew sharing step 4, branch only): **approving crew suggestions** — on Ana's devices a 📬 banner per
+  person ("Davide suggests 2 changes") opens the suggestions: ✓ Approve applies them to the current film
+  (warns "Changed meanwhile" first, then "Approve anyway") and uploads as a normal save ("— proposed by
+  Davide, approved"); ✕ Don't approve takes an optional reason. The answer is written on the issue only
+  after the upload; offline it waits. No crew issues (or a key that can't read issues) → app as before.
 - Cues is Speak Screen friendly (v62–63, iPhone's own Siri reading, started only by a two-finger swipe):
   only the dialogue is readable (the rest aria-hidden), "Prince John." before each line, and the
   following lines are there invisibly (.sr-only) so Speak Screen reads to the end of the scene.

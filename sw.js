@@ -16,6 +16,7 @@ const FILES = [
   'src/parts/battery-tag.js', 'src/parts/battery-cell.js', 'src/parts/image-for.js', 'src/export/gear-image.js', 'src/export/gear-text.js', 'src/export/xlsx.js', 'src/export/timesheet.js', 'src/manuals.js', 'src/parts/auto-scroll.js', 'src/theme.js', 'src/parts/theme-switch.js', 'src/parts/email-robot.js', 'src/cues-rules.js', 'src/cues-phrases.js', 'src/cues-map-rules.js', 'src/screens/cues-map.js', 'src/cues-timeline-rules.js', 'src/screens/cues-timeline.js', 'src/cues-editing.js', 'src/parts/cue-line-editor.js',
   'src/ifb-editing.js', 'src/ifb-rules.js',
   'src/crew-link.js', 'src/parts/crew-share.js', 'src/crew-changes.js', 'src/crew-describe.js', 'src/crew-sync.js', 'src/films.js',
+  'src/crew-inbox.js', 'src/crew-decisions.js', 'src/crew-approve.js', 'src/screens/crew-suggestions.js',
   'src/store/local.js', 'src/store/github.js', 'src/store/repo-files.js',
   'src/parts/pills.js', 'src/parts/scene-table.js', 'src/parts/scene-editor.js', 'src/parts/picker.js', 'src/parts/banners.js', 'src/parts/item-form.js', 'src/parts/ifb-picker.js', 'src/parts/icons.js',
   'src/screens/schedule.js', 'src/screens/scenes.js', 'src/screens/kit.js', 'src/screens/projects.js', 'src/screens/proposal.js', 'src/screens/document.js', 'src/screens/cues.js', 'src/screens/cues-picker.js',

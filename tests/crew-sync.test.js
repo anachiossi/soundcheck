@@ -4,7 +4,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { sendSuggestions, takeBackClosed, noteBases, keepProposed, proposedPaths, DOWNLOAD_AGAIN } from '../src/crew-sync.js';
+import { sendSuggestions, takeBackClosed, noteBases, keepProposed, proposedPaths, staysOnPhone, DOWNLOAD_AGAIN } from '../src/crew-sync.js';
 import { suggestionIssue, readSuggestion } from '../src/crew-changes.js';
 import { applyRemote, filesToDownload } from '../src/store/repo-files.js';
 
@@ -166,4 +166,17 @@ test('a crew phone never gets conflicts: its proposed file stays until the sugge
   assert.deepEqual(merged.outbox, { [PATH]: { saved_at: SAVED } });
   assert.equal(merged.shas[PATH], 'sha-new');
   assert.deepEqual(noteBases(merged).crewSuggestions.base, { [PATH]: 'sha-base' }, 'the start version is kept');
+});
+
+test('a crew phone\'s hours and wrap alerts stay on the phone: never sent, never "proposed"', async () => {
+  const asked = fakeGitHub(() => 404);
+  const outbox = { 'hours/9.json': { saved_at: SAVED }, 'push/davide-phone.json': { saved_at: SAVED } };
+  const project = crewProject({ outbox, shas: { 'hours/9.json': 'sha-hours' }, hours: { 9: { day: 9 } } });
+  const store = memoryStore(project);
+  assert.equal(await sendSuggestions(connection, store), 0);
+  assert.deepEqual(asked, []);
+  assert.equal(store.project, project, 'no bookkeeping');
+  assert.deepEqual(noteBases(project).crewSuggestions.base, {});
+  assert.deepEqual(proposedPaths(project), []);
+  assert.ok(staysOnPhone('hours/9.json') && staysOnPhone('push/davide-phone.json') && !staysOnPhone(PATH));
 });

@@ -31,6 +31,9 @@ let state = {
   connection: loadJson('sc_github', null), // GitHub: { owner, repo, branch, token, device } (+ role: 'crew', name, folder on a crew phone)
   crewKey: loadJson('sc_crew_key', ''),     // Share with crew: the film's crew key (this device only, never synced)
   crewNames: loadJson('sc_crew_names', []), // names crew links were made for (this device only)
+  crewSuggestions: [],      // owner: the crew's open suggestions, from the last sync (crew-inbox.js)
+  crewDecisions: loadJson('sc_crew_decisions', []), // owner: decisions not sent yet (crew-decisions.js)
+  crewBy: null,             // the person whose suggestions the 'crew-suggestions' screen shows
   films: null,              // films in the repo (null = not looked yet)
   sync: { running: false, error: null },
   emailRobot: null,         // ✉ { checkedAt, run, noAccess, starting } (email-robot.js)
@@ -133,7 +136,8 @@ export async function start() {
 
   const { projectId: _, ...choices } = prefs;
   // A screen that needs a scene / document / proposal it doesn't have → the Schedule.
-  const needs = { cues: choices.cuesScene, 'cues-map': choices.cuesScene, 'cues-timeline': choices.cuesScene, document: choices.documentPath, proposal: choices.proposalId };
+  const needs = { cues: choices.cuesScene, 'cues-map': choices.cuesScene, 'cues-timeline': choices.cuesScene, document: choices.documentPath, proposal: choices.proposalId,
+    'crew-suggestions': null }; // the crew's suggestions come back with the next sync
   if (choices.screen in needs && !needs[choices.screen]) Object.assign(choices, { screen: 'schedule', department: 'mics' });
   const draft = loadJson('sc_edit', null);
   const edit = draft?.projectId === project.id ? { sceneId: draft.sceneId, rows: draft.rows } : null;
