@@ -32,6 +32,9 @@
 | Uploading / downloading, "Keep mine" | `src/sync.js` (logic), `src/store/github.js` (talks to GitHub) |
 | How a film is split into files | `src/store/repo-files.js` |
 | The films list in Projects, downloading a film the first time | `src/films.js` |
+| One repo per film: which repo a film lives in (`project.source`), `connectionFor(project, connection)` used by everything that talks to GitHub about a film | `src/film-source.js` (tests: `tests/film-repos.test.js`) |
+| Projects → Film repos: the extra repos Ana's key reads (`connection.repos`), Add (checks the key can read it) / Remove | `src/film-repos.js` (actions), `src/parts/film-repos.js` (the panel) |
+| Preparing the next film's own data repo (local folder, never pushes) | `tools/new-film-repo.mjs` (tests: `tests/new-film-repo.test.js`) |
 | Week / all-film images | `src/export/schedule-images.js` |
 
 ## Recipes
@@ -46,8 +49,9 @@ installed devices keep showing the old version.
 **Fix something by hand:** edit the JSON file on github.com (e.g. `presets/12.json`), commit.
 Devices pick it up at their next sync.
 
-**New film:** make a folder `projects/<film-id>/` in soundcheck-data with the same files as an
-existing film (the analyzer pipeline will write these). It appears in Projects on every device.
+**New film:** one private repo per film: `node tools/new-film-repo.mjs …`, then the steps in
+`docs/CREW_SHARING.md` → "Setting up the next film". (Old way, still works: a folder `projects/<film-id>/`
+in soundcheck-data with the same files as an existing film.) It appears in Projects on every device.
 
 ## Production emails → proposals (pipeline/)
 Runs in the cloud (GitHub Actions), in Python; the laptop can run it too. Nothing in the film changes until you accept it in the app.
@@ -82,7 +86,9 @@ Which emails belong to a film: `projects/<film>/inbox.json` in the data repo.
 1. GitHub → Settings → Developer settings → Fine-grained tokens → Generate: repository access **only
    soundcheck-data**, permissions **Actions: Read and write** + **Variables: Read and write**.
 2. script.google.com, logged in as the production mailbox → New project → paste `pipeline/gmail-trigger.gs`.
-3. ⚙ Project settings → Script properties → add `GITHUB_TOKEN` = the token.
+3. ⚙ Project settings → Script properties → add `GITHUB_TOKEN` = the token. For a film with its own repo,
+   also `REPO` = `owner/name` of that repo (empty = `anachiossi/soundcheck-data`, as before); the token must
+   cover that repo.
 4. Choose `setup` in the function menu → Run → allow access. This creates the 10-minute timer.
 5. ⏰ Triggers → the timer → ✎ → Failure notification: **Notify me immediately**.
 Check: Executions (☰ list icon) shows each check; GitHub → Actions shows the runs it started.
@@ -226,6 +232,8 @@ repo, branch, the film's crew key, the person's name and the film folder, after 
 | Crew phones never commit (the outbox stays on the phone) | `upload()` in `src/sync.js` |
 
 A crew connection is `{ …, device: name, role: 'crew', name, folder }`; no role = Ana's devices (as before).
+The link's owner/repo are the film's own repo (`connectionFor` in `src/film-source.js`); the film downloaded
+from it remembers that repo (`project.source`).
 
 ## Crew suggestions (crew sharing step 3)
 On a crew phone, Save works as usual (the file goes into the outbox), but sync never commits:

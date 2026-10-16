@@ -1,4 +1,4 @@
-// sync.js — keeps the device and the soundcheck-data repo in step.
+// sync.js — keeps the device and the film's data repo (project.source, film-source.js) in step.
 //   1. download: files that changed in the repo (by their sha fingerprint)
 //   2. upload:   files changed on this device (the outbox), all in ONE commit
 //   3. documents: the PDFs (ODG, sides) of every day and the script, kept on the device
@@ -21,6 +21,7 @@ import * as inbox from './crew-inbox.js';
 import { ownerInbox } from './crew-inbox-sync.js';
 import { sendWaitingFeedback } from './crew-feedback.js';
 import { refreshEmailRobot } from './email-robot.js';
+import { connectionFor } from './film-source.js';
 import { applyRemote, filesToDownload, fileContent, setFileContent, formatJson } from './store/repo-files.js';
 
 let lastSync = 0;
@@ -35,8 +36,9 @@ export function startAutoSync() {
 }
 
 export async function syncNow({ loud = false } = {}) {
-  const { connection, project, sync } = getState();
-  if (!connection || !project || !navigator.onLine) return;
+  const { connection: deviceConnection, project, sync } = getState();
+  if (!deviceConnection || !project || !navigator.onLine) return;
+  const connection = connectionFor(project, deviceConnection); // the film's own repo (film-source.js)
   if (sync.running) { runAgain = true; return; }
   // A film added from a file doesn't know its folder yet: same id, same folder.
   if (!project.folder) await saveAndShow({ ...project, folder: `projects/${project.id}` });

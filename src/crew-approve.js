@@ -14,6 +14,7 @@ import { applyChanges, describeChanges } from './crew-changes.js';
 import { fileContent, setFileContent } from './store/repo-files.js';
 import { addDecision } from './crew-decisions.js';
 import { syncNow } from './sync.js';
+import { connectionFor } from './film-source.js';
 
 // The film with the suggestion put in: { project, clashes: [changes someone else made meanwhile] }.
 // base = the film's version the suggestion started from (null when it had none).
@@ -32,7 +33,7 @@ export async function approveSuggestion(suggestion, { anyway = false } = {}) {
   let base = null;
   if (suggestion.base_sha) {
     try {
-      base = await github.readJsonFile(getState().connection, suggestion.base_sha);
+      base = await github.readJsonFile(connectionFor(getState().project, getState().connection), suggestion.base_sha);
     } catch (error) {
       showMessage('error', `Couldn't check what changed meanwhile: ${error.message}. Try again with signal.`);
       return {};

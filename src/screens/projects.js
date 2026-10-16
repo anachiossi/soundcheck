@@ -1,6 +1,7 @@
 // projects.js — the Projects screen.
 // • Connect this device to the data (the private soundcheck-data repo), once.
-// • Films: the ones in the repo (tap to download) and the ones on this device.
+// • Films: the ones in the repos (tap to download) and the ones on this device.
+//   Film repos (Ana's devices): the extra repos, one per film, her key reads (parts/film-repos.js).
 // • The open film: sync status, "Sync now", backup file; its documents (📄 script, 📄 latest PDL,
 //   offline) and ⏱ Hours (the week / whole film for production, fix any day's wrap).
 // • Share with crew (Ana's devices, film open): a link per person (parts/crew-share.js).
@@ -30,6 +31,8 @@ import { MySuggestions } from '../parts/crew-log.js';
 import { FeedbackButton } from '../parts/crew-feedback-form.js';
 import { MyCallSwitch } from '../parts/my-call-switch.js';
 import { staysOnPhone } from '../crew-sync.js';
+import { FilmRepos } from '../parts/film-repos.js';
+import { onDevice } from '../film-source.js';
 
 export function ProjectsScreen({ state }) {
   const { project, projects, connection, films, online } = state;
@@ -42,15 +45,16 @@ export function ProjectsScreen({ state }) {
       <h2 class="section-title">Films</h2>
       ${films === null && filmsNote(state) && html`<p class="muted">${filmsNote(state)}</p>`}
       <div class="project-list">
-        ${(films || []).filter(f => f.id !== project?.id).map(film => {
-          const here = projects.some(p => p.id === film.id);
+        ${(films || []).filter(f => !(f.id === project?.id && onDevice(f, [project], connection) === 'here')).map(film => {
+          const here = onDevice(film, projects, connection) === 'here'; // same id AND same repo (film-source.js)
+          const from = film.showRepo ? ` · ${film.owner}/${film.repo}` : ''; // two films with the same id
           return html`
-            <button key=${film.id} class="project" onClick=${() => (here ? openProject(film.id) : downloadFilm(film))}>
-              <b>${film.name}</b><small>${here ? 'on this device · open' : 'download to this device'}</small>
+            <button key=${`${film.owner}/${film.repo}/${film.id}`} class="project" onClick=${() => (here ? openProject(film.id) : downloadFilm(film))}>
+              <b>${film.name}</b><small>${here ? 'on this device · open' : film.clash ? "same id as another film: can't download" : 'download to this device'}${from}</small>
             </button>`;
         })}
       </div>`}
-    ${projects.filter(p => p.id !== project?.id && !(films || []).some(f => f.id === p.id)).map(p => html`
+    ${projects.filter(p => p.id !== project?.id && !(films || []).some(f => onDevice(f, [p], connection) === 'here')).map(p => html`
       <button key=${p.id} class="project" onClick=${() => openProject(p.id)}>
         <b>${p.name}</b><small>on this device · data as of ${formatStamp(p.data_as_of)}</small>
       </button>`)}
@@ -60,7 +64,8 @@ export function ProjectsScreen({ state }) {
       ${project && html`<${MySuggestions} state=${state} /><${FeedbackButton} state=${state} />`}`}
     ${connection && !isCrew(connection) && html`
       <p class="muted connection">Connected to ${connection.owner}/${connection.repo}${connection.branch !== 'main' ? ` (${connection.branch})` : ''}
-        ${' '}as <b>${connection.device}</b>. <button class="link" onClick=${forgetConnection}>Disconnect</button></p>`}
+        ${' '}as <b>${connection.device}</b>. <button class="link" onClick=${forgetConnection}>Disconnect</button></p>
+      <${FilmRepos} connection=${connection} />`}
 
     ${connection && !isCrew(connection) && project && html`<${ShareWithCrew} state=${state} />`}
 

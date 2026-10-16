@@ -84,7 +84,7 @@ function fakeGitHub(answers) {
 
 const asBlob = object => ({ content: Buffer.from(JSON.stringify(object)).toString('base64') });
 
-test('a film is found by its folder: its id and name come from film.json', async () => {
+test('a film is found by its folder: its id and name come from film.json, and it remembers its repo', async () => {
   const asked = fakeGitHub(path => {
     if (path === '/git/ref/heads/main') return { object: { sha: 'c1' } };
     if (path === '/git/commits/c1') return { tree: { sha: 't1' } };
@@ -93,7 +93,8 @@ test('a film is found by its folder: its id and name come from film.json', async
     return 404;
   });
   const connection = { owner: 'someone', repo: 'film-data', branch: 'main', token: 'x', role: 'crew', name: 'Davide' };
-  assert.deepEqual(await readFilm(connection, 'projects/test-film'), { id: 'test-film', name: 'Test Film', folder: 'projects/test-film' });
+  assert.deepEqual(await readFilm(connection, 'projects/test-film'), { id: 'test-film', name: 'Test Film', folder: 'projects/test-film',
+    owner: 'someone', repo: 'film-data', branch: 'main' });
   assert.ok(asked.every(url => url.startsWith('https://api.github.com/repos/someone/film-data')), 'only reads');
 });
 

@@ -12,6 +12,7 @@ import { makeCrewLink } from '../crew-link.js';
 import { showMessage } from '../state.js';
 import { rememberCrewKey, rememberCrewName, removeCrewName, restoreCrewName } from '../crew-device.js';
 import { isRemovedName } from '../crew-inbox.js';
+import { connectionFor } from '../film-source.js';
 
 export function ShareWithCrew({ state }) {
   const { project, connection, crewKey, crewNames, crewRemoved } = state;
@@ -23,8 +24,9 @@ export function ShareWithCrew({ state }) {
     event.preventDefault();
     const person = name.trim();
     rememberCrewKey(key.trim());
+    const film = connectionFor(project, connection); // the film's own repo (film-source.js)
     const link = makeCrewLink({
-      owner: connection.owner, repo: connection.repo, branch: connection.branch,
+      owner: film.owner, repo: film.repo, branch: film.branch,
       token: key.trim(), name: person, folder: project.folder || `projects/${project.id}`,
       baseUrl: location.origin + location.pathname,
     });

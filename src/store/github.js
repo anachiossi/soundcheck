@@ -3,7 +3,8 @@
 // connection = { owner, repo, branch, token, device }   (saved on this device only)
 //   a crew phone (crew-link.js) also has role: 'crew', name: 'Davide' and its film's folder;
 //   it never writes files, only issues (its suggestions, crew-sync.js).
-// Used by: sync.js, crew-sync.js, screens/projects.js, email-robot.js
+// Each film may live in its own repo: the connection for a film comes from film-source.js.
+// Used by: sync.js, crew-sync.js, films.js, film-repos.js, screens/projects.js, email-robot.js
 
 const API = 'https://api.github.com';
 
@@ -71,6 +72,12 @@ export async function checkConnection(connection) {
   const repo = await call(connection, '');
   if (!repo.permissions?.push) throw new Error('the key can read but not write this repo');
   await call(connection, `/git/ref/heads/${connection.branch}`);
+  return repo.full_name;
+}
+
+// Projects → Film repos: can the key read this repo? Returns its full name (or throws).
+export async function checkCanRead(connection) {
+  const repo = await call(connection, '');
   return repo.full_name;
 }
 
@@ -147,23 +154,26 @@ export const commentIssue = (connection, number, text) => call(connection, `/iss
 export const closeIssue = (connection, number, reason = 'completed') => call(connection, `/issues/${number}`,
   { method: 'PATCH', body: JSON.stringify({ state: 'closed', state_reason: reason }) });
 
-// One film, by its folder (a crew link knows only the folder): { id, name, folder }
+// Where a film was found (film-source.js): it remembers its repo.
+const whereFrom = connection => ({ owner: connection.owner, repo: connection.repo, branch: connection.branch });
+
+// One film, by its folder (a crew link knows only the folder): { id, name, folder, owner, repo, branch }
 export async function readFilm(connection, folder) {
   const tree = await readTree(connection);
   const sha = tree.files[`${folder}/film.json`];
   if (!sha) throw new Error('the film is not in the repo (or the key cannot see it)');
   const film = await readJsonFile(connection, sha);
-  return { id: film.id, name: film.name, folder };
+  return { id: film.id, name: film.name, folder, ...whereFrom(connection) };
 }
 
-// Every film in the repo: [{ id, name, folder }]
+// Every film in the repo: [{ id, name, folder, owner, repo, branch }]
 export async function listFilms(connection, tree) {
   const films = [];
   for (const [path, sha] of Object.entries(tree.files)) {
     const match = /^(projects\/[^/]+)\/film\.json$/.exec(path);
     if (!match) continue;
     const film = await readJsonFile(connection, sha);
-    films.push({ id: film.id, name: film.name, folder: match[1] });
+    films.push({ id: film.id, name: film.name, folder: match[1], ...whereFrom(connection) });
   }
   return films.sort((a, b) => a.name.localeCompare(b.name));
 }

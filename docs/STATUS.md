@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-10-16 · live **v151** · branch `claude/crew-sharing` = **v156** (v152 rough counts + crew sharing, not merged yet) · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-10-16 · live **v151** · branch `claude/crew-sharing` = **v157** (v152 rough counts + crew sharing, not merged yet) · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
@@ -87,6 +87,13 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   Personal call is saved as `commute.my_name`; Tomorrow push, bedtime and automatic alarms start from her own
   call (else the general call). Needs the Apps Script pasted + ✎ New version after the merge. Python tests in
   `tests/test_*.py`.
+- v157 (crew sharing step 8, branch only, 16 Oct): **one private repo per film** — Projects → Film repos (Ana's
+  devices): extra repos her ONE key reads (`connection.repos`, checked on Add). The films list reads every repo;
+  each downloaded film remembers its repo (`project.source`) and sync, documents, crew suggestions, ✉ robot and
+  crew links all use it (`connectionFor` in `src/film-source.js`). Films without a source (LBE today) = the main
+  repo, unchanged. Same film id in two repos: both listed with the repo name, the second refused.
+  `tools/new-film-repo.mjs` prepares the next film's folder; Apps Script reads the `REPO` script property
+  (default soundcheck-data). Setup steps: `docs/CREW_SHARING.md` → "Setting up the next film".
 - Cues is Speak Screen friendly (v62–63, iPhone's own Siri reading, started only by a two-finger swipe):
   only the dialogue is readable (the rest aria-hidden), "Prince John." before each line, and the
   following lines are there invisibly (.sr-only) so Speak Screen reads to the end of the scene.

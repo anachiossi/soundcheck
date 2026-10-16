@@ -70,7 +70,8 @@ export function listProjects() {
 
 function rememberProject(project) {
   const others = listProjects().filter(p => p.id !== project.id);
-  const entry = { id: project.id, name: project.name, data_as_of: project.data_as_of };
+  // source: the repo the film came from (film-source.js); none = the main repo
+  const entry = { id: project.id, name: project.name, data_as_of: project.data_as_of, ...(project.source && { source: project.source }) };
   try { localStorage.setItem('sc_projects', JSON.stringify([entry, ...others])); } catch { /* storage full or blocked */ }
 }
 

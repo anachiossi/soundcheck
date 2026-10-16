@@ -9,6 +9,7 @@
 import { getState, setState, showMessage } from './state.js';
 import * as inbox from './crew-inbox.js';
 import { forgetDecisions } from './crew-decisions.js';
+import { connectionFor } from './film-source.js';
 
 export async function ownerInbox(connection, store) {
   try {
@@ -25,7 +26,7 @@ export async function ownerInbox(connection, store) {
 // Feedback read: closed on GitHub with "thanks", and off the list. Needs signal.
 export async function markFeedbackRead(feedback) {
   try {
-    await inbox.closeFeedback(getState().connection, feedback.issue);
+    await inbox.closeFeedback(connectionFor(getState().project, getState().connection), feedback.issue);
   } catch (error) {
     if (error.status !== 404 && error.status !== 410) {
       showMessage('error', `Couldn't mark it as read: ${error.message}. Try again with signal.`);

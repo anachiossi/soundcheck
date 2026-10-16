@@ -13,10 +13,16 @@
 //   1. script.google.com (logged in as the production mailbox) → New project → paste this file
 //   2. Project settings → Script properties → GITHUB_TOKEN = the GitHub key (only the soundcheck-data
 //      repository; Actions: read and write, Variables: read and write, Contents: read-only)
+//      (optional) REPO = owner/name of the film's own data repo; empty = anachiossi/soundcheck-data
 //   3. Run setup() once and allow access to Gmail → it creates the 10-minute timer
 //   4. Triggers (clock icon) → the timer → Failure notifications: "Notify me immediately"
 
-const REPO = 'anachiossi/soundcheck-data';
+// The data repo it watches. One repo per film (docs/CREW_SHARING.md → "Setting up the next film"):
+// set the script property REPO = 'owner/name' of the film's repo; without it, soundcheck-data as before.
+const DEFAULT_REPO = 'anachiossi/soundcheck-data';
+function repo() {
+  return PropertiesService.getScriptProperties().getProperty('REPO') || DEFAULT_REPO;
+}
 const WORKFLOW = 'emails.yml';
 const SEARCH = 'has:attachment filename:pdf (subject:ODG OR subject:STRALCI OR subject:PDL) newer_than:3d';
 const REMEMBER = 300; // how many message ids to remember (already seen = no new run)
@@ -261,7 +267,7 @@ function minutesOf(time) {
 
 // A file of the data repo (json = true: parsed) or a folder's list; null when it isn't there.
 function readRepo(path, json) {
-  const response = UrlFetchApp.fetch(`https://api.github.com/repos/${REPO}/contents/${encodeURI(path)}`, {
+  const response = UrlFetchApp.fetch(`https://api.github.com/repos/${repo()}/contents/${encodeURI(path)}`, {
     headers: { Authorization: `Bearer ${PropertiesService.getScriptProperties().getProperty('GITHUB_TOKEN')}`,
                Accept: json ? 'application/vnd.github.raw+json' : 'application/vnd.github+json' },
     muteHttpExceptions: true,
@@ -274,7 +280,7 @@ function readRepo(path, json) {
 }
 
 function startWorkflow(workflow, inputs) {
-  const response = UrlFetchApp.fetch(`https://api.github.com/repos/${REPO}/actions/workflows/${workflow}/dispatches`, {
+  const response = UrlFetchApp.fetch(`https://api.github.com/repos/${repo()}/actions/workflows/${workflow}/dispatches`, {
     method: 'post',
     contentType: 'application/json',
     headers: { Authorization: `Bearer ${PropertiesService.getScriptProperties().getProperty('GITHUB_TOKEN')}`,
@@ -288,7 +294,7 @@ function startWorkflow(workflow, inputs) {
 // "Gmail was checked now" → GitHub variable LAST_GMAIL_CHECK (read by the app's ✉ badge).
 // Never fails the check: without the Variables permission the robot still starts.
 function reportChecked() {
-  const url = `https://api.github.com/repos/${REPO}/actions/variables`;
+  const url = `https://api.github.com/repos/${repo()}/actions/variables`;
   const body = { name: 'LAST_GMAIL_CHECK', value: new Date().toISOString() };
   let code = github(`${url}/LAST_GMAIL_CHECK`, 'patch', body).getResponseCode();
   if (code === 404) code = github(url, 'post', body).getResponseCode(); // the first time: create it
@@ -309,7 +315,7 @@ function github(url, method, body) {
 function startRobot(reason) {
   const token = PropertiesService.getScriptProperties().getProperty('GITHUB_TOKEN');
   if (!token) throw new Error('GITHUB_TOKEN is missing (Project settings → Script properties).');
-  const response = UrlFetchApp.fetch(`https://api.github.com/repos/${REPO}/actions/workflows/${WORKFLOW}/dispatches`, {
+  const response = UrlFetchApp.fetch(`https://api.github.com/repos/${repo()}/actions/workflows/${WORKFLOW}/dispatches`, {
     method: 'post',
     contentType: 'application/json',
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' },

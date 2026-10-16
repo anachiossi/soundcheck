@@ -3,17 +3,19 @@
 //     it leaves the time on GitHub (variable LAST_GMAIL_CHECK) at every check, every 10 minutes
 //   • run: the robot's last run on GitHub (emails.yml): running / finished / failed
 //   • checkEmailsNow(): starts the robot from the phone, waits for it, then syncs the new proposals
+// Each film's robot runs in the film's own repo (film-source.js).
 // Needs the app's GitHub key to have Actions (read and write) and Variables (read).
 // Used by: sync.js (refresh after every sync), parts/email-robot.js
 
 import { getState, setState, showMessage } from './state.js';
 import * as github from './store/github.js';
 import { syncNow } from './sync.js';
+import { connectionFor } from './film-source.js';
 
 const LATE = 30 * 60 * 1000; // Gmail is checked every 10 min: 30 min without a check = something is wrong
 
 export async function refreshEmailRobot() {
-  const { connection } = getState();
+  const connection = connectionFor(getState().project, getState().connection); // the open film's repo
   if (!connection || !navigator.onLine) return;
   const status = await github.emailRobot(connection);
   setState({ emailRobot: { ...getState().emailRobot, ...status } });
@@ -40,7 +42,7 @@ export function ago(iso, now = Date.now()) {
 }
 
 export async function checkEmailsNow() {
-  const { connection } = getState();
+  const connection = connectionFor(getState().project, getState().connection); // the open film's repo
   if (!connection || !navigator.onLine) return showMessage('error', 'No connection: the emails can be checked when there is signal.');
   const asked = Date.now();
   setState({ emailRobot: { ...getState().emailRobot, starting: true } });

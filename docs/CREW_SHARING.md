@@ -72,7 +72,9 @@ Closed with a comment: `approved` or `not approved: <reason>`.
 7. (Done 16 Oct, v156) Push files say whose phone (`person`, `role`); the robot sends Ana's personal alerts
    only to her phones (`send_push.py` audience `owner`, `all` for film alerts). The robots follow Ana's My call
    (`commute.my_name`).
-Later (needs the next film's setup): one repo per film; crew phones sending their own push file; film alerts
+8. (Done 16 Oct, v157) One repo per film: Projects → Film repos; every film remembers its repo
+   (`project.source`); `tools/new-film-repo.mjs`. See "Setting up the next film" below.
+Later (needs the next film's setup): crew phones sending their own push file; film alerts
 to all; wake plan per person.
 
 ## Prep for a new film (Ana)
@@ -81,3 +83,33 @@ to all; wake plan per person.
 2. In the app: Projects → Share with crew → paste the key once.
 3. Per person: name → Copy link → WhatsApp it privately.
 4. At wrap the key expires by itself; their app says "crew access ended".
+
+## Setting up the next film (one private repo per film)
+So the crew key only reads that film. Ana keeps ONE GitHub key for all her films; today's
+`soundcheck-data` (LBE, Vigília) keeps working untouched. Films downloaded before v157 stay where they are.
+
+1. **GitHub → New repository**: private, empty (no README), e.g. `anachiossi/<film-id>-data`.
+2. **On the laptop**, in the soundcheck folder:
+   `node tools/new-film-repo.mjs ../<film-id>-data <film-id> "<Film name>" <TAG> --from ../soundcheck-data`
+   It makes a local folder with the robots (`.github/workflows/*.yml`), README, `.gitignore` and
+   `projects/<film-id>/` (film.json, empty lists, scenes, settings, `inbox.json`). It never pushes.
+   Fill in `inbox.json` → `gmail_search` (the production's subjects), like LBE's.
+3. **Push it**: in the new folder `git init -b main`, `git add -A`, `git commit -m "New film"`,
+   `git remote add origin https://github.com/anachiossi/<film-id>-data.git`, `git push -u origin main`.
+4. **The repo's secrets** (Settings → Secrets and variables → Actions): `GMAIL_ADDRESS`, `GMAIL_APP_PASSWORD`
+   (the same as soundcheck-data's), so the email robot can read the mailbox.
+5. **Ana's key**: GitHub → Settings → Developer settings → Fine-grained tokens → her app key → Repository
+   access → *Only select repositories* → add the new repo (same permissions: Contents RW, Actions RW,
+   Variables R). One key, several repos.
+6. **In the app** (each of Ana's devices): Projects → **Film repos** → Add repo `anachiossi/<film-id>-data`.
+   The app checks the key can read it. The film appears in the Films list → tap to download. From then on
+   that film syncs only with its own repo.
+7. **Crew key**: a new fine-grained token "Crew – <film>" with access to **that repo only** (Contents Read,
+   Issues Read and write; expiry = last shooting day + 1 week). Share with crew as before: the links point
+   to the film's own repo by themselves.
+8. **Gmail trigger (Apps Script)**: Project settings → Script properties → `REPO` = `anachiossi/<film-id>-data`
+   (no `REPO` = `anachiossi/soundcheck-data`, as before), and make sure its `GITHUB_TOKEN` covers the new repo.
+   One script watches one repo: while two films overlap, make a second script project for the second one.
+
+Rare case: two films with the same id (same folder name) in different repos. The app shows both with
+the repo name and refuses to download the second ("same id as another film"). Give one another id.

@@ -1,6 +1,6 @@
 // state.js — the ONE place where the app's data lives.
 // Screens read `state` and call actions; they never change data themselves.
-// Actions live here (navigation, films on the device), in editing.js (changing
+// Actions live here (navigation, films on the device; the extra film repos in film-repos.js), in editing.js (changing
 // presets) and in sync.js (GitHub); the crew lists kept on this device only in crew-device.js.
 // After every change the screen is redrawn.
 // Used by: main.js, editing.js, sync.js and every screen.
@@ -29,7 +29,7 @@ let state = {
   lookup: [],               // scene ids chosen in the Scenes screen
   online: navigator.onLine,
   message: null,            // { kind: 'ok' | 'error', text }
-  connection: loadJson('sc_github', null), // GitHub: { owner, repo, branch, token, device } (+ role: 'crew', name, folder on a crew phone)
+  connection: loadJson('sc_github', null), // GitHub: { owner, repo, branch, token, device, repos? } (+ role: 'crew', name, folder on a crew phone)
   crewKey: loadJson('sc_crew_key', ''),     // Share with crew: the film's crew key (this device only, never synced; crew-device.js)
   crewNames: loadJson('sc_crew_names', []), // names crew links were made for (this device only)
   crewRemoved: loadJson('sc_crew_removed', []), // names removed: their suggestions are ignored (crew-device.js)
@@ -169,7 +169,7 @@ export async function openProject(projectId) {
   if (!saved) return showMessage('error', 'That film is not on this device.');
   const project = upgradeOutbox(saved);
   setState({ project, screen: 'schedule', lookup: [], edit: null, picker: null,
-    day: defaultDay(project), week: null });
+    day: defaultDay(project), week: null, emailRobot: null }); // ✉ of this film comes with its sync
 }
 
 // Backup file → device. Unsent changes already on the device are kept.
