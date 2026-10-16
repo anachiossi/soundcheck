@@ -1,6 +1,6 @@
 // help.js — the Help page (Projects → Help): how to set things up and the tips that used to sit
 // on the screens themselves, so those keep only their controls.
-// A crew phone doesn't see Wrap hours and Alarms (Ana's personal setup: crew-link.js crewHides).
+// A crew phone doesn't see Alarms and wrap alerts (Ana's personal setup: crew-link.js crewHides).
 // Used by: main.js
 
 import { html } from '../../vendor/preact-htm.js';
@@ -8,7 +8,7 @@ import { setState } from '../state.js';
 import { crewHides } from '../crew-link.js';
 
 export function HelpScreen({ state }) {
-  const personal = !crewHides(state.connection, 'help-hours');
+  const alarms = !crewHides(state.connection, 'help-alarms');
   return html`
     <div class="help-page">
       <button class="btn" onClick=${() => setState({ screen: 'projects' })}>‹ Projects</button>
@@ -23,15 +23,16 @@ export function HelpScreen({ state }) {
       <h2 class="section-title">Screen</h2>
       <p>Projects → Screen: <b>Auto</b> follows the phone's own light / dark setting. <b>Dark</b> is easier on the eyes on night sets.</p>
 
-      ${personal && html`
       <h2 class="section-title">Wrap hours</h2>
       <ul class="help">
         <li>The ⏱ in the top bar counts down to the ODG's wrap, then counts the overtime (+0h 35m).</li>
         <li>After the wrap: "Did today finish on time?" — No asks again every hour ("Is this a wrap?") until you type the real wrap.</li>
         <li>Tap ⏱ (or Projects → ⏱ Hours, any day) for the week, the overtime, and the images for production (week or whole film). Tap a day's wrap to correct it.</li>
-        <li><b>Notifications</b> at the wrap, even with the app closed: Hours → 🔔 Wrap alerts → Allow (Home Screen app, iOS 16.4 or later). They can come up to 10 minutes late.</li>
+        ${alarms && html`<li><b>Notifications</b> at the wrap, even with the app closed: Hours → 🔔 Wrap alerts → Allow (Home Screen app, iOS 16.4 or later). They can come up to 10 minutes late.</li>`}
+        <li>Projects → <b>My call</b>: your hours count from the crew call, or from your own call on the call sheet (your name as printed there).</li>
       </ul>
 
+      ${alarms && html`
       <h2 class="section-title">Alarms for the next day</h2>
       <p>Projects → ⏱ Hours shows, for the next shooting day: when to sleep, wake up, leave and be at the meeting
         point (the numbers are set per film, under "Wake-up plan"). <b>⏰ Set alarms</b> creates the wake-up and

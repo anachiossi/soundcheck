@@ -16,12 +16,12 @@ export function isCrew(connection) {
 }
 
 // Parts of the app that are Ana's personal setup, not the film's: not shown on crew phones.
-//   'wrap-clock'   the ⏱ countdown in the top bar and "Did today finish on time?" / "Is this a wrap?"
 //   'wrap-alerts'  🔔 Wrap alerts (her phones on the robot's push list)
 //   'tomorrow'     the wake-up plan card and ⏰ Set alarms (the "soundcheck alarms" shortcut)
-//   'help-hours'   Help → Wrap hours and Help → Alarms for the next day
-//   'hours'        the Hours screen, also from a '#hours' link (crew hours come later)
-export const PERSONAL_PARTS = ['wrap-clock', 'wrap-alerts', 'tomorrow', 'help-hours', 'hours'];
+//   'help-alarms'  Help → Alarms for the next day (and the wrap alerts line of Help → Wrap hours)
+// The Hours screen, the ⏱ wrap clock and its question DO show on crew phones: the person's own
+// hours, kept on the phone only (crew-sync.js), with "Export my timesheet" (screens/hours.js).
+export const PERSONAL_PARTS = ['wrap-alerts', 'tomorrow', 'help-alarms'];
 
 export function crewHides(connection, part) {
   return isCrew(connection) && PERSONAL_PARTS.includes(part);

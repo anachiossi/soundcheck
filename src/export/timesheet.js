@@ -4,15 +4,26 @@
 // and the overtime (from the film's working day, e.g. 8h continuate), and the week's total. Everyone
 // starts with the times logged in the app (the department works the same hours); any cell can be changed
 // in Excel and the formulas follow. No lunch, travel or euro (Ana). Headers in Italian (for production).
+// The days come from the Hours screen, so their call is "My call" (my-call.js).
+// A crew phone ("Export my timesheet"): only that person's own block (onlyName = the name in their link).
 // Used by: screens/hours.js
 
 import { WORKDAYS, workdayOf } from '../hours-rules.js';
 import { xlsxBlob } from './xlsx.js';
+import { sameName } from '../my-call.js';
 
 const SOUND_JOBS = /fonic|microfon|boom|sound|suono|audio/i;
 
 // the sound department, from the IFB crew list (in the list's order)
 export const soundPeople = project => (project.crew || []).filter(person => SOUND_JOBS.test(person.job || ''));
+
+// the blocks of the sheet: the sound department, or only one person (with their job when the
+// IFB crew list has them)
+export function timesheetPeople(project, onlyName = '') {
+  if (!onlyName) return soundPeople(project);
+  const listed = (project.crew || []).find(person => sameName(person.name, onlyName));
+  return [listed || { name: onlyName, job: '' }];
+}
 
 // '2026-09-28' → 'lun 28/09/2026'
 const WEEKDAYS = ['dom', 'lun', 'mar', 'mer', 'gio', 'ven', 'sab'];
@@ -20,7 +31,8 @@ const italianDate = iso => `${WEEKDAYS[new Date(`${iso}T12:00`).getDay()]} ${iso
 
 const HEADER = ['Giorno', 'Data', 'Convocazione', 'Fine ODG', 'Fine reale', 'Ore lavorate', 'Straordinario'];
 
-export function timesheetBlob(project, days, weekTitle) {
+export function timesheetBlob(project, days, weekTitle, onlyName = '') {
+  const people = timesheetPeople(project, onlyName);
   const kind = WORKDAYS[workdayOf(project)];
   const hours = kind?.hours || 8;
   const rows = [
@@ -29,7 +41,7 @@ export function timesheetBlob(project, days, weekTitle) {
     [],
   ];
   const bold = [0];
-  for (const person of soundPeople(project)) {
+  for (const person of people) {
     rows.push([{ text: person.name, bold: true }, person.job || '']);
     bold.push(rows.length - 1);
     rows.push(HEADER);
@@ -45,7 +57,7 @@ export function timesheetBlob(project, days, weekTitle) {
     rows.push(['', '', '', '', '', { text: 'Totale', bold: true }, { f: `SUM(G${first}:G${last})`, bold: true }]);
     rows.push([]);
   }
-  if (!soundPeople(project).length) rows.push(['No sound department in the crew list (IFB → Crew).']);
+  if (!people.length) rows.push(['No sound department in the crew list (IFB → Crew).']);
   return xlsxBlob([{ name: 'Foglio ore', rows, bold, freeze: 0 }]);
 }
 

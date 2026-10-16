@@ -284,9 +284,9 @@ Decisions not sent yet are kept on this device only: localStorage `sc_crew_decis
 
 ## Crew screens (crew sharing step 5)
 **Hidden on crew phones** (Ana's personal setup, not the film's): `crewHides(connection, part)` in
-`src/crew-link.js` with the list `PERSONAL_PARTS`: the ⏱ wrap clock and "Did today finish on time?" /
-"Is this a wrap?" (`src/main.js`), 🔔 Wrap alerts and the wake-up plan / ⏰ Set alarms card (`src/screens/hours.js`),
-Help → Wrap hours and Alarms (`src/screens/help.js`), the Hours screen and the `#hours` link (`src/main.js`).
+`src/crew-link.js` with the list `PERSONAL_PARTS`: 🔔 Wrap alerts and the wake-up plan / ⏰ Set alarms card
+(`src/screens/hours.js`), Help → Alarms and the wrap alerts line of Help → Wrap hours (`src/screens/help.js`).
+(Since step 6 the Hours screen, `#hours` and the ⏱ wrap clock show on crew phones: see "Crew hours".)
 Ana's devices see everything as before.
 
 **My suggestions** (Projects, crew only, `<details class="more">`): what waits first ("Waiting for approval",
@@ -317,3 +317,33 @@ comments "thanks" and closes the issue. **Remove / Restore** next to each name i
 | Feedback form and the wrap offer | `src/parts/crew-feedback-form.js` |
 | Owner sync: decisions, suggestions, feedback, removed names; Mark as read | `src/crew-inbox-sync.js`, `src/crew-inbox.js` |
 | Tests | `tests/crew-screens.test.js` (fake GitHub) |
+
+## My call (crew sharing step 6)
+Every device (Ana's and crew) chooses in Projects → **My call** (segmented, like Screen): **General crew call**
+(the default: exactly as before) or **Personal call** + "Your name as printed on the call sheet". Kept on the
+device only: localStorage `sc_my_call` = `{ mode: 'general' | 'personal', name }` → `state.myCall`
+(`rememberMyCall` in `src/state.js`).
+`myCallFor(project, day, setting)` → `{ call, source: 'general' | 'personal' | 'fallback', note }`: Personal
+looks the name up in `calls.json` (`project.crewCalls[date]`), matching with no capitals, accents or extra
+spaces (`sameName`, also used by the wake plan's `ride_with`). Not on that day's sheet → the crew call, source
+`fallback`, note "Your name wasn't on this day's call sheet: using the crew call." (a muted line on Hours).
+`withMyCalls(project, setting)` gives the Hours screen, the ⏱ wrap clock / question and the timesheet a copy of
+the film where each day's call is "my call" (General → the very same film). The wake plan (Tomorrow card)
+starts from my call; `ride_with` still follows the colleague's call. The Schedule always shows the crew call.
+Nothing is saved from it. (The robots' automatic alarms and pushes still use the crew call.)
+
+| What | File |
+|---|---|
+| The rules (`myCallFor`, `withMyCalls`, `sameName`, `daysNotOnSheet`) | `src/my-call.js` |
+| Projects → My call | `src/parts/my-call-switch.js` |
+| Tests | `tests/my-call.test.js` |
+
+## Crew hours (crew sharing step 6)
+Hours are per person. On a crew phone the Hours screen, `#hours` and the ⏱ wrap clock / "Did today finish on
+time?" show again, counting the person's OWN hours (from My call). Their `hours/<day>.json` stay in the outbox
+on the phone, never sent (`staysOnPhone`). The film's `hours/` and `push/` files are Ana's: the crew download
+skips them (`download()` in `src/sync.js`), and `ownHoursOnly` in `src/crew-sync.js` keeps only hours / wrap
+alerts that are in the phone's outbox, so a copy of Ana's hours downloaded by an older version is dropped at
+the next sync. Hours → **📊 Export my timesheet**: the same Excel as Ana's, with only the person's block
+(`timesheetPeople(project, name)` in `src/export/timesheet.js`; their job from the IFB crew list when the name
+is there). Still hidden on crew: wake plan / alarms, 🔔 wrap alerts, Help → Alarms.

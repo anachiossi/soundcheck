@@ -15,10 +15,11 @@
 // (`project.crew` is already the IFB crew list, hence the longer name.)
 // store = { read: () => the latest project, save: async project => … } (sync.js gives it).
 // Hours (hours/…) and wrap alerts (push/…) are personal: on a crew phone they stay on the phone,
-// never sent and never "proposed".
+// never sent and never "proposed". And the film's hours/ and push/ files are Ana's: a crew phone
+// never downloads them (sync.js), and drops any copy an older version downloaded (ownHoursOnly).
 
 import * as github from './store/github.js';
-import { fileContent } from './store/repo-files.js';
+import { fileContent, applyRemote, hoursFile, pushFile } from './store/repo-files.js';
 import { changesBetween, describeChanges, suggestionIssue, readSuggestion, readDecision } from './crew-changes.js';
 
 // A fingerprint no file has: the next download takes the film's version of that file again
@@ -42,6 +43,20 @@ export function proposedPaths(project) {
   return Object.entries(project.outbox || {})
     .filter(([path, entry]) => sent[path] && sent[path].saved_at === entry.saved_at)
     .map(([path]) => path);
+}
+
+// A crew phone keeps only its OWN hours and wrap alerts: the ones saved on it, which always stay
+// in the outbox (never sent). Any other (Ana's, downloaded by an older version) is dropped.
+export function ownHoursOnly(project) {
+  const outbox = project.outbox || {};
+  const own = (records, fileOf) => Object.fromEntries(Object.entries(records || {}).filter(([key]) => outbox[fileOf(key)]));
+  return { ...project, hours: own(project.hours, hoursFile), push: own(project.push, pushFile) };
+}
+
+// A download on a crew phone: the film's changes in (remote has no hours/ or push/, sync.js),
+// its own hours kept, its proposed files kept.
+export function mergeDownload(project, changed, remote) {
+  return keepProposed(applyRemote(noteBases(ownHoursOnly(project)), changed, remote));
 }
 
 // Before a download: remember which version of the film each changed file started from.

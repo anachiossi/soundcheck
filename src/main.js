@@ -2,14 +2,14 @@
 // (with the sync badge), the tabs, the current screen and, when open, the
 // picker. Starts automatic syncing, and registers sw.js so the app itself is
 // stored on the device and opens with no signal (and updates itself).
-// A crew phone hides Ana's personal parts (wrap clock, Hours, '#hours'; crew-link.js crewHides).
+// A crew phone sees the ⏱ wrap clock and Hours too: the person's own hours (crew-link.js crewHides).
 // Used by: index.html
 
 import { html, render, useState, useEffect } from '../vendor/preact-htm.js';
-import { useAppState, start, showScreen, clearMessage, setState, getState, showMessage, joinAsCrew } from './state.js';
+import { useAppState, start, showScreen, clearMessage, setState, showMessage, joinAsCrew } from './state.js';
 import { startAutoSync, syncNow } from './sync.js';
 import { downloadCrewFilm } from './films.js';
-import { readCrewLink, isCrew, crewHides } from './crew-link.js';
+import { readCrewLink, isCrew } from './crew-link.js';
 import { proposedPaths, staysOnPhone } from './crew-sync.js';
 import { formatStamp } from './model.js';
 import { ScheduleScreen } from './screens/schedule.js';
@@ -109,7 +109,6 @@ function AppVersion() {
 function App() {
   const state = useAppState();
   const { project, screen, message, busyText, connection } = state;
-  const wrapClock = !crewHides(connection, 'wrap-clock');
   const current = project ? screen : 'projects';
   if (current === 'cues') return html`<${CuesScreen} key=${state.cuesScene} state=${state} />`; // full screen
   // the Scene Map and Timeline are moments to focus: full screen too, no title, badges or tabs
@@ -119,7 +118,7 @@ function App() {
   const Screen = current === 'proposal' ? ProposalScreen
     : current === 'crew-suggestions' ? CrewSuggestionsScreen
     : current === 'document' ? DocumentScreen
-    : current === 'hours' && !crewHides(connection, 'hours') ? HoursScreen
+    : current === 'hours' ? HoursScreen
     : current === 'help' ? HelpScreen
     : current === 'lav-share' ? LavShareScreen
     : current === 'cues-map' ? CuesMapScreen
@@ -131,7 +130,7 @@ function App() {
       <div class="topbar__title">
         <span class="topbar__film">${project ? project.name : 'soundcheck'}</span>
       </div>
-      <div class="topbar__status"><${SyncBadge} state=${state} /> ${!isCrew(connection) && html`<${EmailBadge} state=${state} />`} ${wrapClock && html`<${WrapBadge} project=${project} />`}</div>
+      <div class="topbar__status"><${SyncBadge} state=${state} /> ${!isCrew(connection) && html`<${EmailBadge} state=${state} />`} <${WrapBadge} project=${project} myCall=${state.myCall} /></div>
       ${project && html`<${DepartmentSwitch} department=${state.department} />`}
     </header>
     <nav class="tabs">
@@ -141,7 +140,7 @@ function App() {
     </nav>
     ${message && html`
       <div class=${'message message--' + message.kind} onClick=${clearMessage}>${message.text} <span>✕</span></div>`}
-    ${project && wrapClock && html`<${WrapQuestion} project=${project} />`}
+    ${project && html`<${WrapQuestion} project=${project} myCall=${state.myCall} />`}
     ${project && isCrew(connection) && html`<${FeedbackOffer} key=${project.folder} state=${state} />`}
     ${project && !['proposal', 'document', 'crew-suggestions'].includes(current) && html`<${ProposalBanner} project=${project} />`}
     ${project && !['proposal', 'document', 'crew-suggestions'].includes(current) && html`<${CrewSuggestionsBanner} state=${state} />`}
@@ -161,10 +160,8 @@ render(html`<${App} />`, document.getElementById('app'));
 function openFromLink() {
   const lavs = /^#lavs-(\d+)$/.exec(location.hash);
   if (location.hash.startsWith('#join=')) return joinFromLink();
-  if (location.hash === '#hours') {
-    // a crew phone has no Hours (yet): the link just opens the app
-    if (!crewHides(getState().connection, 'hours')) setState({ screen: 'hours', department: 'mics' });
-  } else if (lavs) setState({ screen: 'lav-share', lavDay: Number(lavs[1]), department: 'mics' });
+  if (location.hash === '#hours') setState({ screen: 'hours', department: 'mics' });
+  else if (lavs) setState({ screen: 'lav-share', lavDay: Number(lavs[1]), department: 'mics' });
   else return;
   history.replaceState(null, '', location.pathname + location.search);
 }

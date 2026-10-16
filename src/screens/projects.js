@@ -4,9 +4,10 @@
 // • The open film: sync status, "Sync now", backup file; its documents (📄 script, 📄 latest PDL,
 //   offline) and ⏱ Hours (the week / whole film for production, fix any day's wrap).
 // • Share with crew (Ana's devices, film open): a link per person (parts/crew-share.js).
-//   A crew phone sees "Connected as Davide (crew)" and no Connect, Share with crew or ⏱ Hours;
+//   A crew phone sees "Connected as Davide (crew)" and no Connect or Share with crew (⏱ Hours = its own);
 //   instead: "My suggestions" (parts/crew-log.js) and "Enjoyed soundcheck? Share some feedback"
 //   (parts/crew-feedback-form.js).
+// • My call: General crew call / Personal call (parts/my-call-switch.js, every device).
 // • Screen: Auto / Light / Dark (parts/theme-switch.js).
 // • ? Help → the Help page (screens/help.js): offline use, wrap hours, hearing the lines…
 // Each film has its own database on the device; old films are kept.
@@ -27,6 +28,8 @@ import { isCrew } from '../crew-link.js';
 import { ShareWithCrew } from '../parts/crew-share.js';
 import { MySuggestions } from '../parts/crew-log.js';
 import { FeedbackButton } from '../parts/crew-feedback-form.js';
+import { MyCallSwitch } from '../parts/my-call-switch.js';
+import { staysOnPhone } from '../crew-sync.js';
 
 export function ProjectsScreen({ state }) {
   const { project, projects, connection, films, online } = state;
@@ -68,6 +71,7 @@ export function ProjectsScreen({ state }) {
       </label>
     </details>
 
+    <${MyCallSwitch} state=${state} />
     <${ThemeSwitch} />
 
     <button class="btn help-link" onClick=${() => setState({ screen: 'help' })}>? Help</button>`;
@@ -75,7 +79,8 @@ export function ProjectsScreen({ state }) {
 
 function OpenFilm({ state }) {
   const { project, connection, sync, online } = state;
-  const waiting = Object.keys(project.outbox || {}).length;
+  // a crew phone's own hours stay on the phone: never "waiting to upload" (crew-sync.js)
+  const waiting = Object.keys(project.outbox || {}).filter(path => !isCrew(connection) || !staysOnPhone(path)).length;
   const conflicts = Object.keys(project.conflicts || {}).length;
   const status = sync.running ? 'Syncing…'
     : conflicts ? `⚠ ${conflicts} change(s) made on two devices: open them to choose`
@@ -88,7 +93,7 @@ function OpenFilm({ state }) {
     ${connection && html`
       <button class="btn" disabled=${!online || sync.running} onClick=${() => syncNow({ loud: true })}>↻ Sync now</button>
       ${!online && html`<small class="muted"> No signal: changes wait on this device.</small>`}`}
-    <${FilmDocuments} project=${project} crew=${isCrew(connection)} />`;
+    <${FilmDocuments} project=${project} />`;
 }
 
 // the film's tag ('LBE'): tap to change it — every exported file starts with it
@@ -102,8 +107,8 @@ function FilmTag({ project }) {
   return html`<button class="film-tag" onClick=${() => setTyping(tagOf(project))} title="The film's tag: exported files start with it">${tagOf(project)}</button>`;
 }
 
-// 📄 Script · 📄 PDL (when they are on the device) · ⏱ Hours (not on crew phones, for now)
-function FilmDocuments({ project, crew }) {
+// 📄 Script · 📄 PDL (when they are on the device) · ⏱ Hours (on a crew phone: the person's own)
+function FilmDocuments({ project }) {
   const script = cuesSummary(project);
   const doc = (file, title) => {
     const path = `${project.folder}/docs/${file}`;
@@ -115,7 +120,7 @@ function FilmDocuments({ project, crew }) {
     <div class="toolbar film-docs">
       ${doc('script.pdf', `Script${script.version ? ` ${script.version}` : ''}`)}
       ${doc('pdl.pdf', 'PDL')}
-      ${!crew && html`<button class="btn" onClick=${() => setState({ screen: 'hours' })}>⏱ Hours</button>`}
+      <button class="btn" onClick=${() => setState({ screen: 'hours' })}>⏱ Hours</button>
     </div>
     ${script.script > 0 && html`<p class="muted with-icon"><${Icon} name="cues" /> Cues for ${script.script} scenes${script.sides ? `, ${script.sides} updated from the sides` : ''}</p>`}`;
 }

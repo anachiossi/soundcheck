@@ -6,7 +6,10 @@
 //   • 📊 Timesheet → the week as an editable Excel for production, one block per person of the sound department
 //   • 🔔 Wrap alerts: a notification at the wrap, even with the app closed (parts/wrap-alerts.js)
 //   • on top, the night before the next day: sleep · wake · leave · meet, ⏰ Set alarms (parts/tomorrow.js)
-// On a crew phone (for now not reachable) the wake plan and wrap alerts never show: crew-link.js crewHides.
+// "My call" (Projects, my-call.js): the calls here count from the person's own call when they chose
+// Personal; a day their name wasn't on the call sheet uses the crew call, with a muted line saying so.
+// On a crew phone: the person's OWN hours (kept on the phone only, crew-sync.js) and 📊 Export my
+// timesheet (only their block); the wake plan and wrap alerts never show (crew-link.js crewHides).
 // Used by: main.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
@@ -19,10 +22,13 @@ import { shareCanvas, shareFile } from '../export/share.js';
 import { Icon } from '../parts/icons.js';
 import { WrapAlerts } from '../parts/wrap-alerts.js';
 import { Tomorrow } from '../parts/tomorrow.js';
-import { crewHides } from '../crew-link.js';
+import { crewHides, isCrew } from '../crew-link.js';
+import { withMyCalls, daysNotOnSheet, NOT_ON_CALL_SHEET } from '../my-call.js';
 
 export function HoursScreen({ state }) {
-  const { project, connection } = state;
+  const { connection, myCall } = state;
+  const project = withMyCalls(state.project, myCall); // each day's call = "My call"
+  const crew = isCrew(connection);
   const [monday, setMonday] = useState(() => mondayOf(new Date()));
   const [editing, setEditing] = useState(null); // { day, time }
   const days = weekOf(project, monday);
@@ -32,10 +38,11 @@ export function HoursScreen({ state }) {
   const sunday = new Date(monday); sunday.setDate(sunday.getDate() + 6);
   const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   const title = `${formatDate(iso(monday))} – ${formatDate(iso(sunday))}`;
+  const notOnSheet = daysNotOnSheet(state.project, days, myCall);
 
   return html`
     <div class="hours">
-      ${!crewHides(connection, 'tomorrow') && html`<${Tomorrow} project=${project} />`}
+      ${!crewHides(connection, 'tomorrow') && html`<${Tomorrow} project=${state.project} myCall=${myCall} />`}
       <div class="hours__week">
         <button class="btn" onClick=${() => move(-1)} aria-label="Week before">‹</button>
         <b>${title}</b>
@@ -52,9 +59,10 @@ export function HoursScreen({ state }) {
           <${Icon} name="image" /> Week</button>
         <button class="btn" onClick=${async () => shareCanvas(await hoursImage(project, filmWeeks(project), project.name), exportName(project, 'hours_ALL-FILM.png'))}>
           <${Icon} name="image" /> Whole film</button>
-        <button class="btn" disabled=${days.length === 0} onClick=${() => shareFile(timesheetBlob(project, days, title),
-          exportName(project, `timesheet_${days[0]?.week ? `${weekTag(days[0].week)}_` : ''}${shortDate(iso(monday))}.xlsx`))}>📊 Timesheet</button>
+        <button class="btn" disabled=${days.length === 0} onClick=${() => shareFile(timesheetBlob(project, days, title, crew ? connection.name : ''),
+          exportName(project, `timesheet_${days[0]?.week ? `${weekTag(days[0].week)}_` : ''}${shortDate(iso(monday))}.xlsx`))}>📊 ${crew ? 'Export my timesheet' : 'Timesheet'}</button>
       </div>
+      ${notOnSheet.length > 0 && html`<p class="muted">${notOnSheet.map(d => `D${d.day}`).join(' · ')}: ${NOT_ON_CALL_SHEET}</p>`}
       ${days.length === 0 ? html`<p class="empty">No shooting this week.</p>` : html`
         <table class="hours__table">
           <thead><tr><th>Day</th><th>Call</th><th>ODG wrap</th><th>Wrap</th><th>Worked</th><th>Extra</th></tr></thead>

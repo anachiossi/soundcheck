@@ -69,6 +69,13 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   helped, annoyed, text; kept on the phone offline, sent at sync as a `crew-feedback` issue); offered once by
   itself from 3 days before the last shooting day. Ana: "Feedback from the crew" banner + Mark as read; Remove /
   Restore names in Share with crew (their suggestions and feedback are ignored).
+- v153 (crew sharing step 6, branch only): **My call + crew hours** — Projects → My call (every device, kept
+  on the device): General crew call (default, as before) or Personal call = your name as printed on the call
+  sheet, matched in `calls.json` (no capitals/accents/extra spaces); not on that day's sheet → crew call + a
+  muted note on Hours. Hours, ⏱ wrap clock, timesheet and the wake plan use it; the Schedule keeps the crew call.
+  Crew phones get Hours and the wrap clock back (their OWN hours, phone only): they never download the
+  film's `hours/` and `push/` (an old copy is dropped at the next sync) and get "📊 Export my timesheet" (their
+  block only). Still hidden on crew: wake plan / alarms, 🔔 wrap alerts, Help → Alarms.
 - Cues is Speak Screen friendly (v62–63, iPhone's own Siri reading, started only by a two-finger swipe):
   only the dialogue is readable (the rest aria-hidden), "Prince John." before each line, and the
   following lines are there invisibly (.sr-only) so Speak Screen reads to the end of the scene.

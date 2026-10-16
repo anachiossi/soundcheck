@@ -8,6 +8,7 @@
 // changes wait safely in the outbox.
 // A crew phone (crew-link.js) never commits: its changes stay on the phone, "proposed", and
 // are sent as suggestions (crew-sync.js). Ana's devices then list those (crew-inbox-sync.js).
+// It never downloads the film's hours/ and push/ (Ana's): its hours are its own.
 // Used by: main.js, editing.js, films.js, screens/projects.js, parts/scene-table.js
 
 import { getState, setState, saveAndShow, showMessage } from './state.js';
@@ -92,8 +93,8 @@ async function downloadAndUpload(connection, store) {
 }
 
 // A crew phone (crew-sync.js): closed suggestions first (so their files are downloaded again
-// now), then download, then send the outbox as suggestions and any feedback. Never commits.
-async function syncAsCrew(connection, store) {
+// now), then download, then send the outbox as suggestions and any feedback. Never commits. (tests too)
+export async function syncAsCrew(connection, store) {
   await crew.takeBackClosed(connection, store);
   const tree = await github.readTree(connection);
   await download(connection, tree, store);
@@ -106,10 +107,12 @@ async function syncAsCrew(connection, store) {
 async function download(connection, tree, store) {
   const project = store.read();
   const prefix = project.folder + '/';
+  const crewPhone = isCrew(connection);
   const remote = {};
   for (const [path, sha] of Object.entries(tree.files)) {
     const inside = path.startsWith(prefix) ? path.slice(prefix.length) : null;
-    if (inside && !inside.startsWith('_import/') && !inside.startsWith('docs/')) remote[inside] = sha;
+    const personal = crewPhone && inside && crew.staysOnPhone(inside); // Ana's hours/ and push/
+    if (inside && !inside.startsWith('_import/') && !inside.startsWith('docs/') && !personal) remote[inside] = sha;
   }
   const changed = {};
   const paths = filesToDownload(project, remote);
@@ -119,9 +122,7 @@ async function download(connection, tree, store) {
     }));
   }
   const latest = store.read(); // the user may have saved meanwhile
-  let merged;
-  if (isCrew(connection)) merged = crew.keepProposed(applyRemote(crew.noteBases(latest), changed, remote));
-  else merged = applyRemote(latest, changed, remote);
+  const merged = crewPhone ? crew.mergeDownload(latest, changed, remote) : applyRemote(latest, changed, remote);
   merged.data_as_of = new Date().toISOString();
   await store.save(merged);
 }

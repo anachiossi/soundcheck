@@ -68,7 +68,7 @@ Closed with a comment: `approved` or `not approved: <reason>`.
 3. Crew sync: outbox → suggestions; closed → back to the film's version.
 4. Ana's inbox: approve / don't approve.
 5. Crew screens: hidden personal parts, neutral words, message log, feedback.
-6. "My call" + crew hours on the phone.
+6. "My call" + crew hours on the phone. (Done 16 Oct: Projects → My call; crew Hours + Export my timesheet.)
 Later (needs the next film's setup): one repo per film; per-person notifications in the robots; wake plan
 per person.
 

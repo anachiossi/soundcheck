@@ -37,6 +37,7 @@ let state = {
   feedbackWaiting: loadJson('sc_crew_feedback', []),    // crew phone: feedback not sent yet (crew-feedback.js)
   feedbackOffered: loadJson('sc_feedback_offered', []), // crew phone: films whose feedback line was offered
   feedbackOpen: false,      // crew phone: the feedback form is open (Projects)
+  myCall: loadJson('sc_my_call', { mode: 'general', name: '' }), // Projects → My call: whose call my hours count from (my-call.js)
   crewSuggestions: [],      // owner: the crew's open suggestions, from the last sync (crew-inbox.js)
   crewDecisions: loadJson('sc_crew_decisions', []), // owner: decisions not sent yet (crew-decisions.js)
   crewBy: null,             // the person whose suggestions the 'crew-suggestions' screen shows
@@ -108,6 +109,12 @@ export function joinAsCrew(link) {
   const { owner, repo, branch, token, name, folder } = link;
   saveConnection({ owner, repo, branch, token, device: name, role: 'crew', name, folder }); // folder: the only film it sees
   return true;
+}
+
+// Projects → My call (my-call.js): the general crew call or the person's own; this device only.
+export function rememberMyCall(myCall) {
+  try { localStorage.setItem('sc_my_call', JSON.stringify(myCall)); } catch { /* not remembered after a reload */ }
+  setState({ myCall });
 }
 
 export function forgetConnection() {

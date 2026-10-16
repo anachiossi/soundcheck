@@ -3,13 +3,15 @@
 //     gone once the day is wrapped. Tap → the Hours screen (the week, for production).
 //   • WrapQuestion: after the ODG's wrap, "Did today finish on time?" Yes / No. No = asked again in
 //     an hour: "Is this a wrap?" Yes (type the real wrap) / Not yet — like an alarm's snooze.
-// The phone's clock is read every 20 s while the app is open.
+// The phone's clock is read every 20 s while the app is open. The day counts from "My call"
+// (my-call.js: the crew call, or the person's own when they chose Personal). Crew phones too.
 // Used by: main.js
 
 import { html, useEffect, useState } from '../../vendor/preact-htm.js';
 import { today, span, nowRounded } from '../hours-rules.js';
 import { finishedOnTime, notYet, wrappedAt } from '../hours-editing.js';
 import { setState } from '../state.js';
+import { withMyCalls } from '../my-call.js';
 
 function useClock() {
   const [now, setNow] = useState(() => new Date());
@@ -22,9 +24,9 @@ function useClock() {
   return now;
 }
 
-export function WrapBadge({ project }) {
+export function WrapBadge({ project, myCall }) {
   const now = useClock();
-  const day = project && today(project, now);
+  const day = project && today(withMyCalls(project, myCall), now);
   if (!day || day.phase === 'wrapped') return null;
   const text = day.phase === 'before' ? `${span(day.left)} to wrap` : `+${span(day.over)}`;
   return html`
@@ -32,10 +34,10 @@ export function WrapBadge({ project }) {
             title=${`Day ${day.day}: wrap ${day.wrap} on the ODG`}>⏱ ${text}</button>`;
 }
 
-export function WrapQuestion({ project }) {
+export function WrapQuestion({ project, myCall }) {
   const now = useClock();
   const [typing, setTyping] = useState(null); // the real wrap being typed
-  const day = project && today(project, now);
+  const day = project && today(withMyCalls(project, myCall), now);
   if (!day || !['ask', 'ask-wrap'].includes(day.phase)) return null;
 
   if (typing !== null) {

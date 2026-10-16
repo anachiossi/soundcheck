@@ -48,10 +48,11 @@ const feedbackOnGitHub = (number, by, state = 'open') => ({ number, state, ...fe
 
 // ---- hidden parts ---------------------------------------------------------------
 
-test('a crew phone hides the wrap clock, wrap alerts, wake plan, Help → Alarms and Hours', () => {
-  for (const part of ['wrap-clock', 'wrap-alerts', 'tomorrow', 'help-hours', 'hours']) assert.ok(crewHides(crew, part), part);
+test('a crew phone hides the wrap alerts, wake plan and Help → Alarms, and shows its own Hours and wrap clock', () => {
+  for (const part of ['wrap-alerts', 'tomorrow', 'help-alarms']) assert.ok(crewHides(crew, part), part);
+  for (const part of ['hours', 'wrap-clock']) assert.equal(crewHides(crew, part), false, part);
   assert.deepEqual(PERSONAL_PARTS.filter(part => crewHides(owner, part)), [], 'Ana\'s devices hide nothing');
-  assert.equal(crewHides(null, 'hours'), false, 'not connected: nothing hidden');
+  assert.equal(crewHides(null, 'tomorrow'), false, 'not connected: nothing hidden');
   assert.equal(crewHides(crew, 'schedule'), false, 'the film itself is never hidden');
 });
 
