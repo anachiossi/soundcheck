@@ -330,7 +330,6 @@ button.kit-item { border: 0; background: none; padding: 4px; border-radius: 12px
   font-size: 16px; font-weight: 700; }
 .cues__close { position: relative; border: 0; background: rgba(0,0,0,.18); color: inherit; border-radius: 999px;
   width: 48px; height: 48px; font-size: 18px; touch-action: manipulation; }
-.cues__close--on { background: rgba(0,0,0,.55); color: #fff; }   /* 🔊 reading aloud */
 .cues__close::after { content: ''; position: absolute; inset: -12px; }   /* a bigger invisible target around the ✕ */
 .cues__name { font-family: var(--cue-font); font-weight: 700; text-transform: uppercase; text-align: center;
   font-size: clamp(24px, min(6.5vw, 7vh), 44px); letter-spacing: .06em; line-height: 1.1; }
@@ -388,7 +387,7 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
 .timeline__block--now { opacity: 1; box-shadow: inset 0 0 0 3px var(--ink); z-index: 1; }
 .timeline__cursor { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--ink); pointer-events: none; }
 .timeline__cursor span { position: absolute; top: -2px; left: 50%; transform: translateX(-50%); font-size: 18px; color: var(--ink); }
-.focus-bar__toggle { width: 44px; height: 40px; border-radius: 999px; font-weight: 800; font-size: 16px; }   /* Aa · 🔊: on = black */
+.focus-bar__toggle { width: 44px; height: 40px; border-radius: 999px; font-weight: 800; font-size: 16px; }   /* Aa: on = black */
 .focus-bar__toggle--on { background: var(--accent); color: var(--on-accent); }
 .timeline__controls { margin: 0 0 12px; }   /* above the track: space between the words and the colours */
 /* full screen, like a music player: the script scrolls above, the track + controls are the play bar */

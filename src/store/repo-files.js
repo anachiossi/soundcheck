@@ -20,7 +20,7 @@
 //                          shooting day 9 (hours-rules.js); one file per day, like the presets
 //     push/ana-iphone.json { endpoint, keys, device } where to send wrap alerts (parts/wrap-alerts.js);
 //                          read by the robot (pipeline/send_push.py), one file per phone
-//     settings.json        this film's own rules: presets (the generator), voices (read aloud), workday
+//     settings.json        this film's own rules: presets (the generator), workday (an old "voices" key is ignored)
 //     ifb/crew.json        [{ id, name, job, color, phone }]          IFB department:
 //     ifb/receivers.json   [{ id, model, color, connector }]
 //     ifb/headphones.json  [{ id, model, color, connector, attenuated }]

@@ -51,9 +51,7 @@ export function HelpScreen() {
 
       <h2 class="section-title">Hearing the lines</h2>
       <ul class="help">
-        <li>🔊 in Cues and the Timeline reads the scene with the phone's voice, a short pause between lines.
-          The iPhone gives web apps one voice per language; no sound? Check the silent switch.</li>
-        <li>With Siri's voice: open Cues on the first line and swipe down with two fingers from the top (Speak Screen,
+        <li>soundcheck never speaks by itself. To hear a scene with Siri's voice: open Cues on the first line and swipe down with two fingers from the top (Speak Screen,
           turn it on in Settings → Accessibility → Spoken Content). It reads each character's name, then the line,
           to the end of the scene. Don't tap while it reads.</li>
       </ul>

@@ -148,10 +148,9 @@ The app's GitHub key needs **Actions: Read and write** and **Variables: Read-onl
 | Which lines a scene shows (sides → script → base scene for 7fin) | `src/cues-rules.js` |
 | The full-screen mode (one speech per page, scrolls when long) | `src/screens/cues.js` + section 11 of `app.css` |
 | One phrase per line (after , ; : . ? ! …) | `src/cues-phrases.js` |
-| 🔊 Read aloud with the phone's voice (the iPhone gives web pages only one per language: Alice, so no voice menu); Timeline follows the voice, Cues turns pages by itself. `settings.json` → `voices` and each character's `voice` stay in the data, used only where a device has more voices | `src/read-aloud.js` |
 | Scene Map: colour strip, beats, each line's last words (tap a line → the whole line + Learn from here); made from the same lines, so ✎ edits show at once | `src/cues-map-rules.js`, `src/screens/cues-map.js` |
 | Scene Map auto-scroll (pinned at the top with the colour strip): ▶/■, speed − / + (remembered), a touch pauses, carries on after you let go | `src/parts/auto-scroll.js` |
-| Scene Timeline (Pro Tools-style): blocks back to back in the speakers' colours, width ∝ speaking time (syllables at ~5.5/s at 1×, pauses after , . ? ! … and a breath when the speaker changes) (long speeches capped "⋯" so the next lines stay in view), fixed ▼ cursor, ▶ / speed 0.5–2× / drag to scrub / tap to jump; above the track, the whole scene as a script scrolling by itself like Spotify lyrics (name centred, dialogue left-aligned with an indent; said lines fade, the current line turns black word by word; scroll by hand / tap a line to jump); the track + controls are the play bar; Aa and 🔊 in the top row | `src/cues-timeline-rules.js`, `src/screens/cues-timeline.js`, `src/parts/scene-script.js` |
+| Scene Timeline (Pro Tools-style): blocks back to back in the speakers' colours, width ∝ speaking time (syllables at ~5.5/s at 1×, pauses after , . ? ! … and a breath when the speaker changes) (long speeches capped "⋯" so the next lines stay in view), fixed ▼ cursor, ▶ / speed 0.5–2× / drag to scrub / tap to jump; above the track, the whole scene as a script scrolling by itself like Spotify lyrics (name centred, dialogue left-aligned with an indent; said lines fade, the current line turns black word by word; scroll by hand / tap a line to jump); the track + controls are the play bar; Aa in the top row | `src/cues-timeline-rules.js`, `src/screens/cues-timeline.js`, `src/parts/scene-script.js` |
 | ✎ Changed on set (edit / delete / + New line before or after, undo all) → `lines/set/<scene>.json`, wins over sides and script; the pipeline never writes it; newer paper is offered (Use it / Keep my changes) | `src/cues-editing.js`, panel `src/parts/cue-line-editor.js` |
 
 ## 🔊 Sound breakdown (dificultômetro + lav warnings)
@@ -201,6 +200,8 @@ v145 (13 Oct, Ana: "why haven't you done this?"):
 - v150 (Ana, 13 Oct): IFB receivers get a BAND field (ifb/receivers.json `band`, e.g. "Cw 718–790") — the EK1039s come in 2 frequency groups; shown in the IFB Kit and in the receiver picker. No serial numbers needed.
 - v151 (Ana, 13 Oct): Gear → Manuals grouped by BRAND then CATEGORY (gear/manuals.json `category`): one category → "Schoeps — Microphones" on the brand line; several → a small sub-heading each (Sennheiser: Headphones, Wireless…). Brands and categories A–Z. Also v150: Hours keeps a worked day whose scenes a later ODG moved away (hours/<day>.json keeps call + odg_wrap).
   (Lockit 17 h, LockitBT 14 h, NanoLockit 25 h, Tentacles 50 / 35 h).
+- v153 (Ana, 16 Oct): read aloud removed — the app never speaks (no `src/read-aloud.js`, no 🔊 in Cues or the
+  Timeline); an old `voices` key in settings.json and `voice` in characters.json are ignored.
 No notifications yet (after the aesthetics, Ana 12 Oct).
 | What | File |
 |---|---|

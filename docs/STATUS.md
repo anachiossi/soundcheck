@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-10-15 · live version **v152** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-10-16 · version **v153** (branch `claude/crew-sharing`; live may still be v152) · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
@@ -47,19 +47,12 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   person speaking — `cues-timeline-rules.js`). Map and Timeline open full screen (`main.js` focus).
 - 🔍 **Search the lines** (v112, `parts/line-search.js`) in Cues, Dialogue map and Timeline: words and speakers (v116), every match highlighted
   (capitals / accents ignored), "2 / 7" with ↑ ↓ — on set "we start from WORD".
-- 🔊 **Read aloud** (Timeline and Cues): the phone's own voices (`src/read-aloud.js`); two per film,
-  female + male, in `settings.json` → `voices`; each character's `voice` in
-  characters.json. iOS quirks handled in v58: extra end/interrupted events, voices list empty at
-  start (asked at each line), no word positions (cursor paced by itself, waits at the line end);
-  v60: a listed-but-silent voice falls back to the default one, Kit ▶ shows what the voice did. No Siri voices (not given to web pages).
-  Test with a fake iPhone voice: `.shots/voice-ios.mjs`.
-- v66: 0.8 s silence between lines in 🔊 (LINE_PAUSE); Speak Screen hears "Prince John." before each line.
-- Cues is Speak Screen friendly (v62–63): only the dialogue is readable (the rest aria-hidden), and the
+- v153 (Ana, 16 Oct): **read aloud removed** — the app never speaks (a phone talking by accident on set
+  is the worst case; hard to set up, poor on other phones). `src/read-aloud.js` and the 🔊 buttons in
+  Cues and Timeline are gone; an old `voices` key in settings.json / `voice` in characters.json is ignored.
+- Cues is Speak Screen friendly (v62–63, iPhone's own Siri reading, started only by a two-finger swipe):
+  only the dialogue is readable (the rest aria-hidden), "Prince John." before each line, and the
   following lines are there invisibly (.sr-only) so Speak Screen reads to the end of the scene.
-- iPhone gives web pages only ONE Italian voice (Alice · Standard, in Safari, Chrome and the home-screen app)
-  although Emma Premium + Luca are downloaded: no male voice in-app on iOS. Options: Speak Screen (Siri),
-  or cloud voices recorded per scene (offered to Ana, not decided).
-  v64: Kit voice menu and the character voice field removed (Ana: one voice, no choices, no warnings).
 - Cues text priority (`cues-rules.js`): on-set edit (`lines/set/`) → newest sides → script;
   a newer paper after an edit is flagged, never overwrites it.
 - Scenes tab: scenes already shot are dark grey (v114, `doneScenes`: every day they're on is over) — the film's progress.
@@ -138,7 +131,6 @@ film before November.
   warning be quieter too?
 - Analyzer for a NEW film writing schedule.json / scenes.json / sound/ directly (today: one-off
   scripts in `D:\script_read_claude\projects\<film>\work\`).
-- Read aloud on the Scene Map (mentioned, not started). Verify v58 read-aloud on the real iPhone.
 - Scene order comes from the ODG only (sides are used for speakers). Day 5 ODG said 23·4, sides and
   app 4·23 — asked Ana which wins when they differ; no answer yet.
 - ODG reader: a location can swallow the next column ("PIANO NOBILE (2°) STAND BY:").
