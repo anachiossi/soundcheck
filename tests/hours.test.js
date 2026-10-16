@@ -110,12 +110,12 @@ test('overtime after the first hour counts double (LBE: 1h 15m + 1h 15m = 3h)', 
   assert.equal(countedOvertime({}, 75), 75, 'no rule: as worked');
 });
 
-test("riding with Ilaria: the alarms follow her call on the ODG, Ana's call stays (Ana, 11 Oct)", async () => {
+test("riding with a colleague: the alarms follow their call on the ODG, Ana's call stays (Ana, 11 Oct)", async () => {
   const { wakePlan } = await import('../src/hours-rules.js');
   const project = emptyProject({ id: 'f', name: 'F' }, 'projects/f');
   project.settings = { commute: { meet_before_call: 75, travel_min: 30, travel_max: 45, get_ready: 45, sleep_hours: 8,
-    ride_with: 'Ilaria Salgarella' } };
-  setFileContent(project, 'calls.json', { '2026-10-12': { 'Ilaria  Salgarella': '08:50', 'Ana Chiossi': '09:00' } });
+    ride_with: 'Maria Rossi' } };
+  setFileContent(project, 'calls.json', { '2026-10-12': { 'Maria  Rossi': '08:50', 'Ana Chiossi': '09:00' } });
   assert.equal(fileContent(project, 'calls.json')['2026-10-12']['Ana Chiossi'], '09:00');
   const plan = wakePlan(project, { day: 16, date: '2026-10-12', call: '09:00' });
   assert.equal(plan.call, '09:00');

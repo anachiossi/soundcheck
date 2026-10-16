@@ -62,7 +62,7 @@ Runs in the cloud (GitHub Actions), in Python; the laptop can run it too. Nothin
 | PDL → a whole review from today on: `proposals/pdl-<date>.json` | `pipeline/propose_pdl.py` |
 | All of it, then commit + push | `python pipeline/run.py D:/sound_check_data/projects/<film>` |
 | In the cloud: started minutes after an email arrives (Gmail trigger), and every 30 min 04–10 / 17–24 Rome as a backup; one run at a time | `.github/workflows/emails.yml` in soundcheck-data |
-| Gmail trigger: Google checks the mailbox every 10 min and starts the robot for a new ODG / sides / PDL | `pipeline/gmail-trigger.gs` (Apps Script in sound.chiossi@, see below) |
+| Gmail trigger: Google checks the mailbox every 10 min and starts the robot for a new ODG / sides / PDL | `pipeline/gmail-trigger.gs` (Apps Script in the production mailbox, see below) |
 | Sides in a separate email ("Re: … ODG #7") matched to their day | `sides_by_day` in `pipeline/propose.py` |
 | ODG + sides PDFs filed as `docs/day-N/odg.pdf`, `sides.pdf` | `file_documents` in `pipeline/run.py` |
 | New ODG → notification "🎙 D18 lavs ready" (phones with 🔔 on) → tap opens `#lavs-18` → Share the mic list (WhatsApp / Save Image); sent before review, the screen says when it's a draft (Ana, 12 Oct) | `tell_lavs` in `pipeline/run.py`, `src/screens/lav-share.js` |
@@ -80,7 +80,7 @@ Which emails belong to a film: `projects/<film>/inbox.json` in the data repo.
 ### Email robot trigger (Apps Script) — setup once
 1. GitHub → Settings → Developer settings → Fine-grained tokens → Generate: repository access **only
    soundcheck-data**, permissions **Actions: Read and write** + **Variables: Read and write**.
-2. script.google.com, logged in as sound.chiossi@ → New project → paste `pipeline/gmail-trigger.gs`.
+2. script.google.com, logged in as the production mailbox → New project → paste `pipeline/gmail-trigger.gs`.
 3. ⚙ Project settings → Script properties → add `GITHUB_TOKEN` = the token.
 4. Choose `setup` in the function menu → Run → allow access. This creates the 10-minute timer.
 5. ⏰ Triggers → the timer → ✎ → Failure notification: **Notify me immediately**.
@@ -97,8 +97,8 @@ Ana, 9 Oct: she didn't tap ⏰ and the alarm wasn't set. The iPhone now asks the
   Test in Safari: `<URL>?key=<ALARM_KEY>` shows `none` or the times. (A new version of the script needs
   Deploy → Manage deployments → ✎ → Version: New, or the URL keeps the old code.)
   12 Oct 2026: alarms came out 10 min late (06:45;07:30, Ana's own call) because a second "New deployment"
-  made a new link (`…tAnMuA`, new code) while the shortcut kept the first (`…yl_tTQ`, frozen pre-Ilaria).
-  The shortcut now uses `…tAnMuA`. Never "New deployment" again — always ✎ → New version on that one.
+  made a new link (new code) while the shortcut kept the first (frozen before ride_with).
+  The shortcut now uses the second link. Never "New deployment" again — always ✎ → New version on that one.
 - Shortcut **soundcheck auto alarms** (Shortcuts app):
   1. **Get Contents of URL** (Obter Conteúdo do URL): `<URL>?key=<ALARM_KEY>`
   2. **If** Contents of URL **contains** `;` → **Run Shortcut** (Executar Atalho) *soundcheck alarms*, input =
@@ -113,20 +113,20 @@ Ana, 9 Oct: she didn't tap ⏰ and the alarm wasn't set. The iPhone now asks the
 - Automations (Automação → + → Time of Day): **20:00** daily and **22:30** daily, **Run Immediately**, each
   runs *soundcheck auto alarms*. Running twice is harmless (old soundcheck alarms are deleted first); the
   second catches a late ODG.
-- **Riding with someone** (Ana, 11 Oct: she now goes with Ilaria Salgarella, 2nd costume assistant — "o app
-  precisa ter os meus horários de convocação, mas o alarme agora precisa seguir esse cálculo da Ilaria"):
+- **Riding with someone** (Ana, 11 Oct: she rides with a colleague from another department; the app keeps
+  her own call, the alarms follow the colleague's):
   settings `commute.ride_with` = the name as printed in the ODG's TROUPE list. The pipeline writes everyone's
   call per date to `calls.json` (`file_crew_calls` in `pipeline/run.py`, from `docs/day-<n>/odg.pdf`); wake,
   leave, sleep (app card, robot answer, bedtime and "Tomorrow" pushes) start from THAT call, Ana's own call
-  stays everywhere else. Ilaria leaves her house 1:15 before her call (`meet_before_call` 75), Ana needs 30–45
-  min to reach her. No ODG yet → Ana's call − `ride_gap_if_unknown` (40, the widest gap in ODGs 1–16).
+  stays everywhere else. The colleague leaves 1:15 before their call (`meet_before_call` 75), Ana needs 30–45
+  min to reach them. No ODG yet → Ana's call − `ride_gap_if_unknown` (40, the widest gap in ODGs 1–16).
   Same sums in `hours-rules.js` → `rideCall`, `gmail-trigger.gs` → `rideStart`, `wake_plan.py` → `ride_call`.
 - Ana, 11 Oct, 20:00 run failed: "requires privacy permissions that cannot be granted while the device is
   locked". Each permission (internet to the robot's URL, alarms, notifications, the inner shortcut) must be
   allowed once by hand: run *soundcheck auto alarms* (and *soundcheck alarms*) from the Shortcuts app with the
   phone unlocked → **Always Allow** on every question. After that the locked-phone runs work.
 
-- **On the ODG's arrival** (Ana, 10 Oct): Script property `ALARM_MAIL` = sound.chiossi@gmail.com → at every
+- **On the ODG's arrival** (Ana, 10 Oct): Script property `ALARM_MAIL` = Ana's own address → at every
   10-minute check the robot works out the answer and, when it changes, emails itself "soundcheck alarms"
   (`checkAlarmChange`; never on `error`; last sent in `ALARM_LAST`). Simulated Sat→Tue on real data: one email
   per day at 12:00 (the answer moves to the next day) plus one per ODG change. iPhone: the Gmail account in the

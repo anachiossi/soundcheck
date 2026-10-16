@@ -14,7 +14,8 @@ from pathlib import Path
 
 from pywebpush import WebPushException, webpush
 
-CONTACT = "mailto:chiossi.sound@gmail.com"  # who sends them (the push services ask for a contact)
+CONTACT = os.environ.get("PUSH_CONTACT", "https://anachiossi.github.io/soundcheck/")  # who sends them (the push services
+# ask for a contact: a mailto: or a web address; set PUSH_CONTACT in the workflow for a private address)
 
 
 def send(film, title, body, url="./", tag="wrap"):

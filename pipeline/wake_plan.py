@@ -2,7 +2,7 @@
 src/hours-rules.js wakePlan; Ana's "hora de acordar" calculator, 1 Oct 2026):
     meeting point = call − meet_before_call · leave = meeting − travel_max … meeting − travel_min
     wake = leave − get_ready · sleep = wake − sleep_hours
-Riding with someone ("ride_with": "Ilaria Salgarella", Ana 11 Oct): the sums start from THAT person's
+Riding with someone ("ride_with": "<name as printed on the ODG>", Ana 11 Oct): the sums start from THAT person's
 call on the ODG (calls.json); not known yet → Ana's call − ride_gap_if_unknown (40: the widest gap seen).
 The film's numbers: settings.json → "commute" (no "commute": no plan, no notification).
 Used by: run.py (the "Tomorrow" notification when the ODG arrives)
@@ -60,6 +60,6 @@ def wake_plan(commute, call, calls=None):
 
 if __name__ == "__main__":
     print(wake_plan(COMMUTE, "09:00"))
-    ride = {**COMMUTE, "meet_before_call": 75, "travel_min": 30, "travel_max": 45, "ride_with": "Ilaria Salgarella"}
-    print(wake_plan(ride, "09:00", {"Ilaria Salgarella": "08:50"}))
+    ride = {**COMMUTE, "meet_before_call": 75, "travel_min": 30, "travel_max": 45, "ride_with": "Maria Rossi"}
+    print(wake_plan(ride, "09:00", {"Maria Rossi": "08:50"}))
     print(wake_plan(ride, "09:00", {}))

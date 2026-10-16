@@ -94,12 +94,14 @@ Ana's mockup "Gear inventory redesign", 2 Oct):
 - Rough counts (v152, Ana 15 Oct, RF Spare case): `qty_about: true` shows ×~15 everywhere (`quantityText`);
   tick "About that many" in the object's sheet. For repair cases full of cables / connectors nobody counts.
 - Manuals by brand (`docs/manuals/<brand>/`, `gear/manuals.json`). Hours / timesheet live in Projects.
+- **Gear to check (TODO)**: `D:\sound_check_data\projects\<film>\docs\gear-todo.md` (data repo, private) — every "?" in
+  the gear list, grouped by case; remake with `python tools/gear_todo.py projects/<film>` (data repo). See its README.
 - LBE gear = Angelo Bonanni's kit, dictated by Ana from photos and written by Claude in the data
   (`.shots/lbe-*.mjs`): Inf. Mic's, Maverick → Lav Acessories #1 (TX, lavs, …) and #2 (straps, pouches) done.
   Next: Maverick crates 3–4, Furs / Various / Lectro boxes, the other carts and cases.
 
 ## Email robot (runs in the cloud, no laptop needed)
-Gmail (sound.chiossi@) ← production forwards → **Apps Script trigger every 10 min**
+Gmail (the production mailbox) ← production forwards → **Apps Script trigger every 10 min**
 (`pipeline/gmail-trigger.gs`, installed in that Google account) → starts GitHub Actions
 `emails.yml` in soundcheck-data → `pipeline/run.py`: downloads ODG/sides/PDL by IMAP, writes
 proposals + PDFs + Cues lines, commits. Backup: GitHub cron every 30 min (unreliable on its own).

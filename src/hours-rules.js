@@ -148,7 +148,7 @@ export function nowRounded(now = new Date()) {
 //   travel_min / travel_max  from home to the meeting point (75 / 90): the window to leave
 //   get_ready         from waking up to leaving (45) · sleep_hours (8)
 // call 09:00 → meeting 08:15 · leave 06:45–07:00 · wake 06:00 · sleep 22:00 (the night before)
-//   ride_with  riding with someone (Ana, 11 Oct: Ilaria of costumes): the sums start from THAT person's call
+//   ride_with  riding with someone (Ana, 11 Oct: a colleague from costumes): the sums start from THAT person's call
 //              on the ODG (calls.json) — the app shows Ana's own call everywhere else. Not known yet →
 //              Ana's call − ride_gap_if_unknown (40: the widest gap seen in the ODGs so far)
 export const COMMUTE = { meet_before_call: 45, travel_min: 75, travel_max: 90, get_ready: 45, sleep_hours: 8 };
