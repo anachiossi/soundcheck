@@ -85,7 +85,7 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
 - v156 (branch only, 16 Oct): **notifications per person + robots follow My call** — push files say whose phone
   (`person`, `role`); `send_push.py` audience `owner` (all current alerts, Ana's phones only) / `all`. Ana's
   Personal call is saved as `commute.my_name`; Tomorrow push, bedtime and automatic alarms start from her own
-  call (else the general call). Needs the Apps Script pasted + ✎ New version after the merge. Python tests in
+  call (else the general call). Apps Script pasted + ✎ New version on 17 Oct (alarms checked identical before). Python tests in
   `tests/test_*.py`.
 - v157 (crew sharing step 8, branch only, 16 Oct): **one private repo per film** — Projects → Film repos (Ana's
   devices): extra repos her ONE key reads (`connection.repos`, checked on Add). The films list reads every repo;
