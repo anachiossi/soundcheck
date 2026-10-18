@@ -107,9 +107,12 @@ def check_day(day_number, date, call, wrap, scene_ids, schedule, label, week=Non
     elif rows:
         checks.append(f"{label}: date and times match")
     if scene_ids != now:
-        op = {"op": "set_day_scenes", "day": day_number, "scene_ids": scene_ids}
-        if not rows:  # a new shooting day: it needs its date and times too
-            op["fields"] = {k: v for k, v in wanted if v}
+        # always carry the day's date and times: an earlier change of the same ODG can move this day's
+        # last scene to another day, and then the day is rebuilt from these fields alone
+        # (18 Oct: ODG #21 moved 49 from day 22 to day 21 → day 22 came back with no date, painted green)
+        known = {k: first.get(k) for k in ("date", "call", "wrap", "week") if first.get(k)}
+        op = {"op": "set_day_scenes", "day": day_number, "scene_ids": scene_ids,
+              "fields": {**known, **{k: v for k, v in wanted if v}}}
         text = (f"{label}: new day, {date}, scenes {' · '.join(scene_ids)}" if not rows
                 else f"{label}: scenes {' · '.join(now) or 'none'} → {' · '.join(scene_ids) or 'none (day removed)'}")
         changes.append({"text": text, "op": op})
