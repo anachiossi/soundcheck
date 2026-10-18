@@ -8,6 +8,7 @@
 import { getState, setState, saveAndShow, showMessage } from './state.js';
 import { emptyRow, newKey, cleanRows, sameDayKit } from './preset-rules.js';
 import { applyLavAccessories, withLavAccessory } from './lav-acc-rules.js';
+import { applyUsualTxAcc } from './usual-acc.js';
 import { syncNow } from './sync.js';
 import { presetFile } from './store/repo-files.js';
 
@@ -83,7 +84,9 @@ export async function saveEdit() {
   // Rows with nothing in them are dropped.
   // a lav chosen or changed gets its mount / plush sleeve (lav-acc-rules.js, Ana 18 Oct)
   const savedRows = project.presets[edit.sceneId]?.rows || [];
-  const rows = applyLavAccessories(project, edit.sceneId, cleanRows(edit.rows).filter(r => r.char_id || r.tx_id || r.lav_id), savedRows);
+  // and a TX chosen or changed gets the character's usual strap / pouch (usual-acc.js, Ana 18 Oct)
+  const filled = cleanRows(edit.rows).filter(r => r.char_id || r.tx_id || r.lav_id);
+  const rows = applyUsualTxAcc(project, applyLavAccessories(project, edit.sceneId, filled, savedRows), savedRows);
   const savedAt = new Date().toISOString();
   const presets = { ...project.presets, [edit.sceneId]: { scene_id: edit.sceneId, updated_at: savedAt, rows } };
   const outbox = { ...project.outbox, [presetFile(edit.sceneId)]: { saved_at: savedAt } };

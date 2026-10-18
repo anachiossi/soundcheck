@@ -7,6 +7,7 @@
 
 import { presetFile, soundFile } from './store/repo-files.js';
 import { applyLavAccessories } from './lav-acc-rules.js';
+import { applyUsualTxAcc } from './usual-acc.js';
 
 // a new day's shooting week, from its date: the week of the days in the same Monday–Sunday, or the
 // nearest earlier day's week + the weeks between (0 = no date or no other day to go by)
@@ -58,8 +59,9 @@ const OPS = {
   // a whole scene's rows from the preset generator (pipeline/presets.py, a preset review)
   set_preset(film, { scene_id, rows }) {
     const preset = film.presets[scene_id] || { scene_id };
-    // the generator never picks accessories: the lavs get their mount / plush sleeve here (lav-acc-rules.js)
-    const fitted = applyLavAccessories(film, scene_id, rows);
+    // the generator never picks accessories: the lavs get their mount / plush sleeve (lav-acc-rules.js) and the
+    // TX the character's usual strap / pouch (usual-acc.js) here
+    const fitted = applyUsualTxAcc(film, applyLavAccessories(film, scene_id, rows));
     film.presets = { ...film.presets, [scene_id]: {
       ...preset, rows: fitted, updated_at: new Date().toISOString(), updated_by: 'preset review' } };
     return [presetFile(scene_id)];
