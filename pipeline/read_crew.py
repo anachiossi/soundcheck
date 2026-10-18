@@ -37,6 +37,8 @@ def read_crew(path):
         # The table ends where the next table starts (the scene list / department needs).
         bottom = min([y for y, x, t in cells if y > top and t in ("Scena", "FABBISOGNI REPARTI")] or [10_000])
         cells = sorted(c for c in cells if top + 4 < c[0] < bottom)
+        if not cells:  # a "TROUPE" heading with an empty table (18 Oct: ODG #21 BOZZA) — nothing to read here
+            continue
         # First row = three department names (where each group's role column starts),
         # each with "SET" printed where that group's time column is.
         first_y = cells[0][0]
