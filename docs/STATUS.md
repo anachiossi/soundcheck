@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-10-16 · live version **v158** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-10-18 · live version **v159** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
@@ -99,6 +99,12 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   file keeps the film's repo; films of the main repo get no `source` (follow the main connection, as
   before v157); "Personal call" with no name yet leaves the robots' `my_name` alone; a failed film-list
   read says "No signal: showing films on this device." instead of "Looking for films…".
+- v159 (18 Oct, live): **robots never fail unseen** — after the email robot failed 16–18 Oct (push contact
+  refused, ODG #21 never saved, Monday alarm wrong): a failed run emails the production mailbox once per
+  breakdown (`pipeline/robot_failed.py`, last step of emails.yml / wrap-alerts.yml); the ✉ badge reads
+  "✉ ✗ robot failed"; a notification that fails never stops the ODG save; a schedule day with no date fails
+  the run (after saving) and is never painted green. ODG reader: casts wrapped over two lines, tables with no
+  "Tot.", crew list with no TROUPE heading (ODG #21 BOZZA); a day's new scenes always carry its date/times.
 - Cues is Speak Screen friendly (v62–63, iPhone's own Siri reading, started only by a two-finger swipe):
   only the dialogue is readable (the rest aria-hidden), "Prince John." before each line, and the
   following lines are there invisibly (.sr-only) so Speak Screen reads to the end of the scene.
