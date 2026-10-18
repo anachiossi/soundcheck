@@ -212,6 +212,24 @@ button.scene-pill { cursor: pointer; }
 .speaker--no { background: var(--no-bg); color: var(--no); }
 .speaker--maybe { border: 2px dashed var(--line-strong); color: var(--muted); }
 
+/* the Costume column (costume-cell.js): a small photo + "ch.2"; tap → the photos full screen */
+.costume-pill { background: var(--soft); color: var(--ink); justify-content: center; gap: 5px; padding: 4px 8px 4px 4px; }
+.costume-pill b { font-size: 14px; }
+.costume-pill .icon { width: 20px; height: 20px; margin-left: 4px; }
+.costume-pill__thumb { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; object-position: top; flex-shrink: 0; }
+.costume-viewer { position: fixed; inset: 0; z-index: 50; background: #0b0f17; color: #f8fafc; display: flex; flex-direction: column;
+  padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
+.costume-viewer__head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; font-size: 18px; }
+.costume-viewer__head .icon-btn { color: inherit; }
+.costume-viewer__photos { flex: 1; min-height: 0; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 8px; padding: 0 8px; }
+.costume-viewer__photo { flex: 0 0 100%; scroll-snap-align: center; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 0; }
+.costume-viewer__photo img { flex: 1; min-height: 0; max-width: 100%; object-fit: contain; border-radius: 8px; }
+.costume-viewer__photo figcaption { padding: 6px; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; opacity: .8; }
+.costume-viewer__none { flex: 1; display: flex; align-items: center; justify-content: center; opacity: .7; }
+.costume-viewer__foot { padding: 6px 16px 14px; font-size: 15px; }
+.costume-viewer__foot p { margin: 4px 0; }
+.costume-viewer .muted { color: #94a3b8; }
+
 /* ---- 6. Kit & Projects ---------------------------------------------------- */
 .kit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--kit-col), 1fr)); gap: 8px; }
 .kit-grid--wide { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }

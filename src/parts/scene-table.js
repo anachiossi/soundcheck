@@ -5,7 +5,7 @@
 // The mic table (v149, Ana 13 Oct: "the fluidity of horizontal pages to survive adding more columns"): the Character
 // stays pinned on the left; every other column sits in COLUMNS, in Ana's order, and fills pages as wide as the phone
 // allows — swipe sideways for the next page, the dots on the right say which one. A new column = one more entry.
-//   TX (with its frequency) · Speaks · Battery (battery-cell.js) · Lav · Lav acc. · TX acc. · Position
+//   TX (with its frequency) · Speaks · Battery (battery-cell.js) · Lav · Lav acc. · TX acc. · Position · Costume (costume-cell.js)
 // Nothing is ever printed under a pill ("I absolutely disgust this lack of alignment"): new info gets its own column.
 // The editor (scene-editor.js) uses the same pages, with its own cells.
 // Under the slate: the sound bar (dificultômetro, flags, lav warnings — sound-bar.js); a
@@ -28,6 +28,7 @@ import { SoundBar, RowWarnings } from './sound-bar.js';
 import { Icon } from './icons.js';
 import { rowAccessories } from '../accessories.js';
 import { BatteryCell } from './battery-cell.js';
+import { CostumeCell } from './costume-cell.js';
 
 // "ⓘ more info (3)": director / costume notes from the ODGs and production notes, closed until tapped
 function MoreInfo({ items }) {
@@ -113,6 +114,7 @@ export const COLUMNS = [
   { key: 'lav_acc', label: 'Lav acc.', min: 66, cell: (project, row) => html`<${AccCell} project=${project} row=${row} side="lav" />` },
   { key: 'tx_acc', label: 'TX acc.', min: 66, cell: (project, row) => html`<${AccCell} project=${project} row=${row} side="tx" />` },
   { key: 'position', label: 'Position', min: 96, grow: 1.6, cell: (project, row) => html`<${PositionPill} position=${row.position} />` },
+  { key: 'costume', label: 'Costume', min: 84, cell: (project, row, sceneId) => html`<${CostumeCell} project=${project} sceneId=${sceneId} row=${row} />` },
 ];
 
 // the columns cut into pages that fit `width` (in order; a column too wide alone still gets its page)
@@ -175,7 +177,7 @@ function MicRows({ project, sceneId }) {
   return html`<${PagedMics} rows=${rows.map((row, i) => ({
     key: i,
     lead: html`<${CharacterPill} character=${row.character} id=${row.char_id} />`,
-    cells: Object.fromEntries(COLUMNS.map(c => [c.key, c.cell(project, row)])),
+    cells: Object.fromEntries(COLUMNS.map(c => [c.key, c.cell(project, row, sceneId)])),
     after: html`<${RowWarnings} project=${project} sceneId=${sceneId} charId=${row.char_id} />`,
   }))} />`;
 }

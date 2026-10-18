@@ -16,6 +16,7 @@ import { CharacterPill, TxPill, LavPill, SpeakerBadge } from './pills.js';
 import { Icon } from './icons.js';
 import { POSITIONS } from '../accessories.js';
 import { AccCell, PagedMics } from './scene-table.js';
+import { CostumeCell } from './costume-cell.js';
 import { BatteryCell } from './battery-cell.js';
 
 export function SceneEditor({ project, edit }) {
@@ -55,6 +56,7 @@ export function SceneEditor({ project, edit }) {
         tx_acc: cell(i, 'acc', html`<${AccCell} project=${project} row=${row} side="tx" />`, 'tx'),
         position: html`<input class="mics__input" list="lav-positions" value=${row.position || ''} placeholder="—" aria-label="Position"
           onInput=${e => setPosition(i, e.target.value)} />`,
+        costume: html`<${CostumeCell} project=${project} sceneId=${edit.sceneId} row=${{ ...row, character }} />`,
       },
       after: html`<${RowWarnings} project=${project} sceneId=${edit.sceneId} charId=${row.char_id} />`,
     };

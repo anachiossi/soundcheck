@@ -34,6 +34,9 @@
 //                          every battery of the film and its state (battery-rules.js)
 //     calls.json           { '2026-10-12': { 'Maria Rossi': '08:50', … } } everyone's call on each ODG
 //                          (pipeline/run.py file_crew_calls); the alarms follow commute.ride_with's call
+//     costumes.json        { photos_repo, changes: [{ char_id, change, note, photos: [{ file, label }] }],
+//                            scenes: { '26': { char_id: change } } }  the costume changes (ch.N) and who wears
+//                          which in each scene; the photos live in their own private repo (costumes.js)
 //
 // One file per scene preset: saving scene 12 never touches scene 13.
 
@@ -48,7 +51,7 @@ export const IFB_FILES = { 'ifb/crew.json': 'crew', 'ifb/receivers.json': 'ifbRe
   'ifb/headphones.json': 'ifbHeadphones', 'ifb/list.json': 'ifbList' };
 
 // files kept under a name in the device's copy of the film (IFB and Gear lists, crew calls)
-const NAMED_FILES = { ...IFB_FILES, ...GEAR_FILES, 'calls.json': 'crewCalls' };
+const NAMED_FILES = { ...IFB_FILES, ...GEAR_FILES, 'calls.json': 'crewCalls', 'costumes.json': 'costumes' };
 
 const filmFile = project => ({ format: FILM_FORMAT, version: 1, id: project.id, name: project.name, ...(project.tag ? { tag: project.tag } : {}) });
 

@@ -22,6 +22,7 @@ import { ownerInbox } from './crew-inbox-sync.js';
 import { sendWaitingFeedback } from './crew-feedback.js';
 import { refreshEmailRobot } from './email-robot.js';
 import { connectionFor } from './film-source.js';
+import { downloadCostumePhotos } from './costume-photos.js';
 import { filmStore } from './sync-store.js';
 import { applyRemote, filesToDownload, fileContent, setFileContent, formatJson } from './store/repo-files.js';
 
@@ -57,6 +58,7 @@ export async function syncNow({ loud = false } = {}) {
       refreshEmailRobot().catch(() => {}); // the ✉ badge (never blocks the sync)
       if (loud) showMessage('ok', uploaded ? `Uploaded ${uploaded} change(s).` : 'Everything is up to date.');
     }
+    downloadCostumePhotos(connection, deviceStore).catch(() => {}); // in the background (costume-photos.js)
   } catch (error) {
     const accessEnded = error.status === 401 && isCrew(connection); // the crew key expired
     const switched = error.filmSwitched; // another film was opened (sync-store.js): stop quietly

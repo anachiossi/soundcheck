@@ -62,6 +62,19 @@ export async function loadDocument(projectId, path) {
   return bytes ? new Blob([bytes], { type: 'application/pdf' }) : null;
 }
 
+// Costume photos (costume-photos.js), in the same place as the PDFs, by their path in the photos repo
+// with 'photos/' in front: 'photos/costumes/thumbs/ines-ch1.jpg'.
+export async function savePhoto(projectId, path, bytes) {
+  await saveDocument(projectId, `photos/${path}`, bytes);
+}
+
+export async function loadPhoto(projectId, path) {
+  const db = await openDb(projectId);
+  const bytes = await run(db, 'readonly', store => store.get(`photos/${path}`), DOCS);
+  db.close();
+  return bytes ? new Blob([bytes], { type: 'image/jpeg' }) : null;
+}
+
 // The list of films on this device is kept in a small index so it can be
 // shown before any database is opened.
 export function listProjects() {

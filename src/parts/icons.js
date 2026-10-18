@@ -26,6 +26,7 @@ const DRAWINGS = {
   battery: html`<rect x="2" y="7" width="17" height="10" rx="2" /><path d="M21.5 10.5v3" /><path d="M5.5 10v4" />`,  // low: one bar (Ana: not an emoji)
   clock: html`<circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" />`,  // time left on a battery ("6:21")
   battery_empty: html`<rect x="2" y="7" width="17" height="10" rx="2" /><path d="M21.5 10.5v3" /><path d="M8 10l5 4M13 10l-5 4" />`,  // flat: when it runs out ("02:53", Ana 18 Oct)
+  costume: html`<path d="M9 3l3 2 3-2 5 3-2 4-2-1v12H8V9L6 10 4 6z" />`,  // a T-shirt: a costume with no photo yet
   headphones: html`<path d="M4 14v-2a8 8 0 0 1 16 0v2" /><rect x="3" y="13" width="5" height="8" rx="2" /><rect x="16" y="13" width="5" height="8" rx="2" />`,
 };
 
