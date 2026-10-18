@@ -1,7 +1,7 @@
 // battery-cell.js — the Battery column of the mic table (Ana, 13 Oct): "When I'm rigging the actors I put everything
 // and I wanted to toggle a button: ON. From the moment I toggle it, a countdown starts."
 //   OFF (grey) until tapped → a sheet: tap a battery number (the fitting groups, best first) or "ON, no number".
-//   ON: the countdown big, green / yellow / red, and the time to change it small under it ("14:35").
+//   ON: the countdown big, green / yellow / red, and the time to change it small under it, after a clock ("🕒 14:35").
 //   Tap again → how did it end (Dead · Low · Still OK, for learning) + the next battery, or OFF.
 // The timer belongs to the TX, not the character; it lives in gear/batteries.json (battery-rules.js txTimer), so it
 // keeps running offline (only the start time is stored; the phone's clock does the rest).
@@ -12,6 +12,7 @@ import { txTimer, groupsForTx, batteryFile, clock, timeOfDay, ENDS, placeOfTx } 
 import { switchTx } from '../battery-editing.js';
 import { useMinuteClock } from './battery-tag.js';
 import { Sheet } from './gear-form.js';
+import { Icon } from './icons.js';
 
 export function BatteryCell({ project, txId, character }) {
   const now = useMinuteClock();
@@ -22,7 +23,7 @@ export function BatteryCell({ project, txId, character }) {
     <button class="edit-cell" onClick=${() => setOpen(true)} aria-label=${`${placeOfTx(txId)} battery`}>
       ${timer
         ? html`<span class=${`pill pill--tx pill--tx-freq battery-pill battery--${timer.tone}`}>
-            <b>${timer.left == null ? 'ON' : clock(timer.left)}</b>${timer.endsAt && html`<small>${timeOfDay(timer.endsAt)}</small>`}</span>`
+            <b>${timer.left == null ? 'ON' : clock(timer.left)}</b>${timer.endsAt && html`<small class="battery-pill__at"><${Icon} name="clock" label="change at" />${timeOfDay(timer.endsAt)}</small>`}</span>`
         : html`<span class="pill pill--tx battery-pill battery--plain"><b>OFF</b></span>`}
     </button>
     ${open && html`<${TxBatterySheet} project=${project} txId=${txId} character=${character} timer=${timer} now=${now} close=${() => setOpen(false)} />`}`;

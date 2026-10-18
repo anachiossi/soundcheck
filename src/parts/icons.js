@@ -24,6 +24,7 @@ const DRAWINGS = {
   timeline: html`<path d="M2 11h5v6H2zM9 11h6v6H9zM17 11h5v6h-5z" /><path d="M4 3h4l-2 3z" /><path d="M6 6v15" />`,
   gear: html`<rect x="3" y="7" width="18" height="13" rx="2" /><path d="M9 7V5h6v2" /><path d="M3 12h18" />`,  // a case
   battery: html`<rect x="2" y="7" width="17" height="10" rx="2" /><path d="M21.5 10.5v3" /><path d="M5.5 10v4" />`,  // low: one bar (Ana: not an emoji)
+  clock: html`<circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" />`,  // a time of day ("change at 02:53")
   headphones: html`<path d="M4 14v-2a8 8 0 0 1 16 0v2" /><rect x="3" y="13" width="5" height="8" rx="2" /><rect x="16" y="13" width="5" height="8" rx="2" />`,
 };
 
