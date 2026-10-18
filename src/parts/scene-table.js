@@ -108,9 +108,10 @@ export const COLUMNS = [
   { key: 'speaks', label: 'Speaks', min: 58, cell: (project, row) => html`<${SpeakerBadge} speaker=${row.speaker} />` },
   { key: 'battery', label: html`<${Icon} name="battery" label="Battery" />`, min: 56,
     cell: (project, row) => html`<${BatteryCell} project=${project} txId=${row.tx_id} character=${row.character} />` },
-  { key: 'lav', label: 'Lav', min: 76, cell: (project, row) => html`<${LavPill} lav=${row.lav} id=${row.lav_id} mismatch=${row.connectorMismatch} />` },
-  { key: 'lav_acc', label: 'Lav acc.', min: 112, cell: (project, row) => html`<${AccCell} project=${project} row=${row} side="lav" />` },
-  { key: 'tx_acc', label: 'TX acc.', min: 84, cell: (project, row) => html`<${AccCell} project=${project} row=${row} side="tx" />` },
+  // Lav · Lav acc. · TX acc. fit one phone page together (Ana, 18 Oct): accessory words are stacked, one per line
+  { key: 'lav', label: 'Lav', min: 66, cell: (project, row) => html`<${LavPill} lav=${row.lav} id=${row.lav_id} mismatch=${row.connectorMismatch} />` },
+  { key: 'lav_acc', label: 'Lav acc.', min: 66, cell: (project, row) => html`<${AccCell} project=${project} row=${row} side="lav" />` },
+  { key: 'tx_acc', label: 'TX acc.', min: 66, cell: (project, row) => html`<${AccCell} project=${project} row=${row} side="tx" />` },
   { key: 'position', label: 'Position', min: 96, grow: 1.6, cell: (project, row) => html`<${PositionPill} position=${row.position} />` },
 ];
 

@@ -52,8 +52,10 @@ export function LavPill({ lav, id, mismatch, number }) {
 // an accessory (strap, pouch, fur… from Gear) in the Acc. column: the lav pill's shape and size, the thing's
 // colour as background, a short label (Waist, Ankle, Big); its name, brand and id stay in the data (Ana, 8 Oct)
 export function AccPill({ thing }) {
+  // one word per line: "Plush" over "sleeve", so the pill stays narrow (Ana, 18 Oct)
+  const words = String(thing.label).split(' ');
   return html`<span class="pill pill--lav pill--lav-model pill--acc" style=${coloured(thing.color || '#e5e7eb')} title=${thing.name}>
-    <b>${thing.label}</b></span>`;
+    <b>${words.map((word, i) => html`${i > 0 && html`<br />`}${word}`)}</b></span>`;
 }
 
 const SPEAKER_LABEL = { yes: 'YES', no: 'NO', maybe: '?' };

@@ -176,6 +176,7 @@ button.scene-pill { cursor: pointer; }
 /* no "…" in the mic pages (Ana, 18 Oct): words show whole; a long accessory name breaks onto a second line */
 .mics--pages .pill b { text-overflow: clip; }
 .mics--pages .pill--acc b, .mics--pages .pill--position b { white-space: normal; text-align: center; line-height: 1.1; }
+.mics--pages .pill--acc b { font-size: 12px; line-height: 1.05; }   /* "Plush" over "sleeve", a small pill */
 /* the battery pill, smaller (Ana, 18 Oct: "Make the battery pill smaller") */
 .mics--pages .battery-pill { padding-left: 2px; padding-right: 2px; }
 .mics--pages .battery-pill b { font-size: 16px; }
@@ -535,7 +536,7 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
   .page { padding: 10px 8px; }
   /* the pinned Character, compact: name + actor on one line each, no number (the swipe pages need the room) */
   .mics__lead .pill--char { padding: 4px 9px; }
-  .mics__lead .pill__lines b { font-size: 14px; }
+  .mics__lead .pill__lines b { font-size: 14px; white-space: normal; text-overflow: clip; line-height: 1.1; }   /* AVV. MAGNONI wraps, no "…" */
   .mics__lead .pill__lines small { font-size: 11px; white-space: normal; line-height: 1.15; }   /* a long actor name wraps, no "…" (Ana, 18 Oct) */
   .mics__lead .pill__id { display: none; }
   .mics--pages .pill--lav b { font-size: 14px; }
