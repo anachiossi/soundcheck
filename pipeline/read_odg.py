@@ -23,7 +23,7 @@ WEEKDAYS = ["lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato
 DATE_RE = re.compile(r"(" + "|".join(WEEKDAYS) + r")\s+(\d{1,2})\s+(\w+)\s+(\d{4})", re.I)
 SCENE_ID_RE = re.compile(r"^\d+\s*[A-Za-z]*$")  # 27 · 27A · 27fin · "27 fin" (ODG #14)
 INT_EXT_RE = re.compile(r"^([IE](?:\s*[-/]\s*[IE])?)\s*/\s*([A-Z]+)$")  # I / G · I-E / N · E / T
-CAST_RE = re.compile(r"^\d+(\s*,\s*\d+)*$")
+CAST_RE = re.compile(r"^\d+([\s,]+\d+)*\s*,?$")  # '1, 4' · '1, 2, 12 13,' (a comma forgotten, ODG #21)
 PAGES_RE = re.compile(r"^(\d+\s+)?\d/8$|^\d+$")
 TIME_RE = re.compile(r"^(\d{1,2})[.:](\d{2})$")
 STANDBY_RE = re.compile(r"^STAND[\s-]*BY:?$", re.I)  # table heading before the stand-by scenes
@@ -59,11 +59,18 @@ def value_after(lines, label):
 
 
 def join_wrapped_cast(lines):
-    """A long cast list wraps: '1, 2, 3, … 9,' + '11, 12, 13' → one line."""
+    """A long cast list wraps onto a second line → one line. Seen on the ODGs:
+    '1, 2, 3, … 9,' + '11, 12, 13' · '1, 2, 4, 5, 6, 7, 12 13,' + '14, 15' · '1, 2, … 7, 12' + '13, 14, 15'
+    (ODG #21 and its BOZZA). A page count ('7/8', '1 7/8', '2') never has a comma, so a numbers-only
+    line with a comma right after a cast line is the rest of the cast."""
     joined = []
     for line in lines:
-        if joined and re.fullmatch(r"(\d+\s*,\s*)+", joined[-1]) and re.match(r"^\d", line):
-            joined[-1] = f"{joined[-1]} {line}"
+        previous = joined[-1] if joined else ""
+        previous_is_cast = bool(CAST_RE.match(previous)) and "/8" not in previous
+        ends_open = previous.rstrip().endswith(",")
+        continues = bool(CAST_RE.match(line)) and "/8" not in line and ("," in line or ends_open)
+        if previous_is_cast and "," in previous and continues:
+            joined[-1] = f"{previous.rstrip().rstrip(',')}, {line}"
         else:
             joined.append(line)
     return joined
@@ -85,7 +92,7 @@ def read_scene_table(lines):
             if CAST_RE.match(line) and not ("/8" in line):
                 following = rest[k + 1] if k + 1 < len(rest) else ""
                 if PAGES_RE.match(following):
-                    cast, pages, location = [c.strip() for c in line.split(",")], following, rest[k + 2:]
+                    cast, pages, location = re.findall(r"\d+", line), following, rest[k + 2:]
                 else:  # no cast listed: this number is the page count
                     pages, location = line, rest[k + 1:]
                 break
@@ -108,11 +115,12 @@ def read_scene_table(lines):
     return scenes
 
 
-def section(lines, start_marker, end_marker, start_at=0):
+def section(lines, start_marker, end_markers, start_at=0):
+    """The lines after start_marker, up to the first line that starts with one of end_markers."""
     start = next((i for i in range(start_at, len(lines)) if lines[i].startswith(start_marker)), None)
     if start is None:
         return [], len(lines)
-    end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith(end_marker)), len(lines))
+    end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith(end_markers)), len(lines))
     return lines[start + 1:end], end
 
 
@@ -168,9 +176,12 @@ def read_odg(path):
     lines = [line for line in lines if line]
     text = "\n".join(lines)
 
-    first_page, advance_at = section(lines, "LOCATION / NOTE", "Tot.")
+    # a scene table ends at "Tot." — or, when there is none (18 Oct, ODG #21 BOZZA), where the
+    # contacts or the crew list start, so they never end up in the last scene's location
+    table_end = ("Tot.", "NUMERI UTILI", "Direttrice di Produzione")
+    first_page, advance_at = section(lines, "LOCATION / NOTE", table_end)
     advance_header = next((l for l in lines if l.startswith("AVANZAMENTO")), "")
-    advance_lines, _ = section(lines, "LOCATION / NOTE", "Tot.", start_at=advance_at)
+    advance_lines, _ = section(lines, "LOCATION / NOTE", table_end, start_at=advance_at)
     date, weekday = read_date(text)
     number = re.search(r"ODG\s*#\s*(\d+)", text)
     advance_day = re.search(r"DAY\s*#\s*(\d+)", advance_header)

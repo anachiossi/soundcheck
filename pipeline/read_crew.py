@@ -32,6 +32,10 @@ def read_crew(path):
     for page in fitz.open(path):
         cells = page_cells(page)
         top = next((y for y, x, t in cells if t == "TROUPE"), None)
+        if top is None or not any(top + 4 < y < top + 60 for y, x, t in cells):
+            # no "TROUPE" heading, or an empty one (18 Oct, ODG #21 BOZZA: heading on page 1, the
+            # table on page 2): the table starts at its first department, REGIA
+            top = next((y - 5 for y, x, t in cells if t == "REGIA"), None)
         if top is None:
             continue
         # The table ends where the next table starts (the scene list / department needs).
