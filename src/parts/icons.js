@@ -25,7 +25,7 @@ const DRAWINGS = {
   gear: html`<rect x="3" y="7" width="18" height="13" rx="2" /><path d="M9 7V5h6v2" /><path d="M3 12h18" />`,  // a case
   battery: html`<rect x="2" y="7" width="17" height="10" rx="2" /><path d="M21.5 10.5v3" /><path d="M5.5 10v4" />`,  // low: one bar (Ana: not an emoji)
   clock: html`<circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" />`,  // time left on a battery ("6:21")
-  bell: html`<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z" /><path d="M10 20.5a2 2 0 0 0 4 0" />`,  // when it rings: the battery's end ("02:53")
+  battery_empty: html`<rect x="2" y="7" width="17" height="10" rx="2" /><path d="M21.5 10.5v3" /><path d="M8 10l5 4M13 10l-5 4" />`,  // flat: when it runs out ("02:53", Ana 18 Oct)
   headphones: html`<path d="M4 14v-2a8 8 0 0 1 16 0v2" /><rect x="3" y="13" width="5" height="8" rx="2" /><rect x="16" y="13" width="5" height="8" rx="2" />`,
 };
 
