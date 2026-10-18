@@ -7,6 +7,7 @@
 
 import { getState, setState, saveAndShow, showMessage } from './state.js';
 import { emptyRow, newKey, cleanRows, sameDayKit } from './preset-rules.js';
+import { applyLavAccessories, withLavAccessory } from './lav-acc-rules.js';
 import { syncNow } from './sync.js';
 import { presetFile } from './store/repo-files.js';
 
@@ -80,14 +81,18 @@ export const cancelEdit = () => setState({ edit: null, picker: null });
 export async function saveEdit() {
   const { edit, project } = getState();
   // Rows with nothing in them are dropped.
-  const rows = cleanRows(edit.rows).filter(r => r.char_id || r.tx_id || r.lav_id);
+  // a lav chosen or changed gets its mount / plush sleeve (lav-acc-rules.js, Ana 18 Oct)
+  const savedRows = project.presets[edit.sceneId]?.rows || [];
+  const rows = applyLavAccessories(project, edit.sceneId, cleanRows(edit.rows).filter(r => r.char_id || r.tx_id || r.lav_id), savedRows);
   const savedAt = new Date().toISOString();
   const presets = { ...project.presets, [edit.sceneId]: { scene_id: edit.sceneId, updated_at: savedAt, rows } };
   const outbox = { ...project.outbox, [presetFile(edit.sceneId)]: { saved_at: savedAt } };
   // the same character keeps the same kit in the day's other scenes (preset-rules.js → sameDayKit)
   const also = sameDayKit(project, edit.sceneId, rows);
   for (const [id, otherRows] of Object.entries(also)) {
-    presets[id] = { ...presets[id], scene_id: id, updated_at: savedAt, rows: otherRows };
+    // the kit travelled from this scene: an exterior there gets the sleeve, not this scene's mount
+    const fitted = otherRows.map(row => (rows.some(r => r.char_id === row.char_id) ? withLavAccessory(project, id, row) : row));
+    presets[id] = { ...presets[id], scene_id: id, updated_at: savedAt, rows: fitted };
     outbox[presetFile(id)] = { saved_at: savedAt };
   }
   await saveAndShow({ ...project, presets, outbox }, { edit: null, picker: null });

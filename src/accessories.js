@@ -11,7 +11,7 @@
 
 import { activeItems, itemById, shortName } from './gear-rules.js';
 
-const WORDS = ['strap', 'pouch', 'lav fur', 'lav cover', 'overcover', 'foam mount']; // not the mics' foams and furs
+const WORDS = ['strap', 'pouch', 'lav fur', 'lav cover', 'overcover', 'foam mount', 'mini mount', 'plush sleeve']; // not the mics' foams and furs
 const TX_WORDS = ['strap', 'pouch', 'pocket', 'belt']; // what holds the TX; anything else is the lav's
 export const POSITIONS = ['chest', 'collar', 'tie', 'hair', 'hat', 'bra', 'shirt', 'jacket', 'cleavage', 'ear', 'forehead'];
 
@@ -32,7 +32,7 @@ export function accessoryPool(project) {
 // goes (Waist, Thigh, Ankle, Chest — the first word of its name without "strap")
 export function accLabel(item) {
   const type = plainText(item.type);
-  for (const [word, label] of [['pouch', 'Pouch'], ['fur', 'Fur'], ['cover', 'Cover'], ['foam', 'Foam']]) if (type.includes(word)) return label;
+  for (const [word, label] of [['pouch', 'Pouch'], ['fur', 'Fur'], ['cover', 'Cover'], ['foam', 'Foam'], ['mini mount', 'Mini mount'], ['plush sleeve', 'Plush sleeve']]) if (type.includes(word)) return label;
   return shortName(item).split(' ')[0];
 }
 
