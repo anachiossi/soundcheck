@@ -101,16 +101,17 @@ export const PositionPill = ({ position }) => (position
   : html`<span class="acc acc--empty">—</span>`);
 
 // the columns after the Character, in Ana's order: key, label, min (px), grow (share of the spare width), view cell.
-// The pages are cut from this list (pagesOf).
+// The pages are cut from this list (pagesOf). `min` is the width the words need whole: never "6…" or "Mini …"
+// (Ana, 18 Oct: "I hate the … Divide it in more pages") — a column that doesn't fit goes to the next page.
 export const COLUMNS = [
   { key: 'tx', label: 'TX', min: 70, cell: (project, row) => html`<${TxPill} tx=${row.tx} character=${row.character} id=${row.tx_id} withFrequency />` },
   { key: 'speaks', label: 'Speaks', min: 58, cell: (project, row) => html`<${SpeakerBadge} speaker=${row.speaker} />` },
-  { key: 'battery', label: html`<${Icon} name="battery" label="Battery" />`, min: 74,
+  { key: 'battery', label: html`<${Icon} name="battery" label="Battery" />`, min: 56,
     cell: (project, row) => html`<${BatteryCell} project=${project} txId=${row.tx_id} character=${row.character} />` },
-  { key: 'lav', label: 'Lav', min: 48, cell: (project, row) => html`<${LavPill} lav=${row.lav} id=${row.lav_id} mismatch=${row.connectorMismatch} />` },
-  { key: 'lav_acc', label: 'Lav acc.', min: 60, cell: (project, row) => html`<${AccCell} project=${project} row=${row} side="lav" />` },
-  { key: 'tx_acc', label: 'TX acc.', min: 60, cell: (project, row) => html`<${AccCell} project=${project} row=${row} side="tx" />` },
-  { key: 'position', label: 'Position', min: 64, grow: 1.6, cell: (project, row) => html`<${PositionPill} position=${row.position} />` },
+  { key: 'lav', label: 'Lav', min: 76, cell: (project, row) => html`<${LavPill} lav=${row.lav} id=${row.lav_id} mismatch=${row.connectorMismatch} />` },
+  { key: 'lav_acc', label: 'Lav acc.', min: 112, cell: (project, row) => html`<${AccCell} project=${project} row=${row} side="lav" />` },
+  { key: 'tx_acc', label: 'TX acc.', min: 84, cell: (project, row) => html`<${AccCell} project=${project} row=${row} side="tx" />` },
+  { key: 'position', label: 'Position', min: 96, grow: 1.6, cell: (project, row) => html`<${PositionPill} position=${row.position} />` },
 ];
 
 // the columns cut into pages that fit `width` (in order; a column too wide alone still gets its page)
