@@ -85,8 +85,14 @@ def run(film_folder, include_past=False):
     documents = file_documents(film, other_sides)
     if documents:
         print(f"documents: {', '.join(documents)}")
-    tell_tomorrow(film, [p for p in written if p["id"].startswith("odg") and p["date"] >= today])
-    tell_lavs(film, [p for p in written if p["id"].startswith("odg") and p["date"] >= today])
+    # a notification that fails must never stop the ODG being saved (18 Oct: a bad push contact
+    # crashed every run for two days, so ODG #21 never reached the app or the alarms)
+    upcoming = [p for p in written if p["id"].startswith("odg") and p["date"] >= today]
+    for tell in (tell_tomorrow, tell_lavs):
+        try:
+            tell(film, upcoming)
+        except Exception as error:
+            print(f"WARNING {tell.__name__} failed, the emails are saved anyway: {error}")
     if written or documents:
         if written:
             git(repo, "add", str(proposals))

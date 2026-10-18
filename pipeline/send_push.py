@@ -17,8 +17,10 @@ from pathlib import Path
 
 from pywebpush import WebPushException, webpush
 
-CONTACT = os.environ.get("PUSH_CONTACT", "https://anachiossi.github.io/soundcheck/")  # who sends them (the push services
-# ask for a contact: a mailto: or a web address; set PUSH_CONTACT in the workflow for a private address)
+CONTACT = os.environ.get("PUSH_CONTACT") or "https://anachiossi.github.io"  # who sends them (the push services
+# ask for a contact: a mailto: or a web address; set PUSH_CONTACT in the workflow for a private address).
+# A web address must be the site only, no path: "https://anachiossi.github.io/soundcheck/" is refused
+# by pywebpush ("Missing 'sub'") — that stopped the email robot 16–18 Oct.
 
 
 def is_for(phone, audience):

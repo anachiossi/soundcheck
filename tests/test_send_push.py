@@ -59,6 +59,13 @@ class SendPushTest(unittest.TestCase):
         send_push.send(self.film, "Did today finish on time?", "Day 12", audience="owner")
         self.assertNotIn("https://push.example/davide", self.sent_to)
 
+    def test_the_sender_contact_is_one_the_push_library_accepts(self):
+        try:
+            from py_vapid import _check_sub
+        except ImportError:
+            self.skipTest("py_vapid not installed here")
+        self.assertTrue(_check_sub(send_push.CONTACT), send_push.CONTACT)  # 16–18 Oct: refused, robot stopped
+
 
 if __name__ == "__main__":
     unittest.main()
