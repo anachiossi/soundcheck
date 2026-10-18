@@ -26,7 +26,9 @@ export function EmailBadge({ state }) {
   const robot = state.emailRobot || {};
   if (!state.connection) return null;
   const health = robotHealth(robot);
+  // a failed robot says so in words, not only orange (16–18 Oct it failed for two days unseen)
   const text = robot.starting ? '✉ checking…'
+    : health === 'failed' ? '✉ ✗ robot failed'
     : robot.checkedAt ? `✉ ${ago(robot.checkedAt)}`
     : robot.run ? `✉ ran ${ago(robot.run.at)}` : '✉ ?';
   const show = () => { setOpen(true); refreshEmailRobot(); };

@@ -266,12 +266,31 @@ def file_archive(film):
     return changed
 
 
+def undated_days(film):
+    """Shooting days in schedule.json with no date. The app paints them as finished and the alarms
+    robot answers 'none' for them (18 Oct: day 22 lost its date when ODG #21 was accepted)."""
+    path = Path(film) / "schedule.json"
+    schedule = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
+    return sorted({row["day"] for row in schedule if not row.get("date")})
+
+
 if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8")
     if "--every-film" in sys.argv:
         repo = Path(sys.argv[sys.argv.index("--every-film") + 1])
-        for film in sorted(p.parent for p in repo.glob("projects/*/inbox.json")):
+        films = sorted(p.parent for p in repo.glob("projects/*/inbox.json"))
+        for film in films:
             print(f"== {film.name}")
             run(film)
     else:
+        films = [Path(sys.argv[1])]
         run(sys.argv[1], include_past="--all" in sys.argv)
+    # checked after everything is saved: the run then counts as failed, so Ana gets the email
+    problems = []
+    for film in films:
+        days = undated_days(film)
+        if days:
+            problems.append(f"{film.name}: day {', '.join(str(day) for day in days)} has no date")
+    if problems:
+        print("SCHEDULE PROBLEM — " + "; ".join(problems))
+        sys.exit(1)

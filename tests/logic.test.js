@@ -122,6 +122,7 @@ test('a day is over after its wrap time; Schedule then opens on the next day', (
   const night = { day: 8, date: '2026-09-30', call: '18:00', wrap: '02:00' };
   assert.equal(dayIsDone(night, at('2026-10-01', 1)), false, 'a night shoot is not over at 1 am');
   assert.equal(dayIsDone(night, at('2026-10-01', 2)), true);
+  assert.equal(dayIsDone({ day: 22, date: '', call: '', wrap: '' }, at('2026-10-18', 19)), false, 'a day with no date is never painted as over');
   const film = { schedule: [
     { scene_id: '11', day: 7, order: 1, date: '2026-09-29', call: '09:00', wrap: '17:00' },
     { scene_id: '12', day: 8, order: 1, date: '2026-09-30', call: '09:00', wrap: '17:00' }] };

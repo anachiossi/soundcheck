@@ -126,6 +126,7 @@ export function doneScenes(project, now = new Date()) {
 }
 
 export function dayIsDone(day, now = new Date()) {
+  if (!day.date) return false; // a day with no date isn't over (18 Oct: day 22 lost its date and turned green)
   const at = typeof now === 'string' ? new Date(`${now}T00:00`) : now;
   const minutes = time => { const [h, m] = String(time).split(':').map(Number); return h * 60 + (m || 0); };
   const nowMinutes = at.getHours() * 60 + at.getMinutes();
