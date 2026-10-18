@@ -181,7 +181,7 @@ button.scene-pill { cursor: pointer; }
 .mics--pages .battery-pill { padding-left: 2px; padding-right: 2px; }
 .mics--pages .battery-pill b { font-size: 16px; }
 .mics--pages .battery-pill.battery--plain b { font-size: 13px; letter-spacing: 0; }
-/* "🕒 02:53": a small clock before the time to change the battery, so it doesn't read as time left (Ana, 18 Oct) */
+/* the battery pill: 🕒 before the time left, 🔔 before the time it runs out (Ana, 18 Oct) */
 .battery-pill__at { display: inline-flex; align-items: center; gap: 2px; }
 .battery-pill__at .icon { width: 1em; height: 1em; flex-shrink: 0; }
 .pill--position { background: var(--soft); color: var(--ink); }
