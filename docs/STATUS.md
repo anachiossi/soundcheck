@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-10-18 · live version **v159** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-10-18 · live version **v167** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
@@ -105,6 +105,16 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   "✉ ✗ robot failed"; a notification that fails never stops the ODG save; a schedule day with no date fails
   the run (after saving) and is never painted green. ODG reader: casts wrapped over two lines, tables with no
   "Tot.", crew list with no TROUPE heading (ODG #21 BOZZA); a day's new scenes always carry its date/times.
+- v160–166 (18 Oct): lav accessory from the scene (INT/INT-EXT → mini mount, EXT → plush sleeve, lav's colour;
+  `lav-acc-rules.js`, settings `presets.lav_accessories`); every TX gets the character's usual strap/pouch (`usual-acc.js`,
+  Kit → usual_acc from 27fin); mic table with no "…" (columns as wide as their words, more pages); battery pill
+  🕒 time left + empty-battery icon before the time it runs out.
+- v167 (18 Oct): **Costume column** — `costumes.json` (film data) says which costume change (ch.N) each character
+  wears in each scene; none to 3 photos per change (front, back, detail) in the film's own private photos repo
+  (`anachiossi/la-buona-educazione-photos`, 1600 px + thumbs). Phones keep all thumbs + full photos of the next
+  3 days (`costume-photos.js`); tap → full-screen viewer (`parts/costume-cell.js`). Weeks 1–3 extracted from the
+  costume department's PDFs (`D:\script_read_claude\projects\la-buona-educazione\work\costumes`). Next: weeks 4–6,
+  adding/changing photos and changes from the app, the Lavaliers continuity file, gear photos (kit repo).
 - Cues is Speak Screen friendly (v62–63, iPhone's own Siri reading, started only by a two-finger swipe):
   only the dialogue is readable (the rest aria-hidden), "Prince John." before each line, and the
   following lines are there invisibly (.sr-only) so Speak Screen reads to the end of the scene.
