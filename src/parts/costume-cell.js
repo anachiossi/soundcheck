@@ -21,7 +21,7 @@ function usePhoto(project, path, full) {
       if (alive) setUrl(found); else if (found) URL.revokeObjectURL(found);
     });
     return () => { alive = false; if (made) URL.revokeObjectURL(made); };
-  }, [project.id, path, full]);
+  }, [project.id, path, full, project.costumePhotos?.files?.[path]]); // looks again once the download brings it
   return url;
 }
 
