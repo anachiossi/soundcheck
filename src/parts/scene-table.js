@@ -6,6 +6,7 @@
 // stays pinned on the left; every other column sits in COLUMNS, in Ana's order, and fills pages as wide as the phone
 // allows — swipe sideways for the next page, the dots on the right say which one. A new column = one more entry.
 //   TX (with its frequency) · Speaks · Battery (battery-cell.js) · Lav · Lav acc. · TX acc. · Position · Costume (costume-cell.js)
+// Tap a TX, lav or accessory with a photo → its photo full screen (photo-viewer.js, gear-photos.js).
 // Nothing is ever printed under a pill ("I absolutely disgust this lack of alignment"): new info gets its own column.
 // The editor (scene-editor.js) uses the same pages, with its own cells.
 // Under the slate: the sound bar (dificultômetro, flags, lav warnings — sound-bar.js); a
@@ -28,6 +29,8 @@ import { SoundBar, RowWarnings } from './sound-bar.js';
 import { Icon } from './icons.js';
 import { rowAccessories } from '../accessories.js';
 import { BatteryCell } from './battery-cell.js';
+import { PhotoTap } from './photo-viewer.js';
+import { itemPhotos, lavPhotos, txPhotos } from '../gear-photos.js';
 import { CostumeCell } from './costume-cell.js';
 
 // "ⓘ more info (3)": director / costume notes from the ODGs and production notes, closed until tapped
@@ -89,11 +92,15 @@ export function SceneTable({ project, sceneId, edit, showDay = false, onRemove, 
 }
 
 
-// the accessories of a row on one side ('lav': fur, cover, foam · 'tx': strap, pouch), one pill each, stacked
-export function AccCell({ project, row, side }) {
+// the accessories of a row on one side ('lav': fur, cover, foam · 'tx': strap, pouch), one pill each, stacked.
+// withPhotos (the table, not the editor): tap → the photos of all of them, swipe from one to the next
+export function AccCell({ project, row, side, withPhotos }) {
   const things = rowAccessories(project, row, side);
   if (!things.length) return html`<span class="acc acc--empty">—</span>`;
-  return html`<span class="acc">${things.map(t => html`<${AccPill} key=${t.id} thing=${t} />`)}</span>`;
+  const pills = html`<span class="acc">${things.map(t => html`<${AccPill} key=${t.id} thing=${t} />`)}</span>`;
+  if (!withPhotos) return pills;
+  const title = `${row.character?.name || ''} · ${side === 'lav' ? 'Lav acc.' : 'TX acc.'}`;
+  return html`<${PhotoTap} project=${project} title=${title} photos=${things.flatMap(t => itemPhotos(project, t.id))}>${pills}<//>`;
 }
 
 // where the lav goes: chest, collar, hair… (free text)
@@ -105,14 +112,17 @@ export const PositionPill = ({ position }) => (position
 // The pages are cut from this list (pagesOf). `min` is the width the words need whole: never "6…" or "Mini …"
 // (Ana, 18 Oct: "I hate the … Divide it in more pages") — a column that doesn't fit goes to the next page.
 export const COLUMNS = [
-  { key: 'tx', label: 'TX', min: 70, cell: (project, row) => html`<${TxPill} tx=${row.tx} character=${row.character} id=${row.tx_id} withFrequency />` },
+  { key: 'tx', label: 'TX', min: 70, cell: (project, row) => html`<${PhotoTap} project=${project} title=${`TX ${row.tx_id} · ${row.tx?.model || ''}`}
+    photos=${txPhotos(project, row.tx)}><${TxPill} tx=${row.tx} character=${row.character} id=${row.tx_id} withFrequency /><//>` },
   { key: 'speaks', label: 'Speaks', min: 58, cell: (project, row) => html`<${SpeakerBadge} speaker=${row.speaker} />` },
   { key: 'battery', label: html`<${Icon} name="battery" label="Battery" />`, min: 56,
     cell: (project, row) => html`<${BatteryCell} project=${project} txId=${row.tx_id} character=${row.character} />` },
   // Lav · Lav acc. · TX acc. fit one phone page together (Ana, 18 Oct): accessory words are stacked, one per line
-  { key: 'lav', label: 'Lav', min: 66, cell: (project, row) => html`<${LavPill} lav=${row.lav} id=${row.lav_id} mismatch=${row.connectorMismatch} />` },
-  { key: 'lav_acc', label: 'Lav acc.', min: 66, cell: (project, row) => html`<${AccCell} project=${project} row=${row} side="lav" />` },
-  { key: 'tx_acc', label: 'TX acc.', min: 66, cell: (project, row) => html`<${AccCell} project=${project} row=${row} side="tx" />` },
+  // in the table (not the editor) a TX, lav or accessory with a photo opens it when tapped (gear-photos.js, Ana 19 Oct)
+  { key: 'lav', label: 'Lav', min: 66, cell: (project, row) => html`<${PhotoTap} project=${project} title=${`Lav ${row.lav_id} · ${row.lav?.model || ''}`}
+    photos=${lavPhotos(project, row.lav)}><${LavPill} lav=${row.lav} id=${row.lav_id} mismatch=${row.connectorMismatch} /><//>` },
+  { key: 'lav_acc', label: 'Lav acc.', min: 66, cell: (project, row) => html`<${AccCell} project=${project} row=${row} side="lav" withPhotos />` },
+  { key: 'tx_acc', label: 'TX acc.', min: 66, cell: (project, row) => html`<${AccCell} project=${project} row=${row} side="tx" withPhotos />` },
   { key: 'position', label: 'Position', min: 96, grow: 1.6, cell: (project, row) => html`<${PositionPill} position=${row.position} />` },
   { key: 'costume', label: 'Costume', min: 84, cell: (project, row, sceneId) => html`<${CostumeCell} project=${project} sceneId=${sceneId} row=${row} />` },
 ];

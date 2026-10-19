@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-10-18 · live version **v167** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-10-19 · live version **v169** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
@@ -112,9 +112,18 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
 - v167 (18 Oct): **Costume column** — `costumes.json` (film data) says which costume change (ch.N) each character
   wears in each scene; none to 3 photos per change (front, back, detail) in the film's own private photos repo
   (`anachiossi/la-buona-educazione-photos`, 1600 px + thumbs). Phones keep all thumbs + full photos of the next
-  3 days (`costume-photos.js`); tap → full-screen viewer (`parts/costume-cell.js`). Weeks 1–3 extracted from the
+  3 days (`photos.js`); tap → full-screen viewer (`parts/photo-viewer.js`). Weeks 1–3 extracted from the
   costume department's PDFs (`D:\script_read_claude\projects\la-buona-educazione\work\costumes`). Next: weeks 4–6,
-  adding/changing photos and changes from the app, the Lavaliers continuity file, gear photos (kit repo).
+  adding/changing photos and changes from the app, the Lavaliers continuity file.
+- v168–169 (19 Oct): **Kit photos** — the makers' official product photos (Ana: like the manuals, better than our own
+  shots of tiny things) in a private repo shared by every film, `anachiossi/soundcheck-kit-photos` (gear/ 1600 px +
+  thumbs 480 px). The film's `gear/photos.json` says which photo shows which Gear thing, lav model (brand + model)
+  and TX model, with the page it came from (`gear-photos.js`). In the mic table (not the editor) tap a TX, lav or
+  accessory pill → its photo full screen; a Gear thing's sheet shows its photo. Phones keep every thumb + the full
+  photos of the next 3 days' mic lists. `photos.js` downloads both photo repos (costumes + kit) after each sync.
+  Batch 1 (30 photos): mini mounts, plush sleeves, stickies, tape, foamies, straps (Ursa, Viviana), DPA lavs, Sanken
+  COS-11D, Zaxcom ZMT4 / ZMT4-HM / ZMT3 / TRXLA3. Next: batch 2 (the other ~200 branded things), pouches (brand?).
+  Robot (same days): newest email wins (exact sent time), "nothing to commit" is not a failure, backup cron 5/day.
 - Cues is Speak Screen friendly (v62–63, iPhone's own Siri reading, started only by a two-finger swipe):
   only the dialogue is readable (the rest aria-hidden), "Prince John." before each line, and the
   following lines are there invisibly (.sr-only) so Speak Screen reads to the end of the scene.

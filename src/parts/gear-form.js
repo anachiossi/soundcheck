@@ -3,7 +3,7 @@
 //   (a cable's connectors and length, a mic's capsule…; the type offers the fields its kind uses) ·
 //   nicknames (for the search) · its real colour · category · inside which cart / case · goes on the truck
 //   as a volume · note. A cart or case lists what it holds (its cases first, ↑ moves one up), with "+ Add inside". "Remove" asks why
-//   (optional) — it goes in the history.
+//   (optional) — it goes in the history. Its photo (gear-photos.js) sits at the top; tap → full screen.
 //   Category: name · colour · inside which category (a sub-category, e.g. Cases → Batteries).
 // Used by: screens/gear.js
 
@@ -12,6 +12,9 @@ import { categoriesOf, topCategories, topOf, containersOf, isContainer, children
 import { textColourFor } from '../colour.js';
 import { saveObject, removeObject, saveCategory, moveCaseUp } from '../gear-editing.js';
 import { Icon } from './icons.js';
+import { PhotoTap, usePhoto } from './photo-viewer.js';
+import { itemPhotos } from '../gear-photos.js';
+import { thumbOf } from '../costumes.js';
 
 // a thing's name; its colour is the row's background (Ana, 8 Oct: "no more square — squares are for check boxes only")
 // v126 (Ana, 8 Oct: "too colorful… a list made by hand, a piece of paper inside the box"): a thing is a small • of its
@@ -56,6 +59,19 @@ function Details({ project, values, set }) {
 
 // object: the object to change, or { category, inside, volume } for a new one.
 // open(object): show another object's sheet (something it holds, or a new one inside it)
+// the thing's photos (gear-photos.js: mostly the maker's): small, tap → full screen
+function ObjectPhotos({ project, itemId, name }) {
+  const photos = itemPhotos(project, itemId);
+  if (!photos.length) return null;
+  return html`<${PhotoTap} project=${project} title=${name} photos=${photos}>
+    <span class="gear-sheet__photos">${photos.map(photo => html`<${Thumb} key=${photo.file} project=${project} file=${photo.file} />`)}</span><//>`;
+}
+
+function Thumb({ project, file }) {
+  const url = usePhoto(project, thumbOf(file), false);
+  return url ? html`<img src=${url} alt="" />` : html`<span class="gear-sheet__nophoto"></span>`;
+}
+
 export function ObjectSheet({ project, object, close, open }) {
   const [values, setValues] = useState({ qty: 1, note: '', ...object });
   const [removing, setRemoving] = useState(null); // the "why" being typed
@@ -86,6 +102,7 @@ export function ObjectSheet({ project, object, close, open }) {
   return html`<${Sheet} title=${values.id ? values.name : 'New'} close=${close}>
     <form class="item-form" onSubmit=${submit}>
       ${values.id && pathOf(project, values).length > 0 && html`<p class="muted gear-sheet__where">in ${pathOf(project, values).map(x => x.name).join(' › ')}</p>`}
+      ${values.id && html`<${ObjectPhotos} project=${project} itemId=${values.id} name=${values.name} />`}
       <div class="gear-sheet__grid">
         <label><span>Name</span><input value=${values.name || ''} onInput=${e => set('name', e.target.value)} required autofocus=${!values.id} /></label>
         <label><span>Brand</span><input value=${values.brand || ''} onInput=${e => set('brand', e.target.value)} /></label>

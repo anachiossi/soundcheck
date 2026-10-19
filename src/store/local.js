@@ -62,7 +62,7 @@ export async function loadDocument(projectId, path) {
   return bytes ? new Blob([bytes], { type: 'application/pdf' }) : null;
 }
 
-// Costume photos (costume-photos.js), in the same place as the PDFs, by their path in the photos repo
+// Costume and kit photos (photos.js), in the same place as the PDFs, by their path in the photos repo
 // with 'photos/' in front: 'photos/costumes/thumbs/ines-ch1.jpg'.
 export async function savePhoto(projectId, path, bytes) {
   await saveDocument(projectId, `photos/${path}`, bytes);

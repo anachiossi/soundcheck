@@ -6,7 +6,7 @@
 // A change has none to 3 photos (front, back, detail: e.g. where the lav goes). The photos live in their own
 // private repo (photos_repo), so the film's data stays light; each has a small copy in costumes/thumbs/.
 // Plain data in, plain data out (no network, no screens).
-// Used by: costume-photos.js, parts/costume-cell.js
+// Used by: photos.js, gear-photos.js, parts/costume-cell.js
 
 import { shootingDays, localTodayIso } from './model.js';
 
@@ -35,13 +35,18 @@ export function photosConnection(project, connection) {
   return { ...connection, owner, repo, branch: 'main' };
 }
 
+// the scenes shot from today to the day after tomorrow (what is about to be rigged), as a Set of scene ids
+export function scenesSoon(project, now = new Date()) {
+  const today = localTodayIso(now);
+  const last = localTodayIso(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2));
+  return new Set(shootingDays(project).filter(d => d.date >= today && d.date <= last)
+    .flatMap(d => d.scenes.map(s => String(s.scene_id))));
+}
+
 // The photos a phone keeps: every thumbnail (small), and the full photos of the changes worn from today to the
 // day after tomorrow (what is about to be rigged). Any other full photo comes when it is opened, with signal.
 export function photosToKeep(project, now = new Date()) {
-  const today = localTodayIso(now);
-  const last = localTodayIso(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2));
-  const soon = new Set(shootingDays(project).filter(d => d.date >= today && d.date <= last)
-    .flatMap(d => d.scenes.map(s => String(s.scene_id))));
+  const soon = scenesSoon(project, now);
   const keep = [];
   for (const change of project.costumes?.changes || []) {
     const worn = scenesOfChange(project, change.char_id, change.change).some(id => soon.has(id));
