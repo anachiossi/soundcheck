@@ -1,10 +1,10 @@
-// battery-editing.js — saves Gear → Batteries (battery-rules.js): a battery's state, a group of batteries; and,
-// apart from them, the mic table's battery column (a TX ON / swapped / OFF).
+// battery-editing.js — saves Gear → Batteries (battery-rules.js): a battery's state, a group of batteries, and the mic
+// table's battery column (a TX ON / swapped / OFF).
 // At once on the device, then uploaded by sync.js (gear/batteries.json).
 // Used by: screens/gear-batteries.js, parts/battery-cell.js
 
 import { getState, saveAndShow, showMessage } from './state.js';
-import { batteryFile, withRun, placeOfTx } from './battery-rules.js';
+import { batteryFile, withRun, batteryIn, placeOfTx, freeChargerFor, chargersFor } from './battery-rules.js';
 import { syncNow } from './sync.js';
 
 const FILE = 'gear/batteries.json';
@@ -80,16 +80,38 @@ export function saveCharger(fields) {
   while (used.has(`c${n}`)) n++;
   const number = value => (value === '' || value == null ? undefined : Math.max(0, Math.round(Number(value) || 0)));
   const charger = { id: fields.id || `c${n}`, name, group: fields.group || undefined, slots: number(fields.slots), charge_min: number(fields.charge_min) };
-  const chargers = fields.id ? file.chargers.map(c => (c.id === charger.id ? charger : c)) : [...file.chargers, charger];
+  // what the form doesn't show (its note, the battery type it charges) stays
+  const chargers = fields.id ? file.chargers.map(c => (c.id === charger.id ? { ...c, ...charger } : c)) : [...file.chargers, charger];
   return save({ ...file, chargers }, `${name} saved.`);
 }
 
-// the mic table's battery column: ON (or a swap: a fresh battery, the countdown starts again) or OFF.
-// Only the TX's timer changes; Gear → Batteries is never touched (Ana, 19 Oct).
-export function switchTx(project, txId, { off = false } = {}) {
+// the mic table's battery column: the TX's battery ends (how: dead / low / ok, for learning) and goes straight to
+// 'charging' on the first charger of its group with a free slot (freeChargerFor; ready again after its charge time,
+// battery-rules.js isReady), then batteryId goes in (null: ON with no
+// number; off: the TX stays OFF)
+export function switchTx(project, txId, { batteryId = null, end, off = false } = {}) {
   const file = batteryFile(project);
+  const current = batteryIn(project, txId)?.battery;
+  const at = now();
+  const batteries = file.batteries.map(b => {
+    if (current && b.id === current.id) {
+      // no charger can take it (alkaline AA): it is empty, to throw away
+      const rechargeable = chargersFor(project, b.group).length > 0;
+      const ended = { ...withRun(b, end, project), state: rechargeable ? 'charging' : 'empty', since: at };
+      delete ended.used_in;
+      const charger = rechargeable && freeChargerFor(project, b.group);
+      if (charger) ended.charger = charger.id;
+      return ended;
+    }
+    if (!off && b.id === batteryId) {
+      const used = { ...b, state: 'in_use', used_in: placeOfTx(txId), since: at };
+      delete used.charger; delete used.charge_min;
+      return used;
+    }
+    return b;
+  });
   const txOn = { ...file.tx_on };
   delete txOn[String(txId)];
-  if (!off) txOn[String(txId)] = now();
-  return save({ ...file, tx_on: txOn }, off ? `${placeOfTx(txId)} OFF.` : `${placeOfTx(txId)} ON.`);
+  if (!off && !batteryId) txOn[String(txId)] = at;
+  return save({ ...file, batteries, tx_on: txOn }, off ? `${placeOfTx(txId)} OFF.` : `${placeOfTx(txId)} ON.`);
 }

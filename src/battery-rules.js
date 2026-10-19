@@ -2,7 +2,7 @@
 // I have on the project": AA for the TXs and plug-ons, NP-F970 for the video kit, built-in ones…).
 //   gear/batteries.json  { groups: [{ id, name, item, battery, wh, life_min, charge_min, models: { 'ZMT4.5': 390 } }],
 //                          devices: [{ model, watts, takes, battery, hours, source }],
-//                          chargers: [{ id, name, group, slots, charge_min }],
+//                          chargers: [{ id, name, group, battery, slots, charge_min }],  (battery: the type it charges, any group)
 //                          batteries: [{ id, group, label, state, since, used_in, charger, charge_min, life_pct,
 //                                        runs: [{ min, end: 'dead'|'low'|'ok', model, pct, at }] }] }
 //   state: 'full' | 'charging' | 'in_use' | 'empty'; since: when it entered that state
@@ -16,12 +16,12 @@
 //   → the IDEAL minutes = wh × takes ÷ watts. models: the minutes Ana SEES in practice per model — they win.
 //   battery 'internal': not swapped (Ana: the Ambient TC boxes) — only the maker's hours on a full charge
 //   battery: the group's battery type (NP-F970): the models that take it are the ones its sheet asks about
-//   tx_on: { '7': since } — a TX switched ON in the mic table: its countdown uses the first group of its battery
-//   type (the best ones are listed first)
-// The mic table's battery column (txTimer, Ana 13 Oct): OFF until tapped while rigging; ON = tx_on only.
-// Ana, 19 Oct: "make the gear battery independent from the timers of mics" — the mic table never asks for a battery
-// number and never changes Gear → Batteries; that list is only for timing the charges, when she wants to.
-// A timer older than TIMER_STALE_H hours is a forgotten one: it shows OFF again.
+//   tx_on: { '7': since } — a TX switched ON in the mic table with no numbered battery (v149): its countdown uses the
+//   first group of its battery type (the best ones are listed first)
+// The mic table's battery column (txTimer, Ana 13 Oct): OFF until tapped while rigging; ON = the battery in use in
+// that TX, or tx_on. A timer older than TIMER_STALE_H hours is a forgotten one: it shows OFF again.
+// All automatic (Ana, 19 Oct): a battery leaving a TX (swap or OFF) goes straight to Charging; once its charge time
+// is up it is ready again (isReady) — no "charging… charged…" taps. Gear → Batteries is for checking, when she wants.
 // How long a battery in use lasts (lifeOf), always aiming short (Ana: "end before!"):
 //   the model's minutes (the group's own for it, else wh ÷ the device's watts, else the group's) × the battery's rank, no more than its last runs that ended dead or low
 //   (dead counts 10% shorter), −15% if its TX is in a long scene today (≥ 3 pages, the AT's rule)
@@ -37,6 +37,7 @@ export const STATES = [['full', 'Full'], ['charging', 'Charging'], ['in_use', 'I
 
 export const batteryFile = project => ({ groups: [], chargers: [], devices: [], batteries: [], tx_on: {}, ...project.gearBatteries });
 export const TIMER_STALE_H = 16;
+export const CHARGE_DEFAULT_MIN = 180; // a group with no charge time: 3 hours (Ana, 19 Oct)
 
 export const ENDS = [['dead', 'Dead'], ['low', 'Low'], ['ok', 'Still OK']];
 export const LONG_SCENE_PAGES = 3;
@@ -65,6 +66,13 @@ export function pagesOf(text) {
 export function txOf(project, place) {
   const id = String(place || '').trim().replace(/^TX\s*/i, '');
   return id ? (project.transmitters || []).find(t => String(t.id).toLowerCase() === id.toLowerCase()) || null : null;
+}
+
+// the battery in use in a TX (null: none marked)
+export function batteryIn(project, txId) {
+  const { groups, batteries } = batteryFile(project);
+  const battery = batteries.find(b => b.state === 'in_use' && String(txOf(project, b.used_in)?.id) === String(txId));
+  return battery ? { battery, group: groups.find(g => g.id === battery.group) } : null;
 }
 
 // today's shooting day (null: no shooting today)
@@ -127,7 +135,29 @@ export function lifeOf(project, battery, group, now = Date.now()) {
 // minutes on the charger: the battery's own, its charger's, the group's
 export function chargeOf(project, battery, group) {
   const charger = batteryFile(project).chargers.find(c => c.id === battery.charger);
-  return Number(battery.charge_min ?? charger?.charge_min ?? group?.charge_min) || 0;
+  return Number(battery.charge_min ?? charger?.charge_min ?? group?.charge_min) || CHARGE_DEFAULT_MIN;
+}
+
+// where a battery coming out of a TX goes to charge (Ana, 19 Oct: "always the first available slot of charger"):
+// the first charger of its group, in the order of Gear → Batteries (the preferred one first), with a free slot;
+// a charger with no slot count never fills. null: no charger for the group, or all full.
+export function freeChargerFor(project, groupId) {
+  return chargersFor(project, groupId).find(c => !c.slots || chargerLoad(project, c.id) < c.slots) || null;
+}
+
+// the chargers that charge a group: made for it (group), or for its battery type (battery: 'NP-50' — one charger
+// for the new, Pentax and Fuji NP-50s)
+export function chargersFor(project, groupId) {
+  const { groups, chargers } = batteryFile(project);
+  const type = groups.find(g => g.id === groupId)?.battery;
+  return chargers.filter(c => c.group === groupId || (type && c.battery === type));
+}
+
+// a battery that can go in a TX: full, or charging and its charge time is up (Ana, 19 Oct: "after 3 hours it goes
+// back to available, presuming I did my job correctly")
+export function isReady(project, battery, group, now = Date.now()) {
+  if (battery.state === 'full') return true;
+  return battery.state === 'charging' && timeLeft(battery, group, now, project)?.left === 0;
 }
 
 // batteries on a charger now
@@ -181,16 +211,17 @@ export function groupsForTx(project, txId) {
   return type ? groups.filter(g => g.battery === type) : [];
 }
 
-// the battery column of a TX: null (OFF) or { group, since, minutes, left, endsAt, tone, notes }
+// the battery column of a TX: null (OFF) or { battery (null: no number), group, since, minutes, left, endsAt, tone, notes }
 export function txTimer(project, txId, now = Date.now()) {
   if (!txId) return null;
-  const since = batteryFile(project).tx_on[String(txId)];
+  const found = batteryIn(project, txId);
+  const since = found?.battery.since || batteryFile(project).tx_on[String(txId)];
   if (!since || now - Date.parse(since) > TIMER_STALE_H * 3600000) return null;
-  const group = groupsForTx(project, txId)[0] || null;
-  const battery = { state: 'in_use', used_in: placeOfTx(txId), since };
+  const group = found?.group || groupsForTx(project, txId)[0] || null;
+  const battery = found?.battery || { state: 'in_use', used_in: placeOfTx(txId), since };
   const life = lifeOf(project, battery, group, now);
   const time = timeLeft(battery, group, now, project);
-  return { group, since, minutes: life?.minutes ?? null, left: time?.left ?? null,
+  return { battery: found?.battery || null, group, since, minutes: life?.minutes ?? null, left: time?.left ?? null,
     endsAt: life ? Date.parse(since) + life.minutes * 60000 : null, tone: time ? toneOf(battery, group, now, project) : 'plain', notes: life?.notes || [] };
 }
 

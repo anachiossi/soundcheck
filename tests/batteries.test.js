@@ -49,7 +49,7 @@ test('gear/batteries.json is a film file', () => {
 });
 
 // ---- estimates: TX model × rank × learning × long scene (Ana, 12 Oct) ----
-import { lifeOf, pagesOf, wearerOf, withRun, chargeOf, chargerLoad } from '../src/battery-rules.js';
+import { lifeOf, pagesOf, batteryIn, wearerOf, withRun, chargeOf, chargerLoad } from '../src/battery-rules.js';
 
 const day = '2026-10-13';
 const noon = new Date(`${day}T12:00`).getTime();
@@ -95,7 +95,9 @@ test('it learns from runs that ended dead or low, always aiming short', () => {
   assert.equal(withRun(full, 'dead', filmDay, noon), full, 'only a battery leaving a TX has a run');
 });
 
-test('who wears a TX today, chargers', () => {
+test('which battery is in a TX, who wears it today, chargers', () => {
+  assert.equal(batteryIn(filmDay, '7').battery.label, '1');
+  assert.equal(batteryIn(filmDay, 'B1'), null);
   assert.equal(wearerOf(filmDay, '7', noon).actor, 'Luis Miguel');
   assert.equal(chargeOf(filmDay, onCharger, aaGroup), 150);
   assert.equal(chargerLoad(filmDay, 'c1'), 1);
@@ -123,33 +125,29 @@ test('minutes from the power a model draws: Wh per battery × batteries ÷ W (An
 import { txTimer, groupsForTx, placeOfTx, timeOfDay, TIMER_STALE_H } from '../src/battery-rules.js';
 
 const rig = {
-  transmitters: [{ id: '7', model: 'ZMT4.5' }, { id: 'B1', model: 'TRX742' }],
+  transmitters: [{ id: '7', model: 'ZMT4.5' }, { id: 'B1', model: 'HM_ZMT4' }],
   gearBatteries: {
-    groups: [{ id: 'f', name: 'Fuji', battery: 'NP-50', wh: 3.4, models: { 'ZMT4.5': 120 } }, { id: 'n', name: 'new', battery: 'NP-50', wh: 3.33 }],
+    groups: [{ id: 'n', name: 'new', battery: 'NP-50', wh: 3.33 }, { id: 'f', name: 'Fuji', battery: 'NP-50', wh: 3.4, models: { 'ZMT4.5': 120 } }],
     devices: [{ model: 'ZMT4.5', watts: 0.525, battery: 'NP-50' }],
-    batteries: [{ id: 'f-15', group: 'f', label: '15', state: 'in_use', used_in: 'TX 7', since: '2026-10-13T02:00:00Z' }],
-    tx_on: { 7: at, B1: at },
+    batteries: [{ id: 'f-15', group: 'f', label: '15', state: 'in_use', used_in: 'TX 7', since: at }],
+    tx_on: { B1: at },
   },
 };
 
-test('battery column: ON counts down from the best group of its battery type; the change time is ON + life', () => {
-  assert.deepEqual(groupsForTx(rig, '7').map(g => g.id), ['f', 'n']);
+test('battery column: a numbered battery in the TX counts down from its own minutes; the change time is since + life', () => {
   const timer = txTimer(rig, '7', minutesAfter(30));
+  assert.equal(timer.battery.label, '15');
   assert.equal(timer.minutes, 120);
   assert.equal(timer.left, 90);
   assert.equal(timer.endsAt, minutesAfter(120));
 });
 
-test('battery column: Gear → Batteries never drives it (a battery marked In use in TX 7 changes nothing)', () => {
-  const offInTable = { ...rig, gearBatteries: { ...rig.gearBatteries, tx_on: {} } };
-  assert.equal(txTimer(offInTable, '7', minutesAfter(10)), null, 'OFF in the table = OFF, whatever Gear says');
-  assert.equal(txTimer(rig, '7', minutesAfter(10)).since, at, 'the timer starts when it was switched ON');
-});
-
-test('battery column: unknown draw = ON with no countdown; never switched on = OFF', () => {
+test('battery column: ON with no number uses the best group of its battery type; unknown draw = ON, no countdown', () => {
+  assert.deepEqual(groupsForTx(rig, '7').map(g => g.id), ['n', 'f']);
   const plug = txTimer(rig, 'B1', minutesAfter(10));
-  assert.equal(plug.left, null, 'TRX742 has no watts: no estimate');
-  assert.equal(txTimer(rig, '3', minutesAfter(10)), null);
+  assert.equal(plug.battery, null);
+  assert.equal(plug.left, null, 'HM_ZMT4 has no watts: no estimate');
+  assert.equal(txTimer(rig, '3', minutesAfter(10)), null, 'never switched on: OFF');
 });
 
 test('battery column: a forgotten timer (older than a day of work) shows OFF again', () => {
@@ -161,4 +159,42 @@ test('battery column: place names and clock time', () => {
   assert.equal(placeOfTx('7'), 'TX 7');
   assert.equal(placeOfTx('B1'), 'B1');
   assert.match(timeOfDay(Date.parse(at)), /^\d{1,2}:\d{2}$/);
+});
+
+// ---- v171 (Ana, 19 Oct): a battery out of a TX charges by itself, and is ready again after its charge time ----
+import { isReady, freeChargerFor, chargersFor, CHARGE_DEFAULT_MIN } from '../src/battery-rules.js';
+
+test('a battery taken out of a TX is ready again once its charge time is up (3 h when nothing says)', () => {
+  const group = { id: 'n', name: 'NP-50' };
+  const charging = { id: 'n-1', group: 'n', label: '1', state: 'charging', since: at };
+  const project = { gearBatteries: { groups: [group] } };
+  assert.equal(CHARGE_DEFAULT_MIN, 180);
+  assert.equal(isReady(project, charging, group, minutesAfter(179)), false, 'still charging');
+  assert.equal(isReady(project, charging, group, minutesAfter(180)), true, 'charged: offered again');
+  assert.equal(isReady(project, charging, { ...group, charge_min: 90 }, minutesAfter(90)), true, 'the group\'s own charge time wins');
+  assert.equal(isReady(project, { ...charging, state: 'full' }, group, minutesAfter(0)), true);
+  assert.equal(isReady(project, { ...charging, state: 'empty' }, group, minutesAfter(999)), false, 'empty waits for a tap in Gear');
+});
+
+test('a battery out of a TX goes on the first charger of its group with a free slot (the preferred one first)', () => {
+  const project = { gearBatteries: {
+    chargers: [{ id: 'c1', group: 'n', slots: 2 }, { id: 'c2', group: 'n', slots: 4 }, { id: 'c3', group: 'aa' }],
+    batteries: [{ id: 'n-1', group: 'n', state: 'charging', charger: 'c1' }],
+  } };
+  assert.equal(freeChargerFor(project, 'n').id, 'c1', 'one slot left on the preferred charger');
+  const full = { gearBatteries: { ...project.gearBatteries, batteries: [...project.gearBatteries.batteries, { id: 'n-2', group: 'n', state: 'charging', charger: 'c1' }] } };
+  assert.equal(freeChargerFor(full, 'n').id, 'c2', 'the preferred one is full: the next one');
+  assert.equal(freeChargerFor(project, 'aa').id, 'c3', 'no slot count: never full');
+  assert.equal(freeChargerFor(project, 'np-f'), null, 'no charger for the group');
+});
+
+test('a charger made for a battery type charges every group of that type; a battery no charger takes is not rechargeable', () => {
+  const project = { gearBatteries: {
+    groups: [{ id: 'new', battery: 'NP-50' }, { id: 'fuji', battery: 'NP-50' }, { id: 'alk', battery: 'AA' }, { id: 'nimh', battery: 'AA' }],
+    chargers: [{ id: 'wrinex', battery: 'NP-50', slots: 8 }, { id: 'isdt', group: 'nimh', slots: 8 }],
+    batteries: [],
+  } };
+  assert.equal(freeChargerFor(project, 'fuji').id, 'wrinex');
+  assert.equal(freeChargerFor(project, 'nimh').id, 'isdt');
+  assert.deepEqual(chargersFor(project, 'alk'), [], 'alkaline AA: no charger, goes to Empty');
 });

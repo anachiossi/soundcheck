@@ -5,7 +5,8 @@
 // "+ Charger": a name, the group it charges, slots, minutes for a full charge.
 // "Power draw": what each model draws (W) and how many batteries it takes; with the group's Wh per battery it
 // gives the minutes (Ana, 13 Oct: "for all equipment that has batteries, the consumption it has per hour").
-// Only for timing the charges when Ana wants: the mic table's battery column never changes this list (Ana, 19 Oct).
+// A battery coming out of a TX in the mic table lands here as Charging by itself, and shows "ready" (green) once its
+// charge time is up (default 3 h) — no taps needed (Ana, 19 Oct). Tapping here is only to be precise.
 // No notifications yet (Ana, 12 Oct: "once we have the aesthetics right we can think of notification triggering").
 // Used by: main.js
 
@@ -53,7 +54,7 @@ export function GearBatteriesScreen({ state }) {
                   <button key=${b.id} class=${`battery battery--${toneOf(b, g, now, project)}`} onClick=${() => setOpenBattery({ battery: b, group: g })}>
                     <b>${b.label}</b>
                     <small>${b.state === 'in_use' ? placeLabel(project, b, now) : b.state === 'charging' ? 'charging' : b.state === 'full' ? 'full' : 'empty'}</small>
-                    ${time && html`<small class="battery__time">${time.left ? clock(time.left) : b.state === 'charging' ? 'done?' : '0:00'}</small>`}
+                    ${time && html`<small class="battery__time">${time.left ? clock(time.left) : b.state === 'charging' ? 'ready' : '0:00'}</small>`}
                   </button>`;
               })}
             </div>

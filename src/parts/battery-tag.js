@@ -1,9 +1,10 @@
-// battery-tag.js — the battery time of a TX, next to its pill (Kit): the same countdown as the mic table's battery
-// column (battery-rules.js txTimer), green / yellow / red. Nothing when the TX is OFF.
-// Used by: screens/kit.js; useMinuteClock also by parts/battery-cell.js, screens/gear-batteries.js
+// battery-tag.js — the battery time of a TX, next to its pill (Mics scene tables, Kit): the countdown of the
+// battery marked "In use" in it in Gear → Batteries, green / yellow / red (battery-rules.js). Nothing when no
+// battery is marked in it.
+// Used by: parts/scene-table.js, screens/kit.js, screens/gear-batteries.js (the clock)
 
 import { html, useState, useEffect } from '../../vendor/preact-htm.js';
-import { txTimer, clock } from '../battery-rules.js';
+import { batteryIn, timeLeft, toneOf, clock } from '../battery-rules.js';
 
 // the countdowns move: a new look every 30 seconds
 export function useMinuteClock() {
@@ -17,7 +18,10 @@ export function useMinuteClock() {
 
 export function BatteryTag({ project, txId }) {
   const now = useMinuteClock();
-  const timer = txId && txTimer(project, txId, now);
-  if (!timer) return null;
-  return html`<span class=${`battery-tag battery--${timer.tone}`}>🔋 ${timer.left == null ? 'ON' : clock(timer.left)}</span>`;
+  const found = txId && batteryIn(project, txId);
+  if (!found) return null;
+  const { battery, group } = found;
+  const time = timeLeft(battery, group, now, project);
+  return html`<span class=${`battery-tag battery--${toneOf(battery, group, now, project)}`} title=${`${group?.name || ''} ${battery.label}`}>
+    🔋 ${time ? clock(time.left) : battery.label}</span>`;
 }
