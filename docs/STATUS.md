@@ -122,7 +122,11 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   accessory pill → its photo full screen; a Gear thing's sheet shows its photo. Phones keep every thumb + the full
   photos of the next 3 days' mic lists. `photos.js` downloads both photo repos (costumes + kit) after each sync.
   Batch 1 (30 photos): mini mounts, plush sleeves, stickies, tape, foamies, straps (Ursa, Viviana), DPA lavs, Sanken
-  COS-11D, Zaxcom ZMT4 / ZMT4-HM / ZMT3 / TRXLA3. Next: batch 2 (the other ~200 branded things), pouches (brand?).
+  COS-11D, Zaxcom ZMT4 / ZMT4-HM / ZMT3 / TRXLA3. Batch 2 (42): Zaxcom recorders/receivers/NP-50, Schoeps, Ambient
+  Lockits/Slate, Cinela Piano/Pianissimo/COSI, Viviana, Bubblebee, Hollyland, beyerdynamic M 201, Speakeasy, Sanken
+  CUB-01; every single lav/TX item shows its model's photo → 115 Gear items with a photo (8.4 MB repo).
+  Left (no maker's page online, or brand/model unknown): Rycote lyres, Sennheiser G3/2000, Audioroot, Manfrotto,
+  pouches, cases/boxes, cables, batteries/chargers — Ana's own photos or a dealer's, her call.
   Robot (same days): newest email wins (exact sent time), "nothing to commit" is not a failure, backup cron 5/day.
 - Cues is Speak Screen friendly (v62–63, iPhone's own Siri reading, started only by a two-finger swipe):
   only the dialogue is readable (the rest aria-hidden), "Prince John." before each line, and the
