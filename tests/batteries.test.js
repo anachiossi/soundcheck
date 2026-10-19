@@ -49,7 +49,7 @@ test('gear/batteries.json is a film file', () => {
 });
 
 // ---- estimates: TX model × rank × learning × long scene (Ana, 12 Oct) ----
-import { lifeOf, pagesOf, batteryIn, wearerOf, withRun, chargeOf, chargerLoad } from '../src/battery-rules.js';
+import { lifeOf, pagesOf, wearerOf, withRun, chargeOf, chargerLoad } from '../src/battery-rules.js';
 
 const day = '2026-10-13';
 const noon = new Date(`${day}T12:00`).getTime();
@@ -95,9 +95,7 @@ test('it learns from runs that ended dead or low, always aiming short', () => {
   assert.equal(withRun(full, 'dead', filmDay, noon), full, 'only a battery leaving a TX has a run');
 });
 
-test('which battery is in a TX, who wears it today, chargers', () => {
-  assert.equal(batteryIn(filmDay, '7').battery.label, '1');
-  assert.equal(batteryIn(filmDay, 'B1'), null);
+test('who wears a TX today, chargers', () => {
   assert.equal(wearerOf(filmDay, '7', noon).actor, 'Luis Miguel');
   assert.equal(chargeOf(filmDay, onCharger, aaGroup), 150);
   assert.equal(chargerLoad(filmDay, 'c1'), 1);
@@ -125,29 +123,33 @@ test('minutes from the power a model draws: Wh per battery × batteries ÷ W (An
 import { txTimer, groupsForTx, placeOfTx, timeOfDay, TIMER_STALE_H } from '../src/battery-rules.js';
 
 const rig = {
-  transmitters: [{ id: '7', model: 'ZMT4.5' }, { id: 'B1', model: 'HM_ZMT4' }],
+  transmitters: [{ id: '7', model: 'ZMT4.5' }, { id: 'B1', model: 'TRX742' }],
   gearBatteries: {
-    groups: [{ id: 'n', name: 'new', battery: 'NP-50', wh: 3.33 }, { id: 'f', name: 'Fuji', battery: 'NP-50', wh: 3.4, models: { 'ZMT4.5': 120 } }],
+    groups: [{ id: 'f', name: 'Fuji', battery: 'NP-50', wh: 3.4, models: { 'ZMT4.5': 120 } }, { id: 'n', name: 'new', battery: 'NP-50', wh: 3.33 }],
     devices: [{ model: 'ZMT4.5', watts: 0.525, battery: 'NP-50' }],
-    batteries: [{ id: 'f-15', group: 'f', label: '15', state: 'in_use', used_in: 'TX 7', since: at }],
-    tx_on: { B1: at },
+    batteries: [{ id: 'f-15', group: 'f', label: '15', state: 'in_use', used_in: 'TX 7', since: '2026-10-13T02:00:00Z' }],
+    tx_on: { 7: at, B1: at },
   },
 };
 
-test('battery column: a numbered battery in the TX counts down from its own minutes; the change time is since + life', () => {
+test('battery column: ON counts down from the best group of its battery type; the change time is ON + life', () => {
+  assert.deepEqual(groupsForTx(rig, '7').map(g => g.id), ['f', 'n']);
   const timer = txTimer(rig, '7', minutesAfter(30));
-  assert.equal(timer.battery.label, '15');
   assert.equal(timer.minutes, 120);
   assert.equal(timer.left, 90);
   assert.equal(timer.endsAt, minutesAfter(120));
 });
 
-test('battery column: ON with no number uses the best group of its battery type; unknown draw = ON, no countdown', () => {
-  assert.deepEqual(groupsForTx(rig, '7').map(g => g.id), ['n', 'f']);
+test('battery column: Gear → Batteries never drives it (a battery marked In use in TX 7 changes nothing)', () => {
+  const offInTable = { ...rig, gearBatteries: { ...rig.gearBatteries, tx_on: {} } };
+  assert.equal(txTimer(offInTable, '7', minutesAfter(10)), null, 'OFF in the table = OFF, whatever Gear says');
+  assert.equal(txTimer(rig, '7', minutesAfter(10)).since, at, 'the timer starts when it was switched ON');
+});
+
+test('battery column: unknown draw = ON with no countdown; never switched on = OFF', () => {
   const plug = txTimer(rig, 'B1', minutesAfter(10));
-  assert.equal(plug.battery, null);
-  assert.equal(plug.left, null, 'HM_ZMT4 has no watts: no estimate');
-  assert.equal(txTimer(rig, '3', minutesAfter(10)), null, 'never switched on: OFF');
+  assert.equal(plug.left, null, 'TRX742 has no watts: no estimate');
+  assert.equal(txTimer(rig, '3', minutesAfter(10)), null);
 });
 
 test('battery column: a forgotten timer (older than a day of work) shows OFF again', () => {

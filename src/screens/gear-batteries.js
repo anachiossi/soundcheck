@@ -5,6 +5,7 @@
 // "+ Charger": a name, the group it charges, slots, minutes for a full charge.
 // "Power draw": what each model draws (W) and how many batteries it takes; with the group's Wh per battery it
 // gives the minutes (Ana, 13 Oct: "for all equipment that has batteries, the consumption it has per hour").
+// Only for timing the charges when Ana wants: the mic table's battery column never changes this list (Ana, 19 Oct).
 // No notifications yet (Ana, 12 Oct: "once we have the aesthetics right we can think of notification triggering").
 // Used by: main.js
 

@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-10-19 · live version **v169** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-10-19 · live version **v170** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
@@ -109,6 +109,10 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   `lav-acc-rules.js`, settings `presets.lav_accessories`); every TX gets the character's usual strap/pouch (`usual-acc.js`,
   Kit → usual_acc from 27fin); mic table with no "…" (columns as wide as their words, more pages); battery pill
   🕒 time left + empty-battery icon before the time it runs out.
+- v170 (19 Oct): **battery column = a timer only** (Ana: "make the gear battery independent from the timers of
+  mics") — OFF → one tap = ON; ON → tap = Swap battery (countdown restarts) / OFF. No numbers, no "how did it
+  end"; the countdown assumes the TX's first battery group. Gear → Batteries is never changed by the mic table:
+  it is only for timing charges when Ana wants. Kit 🔋 tag = the same timer.
 - v167 (18 Oct): **Costume column** — `costumes.json` (film data) says which costume change (ch.N) each character
   wears in each scene; none to 3 photos per change (front, back, detail) in the film's own private photos repo
   (`anachiossi/la-buona-educazione-photos`, 1600 px + thumbs). Phones keep all thumbs + full photos of the next
