@@ -28,7 +28,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from fetch_mail import fetch  # noqa: E402
+from fetch_mail import emails_oldest_first, fetch  # noqa: E402
 from propose import build_proposal, sides_by_day, NO_SIDES  # noqa: E402
 from propose_pdl import build_pdl_proposal  # noqa: E402
 
@@ -63,7 +63,7 @@ def run(film_folder, include_past=False):
 
     written = []
     other_sides = sides_by_day(film / "_inbox")
-    for email_folder in sorted((film / "_inbox").iterdir()):
+    for email_folder in emails_oldest_first(film / "_inbox"):
         info = json.loads((email_folder / "email.json").read_text(encoding="utf-8"))
         if info.get("message_id") in known or info["subject"] in known:
             continue
@@ -157,7 +157,7 @@ def add_late_sides(film, other_sides):
     but only while Ana hasn't decided anything in it yet."""
     remade = []
     by_message = {}
-    for email_folder in sorted((film / "_inbox").iterdir()):
+    for email_folder in emails_oldest_first(film / "_inbox"):
         info = json.loads((email_folder / "email.json").read_text(encoding="utf-8"))
         by_message[info.get("message_id")] = email_folder
     for path in sorted((film / "proposals").glob("odg-*.json")):
@@ -183,7 +183,7 @@ def file_documents(film, other_sides):
     from cue_lines import write_sides_lines
     from read_odg import read_odg
     changed = []
-    for email_folder in sorted((film / "_inbox").iterdir()):
+    for email_folder in emails_oldest_first(film / "_inbox"):
         odg = next((p for p in email_folder.glob("*.pdf") if "ODG" in p.name.upper()), None)
         if not odg:
             continue
@@ -232,10 +232,10 @@ def file_crew_calls(film):
 
 def file_latest_pdl(film):
     """The newest PDL email's PDF → docs/pdl.pdf (+ docs/pdl.json: which email), for the app's
-    Projects screen. The emails are in date order, so the last one found wins."""
+    Projects screen. The emails are in the order they were sent, so the last one found wins."""
     import shutil
     latest = None
-    for email_folder in sorted((film / "_inbox").iterdir()):
+    for email_folder in emails_oldest_first(film / "_inbox"):
         pdl = next((p for p in email_folder.glob("*.pdf") if "PDL" in p.name.upper()), None)
         if pdl:
             latest = (pdl, json.loads((email_folder / "email.json").read_text(encoding="utf-8")))
@@ -262,7 +262,7 @@ def file_archive(film):
     current = {p.read_bytes() for p in list((film / "docs").glob("day-*/*.pdf")) + [film / "docs" / "pdl.pdf"]
                if p.exists()}
     changed = []
-    for email_folder in sorted((film / "_inbox").iterdir()):
+    for email_folder in emails_oldest_first(film / "_inbox"):
         target = film / "docs" / "archive" / email_folder.name
         for source in sorted(email_folder.glob("*.pdf")):
             copy = target / source.name

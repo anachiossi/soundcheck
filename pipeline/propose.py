@@ -24,6 +24,7 @@ from compare_crew import check_crew
 from read_crew import read_crew
 from read_odg import read_odg
 from read_sides import read_sides
+from fetch_mail import emails_oldest_first
 
 
 def load_film(folder):
@@ -53,7 +54,7 @@ def sides_by_day(inbox):
     sides in a separate email ("Re: LBE - ODG #7" with only STRALCI DAY #7.pdf).
     The day comes from the file name ("DAY #7") or else the subject ("ODG #7"); a later email wins."""
     found = {}
-    for email_folder in sorted(Path(inbox).iterdir()) if Path(inbox).exists() else []:
+    for email_folder in emails_oldest_first(inbox):
         subject = json.loads((email_folder / "email.json").read_text(encoding="utf-8"))["subject"]
         for pdf in email_folder.glob("*.pdf"):
             if "STRALCI" not in pdf.name.upper():

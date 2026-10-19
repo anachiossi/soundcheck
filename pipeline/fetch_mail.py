@@ -22,6 +22,7 @@ import os
 import re
 import sys
 from email.header import decode_header
+from datetime import timezone
 from email.utils import parsedate_to_datetime
 from pathlib import Path
 
@@ -46,6 +47,21 @@ def safe_name(text):
     return re.sub(r"[^\w .#-]+", "_", text).strip()[:80]
 
 
+def emails_oldest_first(inbox):
+    """The saved emails in the order they were sent, to the second: the newest always wins, whatever
+    its subject or file names say (Ana, 19 Oct: ODG #21 "BOZZA" was sent last and was the real one).
+    Emails saved before "sent" existed fall back to their day."""
+    inbox = Path(inbox)
+    if not inbox.exists():
+        return []
+
+    def sent(folder):
+        info = json.loads((folder / "email.json").read_text(encoding="utf-8"))
+        return info.get("sent") or info.get("date", "")
+
+    return sorted((f for f in inbox.iterdir() if (f / "email.json").exists()), key=lambda f: (sent(f), f.name))
+
+
 def fetch(film_folder):
     film = Path(film_folder)
     search = json.loads((film / "inbox.json").read_text(encoding="utf-8"))["gmail_search"]
@@ -66,7 +82,8 @@ def fetch(film_folder):
         _, data = mail.fetch(message_id, "(RFC822)")
         message = email.message_from_bytes(data[0][1])
         subject = decoded(message["Subject"]).replace("Fwd:", "").strip()
-        date = parsedate_to_datetime(message["Date"]).strftime("%Y-%m-%d")
+        sent_at = parsedate_to_datetime(message["Date"])
+        date = sent_at.strftime("%Y-%m-%d")
         message_id = (message["Message-ID"] or f"{date}-{subject}").strip()
         short_id = hashlib.sha1(message_id.encode()).hexdigest()[:8]  # unique per email
         folder = inbox / f"{date}_{safe_name(subject)}_{short_id}"
@@ -81,7 +98,8 @@ def fetch(film_folder):
                 saved.append(name)
         if saved:
             (folder / "email.json").write_text(json.dumps(
-                {"subject": subject, "date": date, "from": decoded(message["From"]), "files": saved,
+                {"subject": subject, "date": date, "sent": sent_at.astimezone(timezone.utc).isoformat(),
+                 "from": decoded(message["From"]), "files": saved,
                  "message_id": message_id},
                 ensure_ascii=False, indent=2), encoding="utf-8")
             new.append(folder.name)
