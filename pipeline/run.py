@@ -37,6 +37,11 @@ def git(repo, *args):
     return subprocess.run(["git", "-C", str(repo), *args], check=True, capture_output=True, text=True).stdout
 
 
+def nothing_staged(repo):
+    """True when "git add" found no change (git diff --cached --quiet says 0 = no difference)."""
+    return subprocess.run(["git", "-C", str(repo), "diff", "--cached", "--quiet"]).returncode == 0
+
+
 def write_json(path, content):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(content, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -100,6 +105,11 @@ def run(film_folder, include_past=False):
             git(repo, "add", str(film / "docs"), str(film / "lines"),
                 *([str(film / "calls.json")] if (film / "calls.json").exists() else []))
         titles = ", ".join([p["title"] for p in written] + ([f"{len(documents)} document(s)"] if documents else []))
+        # documents already saved by an earlier run are filed again identical: nothing to commit is not an
+        # error (18–19 Oct: "git commit" stopped every run with "nothing to commit")
+        if nothing_staged(repo):
+            print("documents already saved, nothing new")
+            return written
         git(repo, "commit", "--quiet", "-m", f"From production emails: {titles}")
         git(repo, "push", "--quiet")
         print("pushed: the app will show them at the next sync")
