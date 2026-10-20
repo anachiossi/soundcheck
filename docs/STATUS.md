@@ -45,11 +45,11 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   script scrolls like Spotify lyrics (`parts/scene-script.js`, names on a highlight of the character's
   colour), the Pro Tools-style track of speakers is the play bar (cursor, speed, scrub, paced like a
   person speaking — `cues-timeline-rules.js`). Map and Timeline open full screen (`main.js` focus).
-- 🟥 **Who's next** (v174–178, Ana 20 Oct; `cues-game-rules.js`, `screens/cues-game.js`): the "Simon" game for
+- 🟥 **Who's next** (v174–179, Ana 20 Oct; `cues-game-rules.js`, `screens/cues-game.js`): the "Simon" game for
   the order of speakers — teach, quiz, teach one more, quiz (v176). The joystick on each scene in the Cues tab
   (next to Cues · map · timeline), also in the Map and Timeline rows. TEACH: line 1 in its speaker's colour, the
   speaker's button lit (moves on by itself, or tap); QUIZ: the line's words on grey, no name — tap who says it;
-  right → it turns into the speaker's colour and name for a moment, like while learning (v177). Faster in v178: 0.8–3 s a line, 0.5 s for a right answer. Next round teaches lines 1–2, then 1–3…
+  right → it turns into the speaker's colour and name for a moment, like while learning (v177). Faster: v179 = 0.3–1 s a line, 0.17 s for a right answer (3× v178). Next round teaches lines 1–2, then 1–3…
   A mistake says who it was and teaches the round again. Beats as in the map, max 8 lines. Silent.
 - 🔍 **Search the lines** (v112, `parts/line-search.js`) in Cues, Dialogue map and Timeline: words and speakers (v116), every match highlighted
   (capitals / accents ignored), "2 / 7" with ↑ ↓ — on set "we start from WORD".

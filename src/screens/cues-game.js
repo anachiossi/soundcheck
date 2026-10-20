@@ -27,13 +27,13 @@ export function CuesGameScreen({ state }) {
   // TEACH moves on by itself, after the time to read the line (a missed line stays a little longer)
   useEffect(() => {
     if (!shown || game.phase !== 'teach') return;
-    const extra = game.missed && game.step === 0 ? 1 : 0;
+    const extra = game.missed && game.step === 0 ? 0.35 : 0;
     const timer = setTimeout(() => setGame(teachNext), (teachSeconds(shown.text) + extra) * 1000);
     return () => clearTimeout(timer);
   }, [game]);
   useEffect(() => {
     if (!reveal) return;
-    const timer = setTimeout(() => { setGame(reveal.next); setReveal(null); }, 500);
+    const timer = setTimeout(() => { setGame(reveal.next); setReveal(null); }, 170);
     return () => clearTimeout(timer);
   }, [reveal]);
   const answer = speakerId => {
