@@ -1,7 +1,7 @@
 // cues-picker.js — the Cues tab: choose a scene to learn.
 // The same day pills as the Schedule (parts/day-strip.js: finished days green, opens on the day we
 // are in). Each scene of the day is a card laid out like a script heading: #12 and the set on one
-// line, the lines count below, then the buttons: 🎙 Cues · map · timeline. Tapping the card = Cues.
+// line, the lines count below, then the buttons: 🎙 Cues · map · timeline · joystick (Who's next game). Tapping the card = Cues.
 // Below: any scene by number.
 // Used by: main.js
 
@@ -16,6 +16,7 @@ import { Icon } from '../parts/icons.js';
 const openCues = sceneId => setState({ screen: 'cues', cuesScene: sceneId, cuesFrom: 'cues-picker', cuesLine: 0 });
 const openMap = sceneId => setState({ screen: 'cues-map', cuesScene: sceneId });
 const openTimeline = sceneId => setState({ screen: 'cues-timeline', cuesScene: sceneId });
+const openGame = sceneId => setState({ screen: 'cues-game', cuesScene: sceneId });
 
 function SceneButton({ project, sceneId }) {
   const cues = cueLines(project, sceneId);
@@ -37,6 +38,8 @@ function SceneButton({ project, sceneId }) {
                   onClick=${event => { event.stopPropagation(); openMap(sceneId); }}><${Icon} name="map" /></button>
           <button class="icon-btn cue-scene__icon" aria-label=${`Timeline of ${sceneId}`}
                   onClick=${event => { event.stopPropagation(); openTimeline(sceneId); }}><${Icon} name="timeline" /></button>
+          <button class="icon-btn cue-scene__icon" aria-label=${`Who's next game, scene ${sceneId}`}
+                  onClick=${event => { event.stopPropagation(); openGame(sceneId); }}><${Icon} name="game" /></button>
         </span>`}
     </div>`;
 }

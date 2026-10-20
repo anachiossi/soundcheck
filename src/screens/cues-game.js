@@ -2,7 +2,7 @@
 // cues-game-rules.js). One coloured button per speaker; tap who says each line, from the start of
 // the beat, one line more every round. Only a mistake shows words: the end of the line before (the
 // cue) and who it really was. Silent. Full screen, like the Dialogue map.
-// Used by: main.js (the game button in Cues and in the Dialogue map)
+// Used by: main.js (the joystick on each scene in the Cues tab, and in the Dialogue map and Timeline)
 
 import { html, useState } from '../../vendor/preact-htm.js';
 import { byId } from '../model.js';
@@ -17,7 +17,7 @@ export function CuesGameScreen({ state }) {
   const { project, cuesScene } = state;
   const [game, setGame] = useState(startGame);
   const cues = cueLines(project, cuesScene);
-  const close = () => setState({ screen: 'cues-map' });
+  const close = () => setState({ screen: 'cues-picker', cuesScene: null });
   if (!cues) return html`<p class="empty">No lines for scene ${cuesScene}.</p><button class="btn" onClick=${close}>‹ Back</button>`;
 
   const lines = cues.lines;
@@ -33,8 +33,9 @@ export function CuesGameScreen({ state }) {
 
   const bar = html`
     <div class="focus-bar">
-      <button class="icon-btn" onClick=${close} aria-label="Dialogue map"><${Icon} name="map" /></button>
-      <button class="icon-btn" onClick=${() => setState({ screen: 'cues', cuesLine: beat.start, cuesFrom: 'cues-map' })} aria-label="Cues"><${Icon} name="cues" /></button>
+      <button class="icon-btn" onClick=${() => setState({ screen: 'cues', cuesLine: beat.start, cuesFrom: 'cues-game' })} aria-label="Cues"><${Icon} name="cues" /></button>
+      <button class="icon-btn" onClick=${() => setState({ screen: 'cues-map' })} aria-label="Dialogue map"><${Icon} name="map" /></button>
+      <button class="icon-btn" onClick=${() => setState({ screen: 'cues-timeline' })} aria-label="Timeline"><${Icon} name="timeline" /></button>
       <span class="focus-bar__space"></span>
       <button class="icon-btn" onClick=${close} aria-label="Close"><${Icon} name="close" /></button>
     </div>`;

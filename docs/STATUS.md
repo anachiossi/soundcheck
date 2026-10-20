@@ -46,7 +46,7 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   colour), the Pro Tools-style track of speakers is the play bar (cursor, speed, scrub, paced like a
   person speaking — `cues-timeline-rules.js`). Map and Timeline open full screen (`main.js` focus).
 - 🟥 **Who's next** (v174, Ana 20 Oct; `cues-game-rules.js`, `screens/cues-game.js`): the "Simon" game for
-  the order of speakers. From the Dialogue map (four-squares button). One coloured button per speaker; round 1 = line 1,
+  the order of speakers. The joystick on each scene in the Cues tab (v175, next to Cues · map · timeline), also in the Map and Timeline rows. One coloured button per speaker; round 1 = line 1,
   round 2 = lines 1–2… always from the start of the beat (beats as in the map, max 8 lines); a mistake shows
   who it was and the cue (end of the line before), then the round starts again. Silent.
 - 🔍 **Search the lines** (v112, `parts/line-search.js`) in Cues, Dialogue map and Timeline: words and speakers (v116), every match highlighted

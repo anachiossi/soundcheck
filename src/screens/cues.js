@@ -94,7 +94,7 @@ export function CuesScreen({ state }) {
 
   // back to where Cues was opened from (the Scene Map keeps the scene)
   const close = () => setState({ screen: state.cuesFrom || 'cues-picker', cuesLine: 0,
-    cuesScene: ['cues-map', 'cues-timeline'].includes(state.cuesFrom) ? cuesScene : null });
+    cuesScene: ['cues-map', 'cues-timeline', 'cues-game'].includes(state.cuesFrom) ? cuesScene : null });
   if (!cues) return html`<div class="cues cues--end"><p>No lines for scene ${cuesScene}.</p><button class="btn" onClick=${close}>Close</button></div>`;
 
   const lines = cues.lines;
