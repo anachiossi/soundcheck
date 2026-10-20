@@ -2,7 +2,8 @@
 // cues-game-rules.js): teach, quiz, teach one more, quiz.
 //   TEACH: each line of the round appears in its speaker's colour, with that speaker's button lit;
 //          it moves on by itself (time to read it), or tap the line to go on sooner
-//   QUIZ:  the lines hide; tap who says line 1, line 2… A mistake says who it was, then teaches again
+//   QUIZ:  each line's words show on grey, without the name; tap who says it. Right → the line takes its
+//          speaker's colour and name for a moment, like while teaching. A mistake says who it was, then teaches again
 // One coloured button per speaker. Silent. Full screen, like the Dialogue map.
 // Used by: main.js (the joystick on each scene in the Cues tab, and in the Dialogue map and Timeline)
 
@@ -17,6 +18,7 @@ import { Icon } from '../parts/icons.js';
 export function CuesGameScreen({ state }) {
   const { project, cuesScene } = state;
   const [game, setGame] = useState(startGame);
+  const [reveal, setReveal] = useState(null); // a right answer, shown in colour for a moment: { game after it }
   const cues = cueLines(project, cuesScene);
   const lines = cues?.lines || [];
   const present = (project.presets?.[cuesScene]?.rows || []).map(row => row.char_id);
@@ -29,6 +31,17 @@ export function CuesGameScreen({ state }) {
     const timer = setTimeout(() => setGame(teachNext), (teachSeconds(shown.text) + extra) * 1000);
     return () => clearTimeout(timer);
   }, [game]);
+  useEffect(() => {
+    if (!reveal) return;
+    const timer = setTimeout(() => { setGame(reveal.next); setReveal(null); }, 900);
+    return () => clearTimeout(timer);
+  }, [reveal]);
+  const answer = speakerId => {
+    if (reveal) return;
+    const next = tap(game, beats, lines, speakerId);
+    if (next.mistakes > game.mistakes) setGame(next); // wrong: at once, it teaches again
+    else setReveal({ next });                         // right: the line in colour first
+  };
 
   const close = () => setState({ screen: 'cues-picker', cuesScene: null });
   if (!cues) return html`<p class="empty">No lines for scene ${cuesScene}.</p><button class="btn" onClick=${close}>‹ Back</button>`;
@@ -55,7 +68,7 @@ export function CuesGameScreen({ state }) {
         <h1>Well done</h1>
         <p>Scene ${cuesScene}: ${lines.length} lines in ${beats.length} ${beats.length === 1 ? 'beat' : 'beats'} ·
           ${game.mistakes === 0 ? 'no mistakes' : `${game.mistakes} ${game.mistakes === 1 ? 'mistake' : 'mistakes'}`}</p>
-        <button class="btn btn--primary" onClick=${() => setGame(startGame())}>▶ Play again</button>
+        <button class="btn btn--primary" onClick=${() => { setReveal(null); setGame(startGame()); }}>▶ Play again</button>
         <button class="btn" onClick=${close}>Close</button>
       </div>`;
   }
@@ -67,7 +80,7 @@ export function CuesGameScreen({ state }) {
     ? html`<p class="game-msg">${missed && game.step === 0
         ? html`<span class="game-msg--wrong">✗ Line ${game.missed.line - beat.start + 1} is <b>${missed.name}</b>.</span> Watch again:`
         : `Watch: line ${game.step + 1} of ${game.round}`}</p>`
-    : html`<p class="game-msg">Your turn: who says line ${game.step + 1}?</p>`;
+    : html`<p class="game-msg">${reveal ? 'Yes!' : `Your turn: who says line ${game.step + 1}?`}</p>`;
 
   return html`${bar}
     <div class="game">
@@ -75,23 +88,24 @@ export function CuesGameScreen({ state }) {
         ${game.mistakes > 0 ? ` · ${game.mistakes} ✗` : ''}</p>
       <div class="map-strip" aria-label="This round's lines">
         ${lines.slice(beat.start, beat.start + game.round).map((line, i) => {
-          const lit = teaching ? i <= game.step : i < game.step;
+          const lit = teaching || reveal ? i <= game.step : i < game.step;
           return html`<span key=${i} class="map-strip__piece" style=${`background:${lit ? colourOf(line.char_id) : 'var(--line)'}`}></span>`;
         })}
       </div>
       ${message}
-      ${teaching
+      ${teaching || reveal
         ? html`<div class="game-line" role="button" style=${`background:${colour};color:${textColourFor(colour)}`}
-            onClick=${() => setGame(teachNext(game))}>
+            onClick=${() => teaching && setGame(teachNext(game))}>
             <b>${shown.name}</b><span>${shown.text}</span></div>`
-        : html`<div class="game-line game-line--hidden">?</div>`}
+        : html`<div class="game-line game-line--ask"><b>?</b><span>${shown.text}</span></div>`}
       <div class="game-pads">
         ${speakersOf(lines).map(speaker => {
           const padColour = colourOf(speaker.char_id);
-          const lit = teaching && speaker.id === speakerOf(shown);
-          return html`<button class=${'game-pad' + (teaching ? (lit ? ' game-pad--lit' : ' game-pad--dim') : '')} key=${speaker.id}
-            disabled=${teaching} style=${`background:${padColour};color:${textColourFor(padColour)}`}
-            onClick=${() => setGame(tap(game, beats, lines, speaker.id))}>${speaker.name}</button>`;
+          const showing = teaching || reveal;
+          const lit = showing && speaker.id === speakerOf(shown);
+          return html`<button class=${'game-pad' + (showing ? (lit ? ' game-pad--lit' : ' game-pad--dim') : '')} key=${speaker.id}
+            disabled=${showing} style=${`background:${padColour};color:${textColourFor(padColour)}`}
+            onClick=${() => answer(speaker.id)}>${speaker.name}</button>`;
         })}
       </div>
     </div>`;
