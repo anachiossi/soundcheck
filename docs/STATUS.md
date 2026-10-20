@@ -45,10 +45,11 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   script scrolls like Spotify lyrics (`parts/scene-script.js`, names on a highlight of the character's
   colour), the Pro Tools-style track of speakers is the play bar (cursor, speed, scrub, paced like a
   person speaking — `cues-timeline-rules.js`). Map and Timeline open full screen (`main.js` focus).
-- 🟥 **Who's next** (v174, Ana 20 Oct; `cues-game-rules.js`, `screens/cues-game.js`): the "Simon" game for
-  the order of speakers. The joystick on each scene in the Cues tab (v175, next to Cues · map · timeline), also in the Map and Timeline rows. One coloured button per speaker; round 1 = line 1,
-  round 2 = lines 1–2… always from the start of the beat (beats as in the map, max 8 lines); a mistake shows
-  who it was and the cue (end of the line before), then the round starts again. Silent.
+- 🟥 **Who's next** (v174–176, Ana 20 Oct; `cues-game-rules.js`, `screens/cues-game.js`): the "Simon" game for
+  the order of speakers — teach, quiz, teach one more, quiz (v176). The joystick on each scene in the Cues tab
+  (next to Cues · map · timeline), also in the Map and Timeline rows. TEACH: line 1 in its speaker's colour, the
+  speaker's button lit (moves on by itself, or tap); QUIZ: tap who says it. Next round teaches lines 1–2, then 1–3…
+  A mistake says who it was and teaches the round again. Beats as in the map, max 8 lines. Silent.
 - 🔍 **Search the lines** (v112, `parts/line-search.js`) in Cues, Dialogue map and Timeline: words and speakers (v116), every match highlighted
   (capitals / accents ignored), "2 / 7" with ↑ ↓ — on set "we start from WORD".
 - v153 (Ana, 16 Oct): **read aloud removed** — the app never speaks (a phone talking by accident on set

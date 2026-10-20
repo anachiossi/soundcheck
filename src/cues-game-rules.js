@@ -1,9 +1,11 @@
 // cues-game-rules.js — the Who's next game (a "Simon" for Cues): learn the ORDER of speakers in a scene.
-// The scene is cut into beats (where someone enters or leaves, cues-map-rules.js), at most 8 lines each.
-// Round 1: tap who says line 1. Round 2: lines 1 and 2. Round 3: lines 1, 2, 3… always from the start
-// of the beat, like Simon. A wrong tap shows the cue (the end of the line before) and the round starts
-// again from the beat's first line. When the whole beat is right, the next beat starts. Silent.
-// No screen code here. Used by: screens/cues-game.js
+// Like the toy that plays a tune of colours and you play it back, one note longer each time (Ana, 20 Oct:
+// "teach, quiz, teach one more, quiz"):
+//   TEACH: the app shows the beat's lines one by one, each with who says it (line 1; then 1–2; then 1–2–3…)
+//   QUIZ:  Ana taps who says each of those lines, in order
+// Right → the next round teaches one line more. Wrong → it says who it was and teaches the round again.
+// The scene is cut into beats (where someone enters or leaves, cues-map-rules.js), at most 8 lines each;
+// when a beat is learnt, the next one starts. Silent. No screen code here. Used by: screens/cues-game.js
 
 import { sceneMap } from './cues-map-rules.js';
 
@@ -24,27 +26,43 @@ export function gameBeats(lines, characters = [], present = []) {
 export function speakersOf(lines) {
   const seen = new Map();
   for (const line of lines) {
-    const id = String(line.char_id || line.name);
+    const id = speakerOf(line);
     if (!seen.has(id)) seen.set(id, { id, char_id: line.char_id, name: line.name });
   }
   return [...seen.values()];
 }
 
-export const startGame = () => ({ beat: 0, round: 1, step: 0, mistakes: 0, missed: null, done: false });
+export const speakerOf = line => String(line.char_id || line.name);
 
-// the line Ana has to find now
+// how long a line stays on screen while teaching: time to read it, between 1.5 and 6 seconds
+export function teachSeconds(text) {
+  const words = String(text || '').split(/\s+/).filter(Boolean).length;
+  return Math.min(6, Math.max(1.5, 1 + words * 0.3));
+}
+
+export const startGame = () => ({ beat: 0, round: 1, phase: 'teach', step: 0, mistakes: 0, missed: null, done: false });
+
+// the line shown (teach) or asked (quiz) now
 export const lineNow = (game, beats) => beats[game.beat].start + game.step;
 
-// Ana taps a speaker → the game after that tap
+// TEACH: the next line; after the round's last line, the quiz starts from the beat's first line
+export function teachNext(game) {
+  if (game.phase !== 'teach') return game;
+  if (game.step + 1 < game.round) return { ...game, step: game.step + 1 };
+  return { ...game, phase: 'quiz', step: 0 };
+}
+
+// QUIZ: Ana taps a speaker → the game after that tap
 export function tap(game, beats, lines, speakerId) {
-  if (game.done) return game;
+  if (game.done || game.phase !== 'quiz') return game;
   const index = lineNow(game, beats);
-  const right = String(lines[index].char_id || lines[index].name) === String(speakerId);
-  if (!right) return { ...game, step: 0, mistakes: game.mistakes + 1, missed: { line: index } };
+  if (speakerOf(lines[index]) !== String(speakerId)) {
+    return { ...game, phase: 'teach', step: 0, mistakes: game.mistakes + 1, missed: { line: index, tapped: String(speakerId) } };
+  }
   const next = { ...game, step: game.step + 1, missed: null };
-  if (next.step < next.round) return next;                       // more lines in this round
+  if (next.step < next.round) return next;                                   // more lines to tap
   const beatLength = beats[game.beat].end - beats[game.beat].start;
-  if (next.round < beatLength) return { ...next, round: next.round + 1, step: 0 }; // one line more
-  if (game.beat + 1 < beats.length) return { ...next, beat: game.beat + 1, round: 1, step: 0 };
+  if (next.round < beatLength) return { ...next, round: next.round + 1, phase: 'teach', step: 0 }; // one line more
+  if (game.beat + 1 < beats.length) return { ...next, beat: game.beat + 1, round: 1, phase: 'teach', step: 0 };
   return { ...next, done: true };
 }
