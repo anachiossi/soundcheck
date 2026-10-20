@@ -25,6 +25,7 @@ import { CuesScreen } from './screens/cues.js';
 import { CuesPickerScreen } from './screens/cues-picker.js';
 import { CuesMapScreen } from './screens/cues-map.js';
 import { CuesTimelineScreen } from './screens/cues-timeline.js';
+import { CuesGameScreen } from './screens/cues-game.js';
 import { IfbListScreen } from './screens/ifb-list.js';
 import { IfbCrewScreen } from './screens/ifb-crew.js';
 import { IfbKitScreen } from './screens/ifb-kit.js';
@@ -115,6 +116,7 @@ function App() {
   // the Scene Map and Timeline are moments to focus: full screen too, no title, badges or tabs
   if (current === 'cues-map') return html`<main class="focus"><${CuesMapScreen} state=${state} /></main>`;
   if (current === 'cues-timeline') return html`<main class="focus"><${CuesTimelineScreen} state=${state} /></main>`;
+  if (current === 'cues-game') return html`<main class="focus"><${CuesGameScreen} key=${state.cuesScene} state=${state} /></main>`;
   const tabs = tabsOf(state.department);
   const emailProposals = !crewHides(connection, 'email-proposals'); // a crew phone: never (Ana's job)
   const Screen = current === 'proposal' && emailProposals ? ProposalScreen
@@ -137,7 +139,7 @@ function App() {
     </header>
     <nav class="tabs">
       ${tabs.map(([id, label]) => html`
-        <button key=${id} class=${id === current || (id === 'cues-picker' && ['cues-map', 'cues-timeline'].includes(current)) ? 'on' : ''} disabled=${!project && id !== 'projects'}
+        <button key=${id} class=${id === current || (id === 'cues-picker' && ['cues-map', 'cues-timeline', 'cues-game'].includes(current)) ? 'on' : ''} disabled=${!project && id !== 'projects'}
                 onClick=${() => showScreen(id)}>${label}</button>`)}
     </nav>
     ${message && html`

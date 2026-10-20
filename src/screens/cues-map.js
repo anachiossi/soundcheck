@@ -7,7 +7,7 @@
 //   • 🔍 search: every match highlighted, ↑ ↓ from one to the next (parts/line-search.js)
 //   • tap a line → the mic (🎙 Cues from that line) — the same mic as everywhere — and ✎, which edits the line
 //     right here, in the same panel as in Cues (Ana, 9 Oct: "without open another window")
-//   • full screen (a moment to focus): a slim row with Cues · Timeline … ✕ instead of a header
+//   • full screen (a moment to focus): a slim row with Cues · Timeline · Who's next game … ✕ instead of a header
 // Changes made in Cues (✎) show here at once, because the map is made from the same lines (cueLines).
 // Used by: main.js (from the Cues tab, or the map button in Cues)
 
@@ -76,6 +76,7 @@ export function CuesMapScreen({ state }) {
       <div class="focus-bar">
         <button class="icon-btn" onClick=${() => learnFrom(0)} aria-label="Cues from the start"><${Icon} name="cues" /></button>
         <button class="icon-btn" onClick=${() => setState({ screen: 'cues-timeline' })} aria-label="Timeline"><${Icon} name="timeline" /></button>
+        <button class="icon-btn" onClick=${() => setState({ screen: 'cues-game' })} aria-label="Who's next game"><${Icon} name="game" /></button>
         <span class="focus-bar__space"></span>
         <button class="icon-btn" onClick=${() => setSearch(search ? null : { query: '', at: 0 })} aria-label="Search the lines"><${Icon} name="search" /></button>
         <button class="icon-btn" onClick=${back} aria-label="Close"><${Icon} name="close" /></button>

@@ -45,6 +45,10 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   script scrolls like Spotify lyrics (`parts/scene-script.js`, names on a highlight of the character's
   colour), the Pro Tools-style track of speakers is the play bar (cursor, speed, scrub, paced like a
   person speaking — `cues-timeline-rules.js`). Map and Timeline open full screen (`main.js` focus).
+- 🟥 **Who's next** (v174, Ana 20 Oct; `cues-game-rules.js`, `screens/cues-game.js`): the "Simon" game for
+  the order of speakers. From the Dialogue map (four-squares button). One coloured button per speaker; round 1 = line 1,
+  round 2 = lines 1–2… always from the start of the beat (beats as in the map, max 8 lines); a mistake shows
+  who it was and the cue (end of the line before), then the round starts again. Silent.
 - 🔍 **Search the lines** (v112, `parts/line-search.js`) in Cues, Dialogue map and Timeline: words and speakers (v116), every match highlighted
   (capitals / accents ignored), "2 / 7" with ↑ ↓ — on set "we start from WORD".
 - v153 (Ana, 16 Oct): **read aloud removed** — the app never speaks (a phone talking by accident on set
@@ -213,9 +217,6 @@ film before November.
 ## Open / next (none started)
 - Ana to answer: remove misread crew "Antonio Arte Astrid Ardenti"? keep new crew for review instead of auto-apply?
   warn when an ODG date and weekday don't match (ODG #13 "Giovedì 7")? TX 21 / B1–B3 / 4060… exist?
-- **Simon game** for Cues (quiz on the order of speakers): designed, waiting for Ana's go.
-  Proposed defaults: each round replays from the start of the beat; cue words only on a mistake;
-  silent by default.
 - Questions left to Ana: should the sound bar's level chip also be plain? should the lav-picker
   warning be quieter too?
 - Analyzer for a NEW film writing schedule.json / scenes.json / sound/ directly (today: one-off
