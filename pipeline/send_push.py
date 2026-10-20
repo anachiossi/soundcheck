@@ -37,7 +37,7 @@ def send(film, title, body, url="./", tag="wrap", audience="owner"):
         try:
             webpush({"endpoint": phone["endpoint"], "keys": phone["keys"]},
                     data=json.dumps({"title": title, "body": body, "tag": tag, "url": url}),
-                    vapid_private_key=os.environ["VAPID_PRIVATE_KEY"], vapid_claims={"sub": CONTACT}, ttl=3600)
+                    vapid_private_key=os.environ["VAPID_PRIVATE_KEY"], vapid_claims={"sub": CONTACT}, ttl=3600, timeout=20)  # never wait forever (20 Oct)
             sent += 1
         except WebPushException as error:
             if error.response is not None and error.response.status_code in (404, 410):

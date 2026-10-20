@@ -69,7 +69,7 @@ def fetch(film_folder):
     inbox.mkdir(exist_ok=True)
 
     address, password = read_login()
-    mail = imaplib.IMAP4_SSL("imap.gmail.com")
+    mail = imaplib.IMAP4_SSL("imap.gmail.com", timeout=60)  # never wait forever for Gmail (20 Oct: a run hung 10 min)
     mail.login(address, password)
     mail.select('"[Gmail]/All Mail"', readonly=True)  # read-only: never marks or moves anything
 

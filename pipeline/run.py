@@ -23,8 +23,10 @@ Only proposals are written. The film's data changes only when Ana accepts them i
 import datetime
 import json
 import os
+import signal
 import subprocess
 import sys
+from contextlib import contextmanager
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -40,6 +42,21 @@ def git(repo, *args):
 def nothing_staged(repo):
     """True when "git add" found no change (git diff --cached --quiet says 0 = no difference)."""
     return subprocess.run(["git", "-C", str(repo), "diff", "--cached", "--quiet"]).returncode == 0
+
+
+@contextmanager
+def time_limit(seconds, what):
+    """Stop a step that takes too long (a PDF the reader gets stuck on): it raises TimeoutError, the
+    robot skips that email and goes on, instead of hanging until GitHub kills the whole run (20 Oct)."""
+    def stop(signum, frame):
+        raise TimeoutError(f"{what}: still not done after {seconds} s")
+    old = signal.signal(signal.SIGALRM, stop)
+    signal.alarm(seconds)
+    try:
+        yield
+    finally:
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, old)
 
 
 def write_json(path, content):
@@ -68,13 +85,19 @@ def run(film_folder, include_past=False):
         if info.get("message_id") in known or info["subject"] in known:
             continue
         names = " ".join(info["files"]).upper()
-        if "PDL" in names:
-            proposal = build_pdl_proposal(film, email_folder)
-        elif "ODG" in names:
-            proposal = build_proposal(film, email_folder, other_sides)
-            if proposal["date"] < today and not include_past:
-                continue
-        else:
+        if "PDL" not in names and "ODG" not in names:
+            continue
+        print(f"reading {email_folder.name}")
+        try:
+            with time_limit(120, email_folder.name):
+                if "PDL" in names:
+                    proposal = build_pdl_proposal(film, email_folder)
+                else:
+                    proposal = build_proposal(film, email_folder, other_sides)
+        except TimeoutError as error:
+            print(f"WARNING skipped: {error}")
+            continue
+        if "PDL" not in names and proposal["date"] < today and not include_past:
             continue
         name = proposal["id"]
         while (proposals / f"{name}.json").exists():  # a corrected ODG with the same number
@@ -285,7 +308,7 @@ def undated_days(film):
 
 
 if __name__ == "__main__":
-    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stdout.reconfigure(encoding="utf-8", line_buffering=True)  # line by line: the GitHub log shows where it is (20 Oct)
     if "--every-film" in sys.argv:
         repo = Path(sys.argv[sys.argv.index("--every-film") + 1])
         films = sorted(p.parent for p in repo.glob("projects/*/inbox.json"))
