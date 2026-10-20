@@ -1,7 +1,7 @@
 // cues-game.js — Who's next: a game to learn the ORDER of speakers (a "Simon" for Cues, rules in
 // cues-game-rules.js): teach, quiz, teach one more, quiz.
 //   TEACH: each line of the round appears in its speaker's colour, with that speaker's button lit;
-//          it moves on by itself (time to read it), or tap the line to go on sooner
+//          Ana taps the line to go on (no timer: Ana, 20 Oct)
 //   QUIZ:  each line's words show on grey, without the name; tap who says it. Right → the line takes its
 //          speaker's colour and name for a moment, like while teaching. A mistake says who it was, then teaches again
 // One coloured button per speaker. Silent. Full screen, like the Dialogue map.
@@ -11,7 +11,7 @@ import { html, useState, useEffect } from '../../vendor/preact-htm.js';
 import { byId } from '../model.js';
 import { textColourFor, isNearWhite } from '../colour.js';
 import { cueLines } from '../cues-rules.js';
-import { gameBeats, speakersOf, speakerOf, startGame, teachNext, tap, lineNow, teachSeconds } from '../cues-game-rules.js';
+import { gameBeats, speakersOf, speakerOf, startGame, teachNext, tap, lineNow } from '../cues-game-rules.js';
 import { setState } from '../state.js';
 import { Icon } from '../parts/icons.js';
 
@@ -24,13 +24,6 @@ export function CuesGameScreen({ state }) {
   const present = (project.presets?.[cuesScene]?.rows || []).map(row => row.char_id);
   const beats = cues ? gameBeats(lines, project.characters || [], present) : [];
   const shown = cues && !game.done ? lines[lineNow(game, beats)] : null;
-  // TEACH moves on by itself, after the time to read the line (a missed line stays a little longer)
-  useEffect(() => {
-    if (!shown || game.phase !== 'teach') return;
-    const extra = game.missed && game.step === 0 ? 0.35 : 0;
-    const timer = setTimeout(() => setGame(teachNext), (teachSeconds(shown.text) + extra) * 1000);
-    return () => clearTimeout(timer);
-  }, [game]);
   useEffect(() => {
     if (!reveal) return;
     const timer = setTimeout(() => { setGame(reveal.next); setReveal(null); }, 170);
@@ -78,8 +71,8 @@ export function CuesGameScreen({ state }) {
   const colour = colourOf(shown.char_id);
   const message = teaching
     ? html`<p class="game-msg">${missed && game.step === 0
-        ? html`<span class="game-msg--wrong">✗ Line ${game.missed.line - beat.start + 1} is <b>${missed.name}</b>.</span> Watch again:`
-        : `Watch: line ${game.step + 1} of ${game.round}`}</p>`
+        ? html`<span class="game-msg--wrong">✗ Line ${game.missed.line - beat.start + 1} is <b>${missed.name}</b>.</span> Tap the line to go on.`
+        : `Learn line ${game.step + 1} of ${game.round} · tap it to go on`}</p>`
     : html`<p class="game-msg">${reveal ? 'Yes!' : `Your turn: who says line ${game.step + 1}?`}</p>`;
 
   return html`${bar}

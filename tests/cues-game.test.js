@@ -1,7 +1,7 @@
 // cues-game.test.js — the Who's next game: teach, quiz, teach one more, quiz. Run: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { gameBeats, speakersOf, startGame, teachNext, tap, lineNow, teachSeconds, BEAT_MAX } from '../src/cues-game-rules.js';
+import { gameBeats, speakersOf, startGame, teachNext, tap, lineNow, BEAT_MAX } from '../src/cues-game-rules.js';
 
 const say = (char_id, text, action) => ({ name: `C${char_id}`, char_id, text, action });
 const cast = [{ id: '1', name: 'INES' }, { id: '9', name: 'MARIO' }];
@@ -46,10 +46,4 @@ test('a wrong tap says who it was and teaches the round again; the end says done
   game = teachNext(teachNext(game));
   game = tap(tap(game, beats, lines, '1'), beats, lines, '9');
   assert.equal(game.done, true);
-});
-
-test('a line stays on screen for a glance, 0.3 to 1 second', () => {
-  assert.equal(teachSeconds('Ciao.'), 0.3);
-  assert.equal(teachSeconds('uno due tre quattro cinque sei sette otto nove dieci'), 0.67);
-  assert.equal(teachSeconds('parola '.repeat(40)), 1);
 });

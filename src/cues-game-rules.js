@@ -34,12 +34,6 @@ export function speakersOf(lines) {
 
 export const speakerOf = line => String(line.char_id || line.name);
 
-// how long a line stays on screen while teaching: a glance, between 0.3 and 1 second (Ana, 20 Oct: faster, then 3×)
-export function teachSeconds(text) {
-  const words = String(text || '').split(/\s+/).filter(Boolean).length;
-  return Math.min(1, Math.max(0.3, Math.round((0.17 + words * 0.05) * 100) / 100));
-}
-
 export const startGame = () => ({ beat: 0, round: 1, phase: 'teach', step: 0, mistakes: 0, missed: null, done: false });
 
 // the line shown (teach) or asked (quiz) now
