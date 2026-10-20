@@ -7,6 +7,7 @@
 // gives the minutes (Ana, 13 Oct: "for all equipment that has batteries, the consumption it has per hour").
 // A battery coming out of a TX in the mic table lands here as Charging by itself, and shows "ready" (green) once its
 // charge time is up (default 3 h) — no taps needed (Ana, 19 Oct). Tapping here is only to be precise.
+// Each group shows its battery's photo under the name (its Gear thing's first photo; tap → all) (Ana, 20 Oct).
 // No notifications yet (Ana, 12 Oct: "once we have the aesthetics right we can think of notification triggering").
 // Used by: main.js
 
@@ -14,7 +15,7 @@ import { html, useState } from '../../vendor/preact-htm.js';
 import { STATES, ENDS, batteryFile, batteryGroups, timeLeft, toneOf, clock, countsOf, lifeOf, chargerLoad, txOf, wearerOf, minutesFromDraw } from '../battery-rules.js';
 import { setBattery, saveGroup, saveCharger, saveDevice } from '../battery-editing.js';
 import { naturalCompare } from '../model.js';
-import { Sheet } from '../parts/gear-form.js';
+import { Sheet, ObjectPhotos } from '../parts/gear-form.js';
 import { useMinuteClock } from '../parts/battery-tag.js';
 
 const TONE_OF_STATE = { full: 'green', charging: 'yellow', in_use: '', empty: 'red' };
@@ -47,6 +48,7 @@ export function GearBatteriesScreen({ state }) {
               ${STATES.filter(([s]) => counts[s]).map(([s, label]) => html`
                 <span key=${s} class=${`chip chip--static battery--${TONE_OF_STATE[s] || 'plain'}`}>${counts[s]} ${label.toLowerCase()}</span>`)}
             </header>
+            ${g.item && html`<${ObjectPhotos} project=${project} itemId=${g.item} name=${g.name} max=${1} />`}
             <div class="battery-grid">
               ${g.batteries.map(b => {
                 const time = timeLeft(b, g, now, project);

@@ -59,12 +59,13 @@ function Details({ project, values, set }) {
 
 // object: the object to change, or { category, inside, volume } for a new one.
 // open(object): show another object's sheet (something it holds, or a new one inside it)
-// the thing's photos (gear-photos.js: mostly the maker's): small, tap → full screen
-function ObjectPhotos({ project, itemId, name }) {
+// the thing's photos (gear-photos.js: mostly the maker's): small, tap → full screen (all of them).
+// max: show only the first few (Gear → Batteries shows one under each group's name)
+export function ObjectPhotos({ project, itemId, name, max }) {
   const photos = itemPhotos(project, itemId);
   if (!photos.length) return null;
   return html`<${PhotoTap} project=${project} title=${name} photos=${photos}>
-    <span class="gear-sheet__photos">${photos.map(photo => html`<${Thumb} key=${photo.file} project=${project} file=${photo.file} />`)}</span><//>`;
+    <span class="gear-sheet__photos">${photos.slice(0, max || photos.length).map(photo => html`<${Thumb} key=${photo.file} project=${project} file=${photo.file} />`)}</span><//>`;
 }
 
 function Thumb({ project, file }) {
