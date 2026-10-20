@@ -48,8 +48,8 @@ test('a wrong tap says who it was and teaches the round again; the end says done
   assert.equal(game.done, true);
 });
 
-test('a line stays on screen long enough to read it, 1.5 to 6 seconds', () => {
-  assert.equal(teachSeconds('Ciao.'), 1.5);
-  assert.equal(teachSeconds('uno due tre quattro cinque sei sette otto nove dieci'), 4);
-  assert.equal(teachSeconds('parola '.repeat(40)), 6);
+test('a line stays on screen for a quick read, 0.8 to 3 seconds', () => {
+  assert.equal(teachSeconds('Ciao.'), 0.8);
+  assert.equal(teachSeconds('uno due tre quattro cinque sei sette otto nove dieci'), 2);
+  assert.equal(teachSeconds('parola '.repeat(40)), 3);
 });
