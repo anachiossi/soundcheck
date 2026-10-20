@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-10-19 · live version **v172** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-10-20 · live version **v173** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
@@ -116,6 +116,10 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   only for being precise. (v170, timer without numbers, undone the same day.)
 - v172 (19 Oct): **photo full screen fixed** — opened from a Gear sheet, the photo was cut to the sheet on the
   iPhone and its × hidden (Ana: "getting off an image is buggy"); the viewer is now drawn on the page itself.
+- v173 (20 Oct): **battery photos** — Gear → Batteries shows each group's battery photo under its name (the
+  group's Gear thing's first photo; tap → all its photos). Kit photos (data, not code): cables show one photo per
+  connector end (`gear/connector-<type>.jpg`, 28 types, shared by all cables); branded gear inside the cases shows
+  the maker/shop photo first, Ana's photo second.
 - v167 (18 Oct): **Costume column** — `costumes.json` (film data) says which costume change (ch.N) each character
   wears in each scene; none to 3 photos per change (front, back, detail) in the film's own private photos repo
   (`anachiossi/la-buona-educazione-photos`, 1600 px + thumbs). Phones keep all thumbs + full photos of the next
