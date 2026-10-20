@@ -1,6 +1,6 @@
 // cues-game.js — Who's next: a game to learn the ORDER of speakers (a "Simon" for Cues, rules in
 // cues-game-rules.js): teach, quiz, teach one more, quiz.
-//   TEACH: each line of the round appears in its speaker's colour, with that speaker's button lit;
+//   TEACH: only the new line appears, in its speaker's colour, with that speaker's button lit;
 //          Ana taps the line to go on (no timer: Ana, 20 Oct)
 //   QUIZ:  each line's words show on grey, without the name; tap who says it. Right → the line takes its
 //          speaker's colour and name for a moment, like while teaching. A mistake says who it was, then teaches again
@@ -70,9 +70,9 @@ export function CuesGameScreen({ state }) {
   const missed = game.missed && lines[game.missed.line];
   const colour = colourOf(shown.char_id);
   const message = teaching
-    ? html`<p class="game-msg">${missed && game.step === 0
-        ? html`<span class="game-msg--wrong">✗ Line ${game.missed.line - beat.start + 1} is <b>${missed.name}</b>.</span> Tap the line to go on.`
-        : `Learn line ${game.step + 1} of ${game.round} · tap it to go on`}</p>`
+    ? html`<p class="game-msg">${missed
+        ? html`<span class="game-msg--wrong">✗ Line ${game.missed.line - beat.start + 1} is <b>${missed.name}</b>.</span> Learn it, tap it to go on.`
+        : `New: line ${game.step + 1} · tap it to go on`}</p>`
     : html`<p class="game-msg">${reveal ? 'Yes!' : `Your turn: who says line ${game.step + 1}?`}</p>`;
 
   return html`${bar}

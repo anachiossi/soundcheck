@@ -22,28 +22,28 @@ test('a new beat starts where someone enters', () => {
   assert.deepEqual(gameBeats(scene, cast).map(b => [b.start, b.end]), [[0, 2], [2, 3]]);
 });
 
-test('teach line 1, quiz line 1, then teach lines 1–2, quiz lines 1–2', () => {
+test('teach the new line only, then quiz from the start of the beat', () => {
   const beats = [{ start: 0, end: 3 }];
   let game = startGame();
   assert.deepEqual([game.phase, lineNow(game, beats)], ['teach', 0]);
   game = teachNext(game);                                    // line 1 taught → quiz
   assert.deepEqual([game.phase, game.step], ['quiz', 0]);
   assert.equal(tap(startGame(), beats, lines, '1').phase, 'teach', 'no tapping while it teaches');
-  game = tap(game, beats, lines, '1');                       // right → teach one more
-  assert.deepEqual([game.phase, game.round, game.step], ['teach', 2, 0]);
-  game = teachNext(teachNext(game));                         // lines 1 and 2 shown → quiz
+  game = tap(game, beats, lines, '1');                       // right → teach line 2 only
+  assert.deepEqual([game.phase, game.round, lineNow(game, beats)], ['teach', 2, 1]);
+  game = teachNext(game);                                    // → quiz lines 1 and 2
   assert.deepEqual([game.phase, game.step], ['quiz', 0]);
   game = tap(tap(game, beats, lines, '1'), beats, lines, '9');
-  assert.deepEqual([game.phase, game.round], ['teach', 3]);
+  assert.deepEqual([game.phase, game.round, lineNow(game, beats)], ['teach', 3, 2]);
 });
 
-test('a wrong tap says who it was and teaches the round again; the end says done', () => {
+test('a wrong tap teaches just the missed line, then quizzes from the start; the end says done', () => {
   const beats = [{ start: 0, end: 2 }];
-  let game = tap(teachNext(startGame()), beats, lines, '9'); // wrong: line 1 is Ines
-  assert.deepEqual([game.phase, game.round, game.step, game.mistakes, game.missed.line], ['teach', 1, 0, 1, 0]);
-  game = tap(teachNext(game), beats, lines, '1');
-  assert.equal(game.missed, null);
-  game = teachNext(teachNext(game));
+  let game = tap(teachNext(startGame()), beats, lines, '1'); // round 1 right
+  game = tap(tap(teachNext(game), beats, lines, '1'), beats, lines, '1'); // line 2 wrong: it is Mario
+  assert.deepEqual([game.phase, game.mistakes, game.missed.line, lineNow(game, beats)], ['teach', 1, 1, 1]);
+  game = teachNext(game);
+  assert.deepEqual([game.phase, game.step], ['quiz', 0]);
   game = tap(tap(game, beats, lines, '1'), beats, lines, '9');
   assert.equal(game.done, true);
 });

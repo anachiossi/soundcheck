@@ -1,9 +1,10 @@
 // cues-game-rules.js — the Who's next game (a "Simon" for Cues): learn the ORDER of speakers in a scene.
 // Like the toy that plays a tune of colours and you play it back, one note longer each time (Ana, 20 Oct:
 // "teach, quiz, teach one more, quiz"):
-//   TEACH: the app shows the beat's lines one by one, each with who says it (line 1; then 1–2; then 1–2–3…)
-//   QUIZ:  Ana taps who says each of those lines, in order
-// Right → the next round teaches one line more. Wrong → it says who it was and teaches the round again.
+//   TEACH: the app shows only the NEW line, with who says it (round 1: line 1; round 2: line 2…) —
+//          not the whole round again (Ana, 20 Oct: too repetitive)
+//   QUIZ:  Ana taps who says each line from the start of the beat, in order, the new one last
+// Right → the next round teaches the next line. Wrong → it says who it was and teaches just that line.
 // The scene is cut into beats (where someone enters or leaves, cues-map-rules.js), at most 8 lines each;
 // when a beat is learnt, the next one starts. Silent. No screen code here. Used by: screens/cues-game.js
 
@@ -39,10 +40,9 @@ export const startGame = () => ({ beat: 0, round: 1, phase: 'teach', step: 0, mi
 // the line shown (teach) or asked (quiz) now
 export const lineNow = (game, beats) => beats[game.beat].start + game.step;
 
-// TEACH: the next line; after the round's last line, the quiz starts from the beat's first line
+// TEACH → QUIZ: one line is taught, then the quiz starts from the beat's first line
 export function teachNext(game) {
   if (game.phase !== 'teach') return game;
-  if (game.step + 1 < game.round) return { ...game, step: game.step + 1 };
   return { ...game, phase: 'quiz', step: 0 };
 }
 
@@ -51,12 +51,12 @@ export function tap(game, beats, lines, speakerId) {
   if (game.done || game.phase !== 'quiz') return game;
   const index = lineNow(game, beats);
   if (speakerOf(lines[index]) !== String(speakerId)) {
-    return { ...game, phase: 'teach', step: 0, mistakes: game.mistakes + 1, missed: { line: index, tapped: String(speakerId) } };
+    return { ...game, phase: 'teach', mistakes: game.mistakes + 1, missed: { line: index, tapped: String(speakerId) } }; // teach that line
   }
   const next = { ...game, step: game.step + 1, missed: null };
   if (next.step < next.round) return next;                                   // more lines to tap
   const beatLength = beats[game.beat].end - beats[game.beat].start;
-  if (next.round < beatLength) return { ...next, round: next.round + 1, phase: 'teach', step: 0 }; // one line more
+  if (next.round < beatLength) return { ...next, round: next.round + 1, phase: 'teach', step: next.round }; // the new line
   if (game.beat + 1 < beats.length) return { ...next, beat: game.beat + 1, round: 1, phase: 'teach', step: 0 };
   return { ...next, done: true };
 }
