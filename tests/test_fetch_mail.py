@@ -47,6 +47,7 @@ class EmailsOldestFirstTest(unittest.TestCase):
 class FakeGmail:
     """Pretends to be Gmail: one email with a PDF; the first download is cut ("socket error: EOF")."""
     connections = 0
+    asked = []  # what was fetched: header only or the whole email
 
     def __init__(self):
         FakeGmail.connections += 1
@@ -54,9 +55,12 @@ class FakeGmail:
     def uid(self, command, *args):
         if command == "search":
             return "OK", [b"7"]
+        FakeGmail.asked.append(args[1])
         if FakeGmail.connections == 1:
             raise imaplib.IMAP4.abort("socket error: EOF")
-        return "OK", [(b"7 (RFC822)", EMAIL)]
+        if args[1] == "(BODY.PEEK[HEADER])":
+            return "OK", [(b"1 (UID 7 BODY[HEADER] {200}", EMAIL.split(b"\r\n\r\n")[0]), b")"]
+        return "OK", [(b"1 (UID 7 RFC822 {400}", EMAIL), b")"]
 
     def logout(self):
         pass
@@ -78,6 +82,16 @@ class GmailCutsTheConnectionTest(unittest.TestCase):
             self.assertEqual(FakeGmail.connections, 2)
             self.assertEqual(len(new), 1)
             self.assertTrue((film / "_inbox" / new[0] / "LBE - ODG#23.pdf").exists())
+
+    def test_an_email_already_saved_is_read_by_its_header_only_never_downloaded_again(self):
+        with tempfile.TemporaryDirectory() as folder:
+            film = Path(folder)
+            (film / "inbox.json").write_text(json.dumps({"gmail_search": "subject:ODG"}), encoding="utf-8")
+            FakeGmail.connections = 1  # no cut this time
+            fetch(film, open_mail=FakeGmail)
+            FakeGmail.asked = []
+            self.assertEqual(fetch(film, open_mail=FakeGmail), [])
+            self.assertEqual(FakeGmail.asked, ["(BODY.PEEK[HEADER])"])
 
 
 if __name__ == "__main__":

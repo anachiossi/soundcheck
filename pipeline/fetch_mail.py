@@ -73,18 +73,34 @@ def open_mailbox():
 TRIES = 4  # Gmail sometimes cuts the connection mid-download (21 Oct: "socket error: EOF" after 6 min)
 
 
-def download(mailbox, uid):
-    """One email's raw bytes. When Gmail cuts the connection, connect again and ask again.
-    UIDs (not the 1, 2, 3 order numbers) so the same number means the same email after reconnecting."""
+HEADER_ONLY = "(BODY.PEEK[HEADER])"  # subject, date, Message-ID: a few hundred bytes, no PDFs
+WHOLE_EMAIL = "(RFC822)"
+
+
+def ask_gmail(mailbox, uids, what):
+    """Gmail's answer for these emails (whole, or only their headers). When Gmail cuts the connection, connect
+    again and ask again. UIDs (not the 1, 2, 3 order numbers) so the same number means the same email after
+    reconnecting."""
     for attempt in range(1, TRIES + 1):
         try:
-            _, data = mailbox["mail"].uid("fetch", uid, "(RFC822)")
-            return data[0][1]
+            return mailbox["mail"].uid("fetch", uids, what)[1]
         except (imaplib.IMAP4.abort, OSError) as error:
             if attempt == TRIES:
                 raise
             print(f"  Gmail cut the connection ({error}), connecting again ({attempt} of {TRIES - 1})")
             mailbox["mail"] = mailbox["open"]()
+
+
+def all_headers(mailbox, ids):
+    """{uid: header bytes} for every email, in one request to Gmail (one at a time took 1.5 min for 28)."""
+    if not ids:
+        return {}
+    headers = {}
+    for item in ask_gmail(mailbox, b",".join(ids), HEADER_ONLY):
+        if isinstance(item, tuple):  # (b'5 (UID 7 BODY[HEADER] {512}', header bytes)
+            uid = re.search(rb"UID (\d+)", item[0]).group(1)
+            headers[uid] = item[1]
+    return headers
 
 
 def fetch(film_folder, open_mail=open_mailbox):
@@ -98,17 +114,21 @@ def fetch(film_folder, open_mail=open_mailbox):
     ids = found[0].split() if status == "OK" else []
     print(f"{len(ids)} email(s) match: {search}")
 
+    # the headers first, all in one request: an email already saved is never downloaded again
+    # (21 Oct: every run downloaded all 28 emails with their PDFs, and Gmail cut the connection)
+    headers = all_headers(mailbox, ids)
     new = []
     for uid in ids:
-        message = email.message_from_bytes(download(mailbox, uid))
-        subject = decoded(message["Subject"]).replace("Fwd:", "").strip()
-        sent_at = parsedate_to_datetime(message["Date"])
+        header = email.message_from_bytes(headers[uid])
+        subject = decoded(header["Subject"]).replace("Fwd:", "").strip()
+        sent_at = parsedate_to_datetime(header["Date"])
         date = sent_at.strftime("%Y-%m-%d")
-        message_id = (message["Message-ID"] or f"{date}-{subject}").strip()
+        message_id = (header["Message-ID"] or f"{date}-{subject}").strip()
         short_id = hashlib.sha1(message_id.encode()).hexdigest()[:8]  # unique per email
         folder = inbox / f"{date}_{safe_name(subject)}_{short_id}"
         if folder.exists():
             continue
+        message = email.message_from_bytes(ask_gmail(mailbox, uid, WHOLE_EMAIL)[0][1])
         saved = []
         for part in message.walk():
             name = decoded(part.get_filename())
