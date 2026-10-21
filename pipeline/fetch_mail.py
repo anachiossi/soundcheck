@@ -62,25 +62,45 @@ def emails_oldest_first(inbox):
     return sorted((f for f in inbox.iterdir() if (f / "email.json").exists()), key=lambda f: (sent(f), f.name))
 
 
-def fetch(film_folder):
+def open_mailbox():
+    address, password = read_login()
+    mail = imaplib.IMAP4_SSL("imap.gmail.com", timeout=60)  # never wait forever for Gmail (20 Oct: a run hung 10 min)
+    mail.login(address, password)
+    mail.select('"[Gmail]/All Mail"', readonly=True)  # read-only: never marks or moves anything
+    return mail
+
+
+TRIES = 4  # Gmail sometimes cuts the connection mid-download (21 Oct: "socket error: EOF" after 6 min)
+
+
+def download(mailbox, uid):
+    """One email's raw bytes. When Gmail cuts the connection, connect again and ask again.
+    UIDs (not the 1, 2, 3 order numbers) so the same number means the same email after reconnecting."""
+    for attempt in range(1, TRIES + 1):
+        try:
+            _, data = mailbox["mail"].uid("fetch", uid, "(RFC822)")
+            return data[0][1]
+        except (imaplib.IMAP4.abort, OSError) as error:
+            if attempt == TRIES:
+                raise
+            print(f"  Gmail cut the connection ({error}), connecting again ({attempt} of {TRIES - 1})")
+            mailbox["mail"] = mailbox["open"]()
+
+
+def fetch(film_folder, open_mail=open_mailbox):
     film = Path(film_folder)
     search = json.loads((film / "inbox.json").read_text(encoding="utf-8"))["gmail_search"]
     inbox = film / "_inbox"
     inbox.mkdir(exist_ok=True)
 
-    address, password = read_login()
-    mail = imaplib.IMAP4_SSL("imap.gmail.com", timeout=60)  # never wait forever for Gmail (20 Oct: a run hung 10 min)
-    mail.login(address, password)
-    mail.select('"[Gmail]/All Mail"', readonly=True)  # read-only: never marks or moves anything
-
-    status, found = mail.search(None, "X-GM-RAW", f'"{search}"')
+    mailbox = {"mail": open_mail(), "open": open_mail}
+    status, found = mailbox["mail"].uid("search", None, "X-GM-RAW", f'"{search}"')
     ids = found[0].split() if status == "OK" else []
     print(f"{len(ids)} email(s) match: {search}")
 
     new = []
-    for message_id in ids:
-        _, data = mail.fetch(message_id, "(RFC822)")
-        message = email.message_from_bytes(data[0][1])
+    for uid in ids:
+        message = email.message_from_bytes(download(mailbox, uid))
         subject = decoded(message["Subject"]).replace("Fwd:", "").strip()
         sent_at = parsedate_to_datetime(message["Date"])
         date = sent_at.strftime("%Y-%m-%d")
@@ -104,7 +124,7 @@ def fetch(film_folder):
                 ensure_ascii=False, indent=2), encoding="utf-8")
             new.append(folder.name)
             print(f"  new: {folder.name}  ({', '.join(saved)})")
-    mail.logout()
+    mailbox["mail"].logout()
     print(f"{len(new)} new email(s) saved in {inbox}")
     return new
 

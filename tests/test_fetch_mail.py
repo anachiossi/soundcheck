@@ -9,7 +9,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "pipeline"))
 
-from fetch_mail import emails_oldest_first  # noqa: E402
+import imaplib  # noqa: E402
+
+from fetch_mail import emails_oldest_first, fetch  # noqa: E402
 
 
 def save(inbox, name, **info):
@@ -40,6 +42,42 @@ class EmailsOldestFirstTest(unittest.TestCase):
 
     def test_no_inbox_means_no_emails(self):
         self.assertEqual(emails_oldest_first(self.inbox / "missing"), [])
+
+
+class FakeGmail:
+    """Pretends to be Gmail: one email with a PDF; the first download is cut ("socket error: EOF")."""
+    connections = 0
+
+    def __init__(self):
+        FakeGmail.connections += 1
+
+    def uid(self, command, *args):
+        if command == "search":
+            return "OK", [b"7"]
+        if FakeGmail.connections == 1:
+            raise imaplib.IMAP4.abort("socket error: EOF")
+        return "OK", [(b"7 (RFC822)", EMAIL)]
+
+    def logout(self):
+        pass
+
+
+EMAIL = (b"Subject: LBE - ODG #23\r\nDate: Tue, 20 Oct 2026 18:00:00 +0200\r\nMessage-ID: <odg23@x>\r\n"
+         b"Content-Type: multipart/mixed; boundary=B\r\n\r\n--B\r\nContent-Type: application/pdf\r\n"
+         b"Content-Disposition: attachment; filename=\"LBE - ODG#23.pdf\"\r\nContent-Transfer-Encoding: base64\r\n\r\n"
+         b"JVBERi0=\r\n--B--\r\n")
+
+
+class GmailCutsTheConnectionTest(unittest.TestCase):
+    def test_a_cut_connection_is_opened_again_and_the_email_is_still_saved(self):
+        with tempfile.TemporaryDirectory() as folder:
+            film = Path(folder)
+            (film / "inbox.json").write_text(json.dumps({"gmail_search": "subject:ODG"}), encoding="utf-8")
+            FakeGmail.connections = 0
+            new = fetch(film, open_mail=FakeGmail)
+            self.assertEqual(FakeGmail.connections, 2)
+            self.assertEqual(len(new), 1)
+            self.assertTrue((film / "_inbox" / new[0] / "LBE - ODG#23.pdf").exists())
 
 
 if __name__ == "__main__":
