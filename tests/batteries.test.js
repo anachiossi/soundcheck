@@ -246,3 +246,15 @@ test('battery column: a TX turned on at 10:30 counts down from 10:30, not from t
   assert.equal(timer.since, onAt);
   assert.equal(timer.left, 180, '5 h of life, 2 h already gone');
 });
+
+
+test('a sleep added afterwards (13:00–14:00) gives the countdown that hour back', () => {
+  const day = (h, m = 0) => new Date(2026, 9, 22, h, m).getTime();
+  const project = { transmitters: [{ id: '7', model: 'M' }], gearBatteries: { groups: [{ id: 'g', battery: 'AA', life_min: 300 }],
+    devices: [{ model: 'M', battery: 'AA' }], batteries: [], tx_on: { 7: new Date(day(10)).toISOString() } } };
+  assert.equal(txTimer(project, '7', day(15)).left, 0, 'on at 10:00, 5 h: flat at 15:00');
+  const file = wake(sleep(project.gearBatteries, '7', new Date(day(13)).toISOString()), '7', () => false, day(14));
+  const after = { ...project, gearBatteries: file };
+  assert.equal(txTimer(after, '7', day(15)).left, 60, 'an hour asleep: one hour left at 15:00');
+  assert.deepEqual(file.tx_sleep, {}, 'awake again');
+});

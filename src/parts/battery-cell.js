@@ -16,7 +16,7 @@
 
 import { html, useState } from '../../vendor/preact-htm.js';
 import { txTimer, groupsForTx, batteryFile, isReady, clock, timeOfDay, ENDS, placeOfTx, momentAt } from '../battery-rules.js';
-import { switchTx, setOnTime, sleepTx, wakeTx } from '../battery-editing.js';
+import { switchTx, setOnTime, sleepTx, wakeTx, sleptTx } from '../battery-editing.js';
 import { useMinuteClock } from './battery-tag.js';
 import { Sheet } from './gear-form.js';
 import { Icon } from './icons.js';
@@ -87,10 +87,21 @@ function TxBatterySheet({ project, txId, character, timer, now, close }) {
 }
 
 // sleep mode (battery-sleep.js): the countdown pauses, and goes on from there when the TX wakes. The time is now,
-// or earlier when Ana forgot to tap ("it happened at 13:15")
+// or earlier when Ana forgot to tap ("it happened at 13:15"). Forgot both (Ana, 22 Oct)? On a TX awake:
+// "Slept from 13:00 to 14:00" adds that sleep afterwards. The two times typed stay for 10 minutes (lunch: every lav).
+let typedSleep = { from: '', to: '', at: 0 };
+
 function SleepRow({ project, txId, timer, close }) {
   const [time, setTime] = useState(hhmm(Date.now()));
+  const recent = Date.now() - typedSleep.at < 10 * 60000 ? typedSleep : { from: '', to: '' };
+  const [from, setFrom] = useState(recent.from);
+  const [to, setTo] = useState(recent.to);
   const go = action => { action(project, txId, new Date(momentAt(time)).toISOString()); close(); };
+  const remember = (nextFrom, nextTo) => { setFrom(nextFrom); setTo(nextTo); typedSleep = { from: nextFrom, to: nextTo, at: Date.now() }; };
+  const fromAt = from && momentAt(from);
+  const toAt = to && momentAt(to);
+  const valid = fromAt && toAt && toAt > fromAt && fromAt >= Date.parse(timer.since);
+  const addSleep = () => { sleptTx(project, txId, new Date(fromAt).toISOString(), new Date(toAt).toISOString()); close(); };
   return html`
     <p class="sheet__hint">${timer.asleep ? `Asleep since ${timeOfDay(Date.parse(timer.asleep))}: the timer is paused` : 'Sleep mode: the timer pauses'}</p>
     <div class="battery-on">
@@ -98,5 +109,12 @@ function SleepRow({ project, txId, timer, close }) {
       ${timer.asleep
         ? html`<button class="btn btn--primary" onClick=${() => go(wakeTx)}>Wake</button>`
         : html`<button class="btn" onClick=${() => go(sleepTx)}>Sleep</button>`}
-    </div>`;
+    </div>
+    ${!timer.asleep && html`
+      <p class="sheet__hint">Forgot to tap? It slept</p>
+      <div class="battery-on">from
+        <input type="time" class="battery-on-time" value=${from} onInput=${event => remember(event.target.value, to)} aria-label="asleep from" />
+        to <input type="time" class="battery-on-time" value=${to} onInput=${event => remember(from, event.target.value)} aria-label="awake at" />
+        <button class="btn btn--primary" disabled=${!valid} onClick=${addSleep}>Add</button>
+      </div>`}`;
 }

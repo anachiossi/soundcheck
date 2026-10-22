@@ -139,3 +139,12 @@ export function wakeTx(project, txId, at = now()) {
   const file = wake(batteryFile(project), txId, b => b.id === current?.id, Date.parse(at));
   return save(file, `${placeOfTx(txId)} awake: its battery timer goes on.`);
 }
+
+// a sleep added afterwards (Ana, 22 Oct: "I always forget to use this"): asleep from `from` to `to` (ISO), as if
+// Sleep and Wake had been tapped then — the countdown gets that time back
+export function sleptTx(project, txId, from, to) {
+  const current = batteryIn(project, txId)?.battery;
+  const file = wake(sleep(batteryFile(project), txId, from), txId, b => b.id === current?.id, Date.parse(to));
+  const minutes = Math.round((Date.parse(to) - Date.parse(from)) / 60000);
+  return save(file, `${placeOfTx(txId)}: ${minutes} min asleep added, its battery timer gets them back.`);
+}

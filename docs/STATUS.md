@@ -132,6 +132,9 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   (a time later than now = yesterday, night shoots), `battery-editing.js switchTx onAt / setOnTime`.
 - v187 (22 Oct): a TX **asleep** shows its pill **blue, like frozen time** (Ana) — app.css `--frozen` tokens, also in the
   exported mic image (SLEEP cell blue).
+- v188 (22 Oct): **a sleep added afterwards** (Ana: "I always forget to use this") — on a TX awake, "Forgot to tap? It
+  slept from 13:00 to 14:00" → Add: its countdown gets that time back (`battery-editing.js sleptTx` = sleep + wake at
+  those times). The two times stay for 10 min, so after lunch each lav is one tap. Wake already had its own time box.
 - v183 (22 Oct): **TX sleep mode** — in the mic table's battery sheet, Sleep pauses that TX's countdown (pill shows
   the frozen time left + "SLEEP", no flat-at time); Wake goes on from there (the battery's start moves later by the
   time asleep, so its learned runs count only awake time). A time field (default now) lets Ana back-date a tap she
