@@ -225,5 +225,15 @@ export function txTimer(project, txId, now = Date.now()) {
     endsAt: life ? Date.parse(since) + life.minutes * 60000 : null, tone: time ? toneOf(battery, group, now, project) : 'plain', notes: life?.notes || [] };
 }
 
+// '10:30' typed in the sheet → that moment today (Ana, 22 Oct: "I forget to click ON; I turned the lavs on around
+// 10:30"). A time later than now is yesterday's (past midnight on a night shoot).
+export function momentAt(hhmm, now = Date.now()) {
+  const [hours, minutes] = String(hhmm).split(':').map(Number);
+  const moment = new Date(now);
+  moment.setHours(hours, minutes, 0, 0);
+  if (moment.getTime() > now) moment.setDate(moment.getDate() - 1);
+  return moment.getTime();
+}
+
 // '14:35' (the phone's clock)
 export const timeOfDay = ms => { const d = new Date(ms); return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`; };

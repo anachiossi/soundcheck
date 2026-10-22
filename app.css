@@ -190,6 +190,8 @@ button.scene-pill { cursor: pointer; }
 .battery-pill b { font-variant-numeric: tabular-nums; }
 .battery-pill.battery--plain b { font-size: 15px; letter-spacing: .5px; }
 .battery-pick { margin-bottom: 8px; }
+.battery-on { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 4px 0 10px; font-weight: 800; }   /* "Turned on at" (battery-cell.js) */
+.battery-on-time { font: inherit; font-size: 18px; padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--card); color: var(--ink); }
 .battery-pick > small { display: block; color: var(--muted); margin-bottom: 4px; }
 .choice.battery--green { border-color: transparent; }
 .mics__cell { display: flex; flex-direction: column; min-width: 0; }

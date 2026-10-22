@@ -126,6 +126,10 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   group's Gear thing's first photo; tap → all its photos). Kit photos (data, not code): cables show one photo per
   connector end (`gear/connector-<type>.jpg`, 28 types, shared by all cables); branded gear inside the cases shows
   the maker/shop photo first, Ana's photo second.
+- v182 (22 Oct): **"Turned on at"** in the battery sheet (Ana: "many times I forget to click ON") — set the time the
+  TX really went on (e.g. 10:30 at 12:30) and its countdown starts from then; on a TX already ON, change the time and
+  "Save time". A time typed stays the default for 10 min (one tap for each other lav). `battery-rules.js momentAt`
+  (a time later than now = yesterday, night shoots), `battery-editing.js switchTx onAt / setOnTime`.
 - v167 (18 Oct): **Costume column** — `costumes.json` (film data) says which costume change (ch.N) each character
   wears in each scene; none to 3 photos per change (front, back, detail) in the film's own private photos repo
   (`anachiossi/la-buona-educazione-photos`, 1600 px + thumbs). Phones keep all thumbs + full photos of the next

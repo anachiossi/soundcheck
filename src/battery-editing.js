@@ -88,11 +88,12 @@ export function saveCharger(fields) {
 // the mic table's battery column: the TX's battery ends (how: dead / low / ok, for learning) and goes straight to
 // 'charging' on the first charger of its group with a free slot (freeChargerFor; ready again after its charge time,
 // battery-rules.js isReady), then batteryId goes in (null: ON with no
-// number; off: the TX stays OFF)
-export function switchTx(project, txId, { batteryId = null, end, off = false } = {}) {
+// number; off: the TX stays OFF). onAt: when the new battery went in, if not now (ms; Ana forgot to tap ON)
+export function switchTx(project, txId, { batteryId = null, end, off = false, onAt = null } = {}) {
   const file = batteryFile(project);
   const current = batteryIn(project, txId)?.battery;
   const at = now();
+  const on = onAt ? new Date(onAt).toISOString() : at;
   const batteries = file.batteries.map(b => {
     if (current && b.id === current.id) {
       // no charger can take it (alkaline AA): it is empty, to throw away
@@ -104,7 +105,7 @@ export function switchTx(project, txId, { batteryId = null, end, off = false } =
       return ended;
     }
     if (!off && b.id === batteryId) {
-      const used = { ...b, state: 'in_use', used_in: placeOfTx(txId), since: at };
+      const used = { ...b, state: 'in_use', used_in: placeOfTx(txId), since: on };
       delete used.charger; delete used.charge_min;
       return used;
     }
@@ -112,6 +113,16 @@ export function switchTx(project, txId, { batteryId = null, end, off = false } =
   });
   const txOn = { ...file.tx_on };
   delete txOn[String(txId)];
-  if (!off && !batteryId) txOn[String(txId)] = at;
+  if (!off && !batteryId) txOn[String(txId)] = on;
   return save({ ...file, batteries, tx_on: txOn }, off ? `${placeOfTx(txId)} OFF.` : `${placeOfTx(txId)} ON.`);
+}
+
+// a TX that is ON: the time it was really turned on (Ana, 22 Oct), so its countdown starts from then
+export function setOnTime(project, txId, onAt) {
+  const file = batteryFile(project);
+  const since = new Date(onAt).toISOString();
+  const current = batteryIn(project, txId)?.battery;
+  const batteries = file.batteries.map(b => (current && b.id === current.id ? { ...b, since } : b));
+  const txOn = current ? file.tx_on : { ...file.tx_on, [String(txId)]: since };
+  return save({ ...file, batteries, tx_on: txOn }, `${placeOfTx(txId)} ON since ${new Date(onAt).toTimeString().slice(0, 5)}.`);
 }

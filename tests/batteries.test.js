@@ -198,3 +198,22 @@ test('a charger made for a battery type charges every group of that type; a batt
   assert.equal(freeChargerFor(project, 'nimh').id, 'isdt');
   assert.deepEqual(chargersFor(project, 'alk'), [], 'alkaline AA: no charger, goes to Empty');
 });
+
+import { momentAt } from '../src/battery-rules.js';
+
+test('"turned on at 10:30": that time today; a time later than now is yesterday (a night shoot)', () => {
+  const now = new Date(2026, 9, 22, 12, 30).getTime();
+  assert.equal(momentAt('10:30', now), new Date(2026, 9, 22, 10, 30).getTime());
+  const nightNow = new Date(2026, 9, 23, 0, 30).getTime();
+  assert.equal(momentAt('23:15', nightNow), new Date(2026, 9, 22, 23, 15).getTime());
+});
+
+test('battery column: a TX turned on at 10:30 counts down from 10:30, not from the tap', () => {
+  const tapAt = new Date(2026, 9, 22, 12, 30).getTime();
+  const onAt = new Date(momentAt('10:30', tapAt)).toISOString();
+  const project = { transmitters: [{ id: '7', model: 'M' }], gearBatteries: { groups: [{ id: 'g', battery: 'AA', life_min: 300 }],
+    devices: [{ model: 'M', battery: 'AA' }], batteries: [], tx_on: { 7: onAt } } };
+  const timer = txTimer(project, '7', tapAt);
+  assert.equal(timer.since, onAt);
+  assert.equal(timer.left, 180, '5 h of life, 2 h already gone');
+});
