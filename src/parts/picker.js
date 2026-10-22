@@ -7,7 +7,7 @@
 
 import { html, useState } from '../../vendor/preact-htm.js';
 import { naturalCompare, byId } from '../model.js';
-import { usedByOtherRows, sameDaySuggestions, preferredFor, lavNotUsed } from '../preset-rules.js';
+import { usedByOtherRows, sameDaySuggestions, preferredFor, lavNotUsed, lavModelForTx } from '../preset-rules.js';
 import { warningsFor, warningText } from '../sound-rules.js';
 import { setCell, closePicker, toggleAcc } from '../editing.js';
 import { accessoryPool, usualFor, usedElsewhere, accSide } from '../accessories.js';
@@ -40,6 +40,10 @@ export function Picker({ state }) {
   const items = [...project[LIST[field]]].sort((a, b) => naturalCompare(a.id, b.id)).filter(item => matches(item, query) && offered(item));
   const all = byId(project[LIST[field]].filter(offered));
   const soundWarnings = field === 'char_id' ? [] : warningsFor(project, edit.sceneId, row.char_id);
+  // a TRXLA takes a 6061 (settings lav_for_tx_model): those lavs first
+  const tx = byId(project.transmitters).get(String(row.tx_id));
+  const needed = field === 'lav_id' ? lavModelForTx(project, tx) : null;
+  const neededIds = needed ? items.filter(lav => String(lav.model).toLowerCase() === needed.toLowerCase()).map(lav => lav.id) : [];
 
   const pick = id => { setCell(rowIndex, field, id); setQuery(''); };
   const close = () => { closePicker(); setQuery(''); };
@@ -61,7 +65,7 @@ export function Picker({ state }) {
         <input type="search" placeholder="Search number or name" value=${query} onInput=${e => setQuery(e.target.value)} />
         ${row[field] && html`<button class="btn btn--quiet" onClick=${() => pick('')}>Empty</button>`}
       </div>
-      ${[['Preferred for ' + (character?.name || ''), preferred], ['Same as in other scenes today', suggestions]]
+      ${[[`TX ${tx?.id} (${tx?.model}) takes a ${needed}`, neededIds], ['Preferred for ' + (character?.name || ''), preferred], ['Same as in other scenes today', suggestions]]
         .filter(([, ids]) => ids.length > 0 && !query).map(([label, ids]) => html`
         <p class="sheet__hint" key=${label}>${label}</p>
         <div class=${'sheet__grid sheet__grid--' + field}>

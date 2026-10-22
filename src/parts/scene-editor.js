@@ -2,13 +2,13 @@
 // (scene-table.js PagedMics). Tap a Character / TX / Lav / acc. cell → the picker opens. Tap Speaks to change
 // YES → NO → ? . Position: type it (suggestions: accessories.js POSITIONS). The Battery column works as in the table.
 // ↑ moves a row up, ✕ deletes it (next to the character), + adds one.
-// Warnings (same TX or lav twice) show above Save; Save still works but asks
+// Warnings (same TX or lav twice, a TRXLA without its 6061) show above Save; Save still works but asks
 // for a second tap ("Save anyway").
 // Used by: parts/scene-table.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
 import { byId } from '../model.js';
-import { warnings } from '../preset-rules.js';
+import { warnings, txLavProblems } from '../preset-rules.js';
 import { lavProblems } from '../sound-rules.js';
 import { RowWarnings } from './sound-bar.js';
 import { openPicker, cycleSpeaker, addRow, deleteRow, moveRow, cancelEdit, saveEdit, setPosition } from '../editing.js';
@@ -24,7 +24,7 @@ export function SceneEditor({ project, edit }) {
   const chars = byId(project.characters);
   const txs = byId(project.transmitters);
   const lavs = byId(project.lavaliers);
-  const problems = [...warnings(edit.rows), ...lavProblems(project, edit.sceneId, edit.rows)];
+  const problems = [...warnings(edit.rows), ...lavProblems(project, edit.sceneId, edit.rows), ...txLavProblems(project, edit.rows)];
 
   const cell = (rowIndex, field, content, side) => html`
     <button class="edit-cell" onClick=${() => openPicker(rowIndex, field, side)}>${content}</button>`;

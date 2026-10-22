@@ -134,6 +134,10 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   the frozen time left + "SLEEP", no flat-at time); Wake goes on from there (the battery's start moves later by the
   time asleep, so its learned runs count only awake time). A time field (default now) lets Ana back-date a tap she
   forgot. Swapping or OFF wakes it first. `tx_sleep` in gear/batteries.json; logic in `src/battery-sleep.js`.
+- v184 (22 Oct): **TX model → lav model rule** — settings `lav_rules.lav_for_tx_model` (LBE: TRXLA3.5 → 6061, Ana:
+  "don't hide me gear"; 6061 no longer in `not_used`). The lav picker shows "TX 4 (TRXLA3.5) takes a 6061" with
+  those lavs first; Save warns "TX 4 (TRXLA3.5) takes a 6061, lav 13 is a 6060" (Save anyway still works).
+  `preset-rules.js` lavModelForTx / txLavProblems.
 - v167 (18 Oct): **Costume column** — `costumes.json` (film data) says which costume change (ch.N) each character
   wears in each scene; none to 3 photos per change (front, back, detail) in the film's own private photos repo
   (`anachiossi/la-buona-educazione-photos`, 1600 px + thumbs). Phones keep all thumbs + full photos of the next

@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { warnings, usedByOtherRows, sameDaySuggestions, cleanRows, preferredFor, scenesUsing, sameDayKit, lavNotUsed } from '../src/preset-rules.js';
+import { warnings, usedByOtherRows, sameDaySuggestions, cleanRows, preferredFor, scenesUsing, sameDayKit, lavNotUsed, lavModelForTx, txLavProblems } from '../src/preset-rules.js';
 import { projectToFiles, applyRemote, filesToDownload, formatJson, emptyProject, sameRows, upgradeOutbox } from '../src/store/repo-files.js';
 
 const row = (char_id, tx_id, lav_id, speaker = 'yes') => ({ char_id, tx_id, lav_id, speaker });
@@ -53,6 +53,18 @@ test('lav models the film does not use', () => {
   assert.equal(lavNotUsed(p, { model: '6061' }), true);
   assert.equal(lavNotUsed(p, { model: '6060' }), false);
   assert.equal(lavNotUsed({}, { model: '6061' }), false);
+});
+
+test('a TRXLA3.5 without a 6061 gives a warning on Save (Ana, 22 Oct)', () => {
+  const p = {
+    settings: { presets: { lav_rules: { lav_for_tx_model: { 'TRXLA3.5': '6061' } } } },
+    transmitters: [{ id: '4', model: 'TRXLA3.5' }, { id: '14', model: 'ZMT3.5' }],
+    lavaliers: [{ id: '13', model: '6060' }, { id: '43', model: '6061' }],
+  };
+  assert.equal(lavModelForTx(p, { model: 'trxla3.5' }), '6061');
+  assert.equal(lavModelForTx(p, { model: 'ZMT3.5' }), null);
+  assert.deepEqual(txLavProblems(p, [row('1', '4', '13'), row('2', '14', '13')]), ['TX 4 (TRXLA3.5) takes a 6061, lav 13 is a 6060']);
+  assert.deepEqual(txLavProblems(p, [row('1', '4', '43'), row('2', '4', '')]), [], 'a 6061, or no lav yet, is fine');
 });
 
 test('screen-only row keys are not saved', () => {

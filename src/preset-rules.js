@@ -2,6 +2,7 @@
 // • warnings: the same TX or lav twice in one scene (same frequency on two actors!)
 // • suggestions: the TX/lav a character already wears in other scenes that day
 // • preferences: the character's preferred TX, and lavs of the preferred model + colour
+// • the film's lav rules: models not used, and a TX model that must take one lav model
 // Used by: editing.js, kit-editing.js, parts/picker.js, parts/scene-editor.js, screens/kit.js
 
 import { shootingDays, naturalCompare } from './model.js';
@@ -84,6 +85,29 @@ export function scenesUsing(project, list, id) {
 export function lavNotUsed(project, lav) {
   const models = (project.settings?.presets?.lav_rules?.not_used || []).map(m => String(m).toLowerCase());
   return models.includes(String(lav?.model || '').toLowerCase());
+}
+
+// settings.json → presets.lav_rules.lav_for_tx_model: a TX model that must take one lav model
+// (LBE: every TRXLA3.5 takes a 6061, Ana 22 Oct). The lav model this TX needs, or null.
+export function lavModelForTx(project, tx) {
+  const rules = project.settings?.presets?.lav_rules?.lav_for_tx_model || {};
+  const model = Object.keys(rules).find(m => m.toLowerCase() === String(tx?.model || '').toLowerCase());
+  return model ? String(rules[model]) : null;
+}
+
+// For Save: e.g. 'TX 4 (TRXLA3.5) takes a 6061, lav 13 is a 6060'
+export function txLavProblems(project, rows) {
+  const txs = new Map((project.transmitters || []).map(tx => [String(tx.id), tx]));
+  const lavs = new Map((project.lavaliers || []).map(lav => [String(lav.id), lav]));
+  const result = [];
+  for (const row of rows) {
+    const tx = txs.get(String(row.tx_id));
+    const lav = lavs.get(String(row.lav_id));
+    const needed = lavModelForTx(project, tx);
+    if (!needed || !lav || String(lav.model).toLowerCase() === needed.toLowerCase()) continue;
+    result.push(`TX ${tx.id} (${tx.model}) takes a ${needed}, lav ${lav.id} is a ${lav.model}`);
+  }
+  return result;
 }
 
 // A kit set in one scene stays the same in the other scenes of that day with the same character (Ana, 9 Oct):
