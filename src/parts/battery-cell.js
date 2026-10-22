@@ -3,7 +3,8 @@
 //   OFF (grey) until tapped → a sheet: tap a battery number (the fitting groups, best first) or "ON, no number".
 //   ON: the time left big after a clock ("🕒 6:21"), green / yellow / red, and under it, after an empty battery, the time
 //   of day it runs out ("02:53", Ana 18 Oct).
-//   Tap again → how did it end (Dead · Low · Still OK, for learning) + the next battery, or OFF.
+//   Tap again → how did it end (Dead · Low · Still OK, for learning) + the next battery, or OFF, or Sleep / Wake
+//   (Ana, 22 Oct: a TX in sleep mode pauses its countdown; "SLEEP" under the time left).
 //   "Turned on at" (Ana, 22 Oct: "many times I forget to click ON"): the time it really went on, now unless changed;
 //   on a TX already ON it corrects the start of its countdown. A time typed stays the default for 10 minutes, so
 //   the other lavs turned on at the same moment take one tap each.
@@ -15,7 +16,7 @@
 
 import { html, useState } from '../../vendor/preact-htm.js';
 import { txTimer, groupsForTx, batteryFile, isReady, clock, timeOfDay, ENDS, placeOfTx, momentAt } from '../battery-rules.js';
-import { switchTx, setOnTime } from '../battery-editing.js';
+import { switchTx, setOnTime, sleepTx, wakeTx } from '../battery-editing.js';
 import { useMinuteClock } from './battery-tag.js';
 import { Sheet } from './gear-form.js';
 import { Icon } from './icons.js';
@@ -30,7 +31,8 @@ export function BatteryCell({ project, txId, character }) {
       ${timer
         ? html`<span class=${`pill pill--tx pill--tx-freq battery-pill battery--${timer.tone}`}>
             <b class="battery-pill__at">${timer.left == null ? 'ON' : html`<${Icon} name="clock" label="time left" />${clock(timer.left)}`}</b>
-            ${timer.endsAt && html`<small class="battery-pill__at"><${Icon} name="battery_empty" label="flat at" />${timeOfDay(timer.endsAt)}</small>`}</span>`
+            ${timer.endsAt && html`<small class="battery-pill__at"><${Icon} name="battery_empty" label="flat at" />${timeOfDay(timer.endsAt)}</small>`}
+            ${timer.asleep && html`<small class="battery-pill__at">SLEEP</small>`}</span>`
         : html`<span class="pill pill--tx battery-pill battery--plain"><b>OFF</b></span>`}
     </button>
     ${open && html`<${TxBatterySheet} project=${project} txId=${txId} character=${character} timer=${timer} now=${now} close=${() => setOpen(false)} />`}`;
@@ -80,5 +82,21 @@ function TxBatterySheet({ project, txId, character, timer, now, close }) {
       <button class="btn btn--primary" onClick=${() => go({})}>${timer ? 'Swap, no number' : 'ON, no number'}</button>
       ${timer && html`<button class="btn" onClick=${() => go({ off: true })}>OFF</button>`}
     </div>
+    ${timer && html`<${SleepRow} project=${project} txId=${txId} timer=${timer} close=${close} />`}
   <//>`;
+}
+
+// sleep mode (battery-sleep.js): the countdown pauses, and goes on from there when the TX wakes. The time is now,
+// or earlier when Ana forgot to tap ("it happened at 13:15")
+function SleepRow({ project, txId, timer, close }) {
+  const [time, setTime] = useState(hhmm(Date.now()));
+  const go = action => { action(project, txId, new Date(momentAt(time)).toISOString()); close(); };
+  return html`
+    <p class="sheet__hint">${timer.asleep ? `Asleep since ${timeOfDay(Date.parse(timer.asleep))}: the timer is paused` : 'Sleep mode: the timer pauses'}</p>
+    <div class="battery-on">
+      <input type="time" class="battery-on-time" value=${time} onInput=${event => setTime(event.target.value)} aria-label="at" />
+      ${timer.asleep
+        ? html`<button class="btn btn--primary" onClick=${() => go(wakeTx)}>Wake</button>`
+        : html`<button class="btn" onClick=${() => go(sleepTx)}>Sleep</button>`}
+    </div>`;
 }

@@ -155,6 +155,35 @@ test('battery column: a forgotten timer (older than a day of work) shows OFF aga
   assert.equal(txTimer(rig, '7', minutesAfter(TIMER_STALE_H * 60 + 1)), null);
 });
 
+// ---- v183 (Ana, 22 Oct): a TX in sleep mode pauses its countdown ----
+import { wake, sleep } from '../src/battery-sleep.js';
+
+test('a TX asleep keeps the time left it had when it fell asleep, and shows no change time', () => {
+  const asleep = { ...rig, gearBatteries: sleep(rig.gearBatteries, '7', new Date(minutesAfter(30)).toISOString()) };
+  const timer = txTimer(asleep, '7', minutesAfter(90));
+  assert.equal(timer.left, 90, 'still 90 minutes left, as at minute 30');
+  assert.equal(timer.endsAt, null, 'paused: no change time');
+  assert.ok(timer.asleep);
+});
+
+test('a TX woken goes on from where it paused: the time asleep moves its start later', () => {
+  const asleep = sleep(rig.gearBatteries, '7', new Date(minutesAfter(30)).toISOString());
+  const woken = wake(asleep, '7', b => b.id === 'f-15', minutesAfter(90));
+  const project = { ...rig, gearBatteries: woken };
+  const timer = txTimer(project, '7', minutesAfter(100));
+  assert.equal(timer.left, 80, '30 awake + 10 awake = 40 of 120 gone');
+  assert.equal(timer.endsAt, minutesAfter(180), 'changes an hour later than before the sleep');
+  assert.equal(timer.asleep, null);
+});
+
+test('a TX with no numbered battery sleeps and wakes the same way', () => {
+  const asleep = sleep(rig.gearBatteries, 'B1', new Date(minutesAfter(10)).toISOString());
+  const woken = wake(asleep, 'B1', () => false, minutesAfter(40));
+  assert.equal(woken.tx_on.B1, new Date(minutesAfter(30)).toISOString(), 'ON 30 minutes later than it was');
+  assert.deepEqual(woken.tx_sleep, {});
+  assert.equal(wake(rig.gearBatteries, '7', () => true, minutesAfter(40)), rig.gearBatteries, 'awake already: nothing changes');
+});
+
 test('battery column: place names and clock time', () => {
   assert.equal(placeOfTx('7'), 'TX 7');
   assert.equal(placeOfTx('B1'), 'B1');

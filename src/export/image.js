@@ -127,7 +127,7 @@ function drawRigRows(ctx, project, rows, y) {
     pill(ctx, PAD, y, 250, h, c?.color, c?.name || `? ${row.char_id}`, c?.actor);
     pill(ctx, PAD + 262, y, 110, h, c?.color || row.tx?.color, row.tx?.id || '—', row.tx?.frequency ? String(row.tx.frequency) : '');
     const timer = row.tx_id ? txTimer(project, row.tx_id, now) : null;
-    plain(384, 110, h, timer?.endsAt ? timeOfDay(timer.endsAt) : timer ? 'ON' : row.tx_id ? 'OFF' : '—', y);
+    plain(384, 110, h, timer?.endsAt ? timeOfDay(timer.endsAt) : timer?.asleep ? 'SLEEP' : timer ? 'ON' : row.tx_id ? 'OFF' : '—', y);
     pill(ctx, PAD + 506, y, 130, h, row.lav?.color, row.lav?.model || '—', '', { outline: row.lav?.attenuated ? '#dc2626' : null });
     plain(648, 110, h, things(row, 'lav'), y);
     plain(770, 110, h, things(row, 'tx'), y);

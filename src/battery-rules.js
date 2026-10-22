@@ -18,6 +18,7 @@
 //   battery: the group's battery type (NP-F970): the models that take it are the ones its sheet asks about
 //   tx_on: { '7': since } — a TX switched ON in the mic table with no numbered battery (v149): its countdown uses the
 //   first group of its battery type (the best ones are listed first)
+//   tx_sleep: { '7': since } — a TX in sleep mode: its countdown is paused (battery-sleep.js)
 // The mic table's battery column (txTimer, Ana 13 Oct): OFF until tapped while rigging; ON = the battery in use in
 // that TX, or tx_on. A timer older than TIMER_STALE_H hours is a forgotten one: it shows OFF again.
 // All automatic (Ana, 19 Oct): a battery leaving a TX (swap or OFF) goes straight to Charging; once its charge time
@@ -32,10 +33,11 @@
 // parts/battery-cell.js, export/image.js
 
 import { naturalCompare, shootingDays, localTodayIso, byId } from './model.js';
+import { asleepSince, timerNow } from './battery-sleep.js';
 
 export const STATES = [['full', 'Full'], ['charging', 'Charging'], ['in_use', 'In use'], ['empty', 'Empty']];
 
-export const batteryFile = project => ({ groups: [], chargers: [], devices: [], batteries: [], tx_on: {}, ...project.gearBatteries });
+export const batteryFile = project => ({ groups: [], chargers: [], devices: [], batteries: [], tx_on: {}, tx_sleep: {}, ...project.gearBatteries });
 export const TIMER_STALE_H = 16;
 export const CHARGE_DEFAULT_MIN = 180; // a group with no charge time: 3 hours (Ana, 19 Oct)
 
@@ -165,8 +167,9 @@ export const chargerLoad = (project, chargerId) =>
   batteryFile(project).batteries.filter(b => b.state === 'charging' && b.charger === chargerId).length;
 
 // minutes left on the charger or in use, and the share of the whole still to go (null: no timer)
-// with the project: lifeOf / chargeOf; without it: the group's minutes
+// with the project: lifeOf / chargeOf; without it: the group's minutes. In a TX asleep: as when it fell asleep.
 export function timeLeft(battery, group, now = Date.now(), project = null) {
+  if (project && battery.state === 'in_use') now = timerNow(batteryFile(project), txOf(project, battery.used_in)?.id, now);
   const minutes = battery.state === 'charging' ? (project ? chargeOf(project, battery, group) : Number(battery.charge_min ?? group?.charge_min))
     : battery.state === 'in_use' ? (project ? lifeOf(project, battery, group, now)?.minutes : Number(group?.life_min)) : 0;
   if (!minutes || !battery.since) return null;
@@ -211,7 +214,8 @@ export function groupsForTx(project, txId) {
   return type ? groups.filter(g => g.battery === type) : [];
 }
 
-// the battery column of a TX: null (OFF) or { battery (null: no number), group, since, minutes, left, endsAt, tone, notes }
+// the battery column of a TX: null (OFF) or { battery (null: no number), group, since, minutes, left, endsAt, tone, notes,
+// asleep (null, or since when: no endsAt then — the countdown is paused) }
 export function txTimer(project, txId, now = Date.now()) {
   if (!txId) return null;
   const found = batteryIn(project, txId);
@@ -221,8 +225,9 @@ export function txTimer(project, txId, now = Date.now()) {
   const battery = found?.battery || { state: 'in_use', used_in: placeOfTx(txId), since };
   const life = lifeOf(project, battery, group, now);
   const time = timeLeft(battery, group, now, project);
-  return { battery: found?.battery || null, group, since, minutes: life?.minutes ?? null, left: time?.left ?? null,
-    endsAt: life ? Date.parse(since) + life.minutes * 60000 : null, tone: time ? toneOf(battery, group, now, project) : 'plain', notes: life?.notes || [] };
+  const asleep = asleepSince(batteryFile(project), txId);
+  return { battery: found?.battery || null, group, since, minutes: life?.minutes ?? null, left: time?.left ?? null, asleep,
+    endsAt: life && !asleep ? Date.parse(since) + life.minutes * 60000 : null, tone: time ? toneOf(battery, group, now, project) : 'plain', notes: life?.notes || [] };
 }
 
 // '10:30' typed in the sheet → that moment today (Ana, 22 Oct: "I forget to click ON; I turned the lavs on around

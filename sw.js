@@ -3,7 +3,7 @@
 // When you change any app file, bump VERSION so devices pick up the new files.
 // (Film data is NOT stored here; it lives in the per-film database.)
 
-const VERSION = 'soundcheck-v182';
+const VERSION = 'soundcheck-v183';
 const FILES = [
   './', 'index.html', 'app.css', 'manifest.webmanifest',
   'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png',
@@ -12,7 +12,7 @@ const FILES = [
   'vendor/fonts/courier-prime-400.woff2', 'vendor/fonts/courier-prime-700.woff2',
   'src/main.js', 'src/state.js', 'src/model.js', 'src/colour.js',
   'src/editing.js', 'src/kit-editing.js', 'src/sync.js', 'src/preset-rules.js',
-  'src/proposals.js', 'src/proposal-rules.js', 'src/email-robot.js', 'src/sound-rules.js', 'src/sound-editing.js', 'src/parts/sound-bar.js', 'src/parts/scene-pill.js', 'src/parts/conflicts.js', 'src/parts/day-strip.js', 'src/parts/scene-script.js', 'src/parts/line-search.js', 'src/accessories.js', 'src/lav-acc-rules.js', 'src/usual-acc.js', 'src/costumes.js', 'src/photos.js', 'src/gear-photos.js', 'src/parts/photo-viewer.js', 'src/parts/costume-cell.js', 'src/hours-rules.js', 'src/hours-editing.js', 'src/parts/wrap-clock.js', 'src/screens/hours.js', 'src/export/hours-image.js', 'src/parts/wrap-alerts.js', 'src/screens/help.js', 'src/screens/lav-share.js', 'src/parts/tomorrow.js', 'src/gear-rules.js', 'src/gear-editing.js', 'src/parts/gear-form.js', 'src/parts/gear-drag.js', 'src/screens/gear.js', 'src/battery-rules.js', 'src/battery-editing.js', 'src/screens/gear-batteries.js',
+  'src/proposals.js', 'src/proposal-rules.js', 'src/email-robot.js', 'src/sound-rules.js', 'src/sound-editing.js', 'src/parts/sound-bar.js', 'src/parts/scene-pill.js', 'src/parts/conflicts.js', 'src/parts/day-strip.js', 'src/parts/scene-script.js', 'src/parts/line-search.js', 'src/accessories.js', 'src/lav-acc-rules.js', 'src/usual-acc.js', 'src/costumes.js', 'src/photos.js', 'src/gear-photos.js', 'src/parts/photo-viewer.js', 'src/parts/costume-cell.js', 'src/hours-rules.js', 'src/hours-editing.js', 'src/parts/wrap-clock.js', 'src/screens/hours.js', 'src/export/hours-image.js', 'src/parts/wrap-alerts.js', 'src/screens/help.js', 'src/screens/lav-share.js', 'src/parts/tomorrow.js', 'src/gear-rules.js', 'src/gear-editing.js', 'src/parts/gear-form.js', 'src/parts/gear-drag.js', 'src/screens/gear.js', 'src/battery-rules.js', 'src/battery-sleep.js', 'src/battery-editing.js', 'src/screens/gear-batteries.js',
   'src/parts/battery-tag.js', 'src/parts/battery-cell.js', 'src/parts/image-for.js', 'src/export/gear-image.js', 'src/export/gear-text.js', 'src/export/xlsx.js', 'src/export/timesheet.js', 'src/manuals.js', 'src/parts/auto-scroll.js', 'src/theme.js', 'src/parts/theme-switch.js', 'src/parts/email-robot.js', 'src/cues-rules.js', 'src/cues-phrases.js', 'src/cues-map-rules.js', 'src/screens/cues-map.js', 'src/cues-timeline-rules.js', 'src/screens/cues-timeline.js', 'src/cues-editing.js', 'src/parts/cue-line-editor.js', 'src/cues-game-rules.js', 'src/screens/cues-game.js',
   'src/ifb-editing.js', 'src/ifb-rules.js',
   'src/crew-link.js', 'src/parts/crew-share.js', 'src/crew-changes.js', 'src/crew-describe.js', 'src/crew-sync.js', 'src/sync-store.js', 'src/films.js', 'src/crew-join.js', 'src/film-source.js', 'src/film-repos.js', 'src/parts/film-repos.js',

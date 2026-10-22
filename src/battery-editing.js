@@ -1,10 +1,11 @@
 // battery-editing.js — saves Gear → Batteries (battery-rules.js): a battery's state, a group of batteries, and the mic
-// table's battery column (a TX ON / swapped / OFF).
+// table's battery column (a TX ON / swapped / OFF / asleep).
 // At once on the device, then uploaded by sync.js (gear/batteries.json).
 // Used by: screens/gear-batteries.js, parts/battery-cell.js
 
 import { getState, saveAndShow, showMessage } from './state.js';
 import { batteryFile, withRun, batteryIn, placeOfTx, freeChargerFor, chargersFor } from './battery-rules.js';
+import { sleep, wake } from './battery-sleep.js';
 import { syncNow } from './sync.js';
 
 const FILE = 'gear/batteries.json';
@@ -90,10 +91,11 @@ export function saveCharger(fields) {
 // battery-rules.js isReady), then batteryId goes in (null: ON with no
 // number; off: the TX stays OFF). onAt: when the new battery went in, if not now (ms; Ana forgot to tap ON)
 export function switchTx(project, txId, { batteryId = null, end, off = false, onAt = null } = {}) {
-  const file = batteryFile(project);
   const current = batteryIn(project, txId)?.battery;
   const at = now();
   const on = onAt ? new Date(onAt).toISOString() : at;
+  // a TX asleep wakes first: the battery coming out counts only the time it was awake
+  const file = wake(batteryFile(project), txId, b => b.id === current?.id, Date.parse(at));
   const batteries = file.batteries.map(b => {
     if (current && b.id === current.id) {
       // no charger can take it (alkaline AA): it is empty, to throw away
@@ -125,4 +127,15 @@ export function setOnTime(project, txId, onAt) {
   const batteries = file.batteries.map(b => (current && b.id === current.id ? { ...b, since } : b));
   const txOn = current ? file.tx_on : { ...file.tx_on, [String(txId)]: since };
   return save({ ...file, batteries, tx_on: txOn }, `${placeOfTx(txId)} ON since ${new Date(onAt).toTimeString().slice(0, 5)}.`);
+}
+
+// sleep mode (battery-sleep.js): the TX's countdown pauses from `at` (ISO, default now) until it wakes at `at`
+export function sleepTx(project, txId, at = now()) {
+  return save(sleep(batteryFile(project), txId, at), `${placeOfTx(txId)} asleep: its battery timer is paused.`);
+}
+
+export function wakeTx(project, txId, at = now()) {
+  const current = batteryIn(project, txId)?.battery;
+  const file = wake(batteryFile(project), txId, b => b.id === current?.id, Date.parse(at));
+  return save(file, `${placeOfTx(txId)} awake: its battery timer goes on.`);
 }

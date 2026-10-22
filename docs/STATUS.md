@@ -130,6 +130,10 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   TX really went on (e.g. 10:30 at 12:30) and its countdown starts from then; on a TX already ON, change the time and
   "Save time". A time typed stays the default for 10 min (one tap for each other lav). `battery-rules.js momentAt`
   (a time later than now = yesterday, night shoots), `battery-editing.js switchTx onAt / setOnTime`.
+- v183 (22 Oct): **TX sleep mode** — in the mic table's battery sheet, Sleep pauses that TX's countdown (pill shows
+  the frozen time left + "SLEEP", no flat-at time); Wake goes on from there (the battery's start moves later by the
+  time asleep, so its learned runs count only awake time). A time field (default now) lets Ana back-date a tap she
+  forgot. Swapping or OFF wakes it first. `tx_sleep` in gear/batteries.json; logic in `src/battery-sleep.js`.
 - v167 (18 Oct): **Costume column** — `costumes.json` (film data) says which costume change (ch.N) each character
   wears in each scene; none to 3 photos per change (front, back, detail) in the film's own private photos repo
   (`anachiossi/la-buona-educazione-photos`, 1600 px + thumbs). Phones keep all thumbs + full photos of the next
