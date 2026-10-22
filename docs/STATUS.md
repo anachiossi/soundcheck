@@ -138,6 +138,9 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   "don't hide me gear"; 6061 no longer in `not_used`). The lav picker shows "TX 4 (TRXLA3.5) takes a 6061" with
   those lavs first; Save warns "TX 4 (TRXLA3.5) takes a 6061, lav 13 is a 6060" (Save anyway still works).
   `preset-rules.js` lavModelForTx / txLavProblems.
+- v185 (22 Oct): **Photo zoom** — pinch zooms only the photo in the photo viewer (drag to move, double-tap back);
+  the page itself can no longer pinch-zoom there (a zoomed page stayed zoomed, title and Close off screen, Ana
+  "stuck in a photos page"). `src/parts/zoom-image.js`. Not tried on an iPhone yet.
 - v167 (18 Oct): **Costume column** — `costumes.json` (film data) says which costume change (ch.N) each character
   wears in each scene; none to 3 photos per change (front, back, detail) in the film's own private photos repo
   (`anachiossi/la-buona-educazione-photos`, 1600 px + thumbs). Phones keep all thumbs + full photos of the next

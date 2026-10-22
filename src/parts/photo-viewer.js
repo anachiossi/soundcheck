@@ -9,6 +9,7 @@ import { html, render, useEffect, useState } from '../../vendor/preact-htm.js';
 import { thumbOf } from '../costumes.js';
 import { photoNoAccess, photoNow, photoStamp, photoUrl } from '../photos.js';
 import { Icon } from './icons.js';
+import { ZoomImage } from './zoom-image.js';
 
 // a photo's picture address: the thumbnail from the device, or the full photo (fetched if needed); freed when gone
 export function usePhoto(project, path, full) {
@@ -35,7 +36,7 @@ function OnePhoto({ project, photo, place }) {
   const shown = full || thumb;
   return html`
     <figure class="photo-viewer__photo">
-      ${shown ? html`<img src=${shown} alt=${photo.label} />` : html`<p class="muted">No signal: this photo isn't on the phone yet.</p>`}
+      ${shown ? html`<${ZoomImage} src=${shown} alt=${photo.label} />` : html`<p class="muted">No signal: this photo isn't on the phone yet.</p>`}
       <figcaption>${photo.label}${place && ` · ${place}`}
         ${photo.source && html`<a class="photo-viewer__source" href=${photo.source} target="_blank" rel="noopener">photo: ${siteOf(photo.source)} ↗</a>`}
       </figcaption>
@@ -60,6 +61,13 @@ export function PhotoViewer(props) {
 
 function Viewer({ project, title, photos, close, children }) {
   const noAccess = photos.some(photo => photoNoAccess(project, photo.file));
+  // while it is open the iPhone never zooms the whole page (only the photo zooms, zoom-image.js): a zoomed page
+  // stayed zoomed, with the title and Close pushed off the screen (Ana, 22 Oct)
+  useEffect(() => {
+    const noPageZoom = event => event.preventDefault();
+    document.addEventListener('gesturestart', noPageZoom);
+    return () => document.removeEventListener('gesturestart', noPageZoom);
+  }, []);
   return html`
     <div class="photo-viewer" role="dialog" aria-label=${title}>
       <header class="photo-viewer__head">

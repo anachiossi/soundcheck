@@ -227,6 +227,10 @@ button.scene-pill { cursor: pointer; }
 .photo-viewer__photos { flex: 1; min-height: 0; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 8px; padding: 0 8px; }
 .photo-viewer__photo { flex: 0 0 100%; scroll-snap-align: center; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 0; }
 .photo-viewer__photo img { flex: 1; min-height: 0; max-width: 100%; object-fit: contain; border-radius: 8px; }
+.photo-viewer { touch-action: pan-x pan-y; }   /* the page never pinch-zooms here; the photo does (zoom-image.js) */
+.photo-viewer__photo { overflow: hidden; }
+.zoom-image { touch-action: pan-x; transform-origin: center; position: relative; z-index: 1; }
+.zoom-image--zoomed { touch-action: none; }
 .photo-viewer__photo figcaption { padding: 6px; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; opacity: .8; }
 .photo-viewer__none { flex: 1; display: flex; align-items: center; justify-content: center; opacity: .7; }
 .photo-viewer__foot { padding: 6px 16px 14px; font-size: 15px; }
