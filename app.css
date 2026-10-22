@@ -35,6 +35,7 @@
   --badge-bg: rgba(255,255,255,.7);
   --warn-bg: #fff7ed; --warn-line: #fed7aa; --warn-ink: #9a3412;   /* orange boxes */
   --amber-bg: #fef3c7; --amber-ink: #92400e;                       /* IFB OUT, proposal IFB */
+  --frozen-bg: #dbeafe; --frozen: #1d4ed8;                         /* a TX asleep: its time is frozen (Ana, 22 Oct) */
   --done-bg: #dcfce7; --done-line: #86efac; --done-on: #166534;    /* finished days */
   --cue-more: #6b5a2e;
   --tab-bg: rgba(255,255,255,.6);   /* tabs not selected */
@@ -631,6 +632,7 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
 .battery--yellow { background: var(--amber-bg); color: var(--amber-ink); }
 .battery--red { background: var(--no-bg); color: var(--no); }
 .battery--plain { background: var(--soft); color: var(--ink-soft); }
+.battery--asleep { background: var(--frozen-bg); color: var(--frozen); }   /* sleep mode: the countdown is paused, blue like frozen time */
 .battery-tag { align-self: flex-start; margin-top: 3px; padding: 1px 7px; border-radius: 999px; font-size: 12px; font-weight: 800;
   font-variant-numeric: tabular-nums; white-space: nowrap; }
 .kit-item .battery-tag { display: table; margin: 0 0 2px; }   /* on its own line above the model, so long names keep their room */
@@ -653,6 +655,7 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
   --yes-bg: #10281a; --yes: #4ade80; --no-bg: #331414; --no: #f87171;
   --warn: #fb923c; --warn-bg: #2a1a0d; --warn-line: #5a3316; --warn-ink: #fdba74;
   --amber-bg: #33280a; --amber-ink: #fcd34d;
+  --frozen-bg: #0f2342; --frozen: #93c5fd;
   --done-bg: #10281a; --done-line: #166534; --done-on: #15803d;
   --t-day: #33280a; --t-day-ink: #fcd34d; --t-night: #0b0d10; --t-night-ink: #cbd5e1;
   --t-dusk: #3b1d0a; --t-dusk-ink: #fdba74; --t-morning: #0c2a3a; --t-morning-ink: #7dd3fc;

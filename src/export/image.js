@@ -116,10 +116,11 @@ function drawRigRows(ctx, project, rows, y) {
   font(ctx, 600, 20);
   columns.forEach(([title, x, w], i) => text(ctx, title, i ? PAD + x + w / 2 : PAD + 24, y + 12, w, '#64748b', i ? 'center' : 'left'));
   y += 34;
-  const plain = (x, w, h, value, top) => {
-    box(ctx, PAD + x, top, w, h, h / 2, '#f1f5f9');
-    font(ctx, 800, 26); text(ctx, value, PAD + x + w / 2, top + h / 2, w - 16, '#0f172a', 'center');
+  const plain = (x, w, h, value, top, [fill, ink] = ['#f1f5f9', '#0f172a']) => {
+    box(ctx, PAD + x, top, w, h, h / 2, fill);
+    font(ctx, 800, 26); text(ctx, value, PAD + x + w / 2, top + h / 2, w - 16, ink, 'center');
   };
+  const FROZEN = ['#dbeafe', '#1d4ed8']; // a TX asleep: blue, like frozen time (app.css --frozen)
   const things = (row, side) => rowAccessories(project, row, side).map(t => t.label).join(' + ') || '—';
   for (const row of rows) {
     const h = ROW - 16;
@@ -127,7 +128,8 @@ function drawRigRows(ctx, project, rows, y) {
     pill(ctx, PAD, y, 250, h, c?.color, c?.name || `? ${row.char_id}`, c?.actor);
     pill(ctx, PAD + 262, y, 110, h, c?.color || row.tx?.color, row.tx?.id || '—', row.tx?.frequency ? String(row.tx.frequency) : '');
     const timer = row.tx_id ? txTimer(project, row.tx_id, now) : null;
-    plain(384, 110, h, timer?.endsAt ? timeOfDay(timer.endsAt) : timer?.asleep ? 'SLEEP' : timer ? 'ON' : row.tx_id ? 'OFF' : '—', y);
+    plain(384, 110, h, timer?.endsAt ? timeOfDay(timer.endsAt) : timer?.asleep ? 'SLEEP' : timer ? 'ON' : row.tx_id ? 'OFF' : '—', y,
+      timer?.asleep ? FROZEN : undefined);
     pill(ctx, PAD + 506, y, 130, h, row.lav?.color, row.lav?.model || '—', '', { outline: row.lav?.attenuated ? '#dc2626' : null });
     plain(648, 110, h, things(row, 'lav'), y);
     plain(770, 110, h, things(row, 'tx'), y);

@@ -4,7 +4,7 @@
 //   ON: the time left big after a clock ("🕒 6:21"), green / yellow / red, and under it, after an empty battery, the time
 //   of day it runs out ("02:53", Ana 18 Oct).
 //   Tap again → how did it end (Dead · Low · Still OK, for learning) + the next battery, or OFF, or Sleep / Wake
-//   (Ana, 22 Oct: a TX in sleep mode pauses its countdown; "SLEEP" under the time left).
+//   (Ana, 22 Oct: a TX in sleep mode pauses its countdown; "SLEEP" under the time left, the pill blue like frozen time).
 //   "Turned on at" (Ana, 22 Oct: "many times I forget to click ON"): the time it really went on, now unless changed;
 //   on a TX already ON it corrects the start of its countdown. A time typed stays the default for 10 minutes, so
 //   the other lavs turned on at the same moment take one tap each.
@@ -29,7 +29,7 @@ export function BatteryCell({ project, txId, character }) {
   return html`
     <button class="edit-cell" onClick=${() => setOpen(true)} aria-label=${`${placeOfTx(txId)} battery`}>
       ${timer
-        ? html`<span class=${`pill pill--tx pill--tx-freq battery-pill battery--${timer.tone}`}>
+        ? html`<span class=${`pill pill--tx pill--tx-freq battery-pill battery--${timer.asleep ? 'asleep' : timer.tone}`}>
             <b class="battery-pill__at">${timer.left == null ? 'ON' : html`<${Icon} name="clock" label="time left" />${clock(timer.left)}`}</b>
             ${timer.endsAt && html`<small class="battery-pill__at"><${Icon} name="battery_empty" label="flat at" />${timeOfDay(timer.endsAt)}</small>`}
             ${timer.asleep && html`<small class="battery-pill__at">SLEEP</small>`}</span>`
