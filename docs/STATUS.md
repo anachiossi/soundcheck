@@ -141,6 +141,8 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
 - v185 (22 Oct): **Photo zoom** — pinch zooms only the photo in the photo viewer (drag to move, double-tap back);
   the page itself can no longer pinch-zoom there (a zoomed page stayed zoomed, title and Close off screen, Ana
   "stuck in a photos page"). `src/parts/zoom-image.js`. Not tried on an iPhone yet.
+- v186 (22 Oct): the photo viewer's Close (X) is big (56 px target) and taps at once (`touch-action: manipulation`:
+  the iPhone no longer waits to see if it's a double-tap zoom). Ana: "the X was painfully hard to work".
 - v167 (18 Oct): **Costume column** — `costumes.json` (film data) says which costume change (ch.N) each character
   wears in each scene; none to 3 photos per change (front, back, detail) in the film's own private photos repo
   (`anachiossi/la-buona-educazione-photos`, 1600 px + thumbs). Phones keep all thumbs + full photos of the next

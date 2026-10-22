@@ -223,7 +223,8 @@ button.scene-pill { cursor: pointer; }
 .photo-viewer { position: fixed; inset: 0; z-index: 50; background: var(--viewer-bg); color: var(--viewer-ink); display: flex; flex-direction: column;
   padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
 .photo-viewer__head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; font-size: 18px; }
-.photo-viewer__head .icon-btn { color: inherit; }
+.photo-viewer__head .icon-btn { color: inherit; min-width: 56px; min-height: 56px; margin: -8px -8px -8px 0; touch-action: manipulation; }
+.photo-viewer__head .icon-btn .icon { width: 30px; height: 30px; }   /* a big Close: it was "painfully hard" to hit (Ana, 22 Oct) */
 .photo-viewer__photos { flex: 1; min-height: 0; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 8px; padding: 0 8px; }
 .photo-viewer__photo { flex: 0 0 100%; scroll-snap-align: center; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 0; }
 .photo-viewer__photo img { flex: 1; min-height: 0; max-width: 100%; object-fit: contain; border-radius: 8px; }
