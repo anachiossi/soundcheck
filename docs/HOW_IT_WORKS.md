@@ -188,8 +188,8 @@ v145 (13 Oct, Ana: "why haven't you done this?"):
 - **🔋 on the TX pills** (Mics scene tables, Kit): the countdown of the battery marked In use in that TX.
 - **Estimate in a TX**, aiming short ("end before!"): the group's minutes for that TX model (group sheet, by model)
   × the battery's Life % (old ones less) · no more than its last 3 runs that ended Dead/Low in that model (Dead
-  counts 10% shorter; "Still OK" teaches nothing) · −15% if the TX is in a scene of ≥ 3 pages today (the AT's rule).
-  The battery sheet shows who wears it today (character + actor) and the sum (e.g. "ZMT4.5 6:00 × 90% · long scene #12 −15%").
+  counts 10% shorter; "Still OK" teaches nothing). No long-scene cut since v193 (Ana: too strict).
+  The battery sheet shows who wears it today (character + actor) and the sum (e.g. "ZMT4.5 6:00 × 90%").
 - **Learning**: taking a battery out of a TX asks "How did it end? Dead · Low · Still OK" (optional); kept in `runs`.
 - **Chargers** ("+ Charger": name, group it charges, slots, minutes for a full charge). Charging asks which charger;
   minutes = this time's own, else the charger's, else the group's. Each group shows its chargers with load (🔌 5/8).
@@ -201,7 +201,7 @@ v145 (13 Oct, Ana: "why haven't you done this?"):
   model draws in W (manuals / makers, "?" when not published), batteries at once, battery type. A group has its
   battery type and the **Wh on its label** → the IDEAL minutes per model = Wh × batteries ÷ W ("label 6:47"). The
   group sheet asks the minutes **seen in practice** per model taking its battery type; those win over the label.
-  Order: seen > label > the group's minutes; then the battery's Life %, its Dead/Low runs, the long-scene −15%.
+  Order: seen > label > the group's minutes; then the battery's Life %, its Dead/Low runs.
 - v148: battery "internal" (not swapped — Ana, 13 Oct: the Ambient TC boxes) shows the maker's hours on a full charge
 - v149 (Ana, 13 Oct): the mic table on SWIPE PAGES — the Character pinned (compact), every other column in one ordered list (scene-table.js COLUMNS) cut into pages by the phone width, dots top right. Order: TX (+MHz) · Speaks · Battery · Lav · Lav acc. · TX acc. · Position. The Speaks ⇄ Acc. swap and the 🔋 tag under the TX pill are gone ("never print under a pill"). BATTERY column (battery-cell.js): OFF until tapped while rigging → tap a battery number (the groups that fit the TX model, best first) or "ON, no number" (gear/batteries.json tx_on); ON = countdown big + change time small, green/yellow/red; tap again = how did it end (Dead/Low/Still OK) + the next battery, or OFF; the ended battery goes to Empty. A timer older than 16 h shows OFF. Acc. list split by type: strap/pouch/pocket/belt = TX acc., the rest = Lav acc. Position = free text per scene row (suggestions: chest, collar, hair…). Images ask "Image for: Sound mixer · Sound assistants" (parts/image-for.js): mixer = Character · TX (no MHz) · Lav · Speaks; assistants = Character · TX+MHz · Change at · Lav · Lav acc. · TX acc. · Position (file rig_…png).
 - v171 (Ana, 19 Oct): the Battery column keeps the battery numbers (they last differently), but no more "charging… charged…" taps: a battery coming out of a TX (swap or OFF) goes straight to Charging on the first charger with a free slot (freeChargerFor: made for its group, or for its battery type — chargers' `battery` field; Gear order = preference; no charger at all = not rechargeable → Empty), and once its charge time is up (the group's / charger's, else 3 h) it is offered again as ready (battery-rules.js isReady); Gear shows it "ready", green. Gear → Batteries is only for being precise. (v170, a timer with no numbers, was undone.)

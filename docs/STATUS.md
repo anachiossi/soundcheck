@@ -156,6 +156,8 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
 - v191 (23 Oct): **Position in the costume's colour** (Ana). A row may carry `position_color: 'navy'` (names in
   accessories.js `COSTUME_COLOURS`); the editor has a round colour button next to the Position text, the table's
   Position pill and the assistants' image take that colour. In the image the position breaks onto two lines.
+- v193 (23 Oct): **no more −15% on a battery for a long scene** (Ana: "a bit too strict… at 14h it didn't need a
+  change"). The TRXLA3.5s on AA NiMH were 3:30 − 15% = 2:59; now 3:30 (2.28 Wh × 2 ÷ 1.3 W).
 - v192 (23 Oct): costume colour **magenta** (#a21caf) added — Helen's dress, "more magenta, almost purple" (Ana).
 - v167 (18 Oct): **Costume column** — `costumes.json` (film data) says which costume change (ch.N) each character
   wears in each scene; none to 3 photos per change (front, back, detail) in the film's own private photos repo

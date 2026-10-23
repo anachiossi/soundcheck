@@ -80,9 +80,8 @@ test('the TX model\'s minutes × the battery\'s rank', () => {
   assert.equal(lifeOf(filmDay, { ...inTx, used_in: 'Hollyland' }, aaGroup, noon).minutes, 240, 'not a TX: the group\'s');
 });
 
-test('a long scene today (≥ 3 pages) with the TX in it: −15%', () => {
-  assert.equal(lifeOf(filmDay, { ...inTx, used_in: 'B1' }, aaGroup, noon).minutes, 204);
-  assert.equal(lifeOf(filmDay, { ...inTx, used_in: 'B1' }, aaGroup, noon + 86400000).minutes, 240, 'not tomorrow');
+test('a long scene today no longer shortens the battery (Ana, 23 Oct: too strict)', () => {
+  assert.equal(lifeOf(filmDay, { ...inTx, used_in: 'B1' }, aaGroup, noon).minutes, 240);
 });
 
 test('it learns from runs that ended dead or low, always aiming short', () => {

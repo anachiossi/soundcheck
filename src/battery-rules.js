@@ -25,7 +25,7 @@
 // is up it is ready again (isReady) — no "charging… charged…" taps. Gear → Batteries is for checking, when she wants.
 // How long a battery in use lasts (lifeOf), always aiming short (Ana: "end before!"):
 //   the model's minutes (the group's own for it, else wh ÷ the device's watts, else the group's) × the battery's rank, no more than its last runs that ended dead or low
-//   (dead counts 10% shorter), −15% if its TX is in a long scene today (≥ 3 pages, the AT's rule)
+//   (dead counts 10% shorter). No more −15% for a long scene (Ana, 23 Oct: "too strict… at 14h it didn't need a change").
 // Colours, always (Ana, 12 Oct: "green, yellow and red — charged are green, used are red"):
 //   full green · charging yellow (green once its time is up) · empty red ·
 //   in use green, yellow under 30% of its life, red under 10% or past it
@@ -42,8 +42,6 @@ export const TIMER_STALE_H = 16;
 export const CHARGE_DEFAULT_MIN = 180; // a group with no charge time: 3 hours (Ana, 19 Oct)
 
 export const ENDS = [['dead', 'Dead'], ['low', 'Low'], ['ok', 'Still OK']];
-export const LONG_SCENE_PAGES = 3;
-export const LONG_SCENE_CUT = 0.85;
 const RUNS_KEPT = 10;
 const RUNS_LEARNED = 3;
 const DEAD_CUT = 0.9;
@@ -90,12 +88,6 @@ export function wearerOf(project, txId, now = Date.now()) {
   return null;
 }
 
-// today's long scenes with this TX in them
-export function longScenesFor(project, txId, now = Date.now()) {
-  return (todayOf(project, now)?.scenes || []).map(s => String(s.scene_id)).filter(id =>
-    pagesOf(project.scenes?.[id]?.pages) >= LONG_SCENE_PAGES &&
-    project.presets?.[id]?.rows?.some(r => String(r.tx_id) === String(txId)));
-}
 
 // estimated minutes a battery lasts in use, and why (see the top): { minutes, notes } or null (no estimate)
 // what a battery's minutes depend on: its TX's model, its IFB receiver's model ('RX 3'), else the place itself
@@ -129,8 +121,6 @@ export function lifeOf(project, battery, group, now = Date.now()) {
     if (!minutes || learned < minutes) { minutes = learned; notes.push(`its last runs ${clock(Math.round(learned))}`); }
   }
   if (!minutes) return null;
-  const long = tx ? longScenesFor(project, tx.id, now) : [];
-  if (long.length) { minutes *= LONG_SCENE_CUT; notes.push(`long scene ${long.map(id => `#${id}`).join(' ')} −15%`); }
   return { minutes: Math.round(minutes), notes };
 }
 
