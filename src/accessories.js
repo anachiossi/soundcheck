@@ -18,7 +18,7 @@ export const POSITIONS = ['chest', 'collar', 'tie', 'hair', 'hat', 'bra', 'shirt
 // the costume's colour where the lav hides (row.position_color: 'navy'), the Position pill's colour (Ana, 23 Oct)
 export const COSTUME_COLOURS = {
   white: '#ffffff', black: '#111111', grey: '#9ca3af', navy: '#1e3a5f', blue: '#2563eb', beige: '#faf1d9',
-  brown: '#6b4226', pink: '#f9a8d4', red: '#dc2626', green: '#15803d', yellow: '#facc15',
+  brown: '#6b4226', pink: '#f9a8d4', magenta: '#a21caf', red: '#dc2626', green: '#15803d', yellow: '#facc15',
 };
 export const positionColour = row => COSTUME_COLOURS[row?.position_color] || '';
 

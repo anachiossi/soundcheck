@@ -156,6 +156,7 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
 - v191 (23 Oct): **Position in the costume's colour** (Ana). A row may carry `position_color: 'navy'` (names in
   accessories.js `COSTUME_COLOURS`); the editor has a round colour button next to the Position text, the table's
   Position pill and the assistants' image take that colour. In the image the position breaks onto two lines.
+- v192 (23 Oct): costume colour **magenta** (#a21caf) added — Helen's dress, "more magenta, almost purple" (Ana).
 - v167 (18 Oct): **Costume column** — `costumes.json` (film data) says which costume change (ch.N) each character
   wears in each scene; none to 3 photos per change (front, back, detail) in the film's own private photos repo
   (`anachiossi/la-buona-educazione-photos`, 1600 px + thumbs). Phones keep all thumbs + full photos of the next
