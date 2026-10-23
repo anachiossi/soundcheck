@@ -153,6 +153,9 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
 - v190 (23 Oct): exported mic-list images (Ana). **Sound assistants**: a SPEAKS column (YES/NO, as the mixer's) and
   each accessory as a small pill in its own colour (Ankle black, Plush sleeve beige…), stacked when a row has several.
   **Sound mixer**: the TX pill shows its model under the number (4 / TRXLA3.5) and is wider, the lav pill narrower.
+- v191 (23 Oct): **Position in the costume's colour** (Ana). A row may carry `position_color: 'navy'` (names in
+  accessories.js `COSTUME_COLOURS`); the editor has a round colour button next to the Position text, the table's
+  Position pill and the assistants' image take that colour. In the image the position breaks onto two lines.
 - v167 (18 Oct): **Costume column** — `costumes.json` (film data) says which costume change (ch.N) each character
   wears in each scene; none to 3 photos per change (front, back, detail) in the film's own private photos repo
   (`anachiossi/la-buona-educazione-photos`, 1600 px + thumbs). Phones keep all thumbs + full photos of the next

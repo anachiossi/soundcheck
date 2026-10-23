@@ -49,6 +49,14 @@ export function setPosition(rowIndex, position) {
   });
 }
 
+// the costume's colour behind the lav (Position pill's colour): 'navy', 'beige'… or '' for none
+export function setPositionColour(rowIndex, colour) {
+  changeRows(rows => {
+    rows[rowIndex] = { ...rows[rowIndex], position_color: colour };
+    return rows;
+  });
+}
+
 // the Acc. columns: a gear thing in or out of the row (several allowed; the picker stays open)
 export function toggleAcc(rowIndex, id) {
   changeRows(rows => {

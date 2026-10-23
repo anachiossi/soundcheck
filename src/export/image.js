@@ -11,7 +11,7 @@
 import { sceneRows, scheduleFor, sceneInfo, timeClass, formatDate, formatStamp } from '../model.js';
 import { newCanvas, box, text, font, pill, tag, wrapLines } from './draw.js';
 import { LEVELS, soundOf, flagText, warningText, warningsByCharacter } from '../sound-rules.js';
-import { rowAccessories } from '../accessories.js';
+import { rowAccessories, positionColour } from '../accessories.js';
 import { txTimer, timeOfDay } from '../battery-rules.js';
 import { textColourFor, isNearWhite } from '../colour.js';
 
@@ -135,13 +135,33 @@ function drawRigRows(ctx, project, rows, y) {
     pill(ctx, PAD + 456, y, 116, h, row.lav?.color, row.lav?.model || '—', '', { outline: row.lav?.attenuated ? '#dc2626' : null });
     accessoryPills(ctx, PAD + 584, y, 110, h, rowAccessories(project, row, 'lav'));
     accessoryPills(ctx, PAD + 706, y, 110, h, rowAccessories(project, row, 'tx'));
-    plain(828, 90, h, row.position || '—', y);
+    const costume = positionColour(row); // the costume's colour where the lav hides (Ana, 23 Oct)
+    const costumeFill = costume && !isNearWhite(costume) ? costume : '#f1f5f9';
+    twoLinePill(ctx, PAD + 828, y, 90, h, row.position || '—', costumeFill);
     const [label, fill, ink] = SPEAKER[row.speaker] || SPEAKER.maybe;
     box(ctx, PAD + 930, y + 10, 70, h - 20, (h - 20) / 2, fill);
     font(ctx, 800, 22); text(ctx, label, PAD + 965, y + h / 2, 62, ink, 'center');
     y += ROW;
   }
   return y + 14;
+}
+
+// a pill whose words may break onto a second line ("Scollo a" / "fascia"), smaller letters until each line fits
+function twoLinePill(ctx, x, y, w, h, label, fill) {
+  box(ctx, x, y, w, h, h / 2, fill);
+  const words = String(label).split(' ');
+  let size = words.length > 1 ? 22 : 24;
+  font(ctx, 800, size);
+  // the break that gives the most even lines: "Scollo" / "a V", not "Scollo a" / "V"
+  let lines = words;
+  if (words.length > 1) {
+    const splits = words.slice(1).map((_, i) => [words.slice(0, i + 1).join(' '), words.slice(i + 1).join(' ')]);
+    const widest = pair => Math.max(...pair.map(line => ctx.measureText(line).width));
+    lines = splits.reduce((best, pair) => (widest(pair) < widest(best) ? pair : best));
+  }
+  while (size > 14 && Math.max(...lines.map(line => ctx.measureText(line).width)) > w - 14) { size -= 1; font(ctx, 800, size); }
+  const ink = textColourFor(fill);
+  lines.forEach((line, i) => text(ctx, line, x + w / 2, y + h / 2 + (i - (lines.length - 1) / 2) * (size + 4), w - 10, ink, 'center'));
 }
 
 // a row's accessories, one small pill each, stacked in the cell, in the thing's own colour (as in the app's Acc. column)

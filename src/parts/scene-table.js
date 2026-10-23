@@ -23,11 +23,11 @@ import { getState, setState } from '../state.js';
 import { cueLines } from '../cues-rules.js';
 import { resolveConflict } from '../sync.js';
 import { presetFile } from '../store/repo-files.js';
-import { CharacterPill, TxPill, LavPill, SpeakerBadge, AccPill } from './pills.js';
+import { CharacterPill, TxPill, LavPill, SpeakerBadge, AccPill, coloured } from './pills.js';
 import { SceneEditor } from './scene-editor.js';
 import { SoundBar, RowWarnings } from './sound-bar.js';
 import { Icon } from './icons.js';
-import { rowAccessories } from '../accessories.js';
+import { rowAccessories, positionColour } from '../accessories.js';
 import { BatteryCell } from './battery-cell.js';
 import { PhotoTap } from './photo-viewer.js';
 import { itemPhotos, lavPhotos, txPhotos } from '../gear-photos.js';
@@ -103,9 +103,10 @@ export function AccCell({ project, row, side, withPhotos }) {
   return html`<${PhotoTap} project=${project} title=${title} photos=${things.flatMap(t => itemPhotos(project, t.id))}>${pills}<//>`;
 }
 
-// where the lav goes: chest, collar, hair… (free text)
-export const PositionPill = ({ position }) => (position
-  ? html`<span class="pill pill--lav pill--lav-model pill--position" title=${position}><b>${position}</b></span>`
+// where the lav goes: chest, collar, hair… (free text), in the costume's colour there if given (Ana, 23 Oct)
+export const PositionPill = ({ position, colour }) => (position
+  ? html`<span class="pill pill--lav pill--lav-model pill--position" style=${colour ? coloured(colour) : ''} title=${position}>
+      <b>${position}</b></span>`
   : html`<span class="acc acc--empty">—</span>`);
 
 // the columns after the Character, in Ana's order: key, label, min (px), grow (share of the spare width), view cell.
@@ -123,7 +124,7 @@ export const COLUMNS = [
     photos=${lavPhotos(project, row.lav)}><${LavPill} lav=${row.lav} id=${row.lav_id} /><//>` },
   { key: 'lav_acc', label: 'Lav acc.', min: 66, cell: (project, row) => html`<${AccCell} project=${project} row=${row} side="lav" withPhotos />` },
   { key: 'tx_acc', label: 'TX acc.', min: 66, cell: (project, row) => html`<${AccCell} project=${project} row=${row} side="tx" withPhotos />` },
-  { key: 'position', label: 'Position', min: 96, grow: 1.6, cell: (project, row) => html`<${PositionPill} position=${row.position} />` },
+  { key: 'position', label: 'Position', min: 96, grow: 1.6, cell: (project, row) => html`<${PositionPill} position=${row.position} colour=${positionColour(row)} />` },
   { key: 'costume', label: 'Costume', min: 84, cell: (project, row, sceneId) => html`<${CostumeCell} project=${project} sceneId=${sceneId} row=${row} />` },
 ];
 

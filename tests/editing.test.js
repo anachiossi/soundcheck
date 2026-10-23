@@ -163,6 +163,16 @@ test('the Acc. column: a row keeps its accessories when saved, none = no field (
     [{ char_id: '1', tx_id: '3', lav_id: '', speaker: 'no' }]);
 });
 
+test('the position keeps its costume colour when saved, and the pill gets that colour (Ana, 23 Oct)', async () => {
+  const { cleanRows } = await import('../src/preset-rules.js');
+  const { positionColour } = await import('../src/accessories.js');
+  const saved = cleanRows([{ char_id: '1', tx_id: '3', lav_id: '12', speaker: 'yes', position: 'Gola T-shirt', position_color: 'navy' }]);
+  assert.equal(saved[0].position_color, 'navy');
+  assert.equal(positionColour(saved[0]), '#1e3a5f');
+  assert.equal(positionColour({ position: 'Camicia' }), '');
+  assert.equal('position_color' in cleanRows([{ char_id: '1', position_color: '' }])[0], false);
+});
+
 // v149: the lav's position is kept with the row; the acc. list splits into Lav acc. / TX acc. by the thing's type
 import { cleanRows as cleanRows149 } from '../src/preset-rules.js';
 import { accSide } from '../src/accessories.js';

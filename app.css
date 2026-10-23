@@ -174,6 +174,11 @@ button.scene-pill { cursor: pointer; }
 .mics__input { width: 100%; box-sizing: border-box; min-height: var(--pill-h); border: 2px dashed var(--muted-2); border-radius: 999px;
   background: none; padding: 0 8px; font: inherit; font-size: 14px; font-weight: 700; text-align: center; color: var(--ink); }
 .mics--pages .edit-cell { width: 100%; }
+/* Position in the editor: the text, then a round button for the costume's colour (Ana, 23 Oct) */
+.position-edit { display: flex; align-items: center; gap: 4px; width: 100%; min-width: 0; }
+.position-edit .mics__input { flex: 1; min-width: 0; }
+.position-edit__colour { appearance: none; -webkit-appearance: none; flex-shrink: 0; width: 28px; height: 28px; padding: 0;
+  border-radius: 50%; border: 2px solid var(--muted-2); color: transparent; font-size: 16px; }
 .mics--pages .pill--lav-model { justify-content: center; padding-left: 4px; padding-right: 4px; }
 /* no "…" in the mic pages (Ana, 18 Oct): words show whole; a long accessory name breaks onto a second line */
 .mics--pages .pill b { text-overflow: clip; }

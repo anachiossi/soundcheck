@@ -141,6 +141,8 @@ export function sameDayKit(project, sceneId, rows) {
 
 // Rows as stored (without the screen-only `key`).
 export function cleanRows(rows) {
-  return rows.map(({ char_id, tx_id, lav_id, speaker, acc, position }) => ({ char_id, tx_id, lav_id, speaker, ...(acc?.length ? { acc } : {}),
-    ...(String(position || '').trim() ? { position: String(position).trim() } : {}) }));
+  return rows.map(({ char_id, tx_id, lav_id, speaker, acc, position, position_color }) => ({ char_id, tx_id, lav_id, speaker,
+    ...(acc?.length ? { acc } : {}),
+    ...(String(position || '').trim() ? { position: String(position).trim() } : {}),
+    ...(position_color ? { position_color } : {}) }));
 }

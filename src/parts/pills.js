@@ -8,7 +8,7 @@
 import { html } from '../../vendor/preact-htm.js';
 import { textColourFor, isNearWhite } from '../colour.js';
 
-function coloured(background) {
+export function coloured(background) {
   const bg = background && !isNearWhite(background) ? background : '#f1f5f9';
   return `background:${bg};color:${textColourFor(bg)}`;
 }

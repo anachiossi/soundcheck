@@ -1,6 +1,7 @@
 // scene-editor.js — the mic table of a scene in EDIT mode, on the same swipe pages as the table
 // (scene-table.js PagedMics). Tap a Character / TX / Lav / acc. cell → the picker opens. Tap Speaks to change
-// YES → NO → ? . Position: type it (suggestions: accessories.js POSITIONS). The Battery column works as in the table.
+// YES → NO → ? . Position: type it (suggestions: accessories.js POSITIONS); the round button next to it picks the
+// costume's colour there (the pill's colour). The Battery column works as in the table.
 // ↑ moves a row up, ✕ deletes it (next to the character), + adds one.
 // Warnings (same TX or lav twice, a TRXLA without its 6061) show above Save; Save still works but asks
 // for a second tap ("Save anyway").
@@ -11,10 +12,10 @@ import { byId } from '../model.js';
 import { warnings, txLavProblems } from '../preset-rules.js';
 import { lavProblems } from '../sound-rules.js';
 import { RowWarnings } from './sound-bar.js';
-import { openPicker, cycleSpeaker, addRow, deleteRow, moveRow, cancelEdit, saveEdit, setPosition } from '../editing.js';
+import { openPicker, cycleSpeaker, addRow, deleteRow, moveRow, cancelEdit, saveEdit, setPosition, setPositionColour } from '../editing.js';
 import { CharacterPill, TxPill, LavPill, SpeakerBadge } from './pills.js';
 import { Icon } from './icons.js';
-import { POSITIONS } from '../accessories.js';
+import { POSITIONS, COSTUME_COLOURS, positionColour } from '../accessories.js';
 import { AccCell, PagedMics } from './scene-table.js';
 import { CostumeCell } from './costume-cell.js';
 import { BatteryCell } from './battery-cell.js';
@@ -54,8 +55,14 @@ export function SceneEditor({ project, edit }) {
         lav: cell(i, 'lav_id', row.lav_id ? html`<${LavPill} lav=${lav} id=${row.lav_id} />` : empty('lav')),
         lav_acc: cell(i, 'acc', html`<${AccCell} project=${project} row=${row} side="lav" />`, 'lav'),
         tx_acc: cell(i, 'acc', html`<${AccCell} project=${project} row=${row} side="tx" />`, 'tx'),
-        position: html`<input class="mics__input" list="lav-positions" value=${row.position || ''} placeholder="—" aria-label="Position"
-          onInput=${e => setPosition(i, e.target.value)} />`,
+        position: html`<span class="position-edit">
+          <input class="mics__input" list="lav-positions" value=${row.position || ''} placeholder="—" aria-label="Position"
+            onInput=${e => setPosition(i, e.target.value)} />
+          <select class="position-edit__colour" value=${row.position_color || ''} aria-label="Costume colour"
+            style=${`background:${positionColour(row) || 'transparent'}`} onChange=${e => setPositionColour(i, e.target.value)}>
+            <option value="">no colour</option>
+            ${Object.keys(COSTUME_COLOURS).map(name => html`<option key=${name} value=${name}>${name}</option>`)}
+          </select></span>`,
         costume: html`<${CostumeCell} project=${project} sceneId=${edit.sceneId} row=${{ ...row, character }} />`,
       },
       after: html`<${RowWarnings} project=${project} sceneId=${edit.sceneId} charId=${row.char_id} />`,

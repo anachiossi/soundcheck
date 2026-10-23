@@ -3,7 +3,8 @@
 // (strap, pouch) and what covers the lav (fur, cover, foam). Always optional: the preset generator never
 // fills it, an empty cell is fine. One list per row, shown in two columns by the thing's type (accSide).
 // v149 (Ana, 13 Oct): the Speaks ⇄ Acc. swap is gone — every column has its own place (scene-table.js pages).
-// A row may also carry position: 'chest' — where the lav goes, free text (POSITIONS are suggestions).
+// A row may also carry position: 'chest' — where the lav goes, free text (POSITIONS are suggestions) —
+// and position_color: 'beige', the costume's colour there (COSTUME_COLOURS).
 // The pool is the Gear inventory: every thing whose type is a strap, pouch, fur, cover or foam
 // (settings.json → "accessory_types" can name other words for another film).
 // A character's usual kit (characters.json → usual_acc: [{ slot, name, gear? }]) is offered on top of the picker.
@@ -14,6 +15,12 @@ import { activeItems, itemById, shortName } from './gear-rules.js';
 const WORDS = ['strap', 'pouch', 'lav fur', 'lav cover', 'overcover', 'foam mount', 'mini mount', 'plush sleeve']; // not the mics' foams and furs
 const TX_WORDS = ['strap', 'pouch', 'pocket', 'belt']; // what holds the TX; anything else is the lav's
 export const POSITIONS = ['chest', 'collar', 'tie', 'hair', 'hat', 'bra', 'shirt', 'jacket', 'cleavage', 'ear', 'forehead'];
+// the costume's colour where the lav hides (row.position_color: 'navy'), the Position pill's colour (Ana, 23 Oct)
+export const COSTUME_COLOURS = {
+  white: '#ffffff', black: '#111111', grey: '#9ca3af', navy: '#1e3a5f', blue: '#2563eb', beige: '#faf1d9',
+  brown: '#6b4226', pink: '#f9a8d4', red: '#dc2626', green: '#15803d', yellow: '#facc15',
+};
+export const positionColour = row => COSTUME_COLOURS[row?.position_color] || '';
 
 const plainText = text => String(text || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
