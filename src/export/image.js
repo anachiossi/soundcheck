@@ -1,7 +1,8 @@
 // image.js — makes shareable PNG images from the local data (works offline):
 //   sceneSheet(project, sceneIds, title, audience)  one or more scenes (scene card / day sheet)
 // audience (parts/image-for.js asks it): 'mixer' = Character · TX · Lav · Speaks;
-//   'assistants' = Character · TX + MHz · Change at (the battery's change time, no colours) · Lav · Lav acc. · TX acc. · Position
+//   'assistants' = Character · TX + MHz · Change at (the battery's change time, no colours) · Lav · Lav acc. · TX acc.
+//   (each accessory a pill in its colour) · Position · Speaks
 // (Week / all-film images: schedule-images.js, built from the same pieces.)
 // Every image carries the film name and "data as of …" so an old screenshot
 // is never mistaken for the current plan.
@@ -12,6 +13,7 @@ import { newCanvas, box, text, font, pill, tag, wrapLines } from './draw.js';
 import { LEVELS, soundOf, flagText, warningText, warningsByCharacter } from '../sound-rules.js';
 import { rowAccessories } from '../accessories.js';
 import { txTimer, timeOfDay } from '../battery-rules.js';
+import { textColourFor, isNearWhite } from '../colour.js';
 
 export const WIDTH = 1080;
 export const PAD = 40;
@@ -88,16 +90,17 @@ export function drawScene(ctx, project, sceneId, y, audience = 'mixer') {
   // Column titles, so "YES" reads as "this character speaks". The mixer's image: TX numbers, no frequencies (Ana, 13 Oct)
   font(ctx, 600, 20);
   text(ctx, 'CHARACTER', PAD + 24, y + 12, 0, '#64748b');
-  text(ctx, 'TX', PAD + 516, y + 12, 0, '#64748b', 'center');
-  text(ctx, 'LAV', PAD + 616, y + 12, 0, '#64748b');
+  text(ctx, 'TX', PAD + 556, y + 12, 0, '#64748b', 'center');
+  text(ctx, 'LAV', PAD + 696, y + 12, 0, '#64748b');
   text(ctx, 'SPEAKS', PAD + 940, y + 12, 0, '#64748b', 'center');
   y += 34;
   for (const row of rows) {
     const h = ROW - 16;
     const c = row.character;
     pill(ctx, PAD, y, 440, h, c?.color, c?.name || `? ${row.char_id}`, c?.actor);
-    pill(ctx, PAD + 456, y, 120, h, c?.color || row.tx?.color, row.tx?.id || '—');
-    pill(ctx, PAD + 592, y, 260, h, row.lav?.color, row.lav?.model || '—', '',
+    // the TX's number with its model under it (TRXLA3.5, ZMT4.5…), so TX and lav pills are about the same size (Ana, 23 Oct)
+    pill(ctx, PAD + 456, y, 200, h, c?.color || row.tx?.color, row.tx?.id || '—', row.tx?.model || '');
+    pill(ctx, PAD + 672, y, 180, h, row.lav?.color, row.lav?.model || '—', '',
       { outline: row.lav?.attenuated ? '#dc2626' : null });
     const [label, bg, fg] = SPEAKER[row.speaker] || SPEAKER.maybe;
     box(ctx, PAD + 880, y + 10, 120, h - 20, (h - 20) / 2, bg);
@@ -107,35 +110,54 @@ export function drawScene(ctx, project, sceneId, y, audience = 'mixer') {
   return y + 14;
 }
 
-// the sound assistants' rows: what to rig and when to change the battery (the time, no colours; OFF = not rigged yet)
+// the sound assistants' rows: what to rig and when to change the battery (the time, no colours; OFF = not rigged yet),
+// each accessory a pill in its own colour (Waist beige, Ankle black…) and who speaks (Ana, 23 Oct)
 function drawRigRows(ctx, project, rows, y) {
   const now = Date.now();
-  const columns = [['CHARACTER', 0, 250], ['TX', 262, 110], ['CHANGE', 384, 110], ['LAV', 506, 130], ['LAV ACC.', 648, 110],
-    ['TX ACC.', 770, 110], ['POSITION', 892, 108]];
-  font(ctx, 600, 20);
-  columns.forEach(([title, x, w], i) => text(ctx, title, i ? PAD + x + w / 2 : PAD + 24, y + 12, w, '#64748b', i ? 'center' : 'left'));
+  const columns = [['CHARACTER', 0, 214], ['TX', 226, 110], ['CHANGE', 348, 96], ['LAV', 456, 116], ['LAV ACC.', 584, 110],
+    ['TX ACC.', 706, 110], ['POSITION', 828, 90], ['SPEAKS', 930, 70]];
+  font(ctx, 600, 18);
+  columns.forEach(([title, x, w], i) => text(ctx, title, i ? PAD + x + w / 2 : PAD + 24, y + 12, w + 8, '#64748b', i ? 'center' : 'left'));
   y += 34;
   const plain = (x, w, h, value, top, [fill, ink] = ['#f1f5f9', '#0f172a']) => {
     box(ctx, PAD + x, top, w, h, h / 2, fill);
     font(ctx, 800, 26); text(ctx, value, PAD + x + w / 2, top + h / 2, w - 16, ink, 'center');
   };
   const FROZEN = ['#dbeafe', '#1d4ed8']; // a TX asleep: blue, like frozen time (app.css --frozen)
-  const things = (row, side) => rowAccessories(project, row, side).map(t => t.label).join(' + ') || '—';
   for (const row of rows) {
     const h = ROW - 16;
     const c = row.character;
-    pill(ctx, PAD, y, 250, h, c?.color, c?.name || `? ${row.char_id}`, c?.actor);
-    pill(ctx, PAD + 262, y, 110, h, c?.color || row.tx?.color, row.tx?.id || '—', row.tx?.frequency ? String(row.tx.frequency) : '');
+    pill(ctx, PAD, y, 214, h, c?.color, c?.name || `? ${row.char_id}`, c?.actor);
+    pill(ctx, PAD + 226, y, 110, h, c?.color || row.tx?.color, row.tx?.id || '—', row.tx?.frequency ? String(row.tx.frequency) : '');
     const timer = row.tx_id ? txTimer(project, row.tx_id, now) : null;
-    plain(384, 110, h, timer?.endsAt ? timeOfDay(timer.endsAt) : timer?.asleep ? 'SLEEP' : timer ? 'ON' : row.tx_id ? 'OFF' : '—', y,
+    plain(348, 96, h, timer?.endsAt ? timeOfDay(timer.endsAt) : timer?.asleep ? 'SLEEP' : timer ? 'ON' : row.tx_id ? 'OFF' : '—', y,
       timer?.asleep ? FROZEN : undefined);
-    pill(ctx, PAD + 506, y, 130, h, row.lav?.color, row.lav?.model || '—', '', { outline: row.lav?.attenuated ? '#dc2626' : null });
-    plain(648, 110, h, things(row, 'lav'), y);
-    plain(770, 110, h, things(row, 'tx'), y);
-    plain(892, 108, h, row.position || '—', y);
+    pill(ctx, PAD + 456, y, 116, h, row.lav?.color, row.lav?.model || '—', '', { outline: row.lav?.attenuated ? '#dc2626' : null });
+    accessoryPills(ctx, PAD + 584, y, 110, h, rowAccessories(project, row, 'lav'));
+    accessoryPills(ctx, PAD + 706, y, 110, h, rowAccessories(project, row, 'tx'));
+    plain(828, 90, h, row.position || '—', y);
+    const [label, fill, ink] = SPEAKER[row.speaker] || SPEAKER.maybe;
+    box(ctx, PAD + 930, y + 10, 70, h - 20, (h - 20) / 2, fill);
+    font(ctx, 800, 22); text(ctx, label, PAD + 965, y + h / 2, 62, ink, 'center');
     y += ROW;
   }
   return y + 14;
+}
+
+// a row's accessories, one small pill each, stacked in the cell, in the thing's own colour (as in the app's Acc. column)
+function accessoryPills(ctx, x, y, w, h, things) {
+  if (!things.length) return pill(ctx, x, y, w, h, null, '—');
+  const gap = 4;
+  const each = (h - gap * (things.length - 1)) / things.length;
+  things.forEach((thing, i) => {
+    const top = y + i * (each + gap);
+    const fill = thing.color && !isNearWhite(thing.color) ? thing.color : '#e5e7eb';
+    box(ctx, x, top, w, each, each / 2, fill);
+    let size = Math.min(24, Math.floor(each * 0.6)); // smaller letters until the label fits
+    font(ctx, 800, size);
+    while (size > 14 && ctx.measureText(thing.label).width > w - 14) { size -= 1; font(ctx, 800, size); }
+    text(ctx, thing.label, x + w / 2, top + each / 2, w - 12, textColourFor(fill), 'center');
+  });
 }
 
 // Sound line under the slate, sober (no dificultômetro colours on images): the level, the

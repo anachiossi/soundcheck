@@ -150,6 +150,9 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   the iPhone no longer waits to see if it's a double-tap zoom). Ana: "the X was painfully hard to work".
 - v189 (23 Oct): no more "!" next to a lav when the TX and lav connectors differ (mic tables and the exported
   image). Ana: "Take the '!' on the lavs". `row.connectorMismatch` is still worked out in `model.js`, just not shown.
+- v190 (23 Oct): exported mic-list images (Ana). **Sound assistants**: a SPEAKS column (YES/NO, as the mixer's) and
+  each accessory as a small pill in its own colour (Ankle black, Plush sleeve beige…), stacked when a row has several.
+  **Sound mixer**: the TX pill shows its model under the number (4 / TRXLA3.5) and is wider, the lav pill narrower.
 - v167 (18 Oct): **Costume column** — `costumes.json` (film data) says which costume change (ch.N) each character
   wears in each scene; none to 3 photos per change (front, back, detail) in the film's own private photos repo
   (`anachiossi/la-buona-educazione-photos`, 1600 px + thumbs). Phones keep all thumbs + full photos of the next

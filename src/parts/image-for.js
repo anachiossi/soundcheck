@@ -1,7 +1,7 @@
 // image-for.js — before a mic-list image, one question (Ana, 13 Oct: "image for sound mixer or for sound assistants?").
 // The app itself always shows every column; only the image differs (export/image.js):
-//   Sound mixer:      Character · TX · Lav · Speaks
-//   Sound assistants: Character · TX + MHz · Change at · Lav · Lav acc. · TX acc. · Position
+//   Sound mixer:      Character · TX + model · Lav · Speaks
+//   Sound assistants: Character · TX + MHz · Change at · Lav · Lav acc. · TX acc. · Position · Speaks
 //   const audience = await askImageFor(); if (!audience) return;   // 'mixer' | 'assistants' | null (closed)
 // Used by: main.js (the sheet), screens/schedule.js, screens/scenes.js, screens/lav-share.js
 
