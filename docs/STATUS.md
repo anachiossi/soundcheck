@@ -148,6 +148,8 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   "stuck in a photos page"). `src/parts/zoom-image.js`. Not tried on an iPhone yet.
 - v186 (22 Oct): the photo viewer's Close (X) is big (56 px target) and taps at once (`touch-action: manipulation`:
   the iPhone no longer waits to see if it's a double-tap zoom). Ana: "the X was painfully hard to work".
+- v189 (23 Oct): no more "!" next to a lav when the TX and lav connectors differ (mic tables and the exported
+  image). Ana: "Take the '!' on the lavs". `row.connectorMismatch` is still worked out in `model.js`, just not shown.
 - v167 (18 Oct): **Costume column** — `costumes.json` (film data) says which costume change (ch.N) each character
   wears in each scene; none to 3 photos per change (front, back, detail) in the film's own private photos repo
   (`anachiossi/la-buona-educazione-photos`, 1600 px + thumbs). Phones keep all thumbs + full photos of the next

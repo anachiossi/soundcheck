@@ -120,7 +120,7 @@ export const COLUMNS = [
   // Lav · Lav acc. · TX acc. fit one phone page together (Ana, 18 Oct): accessory words are stacked, one per line
   // in the table (not the editor) a TX, lav or accessory with a photo opens it when tapped (gear-photos.js, Ana 19 Oct)
   { key: 'lav', label: 'Lav', min: 66, cell: (project, row) => html`<${PhotoTap} project=${project} title=${`Lav ${row.lav_id} · ${row.lav?.model || ''}`}
-    photos=${lavPhotos(project, row.lav)}><${LavPill} lav=${row.lav} id=${row.lav_id} mismatch=${row.connectorMismatch} /><//>` },
+    photos=${lavPhotos(project, row.lav)}><${LavPill} lav=${row.lav} id=${row.lav_id} /><//>` },
   { key: 'lav_acc', label: 'Lav acc.', min: 66, cell: (project, row) => html`<${AccCell} project=${project} row=${row} side="lav" withPhotos />` },
   { key: 'tx_acc', label: 'TX acc.', min: 66, cell: (project, row) => html`<${AccCell} project=${project} row=${row} side="tx" withPhotos />` },
   { key: 'position', label: 'Position', min: 96, grow: 1.6, cell: (project, row) => html`<${PositionPill} position=${row.position} />` },

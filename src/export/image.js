@@ -99,7 +99,6 @@ export function drawScene(ctx, project, sceneId, y, audience = 'mixer') {
     pill(ctx, PAD + 456, y, 120, h, c?.color || row.tx?.color, row.tx?.id || '—');
     pill(ctx, PAD + 592, y, 260, h, row.lav?.color, row.lav?.model || '—', '',
       { outline: row.lav?.attenuated ? '#dc2626' : null });
-    if (row.connectorMismatch) { font(ctx, 800, 34); text(ctx, '!', PAD + 862, y + h / 2, 0, '#ea580c'); }
     const [label, bg, fg] = SPEAKER[row.speaker] || SPEAKER.maybe;
     box(ctx, PAD + 880, y + 10, 120, h - 20, (h - 20) / 2, bg);
     font(ctx, 800, 26); text(ctx, label, PAD + 940, y + h / 2, 0, fg, 'center');

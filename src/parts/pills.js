@@ -1,7 +1,8 @@
 // pills.js — the coloured rounded "pills" that fill every mic table:
 // character, transmitter (TX), lavalier (lav) and the speaker badge.
 // Colour = identity: the TX pill takes the CHARACTER's colour, so a row reads
-// as one person. Red outline = attenuated lav. "!" = TX/lav connectors differ.
+// as one person. Red outline = attenuated lav. No "!" for TX/lav connectors that differ: Ana knows
+// which lav needs the adaptor (Ana, 23 Oct: "Take the '!' on the lavs").
 // Used by: parts/scene-table.js, screens/kit.js, screens/ifb-*.js
 
 import { html } from '../../vendor/preact-htm.js';
@@ -37,7 +38,7 @@ export function TxPill({ tx, character, id, withFrequency }) {
 
 // number: the lav's own number next to its model — only where a particular lav is chosen (Kit, picker);
 // the scene tables show the model and colour only (Ana, 1 Oct)
-export function LavPill({ lav, id, mismatch, number }) {
+export function LavPill({ lav, id, number }) {
   if (!lav) return html`<span class="pill pill--missing">${id ? `? ${id}` : '—'}</span>`;
   return html`
     <span class="lav-cell">
@@ -45,7 +46,6 @@ export function LavPill({ lav, id, mismatch, number }) {
             style=${coloured(lav.color)} title=${lav.attenuated ? 'attenuated' : ''}>
         <b>${lav.model}</b>${number && html`<small class="pill__id">${lav.id}</small>`}
       </span>
-      ${mismatch && html`<span class="warn" title="TX and lav connectors differ">!</span>`}
     </span>`;
 }
 
