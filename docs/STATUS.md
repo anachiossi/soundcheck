@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-10-20 · live version **v173** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-10-24 · live version **v173** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
@@ -11,6 +11,9 @@ The film-specific diary (decisions, dates, what Ana said) is private:
 - **Vigília** — short, Italian weekend 3–4 Oct 2026, built by hand (no PDL/ODG):
   `D:\script_read_claude\projectsigilia\workuild_vigilia.py`. No email robot (no inbox.json).
   Its script reader options are in its own settings.json (`script_reader`: watermarks, unnumbered_scenes).
+- **Il colpo** (IC) — series, Tramp Limited, from ODG #48 (24 Oct 2026), built by hand from that ODG.
+  Its ODG layout has its own reader, `pipeline/read_odg_tramp.py` (picked automatically, 24 Oct).
+  No email robot yet: inbox.json waits for the production's email subject. Crew page (read_crew) not adapted.
 - Rule (Ana): reader/parser configuration lives in the film's data; never change another film's results.
   Before touching a reader, save LBE's readings and compare after (script + every sides PDF).
 

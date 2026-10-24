@@ -59,7 +59,7 @@ Runs in the cloud (GitHub Actions), in Python; the laptop can run it too. Nothin
 | Step | File |
 |---|---|
 | Download ODG + sides from Gmail (app password in `~/.soundcheck/gmail.txt`) | `pipeline/fetch_mail.py` |
-| Read the ODG: day, times, scenes, cast, department notes | `pipeline/read_odg.py` |
+| Read the ODG: day, times, scenes, cast, department notes | `pipeline/read_odg.py` (LBE layout); the Tramp Limited layout (Il colpo) → `pipeline/read_odg_tramp.py`, chosen automatically |
 | Read the sides: who speaks in each scene | `pipeline/read_sides.py` |
 | Compare with the film (date, times, scenes, cast, speakers) | `pipeline/compare.py`, `pipeline/compare_mics.py` |
 | Write `proposals/odg-N.json` | `pipeline/propose.py` |
