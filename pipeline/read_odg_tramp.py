@@ -72,7 +72,7 @@ def read_scene_table(lines):
 
 
 def read_cast(lines):
-    """Cast (ID · ROLE · actor) and special extras ('ID.136' · 'BIDELLA (Adele Abballe)'). A '(M)' after a
+    """Cast (ID · ROLE · actor) and special extras ('ID.90' · 'BIDELLA (Actor Name)'). A '(M)' after a
     role = a minor: kept as "minor": true."""
     after_table = next((i for i, line in enumerate(lines) if line.startswith("TOT PGS")), 0)  # not the table's CAST column
     body, _ = section(lines, "CAST", ("CONVOCAZIONE MINORI", "CONVOCAZIONE FIGURAZIONI TOT", "FABBISOGNI"), start_at=after_table)
