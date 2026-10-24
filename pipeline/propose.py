@@ -22,7 +22,7 @@ from compare import NOTE_ICONS, note_kind, check_cast_list, check_date, check_ne
 from compare_mics import check_scene_mics
 from compare_crew import check_crew
 from read_crew import read_crew
-from read_odg import read_odg
+from odg_reader import odg_reader_for
 from read_sides import read_sides
 from fetch_mail import emails_oldest_first
 
@@ -71,7 +71,7 @@ def build_proposal(film_folder, email_folder, other_sides=None):
     film = load_film(film_folder)
     email = json.loads((email_folder / "email.json").read_text(encoding="utf-8"))
     odg_pdf = next(p for p in email_folder.glob("*.pdf") if "ODG" in p.name.upper())
-    odg = read_odg(odg_pdf)
+    odg = odg_reader_for(film_folder)(odg_pdf)  # the film's own reader (settings.json "odg_reader")
     sides_pdf = next((p for p in email_folder.glob("*.pdf") if "STRALCI" in p.name.upper()), None)
     if sides_pdf is None:
         sides_pdf = (other_sides or {}).get(odg["number"])

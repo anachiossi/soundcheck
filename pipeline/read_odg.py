@@ -1,7 +1,6 @@
 """read_odg.py — reads a call sheet (ODG, "ordine del giorno") PDF into plain data.
 
-Made on the LBE call sheets (Memo Films layout). The Tramp Limited layout (Il colpo) is read by
-read_odg_tramp.py: read_odg() sees which layout a PDF is and gives the same data either way.
+Made on the LBE call sheets (Memo Films layout); other productions may need tweaks.
 What it finds:
     number, date (+ the weekday printed), call / ready / end-of-shoot / wrap times,
     the day's scenes (id, story day, INT/EXT, day/night, set, synopsis, cast ids, pages, location),
@@ -175,9 +174,6 @@ def read_notes(lines, start_marker, end_marker):
 def read_odg(path):
     lines = [clean(line) for page in fitz.open(path) for line in page.get_text().splitlines()]
     lines = [line for line in lines if line]
-    from read_odg_tramp import is_tramp, read_tramp  # another production's layout (Il colpo, Oct 2026)
-    if is_tramp(lines):
-        return read_tramp(lines)
     text = "\n".join(lines)
 
     # a scene table ends at "Tot." — or, when there is none (18 Oct, ODG #21 BOZZA), where the

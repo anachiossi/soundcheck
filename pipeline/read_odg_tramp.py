@@ -1,6 +1,7 @@
 """read_odg_tramp.py — reads a call sheet in the Tramp Limited layout (Il colpo, from Oct 2026) into the SAME
 data as read_odg.py (the LBE / Memo Films layout), so the robot and the proposals work unchanged.
-read_odg.py decides which layout a PDF is (is_tramp) and calls read_tramp here.
+A film uses it when its settings.json says "odg_reader": "tramp" (odg_reader.py picks it); read_odg.py,
+the main reader, is not changed by it.
 
 What this layout prints (ODG #48, 24 Oct 2026):
     "ODG #48 di 87  Sabato 24 Ottobre 2026  Settimana #10" · CONVOCAZIONE / PROVE / PRONTI A GIRARE /
@@ -32,11 +33,6 @@ SCENES_RE = r"\d+[A-Za-z]*\d*(?:\s*-\s*\d+[A-Za-z]*\d*)*"    # '516 - 517pt1 - 3
 DEPARTMENTS = {"SCEN/ARREDAMENTO": "Scenografia", "PROPS": "Props", "COSTUMI": "Costumi", "MAKE-UP/HAIR": "Trucco/Capelli",
                "VFX": "VFX/AI", "SFX": "SFX/Armi", "MEZZI DI SCENA": "Veicoli", "ATTREZZATURE SPECIALI": "Camera",
                "SUONO": "Suono", "REGIA": "Regia", "PRODUZIONE": "Produzione", "STUNT": "Stunt", "ANIMALI": "Animali"}
-
-
-def is_tramp(lines):
-    """True for this layout: its scene table heading 'SET/SINOSSI' and 'Programma del giorno successivo'."""
-    return "SET/SINOSSI" in lines and any(line.startswith(("ODG #", "Programma del giorno successivo")) for line in lines)
 
 
 def time_after(lines, label):
@@ -159,8 +155,13 @@ def read_tramp(lines):
     }
 
 
-if __name__ == "__main__":
+def read_odg_tramp(path):
+    """The PDF → the same data as read_odg() in read_odg.py."""
     import pymupdf as fitz
+    lines = [clean(line) for page in fitz.open(path) for line in page.get_text().splitlines()]
+    return read_tramp([line for line in lines if line])
+
+
+if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8")
-    pdf_lines = [clean(line) for page in fitz.open(sys.argv[1]) for line in page.get_text().splitlines()]
-    print(json.dumps(read_tramp([line for line in pdf_lines if line]), ensure_ascii=False, indent=1))
+    print(json.dumps(read_odg_tramp(sys.argv[1]), ensure_ascii=False, indent=1))

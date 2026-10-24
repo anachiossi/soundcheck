@@ -4,14 +4,18 @@ Run (from the repo folder):
     python3 -m unittest discover -s tests -p "test_*.py"
 """
 
+import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "pipeline"))
 
 try:
-    from read_odg_tramp import is_tramp, read_tramp
+    from odg_reader import odg_reader_for
+    from read_odg import read_odg
+    from read_odg_tramp import read_odg_tramp, read_tramp
 except ImportError:  # pymupdf not installed here
     read_tramp = None
 
@@ -44,9 +48,15 @@ ODG = HEADER + TABLE + CAST + NEEDS + ADVANCE
 
 @unittest.skipIf(read_tramp is None, "pymupdf not installed")
 class TrampLayoutTest(unittest.TestCase):
-    def test_this_layout_is_told_apart_from_the_lbe_one(self):
-        self.assertTrue(is_tramp(ODG))
-        self.assertFalse(is_tramp(["ORDINE DEL GIORNO", "SCENA", "SET", "CAST"]))
+    def test_a_film_gets_the_main_reader_unless_its_settings_choose_another(self):
+        with tempfile.TemporaryDirectory() as folder:
+            self.assertIs(odg_reader_for(folder), read_odg)  # no settings.json (like LBE: no "odg_reader")
+            settings = Path(folder) / "settings.json"
+            settings.write_text(json.dumps({"odg_reader": "tramp"}), encoding="utf-8")
+            self.assertIs(odg_reader_for(folder), read_odg_tramp)
+            settings.write_text(json.dumps({"odg_reader": "nonsense"}), encoding="utf-8")
+            with self.assertRaises(ValueError):
+                odg_reader_for(folder)
 
     def test_the_header_gives_day_date_and_times(self):
         odg = read_tramp(ODG)

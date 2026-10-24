@@ -204,7 +204,8 @@ def file_documents(film, other_sides):
     (only when new or changed)."""
     import shutil
     from cue_lines import write_sides_lines
-    from read_odg import read_odg
+    from odg_reader import odg_reader_for
+    read_odg = odg_reader_for(film)  # the film's own reader (settings.json "odg_reader")
     changed = []
     for email_folder in emails_oldest_first(film / "_inbox"):
         odg = next((p for p in email_folder.glob("*.pdf") if "ODG" in p.name.upper()), None)
@@ -237,7 +238,9 @@ def file_crew_calls(film):
     Ana, 11 Oct); the app keeps Ana's own call everywhere else.
     Read from the filed ODGs (docs/day-<n>/odg.pdf, the newest of each day), after file_documents."""
     from read_crew import read_crew
-    from read_odg import as_time, read_odg
+    from odg_reader import odg_reader_for
+    from read_odg import as_time
+    read_odg = odg_reader_for(film)
     target = film / "calls.json"
     calls = json.loads(target.read_text(encoding="utf-8")) if target.exists() else {}
     for odg in sorted((film / "docs").glob("day-*/odg.pdf")):

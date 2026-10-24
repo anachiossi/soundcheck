@@ -77,8 +77,9 @@ Today these are hard-coded for LBE in `pipeline/` and in one-off `work/` scripts
 LBE profile. Same kind of paperwork → a new profile file; truly new paperwork → a new reader in the
 engine, reusable afterwards.
 Second case (Il colpo, Oct 2026): a different ODG layout (Tramp Limited) = a new reader,
-`pipeline/read_odg_tramp.py`, giving the same data as `read_odg.py`. The layout is told apart from the
-PDF itself (`is_tramp`: "SET/SINOSSI" + "ODG #…"), so no setting is needed and LBE reads as before.
+`pipeline/read_odg_tramp.py`, giving the same data as `read_odg.py`. The film chooses it in its own
+settings.json: `"odg_reader": "tramp"` (`pipeline/odg_reader.py` picks; no setting = the main reader).
+The main readers are never changed for a new film (Ana, 24 Oct): LBE has no setting and reads as before.
 
 ## The new-film flow (stages + readiness check)
 ```
