@@ -1,6 +1,6 @@
-"""read_odg_tramp.py — reads a call sheet in the Tramp Limited layout (Il colpo, from Oct 2026) into the SAME
+"""read_odg_il_colpo.py — reads a call sheet in Il colpo's layout (from Oct 2026) into the SAME
 data as read_odg.py (the LBE / Memo Films layout), so the robot and the proposals work unchanged.
-A film uses it when its settings.json says "odg_reader": "tramp" (odg_reader.py picks it); read_odg.py,
+A film uses it when its settings.json says "odg_reader": "il-colpo" (odg_reader.py picks it); read_odg.py,
 the main reader, is not changed by it.
 
 What this layout prints (ODG #48, 24 Oct 2026):
@@ -13,7 +13,7 @@ What this layout prints (ODG #48, 24 Oct 2026):
     page 2: "Programma del giorno successivo Lunedì 26 ottobre 2026 orario di lavorazione 10:00 - 18:00"
             + the same scene table (no timeline) + "FABBISOGNI SPECIALI del giorno successivo"
 
-    python pipeline/read_odg_tramp.py "path/to/odg.pdf"
+    python pipeline/read_odg_il_colpo.py "path/to/odg.pdf"
 """
 
 import json
@@ -123,7 +123,7 @@ def read_needs(lines, start_marker, scene_ids):
             for scene_id, by_department in notes.items()}
 
 
-def read_tramp(lines):
+def read_il_colpo(lines):
     text = "\n".join(lines)
     number = re.search(r"ODG\s*#\s*(\d+)(?:\s*di\s*(\d+))?", text)
     week = re.search(r"Settimana\s*#\s*(\d+)", text)
@@ -155,13 +155,13 @@ def read_tramp(lines):
     }
 
 
-def read_odg_tramp(path):
+def read_odg_il_colpo(path):
     """The PDF → the same data as read_odg() in read_odg.py."""
     import pymupdf as fitz
     lines = [clean(line) for page in fitz.open(path) for line in page.get_text().splitlines()]
-    return read_tramp([line for line in lines if line])
+    return read_il_colpo([line for line in lines if line])
 
 
 if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8")
-    print(json.dumps(read_odg_tramp(sys.argv[1]), ensure_ascii=False, indent=1))
+    print(json.dumps(read_odg_il_colpo(sys.argv[1]), ensure_ascii=False, indent=1))

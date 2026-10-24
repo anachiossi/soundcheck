@@ -1,5 +1,5 @@
 """odg_reader.py — picks the call-sheet (ODG) reader a film uses, from that film's settings.json:
-    "odg_reader": "tramp"     → read_odg_tramp.py (Tramp Limited layout: Il colpo)
+    "odg_reader": "il-colpo"  → read_odg_il_colpo.py (Il colpo's layout; any later film with the same layout can use it)
     nothing                   → read_odg.py, the main reader (LBE, Memo Films layout)
 Each film chooses its own; the main reader is never changed for another film (Ana, 24 Oct).
 Both readers give the same data, so the robot (run.py, propose.py) works the same for every film.
@@ -10,9 +10,9 @@ import json
 from pathlib import Path
 
 from read_odg import read_odg
-from read_odg_tramp import read_odg_tramp
+from read_odg_il_colpo import read_odg_il_colpo
 
-READERS = {"main": read_odg, "tramp": read_odg_tramp}
+READERS = {"main": read_odg, "il-colpo": read_odg_il_colpo}
 
 
 def odg_reader_for(film_folder):
