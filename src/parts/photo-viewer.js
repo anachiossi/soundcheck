@@ -5,7 +5,7 @@
 // Buttons are type="button": a viewer inside a form (the Gear sheet) never submits it.
 // Used by: parts/costume-cell.js, parts/scene-table.js, parts/gear-form.js
 
-import { html, render, useEffect, useState } from '../../vendor/preact-htm.js';
+import { html, render, useEffect, useLayoutEffect, useState } from '../../vendor/preact-htm.js';
 import { thumbOf } from '../costumes.js';
 import { photoNoAccess, photoNow, photoStamp, photoUrl } from '../photos.js';
 import { Icon } from './icons.js';
@@ -51,7 +51,9 @@ function OnTop({ children }) {
     document.body.appendChild(box);
     return () => { render(null, box); box.remove(); };
   }, []);
-  useEffect(() => { render(children, box); });
+  // drawn in a layout effect, not a plain one: drawn from a plain effect, the photos' own loading steps (usePhoto)
+  // never started, so the viewer said "No signal" even with the photo on the phone (Ana, 25 Oct)
+  useLayoutEffect(() => { render(children, box); });
   return null;
 }
 
