@@ -81,11 +81,13 @@ export function GearBatteriesScreen({ state }) {
             <b>${d.model}</b>
             <span>${d.battery === 'internal' ? `internal · ${d.hours ? `≈ ${d.hours} h` : '? h'} on a full charge`
               : `${d.watts ? `${d.watts} W` : '? W'}${d.battery ? ` · ${d.takes > 1 ? `${d.takes}× ` : ''}${d.battery}` : ''}`}</span>
-            <small>${groups.filter(g => !g.battery || !d.battery || g.battery.toLowerCase() === d.battery.toLowerCase()).map(g => {
+            ${groups.filter(g => !g.battery || !d.battery || g.battery.toLowerCase() === d.battery.toLowerCase()).map(g => {
               const ideal = minutesFromDraw(project, g, d.model);
               const seen = g.models?.[d.model];
-              return (ideal || seen) && `${g.name}: label ${ideal ? clock(ideal) : '?'}${seen ? ` · seen ${clock(seen)}` : ''}`;
-            }).filter(Boolean).join(' · ')}</small>
+              // one battery group per line, so a "seen" time clearly belongs to its own battery (Ana, 25 Oct)
+              return (ideal || seen) && html`<small key=${g.id}>${g.name}: label ${ideal ? clock(ideal) : '?'}${seen
+                ? html` · <b>seen ${clock(seen)}</b>` : ''}</small>`;
+            }).filter(Boolean)}
           </button>`)}
         <button class="btn btn--quiet" onClick=${() => setOpenDevice({})}>+ Model</button>
       </details>

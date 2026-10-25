@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-10-25 · live version **v194** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-10-25 · live version **v196** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
@@ -160,6 +160,9 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
 - v191 (23 Oct): **Position in the costume's colour** (Ana). A row may carry `position_color: 'navy'` (names in
   accessories.js `COSTUME_COLOURS`); the editor has a round colour button next to the Position text, the table's
   Position pill and the assistants' image take that colour. In the image the position breaks onto two lines.
+- v196 (25 Oct): **Power draw: one battery group per line** (Ana: why "seen" next to "label"?). "Label" = the
+  battery's label Wh ÷ the device's watts (ideal); "seen" = the run time Ana measured on set (group `models`), now
+  bold on its own battery's line, no longer lost in one long sentence.
 - v194 (25 Oct): **photo full screen shows the photo again** (Ana: the battery's thumbnail showed, but tapping it said
   "No signal: this photo isn't on the phone yet"). The viewer drew its contents from a plain effect, so the photos'
   loading steps never started; now a layout effect (`parts/photo-viewer.js` OnTop). Reproduced and checked in a browser.
