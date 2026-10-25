@@ -169,3 +169,13 @@ test('Items grouped by type, names without the type word (v127)', async () => {
   assert.deepEqual(groups[0].items.map(i => i.name), ['Ankle black', 'Waist beige']);
   assert.deepEqual(groups[1].items.map(i => i.name), ['Goo Gone', 'Pouch big black', 'Scissors']);
 });
+
+test('an open cart shows only the guides that name it', async () => {
+  const { manualsForItem } = await import('../src/manuals.js');
+  const project = { gearManuals: [
+    { title: 'Scorpio quick guide', file: 'a.pdf', items: ['g88'] },
+    { title: 'Schoeps CMIT', file: 'b.pdf' },
+  ] };
+  assert.deepEqual(manualsForItem(project, 'g88').map(manual => manual.title), ['Scorpio quick guide']);
+  assert.deepEqual(manualsForItem(project, 'g1'), []);
+});

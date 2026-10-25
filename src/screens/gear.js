@@ -24,7 +24,7 @@ import { gearText, gearSheets } from '../export/gear-text.js';
 import { xlsxBlob } from '../export/xlsx.js';
 import { shareCanvas, shareFile } from '../export/share.js';
 import { showMessage, setState, getState } from '../state.js';
-import { manualsByBrand, manualPath, openManual } from '../manuals.js';
+import { manualsByBrand, manualsForItem, manualPath, openManual } from '../manuals.js';
 import { Icon } from '../parts/icons.js';
 
 // the small square in the object's real colour (a dot when it has none)
@@ -203,7 +203,8 @@ export function GearInventoryScreen({ state }) {
           <span class="gear-here__text"><strong>${here.name}</strong>
             <small>${[here.type, `${items.length} ${items.length === 1 ? 'thing' : 'things'}`].filter(Boolean).join(' · ')}</small></span>
           <button class="icon-btn" onClick=${() => edit(here)} aria-label=${`Edit ${here.name}`}><${Icon} name="edit" /></button>
-        </div>`}
+        </div>
+        <${CaseGuides} project=${project} box=${here} />`}
       <div class="gear__head">
         <span class="muted">${query ? '' : ''}</span>
         <span class="gear__actions">
@@ -227,6 +228,15 @@ export function GearInventoryScreen({ state }) {
       <div class="toolbar"><button class="btn btn--primary" onClick=${newObject}>+ Add${here ? ` in ${here.name}` : ''}</button></div>
       ${sheet}
     </div>`;
+}
+
+// 📄 the help guides of the open cart or case (manuals.json "items"), e.g. the Scorpio guides on the mixer's cart
+function CaseGuides({ project, box }) {
+  const manuals = manualsForItem(project, box.id);
+  if (!manuals.length) return null;
+  return html`<div class="toolbar kit-manuals">${manuals.map(manual => html`
+    <button key=${manual.file} class="btn btn--doc" disabled=${!manualPath(project, manual)} onClick=${() => openManual(project, manual, 'gear-inventory')}>
+      📄 ${manual.title}</button>`)}</div>`;
 }
 
 // Export → Image · Copy as text (a tree, like the `tree` command) · Excel (all the gear + history)

@@ -3,7 +3,8 @@
 // gear/manuals.json [{ brand, category, title, nickname, date, file, models }] (nickname: what we call it on set — "NP-1 charger") that says which models each one covers.
 // category (v150, Ana 13 Oct): "Schoeps — Microphones"; a brand with several gets one sub-heading each
 // (Sennheiser: Wireless, Headphones, Microphones…).
-// Used by: screens/gear.js (Gear → Manuals, by brand), screens/kit.js (📄 under the transmitters)
+// items (optional): the carts / cases it is a guide for, e.g. ["g88"] = the sound mixer's cart.
+// Used by: screens/gear.js (Gear → Manuals, by brand; 📄 guides on an open cart), screens/kit.js (📄 under the transmitters)
 
 import { setState } from './state.js';
 
@@ -21,6 +22,12 @@ export function manualsByBrand(project) {
 export function manualsForModels(project, models) {
   const wanted = new Set(models.map(m => String(m).toLowerCase()));
   return manualsOf(project).filter(manual => (manual.models || []).some(m => wanted.has(String(m).toLowerCase())));
+}
+
+// the guides that belong to a cart or case (manual.items: ["g88"]), shown when it is open in Gear → Inventory
+// (Ana, 25 Oct: "help guides in the mixer page")
+export function manualsForItem(project, itemId) {
+  return manualsOf(project).filter(manual => (manual.items || []).includes(itemId));
 }
 
 // the PDF's path on the device ('' while it hasn't been downloaded yet)
