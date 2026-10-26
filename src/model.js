@@ -13,7 +13,7 @@
       characters:   [{ id, name, actor, color,
                        pref_tx, pref_tx_model, pref_lav_model, pref_lav_model_2, pref_lav_color }],
       transmitters: [{ id, model, color, connector, order }],
-      lavaliers:    [{ id, model, color, connector, attenuated, brand }],
+      lavaliers:    [{ id, model, color, connector, attenuated, brand, serial }],
       schedule:     [{ scene_id, day, order, date, week, call, wrap }],
       presets: { '12': { scene_id, updated_at, rows: [{ char_id, tx_id, lav_id, speaker }] } },
       scenes:  { '12': { int_ext, time_of_day, set, location, pages, story_day, synopsis, notes } }

@@ -168,6 +168,10 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   loading steps never started; now a layout effect (`parts/photo-viewer.js` OnTop). Reproduced and checked in a browser.
 - v193 (23 Oct): **no more −15% on a battery for a long scene** (Ana: "a bit too strict… at 14h it didn't need a
   change"). The TRXLA3.5s on AA NiMH were 3:30 − 15% = 2:59; now 3:30 (2.28 Wh × 2 ÷ 1.3 W).
+- v196 (26 Oct): **each lav's own photo and serial** (Ana: "use these as photos for the lavs… add the serial
+  number"). `gear/photos.json` gets `lav_ids: { '9': [photo] }` — a lav shows its own photo first, then its
+  model's; lavs get a `serial` (Kit → Lavaliers shows "#H247386"). The gear book doesn't read `lav_ids`, so no
+  serials reach it. LBE: 20 lavs photographed and numbered.
 - v195 (25 Oct): **help guides on a cart's page** (Ana: "create help guides in the mixer page"). A manual in
   `gear/manuals.json` may name the carts / cases it belongs to (`items: ["g88"]`); opening that cart in Gear →
   Inventory shows them as 📄 buttons under its name (Il colpo: Scorpio + CL-16, wireless control, ARX8, ADX5D…).

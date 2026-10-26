@@ -42,6 +42,7 @@ export function fieldsFor(list, project) {
   return [
     { key: 'id', label: 'Number' }, { key: 'model', label: 'Model' }, { key: 'color', label: 'Colour', type: 'color' },
     { key: 'connector', label: 'Connector' }, { key: 'brand', label: 'Brand' },
+    { key: 'serial', label: 'Serial number (on the cable sleeve)' },
     { key: 'attenuated', label: 'Attenuated', type: 'checkbox' },
   ];
 }
@@ -99,7 +100,7 @@ export function KitScreen({ state }) {
     <${TxManuals} project=${project} />
     <${Section} ...${shared} list="lavaliers" title="Lavaliers"
       blank=${{ id: nextId('lavaliers'), color: '#000000', attenuated: false }}
-      render=${lav => html`<${LavPill} lav=${lav} number /><small>${lav.brand} · ${lav.connector}${lav.attenuated ? html`<br /><b class="text-danger">attenuated</b>` : ''}</small>`} />`;
+      render=${lav => html`<${LavPill} lav=${lav} number /><small>${lav.brand} · ${lav.connector}${lav.serial ? ` #${lav.serial}` : ''}${lav.attenuated ? html`<br /><b class="text-danger">attenuated</b>` : ''}</small>`} />`;
 }
 
 // 📄 the manuals of the kit's transmitter models (Gear → Manuals has them all, by brand)

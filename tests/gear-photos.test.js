@@ -41,6 +41,13 @@ test('a lav shows the photo of its brand and model, whatever the capitals', () =
   assert.deepEqual(lavPhotos(project, undefined), []);
 });
 
+test('a lav shows its own photo first, then the photo of its model', () => {
+  const own = { file: 'gear/ana-lbe-lav-06.jpg', label: "Lav 6 (Ana's photo)" };
+  const withOwn = { ...project, gearPhotos: { ...project.gearPhotos, lav_ids: { '6': [own] } } };
+  assert.deepEqual(lavPhotos(withOwn, project.lavaliers[0]), [own, dpa]);
+  assert.deepEqual(lavPhotos(withOwn, { id: '7', brand: 'DPA', model: '6060' }), [dpa]);
+});
+
 test('a TX shows the photo of its model', () => {
   assert.deepEqual(txPhotos(project, { model: 'ZMT4.5' }), [zmt4]);
   assert.deepEqual(txPhotos(project, { model: 'TRXLA3.5' }), []);

@@ -3,6 +3,7 @@
 //   { photos_repo: 'anachiossi/soundcheck-kit-photos',
 //     items: { g165: [{ file: 'gear/ursa-minimount-black.jpg', label: 'Ursa MiniMount black', source: 'https://…', note }] },
 //     lavs:  { 'DPA 6060': [ … ] },        → by the lav's brand + model
+//     lav_ids: { '9': [ … ] },             → one lav's own photo, by its kit number (Ana, 26 Oct); shown first
 //     txs:   { 'ZMT4.5': [ … ] } }         → by the TX's model
 // Identical things share one photo file. The photos live in their own private repo, shared by every film (it is
 // Ana's kit, not the film's); each has a small copy in gear/thumbs/.
@@ -18,12 +19,14 @@ export function itemPhotos(project, itemId) {
   return project.gearPhotos?.items?.[itemId] || [];
 }
 
-// the photos of a lav's model: "DPA 6060" (brand + model; capitals don't matter)
+// the photos of a lav: its own photo first (lav_ids, by its number), then its model's: "DPA 6060"
+// (brand + model; capitals don't matter)
 export function lavPhotos(project, lav) {
   if (!lav) return [];
+  const own = project.gearPhotos?.lav_ids?.[String(lav.id)] || [];
   const wanted = plain(`${lav.brand || ''} ${lav.model}`);
   const found = Object.entries(project.gearPhotos?.lavs || {}).find(([key]) => plain(key) === wanted);
-  return found ? found[1] : [];
+  return [...own, ...(found ? found[1] : [])];
 }
 
 // the photos of a TX's model: "ZMT4.5"
