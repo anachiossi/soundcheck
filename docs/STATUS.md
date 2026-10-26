@@ -160,6 +160,9 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
 - v191 (23 Oct): **Position in the costume's colour** (Ana). A row may carry `position_color: 'navy'` (names in
   accessories.js `COSTUME_COLOURS`); the editor has a round colour button next to the Position text, the table's
   Position pill and the assistants' image take that colour. In the image the position breaks onto two lines.
+- Kit website (26 Oct, not an app version): **`/soundcheck/kit/` — the LBE kit for 3 people, read only, with a password**
+  (Ana: "a link like a normal website"). The gear book's page (same filters) + search, truck ticks, big photos,
+  locked with AES-GCM in `kit/kit.bin`; `kit/index.html` asks the password. See HOW_IT_WORKS "Kit website".
 - v196 (25 Oct): **Power draw: one battery group per line** (Ana: why "seen" next to "label"?). "Label" = the
   battery's label Wh ÷ the device's watts (ideal); "seen" = the run time Ana measured on set (group `models`), now
   bold on its own battery's line, no longer lost in one long sentence.

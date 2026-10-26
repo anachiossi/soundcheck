@@ -382,3 +382,14 @@ alerts that are in the phone's outbox, so a copy of Ana's hours downloaded by an
 the next sync. Hours → **📊 Export my timesheet**: the same Excel as Ana's, with only the person's block
 (`timesheetPeople(project, name)` in `src/export/timesheet.js`; their job from the IFB crew list when the name
 is there). Still hidden on crew: wake plan / alarms, 🔔 wrap alerts, Help → Alarms.
+
+## 🔗 Kit website (read only, with a password — Ana, 26 Oct)
+A plain web page for the people who work with the kit (3 people, no editing, no app):
+`https://anachiossi.github.io/soundcheck/kit/`. It is NOT part of the app (not in `sw.js`).
+| What | File |
+|---|---|
+| The door: asks the password, opens the locked kit, shows it; "Remember on this phone" keeps the key (never the password) | `kit/index.html` |
+| The locked kit (AES-256-GCM, PBKDF2-SHA256 600 000 rounds; salt · iv · page) | `kit/kit.bin` (made on the laptop, never by hand) |
+| The page inside: the gear book's page (same filters: no serials, no drawers, no private notes) + search, truck ticks, big photos | soundcheck-data `tools/kit_site.py`, `tools/gear_book.py`, `tools/kit_site_extras.html` |
+Updating it: on the laptop, `KIT_PASSWORD='…' python tools/kit_site.py projects/la-buona-educazione <kit photos> D:\sound_check`,
+then commit + push `kit/kit.bin`. The password is never written in a repo.
