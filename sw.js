@@ -3,7 +3,7 @@
 // When you change any app file, bump VERSION so devices pick up the new files.
 // (Film data is NOT stored here; it lives in the per-film database.)
 
-const VERSION = 'soundcheck-v196';
+const VERSION = 'soundcheck-v197';
 const FILES = [
   './', 'index.html', 'app.css', 'manifest.webmanifest',
   'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png',
@@ -16,7 +16,7 @@ const FILES = [
   'src/parts/battery-tag.js', 'src/parts/battery-cell.js', 'src/parts/image-for.js', 'src/export/gear-image.js', 'src/export/gear-text.js', 'src/export/xlsx.js', 'src/export/timesheet.js', 'src/manuals.js', 'src/parts/auto-scroll.js', 'src/theme.js', 'src/parts/theme-switch.js', 'src/parts/email-robot.js', 'src/cues-rules.js', 'src/cues-phrases.js', 'src/cues-map-rules.js', 'src/screens/cues-map.js', 'src/cues-timeline-rules.js', 'src/screens/cues-timeline.js', 'src/cues-editing.js', 'src/parts/cue-line-editor.js', 'src/cues-game-rules.js', 'src/screens/cues-game.js',
   'src/ifb-editing.js', 'src/ifb-rules.js',
   'src/crew-link.js', 'src/parts/crew-share.js', 'src/crew-changes.js', 'src/crew-describe.js', 'src/crew-sync.js', 'src/sync-store.js', 'src/films.js', 'src/crew-join.js', 'src/film-source.js', 'src/film-repos.js', 'src/parts/film-repos.js',
-  'src/crew-inbox.js', 'src/crew-decisions.js', 'src/crew-approve.js', 'src/screens/crew-suggestions.js',
+  'src/crew-inbox.js', 'src/crew-decisions.js', 'src/crew-approve.js', 'src/screens/crew-suggestions.js', 'src/kit-requests.js', 'src/kit-inbox.js', 'src/kit-approve.js', 'src/screens/kit-requests.js',
   'src/crew-device.js', 'src/crew-feedback.js', 'src/crew-messages.js', 'src/crew-inbox-sync.js', 'src/parts/crew-log.js', 'src/parts/crew-feedback-form.js',
   'src/my-call.js', 'src/parts/my-call-switch.js',
   'src/store/local.js', 'src/store/github.js', 'src/store/repo-files.js',
