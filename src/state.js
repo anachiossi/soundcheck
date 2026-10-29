@@ -42,6 +42,8 @@ let state = {
   crewDecisions: loadJson('sc_crew_decisions', []), // owner: decisions not sent yet (crew-decisions.js)
   crewCantAnswer: false,    // owner: the key can't comment on / close issues (crew-inbox-sync.js)
   crewBy: null,             // the person whose suggestions the 'crew-suggestions' screen shows
+  kitRequests: [],          // owner: requests from the kit website, from the last sync (kit-inbox.js)
+  kitCantRead: false,       // owner: this device's key can't see the kit inbox repo
   films: null, filmsFailed: false, // films in the repos (null = not looked yet); filmsFailed: the last look failed
   sync: { running: false, error: null },
   emailRobot: null,         // ✉ { checkedAt, run, noAccess, starting } (email-robot.js)

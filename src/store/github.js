@@ -103,15 +103,21 @@ export async function readJsonFile(connection, sha) {
 }
 
 // Writes several files as ONE commit on top of `base` (from readTree).
-// files = { 'projects/x/presets/12.json': 'text', … }
+// files = { 'projects/x/presets/12.json': 'text', … }; a photo: { base64: '…' }; null deletes the file
+// (the kit requests: their photos go to the kit photos repo, a handled request leaves the inbox).
 // If someone else committed in between, GitHub refuses (status 422): read again and retry.
 export async function commitFiles(connection, base, files, message) {
+  const entries = [];
+  for (const [path, value] of Object.entries(files)) {
+    if (value === null) entries.push({ path, mode: '100644', type: 'blob', sha: null });
+    else if (typeof value === 'object') {
+      const blob = await call(connection, '/git/blobs', { method: 'POST', body: JSON.stringify({ content: value.base64, encoding: 'base64' }) });
+      entries.push({ path, mode: '100644', type: 'blob', sha: blob.sha });
+    } else entries.push({ path, mode: '100644', type: 'blob', content: value });
+  }
   const tree = await call(connection, '/git/trees', {
     method: 'POST',
-    body: JSON.stringify({
-      base_tree: base.treeSha,
-      tree: Object.entries(files).map(([path, text]) => ({ path, mode: '100644', type: 'blob', content: text })),
-    }),
+    body: JSON.stringify({ base_tree: base.treeSha, tree: entries }),
   });
   const commit = await call(connection, '/git/commits', {
     method: 'POST',

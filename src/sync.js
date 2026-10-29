@@ -25,6 +25,7 @@ import { connectionFor } from './film-source.js';
 import { downloadPhotos } from './photos.js';
 import { filmStore } from './sync-store.js';
 import { applyRemote, filesToDownload, fileContent, setFileContent, formatJson } from './store/repo-files.js';
+import { filmPaths, repoPath, kitOf } from './store/kit-files.js';
 
 let lastSync = 0;
 let runAgain = false; // a save happened while syncing: sync once more right after
@@ -110,13 +111,12 @@ export async function syncAsCrew(connection, store) {
 
 async function download(connection, tree, store) {
   const project = store.read();
-  const prefix = project.folder + '/';
   const crewPhone = isCrew(connection);
   const remote = {};
-  for (const [path, sha] of Object.entries(tree.files)) {
-    const inside = path.startsWith(prefix) ? path.slice(prefix.length) : null;
-    const personal = crewPhone && inside && crew.staysOnPhone(inside); // Ana's hours/ and push/
-    if (inside && !inside.startsWith('_import/') && !inside.startsWith('docs/') && !personal) remote[inside] = sha;
+  // the film's files, and its kit's (kits/<kit>/, kit-files.js), under their film names
+  for (const [inside, sha] of Object.entries(filmPaths(project, tree.files))) {
+    const personal = crewPhone && crew.staysOnPhone(inside); // Ana's hours/ and push/
+    if (!inside.startsWith('_import/') && !inside.startsWith('docs/') && !personal) remote[inside] = sha;
   }
   const changed = {};
   const paths = filesToDownload(project, remote);
@@ -129,6 +129,8 @@ async function download(connection, tree, store) {
   const merged = crewPhone ? crew.mergeDownload(latest, changed, remote) : applyRemote(latest, changed, remote);
   merged.data_as_of = new Date().toISOString();
   await store.save(merged);
+  // the film just named its kit (or another one): its files are elsewhere in the repo, read them now
+  if (kitOf(merged) !== kitOf(project)) await download(connection, tree, store);
 }
 
 // PDFs: every 'docs/day-<n>/odg.pdf' and 'sides.pdf', and 'docs/script.pdf', when new or
@@ -136,13 +138,15 @@ async function download(connection, tree, store) {
 async function downloadDocuments(connection, tree, store) {
   const project = store.read();
   const prefix = project.folder + '/docs/';
+  const manuals = kitOf(project) ? `kits/${kitOf(project)}/docs/manuals/` : null; // the kit's manuals (kit-files.js)
   const yesterday = localTodayIso(new Date(Date.now() - 24 * 3600 * 1000));
   const dates = Object.fromEntries(shootingDays(project).map(d => [d.day, d.date]));
   const documents = { ...project.documents };
   const dateOf = path => dates[/day-(\d+)\//.exec(path)?.[1]] || '';
   // docs/archive/ (every official email, outdated too — pipeline/run.py file_archive) stays in the repo only
   const wanted = Object.entries(tree.files)
-    .filter(([path, sha]) => path.startsWith(prefix) && !path.startsWith(`${prefix}archive/`) && path.endsWith('.pdf') && documents[path] !== sha)
+    .filter(([path, sha]) => ((path.startsWith(prefix) && !path.startsWith(`${prefix}archive/`)) || (manuals && path.startsWith(manuals)))
+      && path.endsWith('.pdf') && documents[path] !== sha)
     .sort(([a], [b]) => (dateOf(a) < yesterday) - (dateOf(b) < yesterday));
   let fetched = 0;
   for (const [path, sha] of wanted) {
@@ -163,7 +167,7 @@ async function upload(connection, tree, store) {
   for (const path of paths) {
     let content = fileContent(project, path);
     if (path.startsWith('presets/')) content = { ...content, updated_at: project.outbox[path].saved_at, updated_by: connection.device };
-    files[`${project.folder}/${path}`] = formatJson(content);
+    files[repoPath(project, path)] = formatJson(content);
   }
   const names = paths.map(path => path.replace(/^presets\//, '#').replace(/\.json$/, '')).join(', ');
   // a file holding an approved crew suggestion: "… — proposed by Davide, approved" (crew-inbox.js)
@@ -177,7 +181,7 @@ async function upload(connection, tree, store) {
   const shas = { ...latest.shas };
   for (const path of paths) {
     if (outbox[path]?.saved_at === project.outbox[path].saved_at) delete outbox[path];
-    shas[path] = after.files[`${project.folder}/${path}`];
+    shas[path] = after.files[repoPath(project, path)];
   }
   await store.save({ ...latest, outbox, shas });
   return paths.length;

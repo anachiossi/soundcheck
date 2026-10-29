@@ -20,6 +20,7 @@ import { ProjectsScreen } from './screens/projects.js';
 import { Picker } from './parts/picker.js';
 import { ProposalScreen, ProposalBanner } from './screens/proposal.js';
 import { CrewSuggestionsScreen, CrewSuggestionsBanner } from './screens/crew-suggestions.js';
+import { KitRequestsScreen, KitRequestsBanner } from './screens/kit-requests.js';
 import { DocumentScreen } from './screens/document.js';
 import { CuesScreen } from './screens/cues.js';
 import { CuesPickerScreen } from './screens/cues-picker.js';
@@ -36,6 +37,7 @@ import { HelpScreen } from './screens/help.js';
 import { LavShareScreen } from './screens/lav-share.js';
 import { GearTruckScreen, GearInventoryScreen, GearManualsScreen } from './screens/gear.js';
 import { GearBatteriesScreen } from './screens/gear-batteries.js';
+import { GearKitScreen } from './screens/gear-kit.js';
 import { WrapBadge, WrapQuestion } from './parts/wrap-clock.js';
 import { Icon } from './parts/icons.js';
 import { EmailBadge } from './parts/email-robot.js';
@@ -63,6 +65,7 @@ const TABS = {
     ['gear-inventory', 'Inventory', GearInventoryScreen],
     ['gear-batteries', 'Batteries', GearBatteriesScreen],
     ['gear-manuals', 'Manuals', GearManualsScreen],
+    ['gear-kit', 'Kit', GearKitScreen],
     ['projects', 'Projects', ProjectsScreen],
   ],
 };
@@ -121,6 +124,7 @@ function App() {
   const emailProposals = !crewHides(connection, 'email-proposals'); // a crew phone: never (Ana's job)
   const Screen = current === 'proposal' && emailProposals ? ProposalScreen
     : current === 'crew-suggestions' ? CrewSuggestionsScreen
+    : current === 'kit-requests' ? KitRequestsScreen
     : current === 'document' ? DocumentScreen
     : current === 'hours' ? HoursScreen
     : current === 'help' ? HelpScreen
@@ -146,8 +150,9 @@ function App() {
       <div class=${'message message--' + message.kind} onClick=${clearMessage}>${message.text} <span>✕</span></div>`}
     ${project && html`<${WrapQuestion} project=${project} myCall=${state.myCall} />`}
     ${project && isCrew(connection) && html`<${FeedbackOffer} key=${project.folder} state=${state} />`}
-    ${project && emailProposals && !['proposal', 'document', 'crew-suggestions'].includes(current) && html`<${ProposalBanner} project=${project} />`}
-    ${project && !['proposal', 'document', 'crew-suggestions'].includes(current) && html`<${CrewSuggestionsBanner} state=${state} />`}
+    ${project && emailProposals && !['proposal', 'document', 'crew-suggestions', 'kit-requests'].includes(current) && html`<${ProposalBanner} project=${project} />`}
+    ${project && !['proposal', 'document', 'crew-suggestions', 'kit-requests'].includes(current) && html`<${CrewSuggestionsBanner} state=${state} />`}
+    ${project && !isCrew(connection) && !['proposal', 'document', 'crew-suggestions', 'kit-requests'].includes(current) && html`<${KitRequestsBanner} state=${state} />`}
     <main class="page"><${Screen} state=${state} /></main>
     <footer class="footer">© 2025–2026 Ana Chiossi · soundcheck<${AppVersion} /></footer>
     <${Picker} state=${state} />

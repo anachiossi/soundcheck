@@ -383,3 +383,31 @@ the next sync. Hours → **📊 Export my timesheet**: the same Excel as Ana's, 
 (`timesheetPeople(project, name)` in `src/export/timesheet.js`; their job from the IFB crew list when the name
 is there). Still hidden on crew: wake plan / alarms, 🔔 wrap alerts, Help → Alarms.
 
+
+## 🧰 Kit requests (Ana's devices; branch kit-requests, 29 Oct)
+People with the kit's read-only page send requests (change a thing, add one, not on this film, gone for good, with
+photos). They wait in a small private inbox repo, named in the film's settings.json: `"kit_inbox": "owner/repo"`
+(no setting = nothing shown). Ana's own key must include that repo. **Nothing they send can delete**: "not on this
+film" / "gone for good" only mark the thing (`removed_kind: 'not_on_film' | 'gone'`), so the kit list only grows.
+| What | File |
+|---|---|
+| A request → the change (draft Ana tidies, new id, plain lines, grouping) | `src/kit-requests.js` (tests: `tests/kit-requests.test.js`) |
+| The inbox repo: read requests + photos, clear a handled one | `src/kit-inbox.js` (tests: `tests/kit-inbox.test.js`) |
+| Approve (photos → kit photos repo + thumbs, save, clear) / Decline | `src/kit-approve.js` |
+| Fetched at each sync, after the crew's suggestions | `kitInbox` in `src/crew-inbox-sync.js` |
+| Banner "Davide · kit website: 2 requests" + the screen | `src/screens/kit-requests.js`, registered in `src/main.js` |
+
+## 🧳 Kits: a fonico's gear, shared by every film (Ana, 29 Oct; branch kit-requests)
+A kit lives once in `kits/<kit>/` of the data repo (same file names as a film: `gear/*`, `transmitters.json`,
+`lavaliers.json`, `ifb/receivers.json`, `ifb/headphones.json`, `docs/manuals/`). A film names it in settings.json
+`"kit": "angelo-davide"` and keeps its own: `gear/on-film.json` { items } (what of the kit is on this film; no file =
+all), `gear/checks.json`, `ifb/crew.json`, `ifb/list.json`. The kit only grows (kit requests never delete).
+| What | File |
+|---|---|
+| Where each file is in the repo (repoPath / filmPaths) | `src/store/kit-files.js` (tests: `tests/kit-files.test.js`, incl. a full sync) |
+| On this film vs the whole kit (`activeItems` / `kitItems` / `onThisFilm`) | `src/gear-rules.js` (tests: `tests/on-film.test.js`) |
+| Choose what is on this film (`setOnFilm`); a new thing joins the film | `src/gear-editing.js` |
+| How many on this film (on-film.json `qty`: fewer than the kit owns; `filmQtyOf`, `quantitiesFor`). A quantity typed on
+  a film that chose from its kit is the film's; more than the kit owns makes the kit own that many | `src/gear-rules.js`, `setFilmQty` in `src/gear-editing.js` |
+| Gear → Kit tab: the whole kit with ticks (a case ticks its contents) | `src/screens/gear-kit.js` |
+| The move (data repo): `python tools/move_to_kits.py` (git mv, bytes + counts checked) | soundcheck-data `tools/move_to_kits.py` |

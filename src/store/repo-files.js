@@ -32,6 +32,8 @@
 //     gear/manuals.json    [{ brand, title, date, file: 'docs/manuals/Zaxcom/ZMT4.pdf', models: ['ZMT4', 'ZMT4.5'] }]
 //     gear/batteries.json  { groups: [{ id, name, life_min, charge_min }], batteries: [{ id, group, label, state, since, used_in }] }
 //                          every battery of the film and its state (battery-rules.js)
+//     gear/on-film.json    { items: [ids] }  which of the kit's things are on THIS film (no file = all); with a kit
+//                          (kit-files.js) the other gear files live in kits/<kit>/ and this one stays here
 //     gear/photos.json     { photos_repo, items: { g165: [{ file, label, source, note }] }, lavs: { 'DPA 6060': […] }, txs: { 'ZMT4': […] } }
 //                          which kit photo shows which thing (gear-photos.js); the photos live in their own private repo
 //     calls.json           { '2026-10-12': { 'Maria Rossi': '08:50', … } } everyone's call on each ODG
@@ -49,7 +51,7 @@ const LISTS = ['characters', 'transmitters', 'lavaliers', 'schedule'];
 // IFB files and the name each one has in the device's copy of the film
 export const GEAR_FILES = { 'gear/categories.json': 'gearCategories', 'gear/items.json': 'gearItems',
   'gear/history.json': 'gearHistory', 'gear/checks.json': 'gearChecks', 'gear/manuals.json': 'gearManuals', 'gear/batteries.json': 'gearBatteries',
-  'gear/photos.json': 'gearPhotos' };
+  'gear/photos.json': 'gearPhotos', 'gear/on-film.json': 'gearOnFilm' };
 export const IFB_FILES = { 'ifb/crew.json': 'crew', 'ifb/receivers.json': 'ifbReceivers',
   'ifb/headphones.json': 'ifbHeadphones', 'ifb/list.json': 'ifbList' };
 

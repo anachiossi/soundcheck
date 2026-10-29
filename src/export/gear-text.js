@@ -4,7 +4,7 @@
 //   'inventory'   the whole tree, with each object's brand and details (BNC · SMA · 3 m)
 // Used by: screens/gear.js
 
-import { categoriesOf, truckOf, topItems, contentsOf, ticked, holds, itemById, quantityText } from '../gear-rules.js';
+import { categoriesOf, truckOf, topItems, contentsOf, ticked, holds, itemById, quantityText, activeItems } from '../gear-rules.js';
 
 const label = (project, item) => {
   const parts = [`${ticked(project, item.id) ? '☑' : '☐'} ${item.name}`];
@@ -74,7 +74,7 @@ export function gearSheets(project) {
   const topName = id => { let c = categories.get(id); while (c?.parent) c = categories.get(c.parent); return c?.name || id || ''; };
   const subName = id => (categories.get(id)?.parent ? categories.get(id).name : '');
   const day = iso => (iso ? String(iso).slice(0, 10) : '');
-  const items = (project.gearItems || []).filter(i => !i.removed);
+  const items = activeItems(project); // on this film
   const details = item => (item.details || []).filter(d => d.value).map(d => `${d.label}: ${d.value}`).join(' · ');
   const rows = items.map(item => [topName(item.category), subName(item.category), pathOf(project, item), item.name, item.brand || '',
     item.type || '', colourName(item.color), Number(item.qty) || 1, details(item), item.volume ? 'yes' : '', ticked(project, item.id) ? '✓' : '',
