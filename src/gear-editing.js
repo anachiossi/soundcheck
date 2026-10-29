@@ -36,10 +36,13 @@ export function saveObject(fields) {
   if (!object.name) return showMessage('error', 'It needs a name.');
   const event = historyOf(before, object);
   const history = event ? [...(project.gearHistory || []), { at: today(), item: object.id, name: object.name, ...event }] : project.gearHistory;
+  // something new, added on a film that chose its things from the kit: it is on this film too
+  const onFilm = !before && Array.isArray(project.gearOnFilm?.items) ? { gearOnFilm: { items: [...project.gearOnFilm.items, object.id] } } : null;
   return save({
     gearItems: before ? items.map(item => (item.id === object.id ? object : item)) : [...items, object],
-    gearHistory: history, gearCategories: categoriesOf(project),
-  }, ['gear/items.json', 'gear/categories.json', ...(event ? ['gear/history.json'] : [])], `${object.name} saved.`);
+    gearHistory: history, gearCategories: categoriesOf(project), ...onFilm,
+  }, ['gear/items.json', 'gear/categories.json', ...(event ? ['gear/history.json'] : []), ...(onFilm ? ['gear/on-film.json'] : [])],
+  `${object.name} saved.`);
 }
 
 // an object leaves the list: kept in the history with the date and why. kind (kit website requests, kit-approve.js):
@@ -108,4 +111,9 @@ export function addItemPhotos(id, photos) {
   const gearPhotos = project.gearPhotos || {};
   const items = { ...gearPhotos.items, [id]: [...(gearPhotos.items?.[id] || []), ...photos] };
   return save({ gearPhotos: { ...gearPhotos, items } }, ['gear/photos.json']);
+}
+
+// which of the kit's things are on THIS film (gear-rules.js onThisFilm): the kit itself never changes
+export function setOnFilm(ids, message) {
+  return save({ gearOnFilm: { items: [...new Set(ids)] } }, ['gear/on-film.json'], message);
 }

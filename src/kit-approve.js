@@ -2,7 +2,7 @@
 // Approve, with signal:
 //   1. their photos move from the inbox to the kit photos repo (+ a small copy in gear/thumbs/), unchanged
 //   2. the change goes into the gear list like an edit by hand (gear-editing.js: saved, then uploaded by sync)
-//      — "not on this film" / "gone for good" only mark the thing, never delete it (kit-requests.js)
+//      — "not on this film" takes it off this film's list only; "gone for good" marks it; nothing is deleted
 //   3. the photos are attached to the thing (gear/photos.json)
 //   4. the request leaves the inbox. If that last step fails, the request is remembered on this device
 //      (localStorage 'sc_kit_done') and cleared at the next sync, so it is never approved twice.
@@ -14,7 +14,8 @@ import { connectionFor } from './film-source.js';
 import { kitPhotosConnection } from './gear-photos.js';
 import { changeOf } from './kit-requests.js';
 import { inboxConnection, photoBytes, base64Of, commitWithRetry, closeRequest } from './kit-inbox.js';
-import { saveObject, removeObject, addItemPhotos } from './gear-editing.js';
+import { saveObject, removeObject, addItemPhotos, setOnFilm } from './gear-editing.js';
+import { kitItems } from './gear-rules.js';
 
 const DONE = 'sc_kit_done';
 const doneHere = () => { try { return JSON.parse(localStorage.getItem(DONE) || '[]'); } catch { return []; } };
@@ -50,6 +51,9 @@ async function movePhotos(project, connection, inbox, request) {
   return added;
 }
 
+// the ids on this film now: its list, or (no list yet) every thing in the kit
+const onFilmNow = project => (Array.isArray(project.gearOnFilm?.items) ? project.gearOnFilm.items : kitItems(project).map(item => item.id));
+
 // → true when done (the card goes), false when it could not be done (a message says why; nothing half-done in the list)
 export async function approveRequest(request, draft) {
   const project = getState().project;
@@ -65,8 +69,9 @@ export async function approveRequest(request, draft) {
     showMessage('error', `Couldn't approve: ${error.message}. Nothing changed in your list.`);
     return false;
   }
-  const id = change.save?.id || change.remove.id;
+  const id = change.save?.id || change.offFilm || change.remove.id;
   if (change.save) await saveObject(change.save);
+  else if (change.offFilm) await setOnFilm(onFilmNow(project).filter(item => item !== id), 'Taken off this film (still in the kit).');
   else await removeObject(change.remove.id, change.remove.why, change.remove.kind);
   if (photos.length) await addItemPhotos(id, photos);
   forget(request);

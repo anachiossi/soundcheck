@@ -46,8 +46,13 @@ export const CASE_COLOURS = ['#111827', '#6b7280', '#cbd5e1', '#ffffff', '#facc1
 
 export const colourOf = (project, categoryId) => categoryById(project, categoryId)?.color || topOf(project, categoryId)?.color || '#64748b';
 
-// the objects still in the list (removed ones live on in the history)
-export const activeItems = project => (project.gearItems || []).filter(item => !item.removed);
+// The kit's objects still in it (removed ones live on in the history): the whole catalogue, every film made with it.
+export const kitItems = project => (project.gearItems || []).filter(item => !item.removed);
+// on THIS film: the film's gear/on-film.json { items: [ids] } (Ana, 29 Oct: the kit stays whole, a film takes what it
+// uses). No list = the whole kit is on the film (LBE, and any film before the kits).
+export const onThisFilm = (project, item) => !Array.isArray(project.gearOnFilm?.items) || project.gearOnFilm.items.includes(item.id);
+// the objects this film shows everywhere (truck, inventory, search, exports)
+export const activeItems = project => kitItems(project).filter(item => onThisFilm(project, item));
 export const itemById = (project, id) => activeItems(project).find(item => item.id === id) || null;
 
 // what a cart / case holds, grouped by category: [{ category, items }]

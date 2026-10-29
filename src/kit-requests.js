@@ -1,8 +1,9 @@
 // kit-requests.js — what the people with the kit website ask (Ana, 29 Oct): change a thing, add one, or say it is
 // not on this film / gone for good. They send it from the site; it waits in the kit inbox (kit-inbox.js) until Ana
 // approves it in the app (screens/kit-requests.js). Plain data in, plain data out (no network, no screens).
-// The kit only ever grows: "not on this film" and "gone for good" never delete, they mark the thing as removed with
-// the reason (removed_kind: 'not_on_film' | 'gone'), so Ana's list keeps everything Angelo and Davide ever had.
+// The kit only ever grows: "not on this film" only takes the thing off THIS film's list (gear/on-film.json), the kit
+// keeps it; "gone for good" marks it as removed with the reason (removed_kind: 'gone'), never deletes it. So Ana's
+// list keeps everything Angelo and Davide ever had.
 //
 // A request (written by the site, tools/kit_site_edit.html in soundcheck-data):
 //   { v: 1, id, mode: 'edit' | 'add', item: 'g492', kind: 'item' | 'case' | 'pouch' | 'cart' | 'truck',
@@ -51,17 +52,14 @@ export function nextGearId(project) {
 }
 
 // What approving does to the gear list:
-//   { save: fields for gear-editing.saveObject } or { remove: { id, why, kind } } (never both), or { problem }
+//   { save: fields for gear-editing.saveObject }, { offFilm: id }, { remove: { id, why, kind: 'gone' } }, or { problem }
 export function changeOf(project, request, draft) {
   const by = whoAndWhen(request);
   if (request.mode === 'edit') {
     const before = itemById(project, request.item);
     if (!before) return { problem: 'That thing is no longer in the list.' };
-    if (draft.gone) {
-      const reason = draft.gone === 'film' ? 'not on this film' : 'gone for good';
-      return { remove: { id: before.id, why: `${reason} (${by})${draft.note ? `: ${draft.note}` : ''}`,
-                         kind: draft.gone === 'film' ? 'not_on_film' : 'gone' } };
-    }
+    if (draft.gone === 'film') return { offFilm: before.id };
+    if (draft.gone) return { remove: { id: before.id, why: `gone for good (${by})${draft.note ? `: ${draft.note}` : ''}`, kind: 'gone' } };
     const fields = { id: before.id, name: draft.name || before.name, qty: draft.qty };
     if (draft.inside !== null && draft.inside !== (before.inside || '')) {
       fields.inside = draft.inside;

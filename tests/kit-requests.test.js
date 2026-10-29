@@ -28,10 +28,9 @@ test('a change can move a thing into another case, or out onto the truck', () =>
   assert.equal(changeOf(film, out, draftOf(film, out)).save.volume, true);
 });
 
-test('not on this film never deletes: the thing is marked, with who and why', () => {
+test('not on this film only takes it off this film: the kit keeps it', () => {
   const request = { mode: 'edit', item: 'g3', gone: 'film', notes: 'small film', who: 'Angelo', at };
-  assert.deepEqual(changeOf(film, request, draftOf(film, request)).remove,
-    { id: 'g3', why: 'not on this film (Angelo, 2026-10-29): small film', kind: 'not_on_film' });
+  assert.deepEqual(changeOf(film, request, draftOf(film, request)), { offFilm: 'g3' });
 });
 
 test('gone for good is marked too, never deleted', () => {
