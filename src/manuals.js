@@ -7,6 +7,7 @@
 // Used by: screens/gear.js (Gear → Manuals, by brand; 📄 guides on an open cart), screens/kit.js (📄 under the transmitters)
 
 import { setState } from './state.js';
+import { repoPath } from './store/kit-files.js';
 
 export const manualsOf = project => project.gearManuals || [];
 
@@ -31,7 +32,8 @@ export function manualsForItem(project, itemId) {
 }
 
 // the PDF's path on the device ('' while it hasn't been downloaded yet)
-export const manualPath = (project, manual) => (project.documents?.[`${project.folder}/${manual.file}`] ? `${project.folder}/${manual.file}` : '');
+// (the kit's manuals are in kits/<kit>/docs/manuals/ when the film names a kit: kit-files.js)
+export const manualPath = (project, manual) => (project.documents?.[repoPath(project, manual.file)] ? repoPath(project, manual.file) : '');
 
 export function openManual(project, manual, from) {
   const path = manualPath(project, manual);
