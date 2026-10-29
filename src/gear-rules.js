@@ -51,8 +51,29 @@ export const kitItems = project => (project.gearItems || []).filter(item => !ite
 // on THIS film: the film's gear/on-film.json { items: [ids] } (Ana, 29 Oct: the kit stays whole, a film takes what it
 // uses). No list = the whole kit is on the film (LBE, and any film before the kits).
 export const onThisFilm = (project, item) => !Array.isArray(project.gearOnFilm?.items) || project.gearOnFilm.items.includes(item.id);
-// the objects this film shows everywhere (truck, inventory, search, exports)
-export const activeItems = project => kitItems(project).filter(item => onThisFilm(project, item));
+// How many of a thing are on THIS film (Ana, 29 Oct: "quantities change from one film to another"): the film's
+// gear/on-film.json { qty: { id: n } } when it takes fewer than the kit owns; else the kit's qty.
+export const filmQtyOf = (project, item) => Number(project.gearOnFilm?.qty?.[item.id]) || item.qty || 1;
+// the objects this film shows everywhere (truck, inventory, search, exports), with this film's quantity
+// (kit_qty: how many the kit owns, when the film takes fewer)
+export const activeItems = project => kitItems(project).filter(item => onThisFilm(project, item))
+  .map(item => (filmQtyOf(project, item) !== (item.qty || 1) ? { ...item, qty: filmQtyOf(project, item), kit_qty: item.qty || 1 } : item));
+
+// A quantity typed on a film that chose from its kit: what the kit owns and what the film takes.
+// Fewer than the kit owns → only the film's number changes; more → the kit owns that many now (it only grows).
+// → { kitQty, filmQty: null when the film simply takes them all }
+export function quantitiesFor(owned, wanted) {
+  const want = Math.max(1, Number(wanted) || 1);
+  const kitQty = Math.max(owned || 1, want);
+  return { kitQty, filmQty: want < kitQty ? want : null };
+}
+
+// the film's list with one thing's quantity set (null = takes all the kit owns)
+export function withFilmQty(gearOnFilm, id, filmQty) {
+  const qty = { ...gearOnFilm?.qty };
+  if (filmQty) qty[id] = filmQty; else delete qty[id];
+  return { ...gearOnFilm, qty };
+}
 export const itemById = (project, id) => activeItems(project).find(item => item.id === id) || null;
 
 // what a cart / case holds, grouped by category: [{ category, items }]

@@ -3,7 +3,7 @@
 // Used by: screens/gear.js
 
 import { getState, saveAndShow, showMessage } from './state.js';
-import { categoriesOf, historyOf, moveUpAmongCases } from './gear-rules.js';
+import { categoriesOf, historyOf, moveUpAmongCases, quantitiesFor, withFilmQty } from './gear-rules.js';
 import { syncNow } from './sync.js';
 
 const today = () => new Date().toISOString();
@@ -29,15 +29,23 @@ export function saveObject(fields) {
   const project = getState().project;
   const items = project.gearItems || [];
   const before = fields.id ? items.find(item => item.id === fields.id) : null;
+  const rest = { ...fields };
+  delete rest.kit_qty; // only shown on a film (gear-rules.js activeItems), never saved
   const object = {
-    ...before, ...fields, id: fields.id || newId(items, 'g'), name: String(fields.name || '').trim(),
+    ...before, ...rest, id: fields.id || newId(items, 'g'), name: String(fields.name || '').trim(),
     qty: Math.max(1, Number(fields.qty) || 1), added: before?.added || today(),
   };
+  // a film that chose from its kit: the quantity typed is this film's; the kit keeps what it owns (or grows)
+  const choosing = Array.isArray(project.gearOnFilm?.items);
+  let filmQty = null;
+  if (choosing && before) ({ kitQty: object.qty, filmQty } = quantitiesFor(before.qty, object.qty));
   if (!object.name) return showMessage('error', 'It needs a name.');
   const event = historyOf(before, object);
   const history = event ? [...(project.gearHistory || []), { at: today(), item: object.id, name: object.name, ...event }] : project.gearHistory;
   // something new, added on a film that chose its things from the kit: it is on this film too
-  const onFilm = !before && Array.isArray(project.gearOnFilm?.items) ? { gearOnFilm: { items: [...project.gearOnFilm.items, object.id] } } : null;
+  const onFilm = !choosing ? null
+    : before ? (filmQty !== (Number(project.gearOnFilm.qty?.[object.id]) || null) ? { gearOnFilm: withFilmQty(project.gearOnFilm, object.id, filmQty) } : null)
+    : { gearOnFilm: { ...project.gearOnFilm, items: [...project.gearOnFilm.items, object.id] } };
   return save({
     gearItems: before ? items.map(item => (item.id === object.id ? object : item)) : [...items, object],
     gearHistory: history, gearCategories: categoriesOf(project), ...onFilm,
@@ -115,5 +123,13 @@ export function addItemPhotos(id, photos) {
 
 // which of the kit's things are on THIS film (gear-rules.js onThisFilm): the kit itself never changes
 export function setOnFilm(ids, message) {
-  return save({ gearOnFilm: { items: [...new Set(ids)] } }, ['gear/on-film.json'], message);
+  return save({ gearOnFilm: { ...getState().project.gearOnFilm, items: [...new Set(ids)] } }, ['gear/on-film.json'], message);
+}
+
+// how many of a thing are on THIS film (Gear → Kit): fewer than the kit owns, or all of them (n = what it owns)
+export function setFilmQty(id, n) {
+  const project = getState().project;
+  const owned = (project.gearItems || []).find(item => item.id === id)?.qty || 1;
+  const want = Math.min(owned, Math.max(1, Number(n) || 1));
+  return save({ gearOnFilm: withFilmQty(project.gearOnFilm, id, want < owned ? want : null) }, ['gear/on-film.json']);
 }

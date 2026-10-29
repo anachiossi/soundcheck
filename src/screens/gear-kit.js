@@ -1,13 +1,14 @@
 // gear-kit.js — Gear → Kit (Ana, 29 Oct): the whole kit of the film's fonico (every thing they ever had, kits/<kit>/)
 // and what is on THIS film. Tick a thing to take it on this film, untick to leave it in the kit; a cart or case ticks
-// or unticks everything inside it too. "All" / "None" for a new film. The kit itself never changes here: only the
+// or unticks everything inside it too. "All" / "None" for a new film. A thing the kit has several of shows
+// "on this film: [n] of N" (Ana, 29 Oct: quantities change from film to film; the kit keeps N). The kit itself never changes here: only the
 // film's list (gear/on-film.json, gear-editing.js setOnFilm). No list yet = everything is on the film.
 // Used by: main.js (the Gear department's tabs)
 
 import { html, useState } from '../../vendor/preact-htm.js';
-import { kitItems, onThisFilm } from '../gear-rules.js';
+import { kitItems, onThisFilm, filmQtyOf } from '../gear-rules.js';
 import { kitOf } from '../store/kit-files.js';
-import { setOnFilm } from '../gear-editing.js';
+import { setOnFilm, setFilmQty } from '../gear-editing.js';
 
 // the kit as a tree: [{ item, depth }] — carts and cases first with what they hold, then loose things, A–Z
 function treeOf(items) {
@@ -69,6 +70,10 @@ export function GearKitScreen({ state }) {
           <li key=${item.id} class="kit-tree__row" style=${`padding-left:${words.length ? 0 : depth * 18}px`}>
             <label><input type="checkbox" checked=${onNow.includes(item.id)} onChange=${() => toggle(item)} />
               <span>${item.name}${(item.qty || 1) > 1 && !item.name.includes(`×${item.qty}`) ? ` ×${item.qty}` : ''}${children.has(item.id) ? html` <small class="muted">(${withContents(children, item.id).length - 1} inside)</small>` : ''}</span></label>
+            ${(item.qty || 1) > 1 && onNow.includes(item.id) && html`
+              <label class="kit-tree__qty">on this film
+                <input type="number" min="1" max=${item.qty} value=${filmQtyOf(project, item)} onChange=${e => setFilmQty(item.id, e.target.value)} />
+                of ${item.qty}</label>`}
           </li>`)}
       </ul>
     </div>`;

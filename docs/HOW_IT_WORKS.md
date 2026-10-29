@@ -407,5 +407,7 @@ all), `gear/checks.json`, `ifb/crew.json`, `ifb/list.json`. The kit only grows (
 | Where each file is in the repo (repoPath / filmPaths) | `src/store/kit-files.js` (tests: `tests/kit-files.test.js`, incl. a full sync) |
 | On this film vs the whole kit (`activeItems` / `kitItems` / `onThisFilm`) | `src/gear-rules.js` (tests: `tests/on-film.test.js`) |
 | Choose what is on this film (`setOnFilm`); a new thing joins the film | `src/gear-editing.js` |
+| How many on this film (on-film.json `qty`: fewer than the kit owns; `filmQtyOf`, `quantitiesFor`). A quantity typed on
+  a film that chose from its kit is the film's; more than the kit owns makes the kit own that many | `src/gear-rules.js`, `setFilmQty` in `src/gear-editing.js` |
 | Gear → Kit tab: the whole kit with ticks (a case ticks its contents) | `src/screens/gear-kit.js` |
 | The move (data repo): `python tools/move_to_kits.py` (git mv, bytes + counts checked) | soundcheck-data `tools/move_to_kits.py` |
