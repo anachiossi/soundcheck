@@ -42,14 +42,15 @@ export function saveObject(fields) {
   }, ['gear/items.json', 'gear/categories.json', ...(event ? ['gear/history.json'] : [])], `${object.name} saved.`);
 }
 
-// an object leaves the list: kept in the history with the date and why
-export function removeObject(id, why) {
+// an object leaves the list: kept in the history with the date and why. kind (kit website requests, kit-approve.js):
+// 'not_on_film' | 'gone' — never a delete: Ana's list keeps everything the kit ever had
+export function removeObject(id, why, kind) {
   const project = getState().project;
   const items = project.gearItems || [];
   const object = items.find(item => item.id === id);
   if (!object) return;
   const inside = items.filter(item => item.inside === id && !item.removed);
-  const gearItems = items.map(item => (item.id === id ? { ...item, removed: today(), removed_note: why || '' }
+  const gearItems = items.map(item => (item.id === id ? { ...item, removed: today(), removed_note: why || '', ...(kind ? { removed_kind: kind } : {}) }
     : item.inside === id ? { ...item, inside: '' } : item)); // what it held stays, loose
   const gearHistory = [...(project.gearHistory || []), { at: today(), item: id, name: object.name, what: 'removed', note: why || '' }];
   return save({ gearItems, gearHistory }, ['gear/items.json', 'gear/history.json'],
@@ -99,4 +100,12 @@ export function clearTicks(ids) {
   const checks = { ...getState().project.gearChecks };
   for (const id of ids) delete checks[id];
   return save({ gearChecks: checks }, ['gear/checks.json'], 'Ticks cleared.');
+}
+
+// photos added to a thing (a kit website request, approved: kit-approve.js). photos = [{ file, label }]
+export function addItemPhotos(id, photos) {
+  const project = getState().project;
+  const gearPhotos = project.gearPhotos || {};
+  const items = { ...gearPhotos.items, [id]: [...(gearPhotos.items?.[id] || []), ...photos] };
+  return save({ gearPhotos: { ...gearPhotos, items } }, ['gear/photos.json']);
 }

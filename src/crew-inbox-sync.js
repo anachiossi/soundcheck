@@ -3,6 +3,7 @@
 //      key can't answer issues they wait, and state.crewCantAnswer shows one line on the screen
 //   2. the crew's open suggestions and feedback are listed for the 📬 banners
 //      (state.crewSuggestions, state.crewFeedback), without the names Ana removed.
+//   3. the kit website's requests (kit-inbox.js → state.kitRequests), for their own 📬 banner
 // Never stops the sync: with no signal (GitHub busy…) everything waits for the next one.
 // Used by: sync.js (owner devices only), screens/crew-suggestions.js (Mark as read)
 
@@ -10,6 +11,8 @@ import { getState, setState, showMessage } from './state.js';
 import * as inbox from './crew-inbox.js';
 import { forgetDecisions } from './crew-decisions.js';
 import { connectionFor } from './film-source.js';
+import { loadKitRequests, inboxConnection } from './kit-inbox.js';
+import { clearLeftovers } from './kit-approve.js';
 
 export async function ownerInbox(connection, store) {
   try {
@@ -20,6 +23,17 @@ export async function ownerInbox(connection, store) {
     if (cantAnswer !== undefined) setState({ crewCantAnswer: cantAnswer });
     const { suggestions, feedback } = await inbox.loadInbox(connection, project.folder, getState().crewRemoved);
     setState({ crewSuggestions: suggestions, crewFeedback: feedback });
+  } catch { /* the next sync tries again */ }
+  await kitInbox(connection, store);
+}
+
+// 3. the kit website's requests (kit-inbox.js): first what could not be cleared before, then the list for 📬
+async function kitInbox(connection, store) {
+  try {
+    const project = store.read();
+    const { requests, cantRead } = await loadKitRequests(project, connection);
+    const inbox = inboxConnection(project, connection);
+    setState({ kitRequests: inbox ? await clearLeftovers(inbox, requests) : requests, kitCantRead: Boolean(cantRead) });
   } catch { /* the next sync tries again */ }
 }
 
