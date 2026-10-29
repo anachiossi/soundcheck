@@ -30,6 +30,7 @@ export function fakeGitHub(repos, { issues = [], onAsk = () => {} } = {}) {
       return answer({ content: Buffer.from(JSON.stringify(content)).toString('base64') });
     }
     if (path.startsWith('/issues?')) return answer(issues);
+    if (options.method === 'POST' && path === '/git/blobs') return answer({ sha: 'b-new' });   // a photo (kit requests)
     if (options.method === 'POST' && path === '/git/trees') return answer({ sha: 't-new' });
     if (options.method === 'POST' && path === '/git/commits') return answer({ sha: 'c-new' });
     if (options.method === 'PATCH' && path.startsWith('/git/refs/heads/')) return answer({});
