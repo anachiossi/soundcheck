@@ -348,6 +348,10 @@ button.kit-item { border: 0; background: none; padding: 4px; border-radius: 12px
 .change__text { flex: 1 1 240px; }
 .change--decided .change__text { color: var(--muted); }
 .kit-request { align-items: flex-start; }
+.kit-tree { list-style: none; padding: 0; margin: 8px 0 0; }
+.kit-tree__row { border-bottom: 1px solid var(--line); }
+.kit-tree__row label { display: flex; gap: 10px; align-items: center; padding: 8px 4px; }
+.kit-tree__row input { width: 20px; height: 20px; flex: none; }
 .kit-request__form { flex: 1 1 100%; min-width: 0; padding: 8px 0 0; }
 .kit-request__form input, .kit-request__form select { width: 100%; box-sizing: border-box; }
 .kit-request__form select { font: inherit; font-size: 16px; padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--card); }
