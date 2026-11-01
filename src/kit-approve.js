@@ -4,6 +4,7 @@
 //   2. the change goes into the gear list like an edit by hand (gear-editing.js: saved, then uploaded by sync)
 //      — "not on this film" takes it off this film's list only; "gone for good" marks it; nothing is deleted
 //   3. the photos are attached to the thing (gear/photos.json)
+//   (a battery request: new batteries numbered after the last, or a new type: battery-editing.js growBatteries)
 //   4. the request leaves the inbox. If that last step fails, the request is remembered on this device
 //      (localStorage 'sc_kit_done') and cleared at the next sync, so it is never approved twice.
 // Decline: the request and its photos leave the inbox; nothing changes in the list.
@@ -16,6 +17,8 @@ import { changeOf } from './kit-requests.js';
 import { inboxConnection, photoBytes, base64Of, commitWithRetry, closeRequest } from './kit-inbox.js';
 import { saveObject, removeObject, addItemPhotos, setOnFilm } from './gear-editing.js';
 import { kitItems } from './gear-rules.js';
+import { growBatteries } from './battery-editing.js';
+import { batteryFile } from './battery-rules.js';
 
 const DONE = 'sc_kit_done';
 const doneHere = () => { try { return JSON.parse(localStorage.getItem(DONE) || '[]'); } catch { return []; } };
@@ -68,6 +71,14 @@ export async function approveRequest(request, draft) {
   } catch (error) {
     showMessage('error', `Couldn't approve: ${error.message}. Nothing changed in your list.`);
     return false;
+  }
+  if (change.battery) {   // a battery request (kit-battery-requests.js): its photos go on the group's own thing, if it has one
+    await growBatteries(change.battery);
+    const thing = batteryFile(getState().project).groups.find(group => group.id === change.battery.id)?.item;
+    if (photos.length && thing) await addItemPhotos(thing, photos);
+    forget(request);
+    await clear(inbox, request, 'approved');
+    return true;
   }
   const id = change.save?.id || change.offFilm || change.remove.id;
   if (change.save) await saveObject(change.save);

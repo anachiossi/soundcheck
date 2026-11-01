@@ -12,6 +12,7 @@
 // Used by: kit-approve.js, screens/kit-requests.js
 
 import { activeItems, itemById, pathOf } from './gear-rules.js';
+import { isBatteryRequest, batteryDraftOf, batteryChangeOf, describeBattery } from './kit-battery-requests.js';   // kind: 'battery'
 
 // what each kind becomes in the gear list
 export const KINDS = {
@@ -31,6 +32,7 @@ export const placeText = (project, id) => (id === '' ? 'on the truck (its own vo
 // The form Ana tidies before approving, filled from the request (and, for a change, from the thing as it is now).
 // inside: an id, '' = on the truck (its own volume); null = leave it where it is.
 export function draftOf(project, request) {
+  if (isBatteryRequest(request)) return batteryDraftOf(project, request);
   const before = request.mode === 'edit' ? itemById(project, request.item) : null;
   const inside = request.inside === 'truck' ? '' : request.inside || null;
   return {
@@ -54,6 +56,7 @@ export function nextGearId(project) {
 // What approving does to the gear list:
 //   { save: fields for gear-editing.saveObject }, { offFilm: id }, { remove: { id, why, kind: 'gone' } }, or { problem }
 export function changeOf(project, request, draft) {
+  if (isBatteryRequest(request)) return batteryChangeOf(project, request, draft);   // → { battery } or { problem }
   const by = whoAndWhen(request);
   if (request.mode === 'edit') {
     const before = itemById(project, request.item);
@@ -80,7 +83,12 @@ export function changeOf(project, request, draft) {
 
 // The request in plain lines, for Ana's card: what they asked, before she tidies it.
 export function describe(project, request) {
-  const lines = [];
+  const lines = isBatteryRequest(request) ? describeBattery(project, request) : [];
+  if (isBatteryRequest(request)) {
+    if (request.notes) lines.push(`“${request.notes}”`);
+    if (request.photos?.length) lines.push(`📷 ${request.photos.length} ${request.photos.length === 1 ? 'photo' : 'photos'}`);
+    return lines;
+  }
   const before = request.mode === 'edit' ? itemById(project, request.item) : null;
   if (request.mode === 'edit') {
     lines.push(before ? `✏️ Change: ${before.name}${before.inside ? ` (in ${placeText(project, before.inside)})` : ''}`

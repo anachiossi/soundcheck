@@ -59,6 +59,32 @@ export function saveGroup(fields) {
   return save({ ...file, groups, batteries: [...file.batteries, ...extra] }, `${name} saved.`);
 }
 
+// a battery request from the kit website, approved (kit-approve.js, kit-battery-requests.js): `add` new batteries
+// numbered after the highest number in the group, a new name, a note added — or, with no id, a new battery type.
+// Nothing is taken away (the kit only grows).
+export function growBatteries({ id, name, battery, add, note }) {
+  const file = batteryFile(getState().project);
+  let groupId = id;
+  let groups;
+  if (groupId) {
+    groups = file.groups.map(g => (g.id !== groupId ? g : { ...g, name: name || g.name, ...(note ? { note: [g.note, note].filter(Boolean).join(' · ') } : {}) }));
+  } else {
+    const used = new Set(file.groups.map(g => g.id));
+    let n = file.groups.length + 1;
+    while (used.has(`b${n}`)) n++;
+    groupId = `b${n}`;
+    groups = [...file.groups, { id: groupId, name, battery: battery || undefined, note: note || undefined }];
+  }
+  const ids = new Set(file.batteries.map(b => b.id));
+  let label = Math.max(0, ...file.batteries.filter(b => b.group === groupId).map(b => Number(b.label) || 0));
+  const extra = [];
+  while (extra.length < (Number(add) || 0)) {
+    label++;
+    if (!ids.has(`${groupId}-${label}`)) extra.push({ id: `${groupId}-${label}`, group: groupId, label: String(label), state: 'full', since: now() });
+  }
+  return save({ ...file, groups, batteries: [...file.batteries, ...extra] }, `${name || 'Batteries'} saved${extra.length ? `: ${extra.length} new` : ''}.`);
+}
+
 // what a model draws: watts (Wh per hour), how many batteries at once, which battery, where it comes from
 export function saveDevice(fields, oldModel) {
   const file = batteryFile(getState().project);

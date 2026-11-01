@@ -2,6 +2,7 @@
 // The banner "🧰 Davide · kit website: 2 requests", one per person, while any wait, like the crew's 📬 suggestions.
 // Each request: their photos, what they asked in plain words (kit-requests.js describe), then the form Ana tidies
 // (name, how many, where, note, and for a change: keep / not on this film / gone for good), ✕ Decline or ✓ Approve.
+// A battery request (kit-battery-requests.js): name, how many (in all / new ones), the battery for a new type, note.
 // Approving needs signal (their photos come from the inbox). Nothing they ask can delete: see kit-requests.js.
 // The data changes in kit-approve.js, never here. Used by: main.js
 
@@ -72,11 +73,16 @@ function Request({ project, request }) {
         ${describe(project, request).map((line, index) => html`${index > 0 && html`<br />`}${line}`)}
       </span>
       <div class="item-form kit-request__form">
-        ${request.mode === 'edit' && html`<span class="choices">
+        ${draft.kind === 'battery' && html`
+          <label><span>Name</span><input value=${draft.name} onInput=${e => set('name', e.target.value)} /></label>
+          ${!request.item && html`<label><span>Battery</span><input value=${draft.battery} placeholder="NP-F970" onInput=${e => set('battery', e.target.value)} /></label>`}
+          <label><span>${request.mode === 'edit' ? 'How many in all' : 'New batteries'}</span>
+            <input type="number" min="0" value=${draft.qty} onInput=${e => set('qty', Number(e.target.value) || 0)} /></label>`}
+        ${draft.kind !== 'battery' && request.mode === 'edit' && html`<span class="choices">
           ${[['', 'Keep it'], ['film', 'Not on this film'], ['forever', 'Gone for good']].map(([value, text]) => html`
             <button type="button" key=${value} class=${'choice' + (draft.gone === value ? ' choice--on' : '')} onClick=${() => set('gone', value)}>${text}</button>`)}
         </span>`}
-        ${!draft.gone && html`
+        ${draft.kind !== 'battery' && !draft.gone && html`
           ${request.mode === 'add' && html`<label><span>What is it</span>
             <select value=${draft.kind} onChange=${e => set('kind', e.target.value)}>
               ${Object.entries(KINDS).map(([key, kind]) => html`<option key=${key} value=${key}>${kind.label}</option>`)}
