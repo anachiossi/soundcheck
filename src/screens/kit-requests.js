@@ -72,7 +72,7 @@ function Request({ project, request }) {
         <${Photos} request=${request} />
         ${describe(project, request).map((line, index) => html`${index > 0 && html`<br />`}${line}`)}
       </span>
-      <div class="item-form kit-request__form">
+      ${draft.kind !== 'firmware' && html`<div class="item-form kit-request__form">
         ${draft.kind === 'battery' && html`
           <label><span>Name</span><input value=${draft.name} onInput=${e => set('name', e.target.value)} /></label>
           ${!request.item && html`<label><span>Battery</span><input value=${draft.battery} placeholder="NP-F970" onInput=${e => set('battery', e.target.value)} /></label>`}
@@ -96,10 +96,10 @@ function Request({ project, request }) {
               ${places.map(place => html`<option key=${place.id} value=${place.id}>${place.text}</option>`)}
             </select></label>`}
         <label><span>Note (kept with it)</span><input value=${draft.note} onInput=${e => set('note', e.target.value)} /></label>
-      </div>
+      </div>`}
       <span class="decision-buttons">
         <button class="btn btn--small" disabled=${busy} onClick=${() => declineRequest(request)}>✕ Decline</button>
-        <button class="btn btn--small btn--primary" disabled=${busy} onClick=${approve}>${busy ? 'Approving…' : '✓ Approve'}</button>
+        <button class="btn btn--small btn--primary" disabled=${busy} onClick=${approve}>${busy ? 'Approving…' : draft.kind === 'firmware' ? '✓ Done' : '✓ Approve'}</button>
       </span>
     </li>`;
 }

@@ -42,6 +42,12 @@ test('a new battery type needs a name, and keeps its battery model', () => {
   assert.ok(changeOf(film, { ...request, name: '' }, { ...draftOf(film, request), name: '' }).problem);
 });
 
+test('"Check for new firmware" changes nothing in the list: Ana asks Claude, then Done', () => {
+  const request = { kind: 'firmware', mode: 'add', item: '', who: 'Davide', at };
+  assert.deepEqual(changeOf(film, request, draftOf(film, request)), { firmware: true });
+  assert.equal(describe(film, request)[0], 'Asks to check for new firmware');
+});
+
 test('a battery group no longer in the list cannot be approved', () => {
   const request = { kind: 'battery', mode: 'add', item: 'b99', count: '2', at };
   assert.ok(changeOf(film, request, draftOf(film, request)).problem);

@@ -31,7 +31,11 @@ export const placeText = (project, id) => (id === '' ? 'on the truck (its own vo
 
 // The form Ana tidies before approving, filled from the request (and, for a change, from the thing as it is now).
 // inside: an id, '' = on the truck (its own volume); null = leave it where it is.
+// "Check for new firmware" from the kit website (Ana, 1 Nov): nothing to tidy; Ana asks Claude to search, then Done
+export const isFirmwareRequest = request => request?.kind === 'firmware';
+
 export function draftOf(project, request) {
+  if (isFirmwareRequest(request)) return { kind: 'firmware', note: '' };
   if (isBatteryRequest(request)) return batteryDraftOf(project, request);
   const before = request.mode === 'edit' ? itemById(project, request.item) : null;
   const inside = request.inside === 'truck' ? '' : request.inside || null;
@@ -56,6 +60,7 @@ export function nextGearId(project) {
 // What approving does to the gear list:
 //   { save: fields for gear-editing.saveObject }, { offFilm: id }, { remove: { id, why, kind: 'gone' } }, or { problem }
 export function changeOf(project, request, draft) {
+  if (isFirmwareRequest(request)) return { firmware: true };   // nothing changes in the gear list
   if (isBatteryRequest(request)) return batteryChangeOf(project, request, draft);   // → { battery } or { problem }
   const by = whoAndWhen(request);
   if (request.mode === 'edit') {
@@ -83,6 +88,9 @@ export function changeOf(project, request, draft) {
 
 // The request in plain lines, for Ana's card: what they asked, before she tidies it.
 export function describe(project, request) {
+  if (isFirmwareRequest(request)) {
+    return ['Asks to check for new firmware', 'Ask Claude: "Check for new firmware for the kit" (kits/<kit>/gear/firmware.json), then Done.'];
+  }
   const lines = isBatteryRequest(request) ? describeBattery(project, request) : [];
   if (isBatteryRequest(request)) {
     if (request.notes) lines.push(`“${request.notes}”`);

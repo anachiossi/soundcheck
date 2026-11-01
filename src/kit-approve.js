@@ -62,6 +62,11 @@ export async function approveRequest(request, draft) {
   const project = getState().project;
   const change = changeOf(project, request, draft);
   if (change.problem) { showMessage('error', change.problem); return false; }
+  if (change.firmware) {   // "Check for new firmware": done once Claude searched; nothing changes in the list
+    forget(request);
+    await clear(inboxConnection(project, connectionFor(project, getState().connection)), request, 'approved');
+    return true;
+  }
   if (!navigator.onLine) { showMessage('error', 'Approving needs signal: their photos come from the inbox.'); return false; }
   const connection = connectionFor(project, getState().connection);
   const inbox = inboxConnection(project, connection);
