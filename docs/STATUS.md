@@ -154,10 +154,13 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   the iPhone no longer waits to see if it's a double-tap zoom). Ana: "the X was painfully hard to work".
 - v189 (23 Oct): no more "!" next to a lav when the TX and lav connectors differ (mic tables and the exported
   image). Ana: "Take the '!' on the lavs". `row.connectorMismatch` is still worked out in `model.js`, just not shown.
-- v197 (29 Oct, branch kit-requests, NOT live): **Kits + kit requests.** A fonico's kit lives once in the data repo's
+- v197 (29 Oct, live 1 Nov): **Kits + kit requests.** A fonico's kit lives once in the data repo's
   kits/<kit>/ (Angelo + Davide, Adriano); a film names it (settings "kit") and ticks what is on it (Gear → Kit).
   Requests from the kit website (✏️ / ＋ with photos) arrive as 📬 "<name> · kit website"; Ana tidies and approves.
-  Nothing they send deletes. See HOW_IT_WORKS "Kits" and "Kit requests".
+  Nothing they send deletes. See HOW_IT_WORKS "Kits" and "Kit requests". The kits moved into kits/ on 1 Nov.
+- v198 (1 Nov): the kit website now shows a change on the sender's phone at once (live edits). Approving or declining
+  leaves a note in the inbox (results/<id>.json: approved / refused) so that phone keeps it or goes back. Requests
+  carry their kit's site code: the banner reads "ab · Davide · kit website" (one inbox for every kit).
 - v190 (23 Oct): exported mic-list images (Ana). **Sound assistants**: a SPEAKS column (YES/NO, as the mixer's) and
   each accessory as a small pill in its own colour (Ankle black, Plush sleeve beige…), stacked when a row has several.
   **Sound mixer**: the TX pill shows its model under the number (4 / TRXLA3.5) and is wider, the lav pill narrower.

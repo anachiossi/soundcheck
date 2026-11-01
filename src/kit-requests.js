@@ -102,11 +102,12 @@ export function describe(project, request) {
   return lines;
 }
 
-// waiting requests, newest last, grouped by who sent them: [['Davide', [request…]], …]
+// waiting requests, newest last, grouped by who sent them: [['ab · Davide', [request…]], …]
+// The kit's site code comes first (one inbox for every kit, Ana 1 Nov): "ab" = the Angelo + Davide kit site.
 export function requestsByPerson(requests) {
   const groups = new Map();
   for (const request of [...(requests || [])].sort((a, b) => String(a.at).localeCompare(String(b.at)))) {
-    const who = request.who || 'Someone';
+    const who = [request.kit, request.who || 'Someone'].filter(Boolean).join(' · ');
     groups.set(who, [...(groups.get(who) || []), request]);
   }
   return [...groups.entries()];

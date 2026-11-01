@@ -65,9 +65,14 @@ export async function commitWithRetry(connection, files, message) {
   }
 }
 
-// a handled request (approved or declined) leaves the inbox, its photos with it
+// a handled request (approved or declined) leaves the inbox, its photos with it, and leaves a note in its place:
+// results/<id>.json = { result: 'approved' | 'refused', at }. The phone that sent it reads the note (the kit website
+// shows a change at once, Ana 1 Nov): refused → it goes back to the kit as it is; approved → it keeps showing it until
+// the rebuilt kit has it.
 export function closeRequest(inbox, request, decision) {
-  return commitWithRetry(inbox, base => Object.fromEntries(Object.keys(base.files)
-    .filter(path => path.startsWith(`${request.folder}/`)).map(path => [path, null])),
-  `${decision}: ${request.who || 'someone'}'s request ${request.id}`);
+  const note = { result: decision === 'declined' ? 'refused' : 'approved', at: new Date().toISOString() };
+  return commitWithRetry(inbox, base => ({
+    ...Object.fromEntries(Object.keys(base.files).filter(path => path.startsWith(`${request.folder}/`)).map(path => [path, null])),
+    [`results/${request.id}.json`]: JSON.stringify(note, null, 2),
+  }), `${decision}: ${request.who || 'someone'}'s request ${request.id}`);
 }

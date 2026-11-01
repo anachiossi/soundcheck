@@ -74,6 +74,11 @@ test('requests are grouped by who sent them, oldest first', () => {
   assert.deepEqual(groups.map(([who, list]) => [who, list.map(r => r.at)]), [['Davide', ['0', '2']], ['Angelo', ['1']], ['Someone', ['3']]]);
 });
 
+test('a request from a kit site shows that kit first: "ab · Davide"', () => {
+  const groups = requestsByPerson([{ who: 'Davide', kit: 'ab', at: '1' }, { who: 'Davide', at: '2' }]);
+  assert.deepEqual(groups.map(([who]) => who), ['ab · Davide', 'Davide']);
+});
+
 test('a new id skips the ones in use, removed ones included', () => {
   assert.equal(nextGearId(film), 'g5');
 });

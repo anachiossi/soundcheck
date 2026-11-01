@@ -35,13 +35,22 @@ test('a key that cannot see the inbox shows nothing and says so', async () => {
   assert.deepEqual(await loadKitRequests(film, connection), { requests: [], cantRead: true });
 });
 
-test('a handled request leaves the inbox with all its photos, in one commit', async () => {
+test('a handled request leaves the inbox with all its photos, in one commit, and leaves an "approved" note', async () => {
   let tree;
   fakeGitHub({ 'someone/kit-inbox': {
     'requests/r2/request.json': { id: 'r2' }, 'requests/r2/photo-1.jpg': 'jpeg', 'requests/r3/request.json': { id: 'r3' },
   } }, { onAsk: (url, options) => { if (url.endsWith('/git/trees') && options.method === 'POST') tree = JSON.parse(options.body).tree; } });
   await closeRequest(inboxConnection(film, connection), { id: 'r2', folder: 'requests/r2', who: 'Davide' }, 'approved');
-  assert.deepEqual(tree.map(entry => [entry.path, entry.sha]).sort(), [['requests/r2/photo-1.jpg', null], ['requests/r2/request.json', null]]);
+  assert.deepEqual(tree.filter(entry => entry.sha === null).map(entry => entry.path).sort(), ['requests/r2/photo-1.jpg', 'requests/r2/request.json']);
+  assert.equal(JSON.parse(tree.find(entry => entry.path === 'results/r2.json').content).result, 'approved');
+});
+
+test('a declined request leaves a "refused" note, so the phone that sent it goes back to the kit as it is', async () => {
+  let tree;
+  fakeGitHub({ 'someone/kit-inbox': { 'requests/r4/request.json': { id: 'r4' } } },
+    { onAsk: (url, options) => { if (url.endsWith('/git/trees') && options.method === 'POST') tree = JSON.parse(options.body).tree; } });
+  await closeRequest(inboxConnection(film, connection), { id: 'r4', folder: 'requests/r4', who: 'Angelo' }, 'declined');
+  assert.equal(JSON.parse(tree.find(entry => entry.path === 'results/r4.json').content).result, 'refused');
 });
 
 test('a photo is written as a binary file, text files as text', async () => {
