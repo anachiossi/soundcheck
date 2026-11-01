@@ -161,6 +161,11 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
 - v198 (1 Nov): the kit website now shows a change on the sender's phone at once (live edits). Approving or declining
   leaves a note in the inbox (results/<id>.json: approved / refused) so that phone keeps it or goes back. Requests
   carry their kit's site code: the banner reads "ab · Davide · kit website" (one inbox for every kit).
+- v201 (2 Nov): **Close film on this device** (Ana: LBE is over; free the device for Il colpo). Projects → the open
+  film → "Close film on this device…" → a question with "Save backup file" (keep it away from GitHub, e.g. Google
+  Drive) and "Close <film>". Deletes only this device's copy (data, day PDFs, photos; ~20–30 MB for LBE); never
+  calls GitHub, and the film can be downloaded again. Refused while changes wait to upload, conflicts are open, or
+  it is syncing. `src/film-close.js`, `deleteProject` in `store/local.js`, tests/film-close.test.js.
 - v190 (23 Oct): exported mic-list images (Ana). **Sound assistants**: a SPEAKS column (YES/NO, as the mixer's) and
   each accessory as a small pill in its own colour (Ankle black, Plush sleeve beige…), stacked when a row has several.
   **Sound mixer**: the TX pill shows its model under the number (4 / TRXLA3.5) and is wider, the lav pill narrower.

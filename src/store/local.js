@@ -75,6 +75,19 @@ export async function loadPhoto(projectId, path) {
   return bytes ? new Blob([bytes], { type: 'image/jpeg' }) : null;
 }
 
+// Close film (film-close.js): this film's database on THIS device goes (data, PDFs, photos), and its line
+// in the list. Nothing else: the film stays in the data repo and can be downloaded again.
+export async function deleteProject(projectId) {
+  await new Promise((resolve, reject) => {
+    const request = indexedDB.deleteDatabase(PREFIX + projectId);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+    request.onblocked = () => resolve(); // open in another tab: the browser finishes it when that tab closes
+  });
+  const others = listProjects().filter(p => p.id !== projectId);
+  try { localStorage.setItem('sc_projects', JSON.stringify(others)); } catch { /* storage blocked */ }
+}
+
 // The list of films on this device is kept in a small index so it can be
 // shown before any database is opened.
 export function listProjects() {

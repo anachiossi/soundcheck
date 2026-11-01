@@ -3,7 +3,8 @@
 // • Films: the ones in the repos (tap to download) and the ones on this device.
 //   Film repos (Ana's devices): the extra repos, one per film, her key reads (parts/film-repos.js).
 // • The open film: sync status, "Sync now", backup file; its documents (📄 script, 📄 latest PDL,
-//   offline) and ⏱ Hours (the week / whole film for production, fix any day's wrap).
+//   offline) and ⏱ Hours (the week / whole film for production, fix any day's wrap);
+//   "Close film on this device" (film-close.js): frees the device, the data repo keeps the film.
 // • Share with crew (Ana's devices, film open): a link per person (parts/crew-share.js).
 //   A crew phone sees "Connected as Davide (crew)" and no Connect or Share with crew (⏱ Hours = its own);
 //   instead: "My suggestions" (parts/crew-log.js) and "Enjoyed soundcheck? Share some feedback"
@@ -33,6 +34,7 @@ import { MyCallSwitch } from '../parts/my-call-switch.js';
 import { staysOnPhone } from '../crew-sync.js';
 import { FilmRepos } from '../parts/film-repos.js';
 import { onDevice } from '../film-source.js';
+import { closeFilm } from '../film-close.js';
 
 export function ProjectsScreen({ state }) {
   const { project, projects, connection, films, online } = state;
@@ -98,7 +100,26 @@ function OpenFilm({ state }) {
     ${connection && html`
       <button class="btn" disabled=${!online || sync.running} onClick=${() => syncNow({ loud: true })}>↻ Sync now</button>
       ${!online && html`<small class="muted"> No signal: changes wait on this device.</small>`}`}
-    <${FilmDocuments} project=${project} />`;
+    <${FilmDocuments} project=${project} />
+    <${CloseFilm} project=${project} />`;
+}
+
+// Close film on this device: a second tap confirms (the film stays safe in the data repo).
+// First a backup file is offered, to keep away from GitHub, e.g. in Google Drive (Ana, 2 Nov).
+function CloseFilm({ project }) {
+  const [asking, setAsking] = useState(false);
+  if (!asking) return html`<button class="link close-film" onClick=${() => setAsking(true)}>Close film on this device…</button>`;
+  return html`
+    <div class="close-film-ask">
+      <p>Close <b>${project.name}</b> on this device? It frees the space here. The film stays safe in your data
+        and can be downloaded again.</p>
+      <p class="muted">First, keep a backup file somewhere else (e.g. Files → Google Drive): the film's data, without the PDFs.</p>
+      <div class="toolbar">
+        <button class="btn" onClick=${downloadProjectFile}><${Icon} name="download" /> Save backup file</button>
+        <button class="btn btn--danger" onClick=${() => closeFilm(project.id)}>Close ${project.name}</button>
+        <button class="btn" onClick=${() => setAsking(false)}>Cancel</button>
+      </div>
+    </div>`;
 }
 
 // the film's tag ('LBE'): tap to change it — every exported file starts with it

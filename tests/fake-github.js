@@ -65,6 +65,10 @@ export function fakeDevice({ onSave = () => {} } = {}) {
     const request = {};
     setTimeout(() => { request.result = database(name); request.onsuccess(); });
     return request;
+  }, deleteDatabase: name => {
+    const request = {};
+    setTimeout(() => { delete databases[name]; request.onsuccess(); });
+    return request;
   } };
   Object.defineProperty(globalThis.navigator, 'onLine', { value: true, configurable: true });
   return databases;
