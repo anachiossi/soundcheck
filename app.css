@@ -313,6 +313,9 @@ button.badge { border: 0; font: inherit; font-size: 12px; cursor: pointer; }
 .link { border: 0; background: none; color: var(--accent); text-decoration: underline; padding: 0; }
 .connection { margin-top: 18px; font-size: 13px; }
 .more .btn { margin: 0 8px 8px 0; }
+.more--all { margin-top: 18px; }
+.more--all > summary { font-weight: 700; }
+.more--all > :not(summary) { margin-left: 12px; }
 
 /* ---- 8. Kit editing ------------------------------------------------------ */
 button.kit-item { border: 0; background: none; padding: 4px; border-radius: 12px; text-align: left; font: inherit; }

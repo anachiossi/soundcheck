@@ -166,6 +166,8 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   Drive) and "Close <film>". Deletes only this device's copy (data, day PDFs, photos; ~20–30 MB for LBE); never
   calls GitHub, and the film can be downloaded again. Refused while changes wait to upload, conflicts are open, or
   it is syncing. `src/film-close.js`, `deleteProject` in `store/local.js`, tests/film-close.test.js.
+- v202 (2 Nov): Projects is simpler: Film repos, Share with crew and Backup files are folded into one closed
+  **More** (Ana: rarely needed; she has never shared a film yet).
 - v190 (23 Oct): exported mic-list images (Ana). **Sound assistants**: a SPEAKS column (YES/NO, as the mixer's) and
   each accessory as a small pill in its own colour (Ankle black, Plush sleeve beige…), stacked when a row has several.
   **Sound mixer**: the TX pill shows its model under the number (4 / TRXLA3.5) and is wider, the lav pill narrower.

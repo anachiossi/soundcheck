@@ -5,6 +5,7 @@
 // • The open film: sync status, "Sync now", backup file; its documents (📄 script, 📄 latest PDL,
 //   offline) and ⏱ Hours (the week / whole film for production, fix any day's wrap);
 //   "Close film on this device" (film-close.js): frees the device, the data repo keeps the film.
+// • More (folded, Ana 2 Nov: rarely needed): Film repos, Share with crew, Backup files.
 // • Share with crew (Ana's devices, film open): a link per person (parts/crew-share.js).
 //   A crew phone sees "Connected as Davide (crew)" and no Connect or Share with crew (⏱ Hours = its own);
 //   instead: "My suggestions" (parts/crew-log.js) and "Enjoyed soundcheck? Share some feedback"
@@ -66,16 +67,17 @@ export function ProjectsScreen({ state }) {
       ${project && html`<${MySuggestions} state=${state} /><${FeedbackButton} state=${state} />`}`}
     ${connection && !isCrew(connection) && html`
       <p class="muted connection">Connected to ${connection.owner}/${connection.repo}${connection.branch !== 'main' ? ` (${connection.branch})` : ''}
-        ${' '}as <b>${connection.device}</b>. <button class="link" onClick=${forgetConnection}>Disconnect</button></p>
-      <${FilmRepos} connection=${connection} />`}
+        ${' '}as <b>${connection.device}</b>. <button class="link" onClick=${forgetConnection}>Disconnect</button></p>`}
 
-    ${connection && !isCrew(connection) && project && html`<${ShareWithCrew} state=${state} />`}
-
-    <details class="more"><summary>Backup files</summary>
-      ${project && html`<button class="btn" onClick=${downloadProjectFile}><${Icon} name="download" /> Save backup file of ${project.name}</button>`}
-      <label class="btn file-btn">+ Add film from a backup file
-        <input type="file" accept=".json,application/json" onChange=${e => { e.target.files[0] && importProjectFile(e.target.files[0]); e.target.value = ''; }} />
-      </label>
+    <details class="more more--all"><summary>More</summary>
+      ${connection && !isCrew(connection) && html`<${FilmRepos} connection=${connection} />`}
+      ${connection && !isCrew(connection) && project && html`<${ShareWithCrew} state=${state} />`}
+      <details class="more"><summary>Backup files</summary>
+        ${project && html`<button class="btn" onClick=${downloadProjectFile}><${Icon} name="download" /> Save backup file of ${project.name}</button>`}
+        <label class="btn file-btn">+ Add film from a backup file
+          <input type="file" accept=".json,application/json" onChange=${e => { e.target.files[0] && importProjectFile(e.target.files[0]); e.target.value = ''; }} />
+        </label>
+      </details>
     </details>
 
     <${MyCallSwitch} state=${state} />
