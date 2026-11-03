@@ -95,6 +95,16 @@ Check: Executions (☰ list icon) shows each check; GitHub → Actions shows the
 
 ### Automatic alarms (no tap) — setup once
 Ana, 9 Oct: she didn't tap ⏰ and the alarm wasn't set. The iPhone now asks the robot every evening.
+**3 Nov (Il colpo, night shoots):** the answer is now the next wake-up still ahead **within 24 hours**
+(`upcomingPlans` → `alarmAnswer`), so after a 17:00–01:00 day the same afternoon's call is set; Friday → Monday
+is still `none` until Sunday. Main-unit rows only. `walk_to_ride` (minutes on foot to the ride's house) comes
+before the drive. With `"travel": "maps"` in the film's commute, the drive is asked to **Google Maps** (Apps
+Script's built-in Maps service: free, no key) from the script property **`RIDE_FROM`** (the ride's address:
+ONLY there, never in a file) to the day's place in `locations.json` (written by `run.py` from the ODG: crew
+parking, else the set; its map link → coordinates), for the time of leaving, + `travel_margin` (15). No address,
+no place yet, or Maps fails → `travel_max`. The app's Tomorrow card still counts `travel_max`.
+**Phone calendar:** `<URL>?key=<ALARM_KEY>&calendar=<film>` = an iCalendar feed (settings `"calendar"`:
+`days_with_2nd_unit` | `all`); iPhone → Settings → Calendar → Accounts → Add Account → Other → Add Subscribed Calendar.
 - The robot (`doGet` → `alarmAnswer` in `pipeline/gmail-trigger.gs`) answers `06:00;06:45` (wake;leave, the
   same sums as the app's ⏰) when the next morning is a shooting day, or `none` (weekend, day off). Before noon
   "next morning" = today; else tomorrow — so Friday's run says `none` and Sunday's sets Monday. An ODG not yet

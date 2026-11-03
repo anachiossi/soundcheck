@@ -104,49 +104,140 @@ function checkWrapAlerts() {
 // ---- Bedtime --------------------------------------------------------------------------------
 // The evening before a shooting day, at the time to sleep (the film's wake-up plan, settings.json
 // "commute": call − meeting − travel − getting ready − sleep hours; same as the app): "💤 Time to sleep".
-const COMMUTE = { meet_before_call: 45, travel_min: 75, travel_max: 90, get_ready: 45, sleep_hours: 8 };
+// walk_to_ride: minutes on foot to the ride's house first (Il colpo 20, Ana 3 Nov).
+// travel: "maps" → the drive is asked to Google Maps (travelMinutes below), else travel_max.
+const COMMUTE = { meet_before_call: 45, travel_min: 75, travel_max: 90, get_ready: 45, sleep_hours: 8, walk_to_ride: 0 };
 
+// Not when still working: a night shoot (17:00–01:00) ends after the time to sleep for the next call.
 function checkBedtime() {
   const now = new Date();
-  const minute = Number(Utilities.formatDate(now, TIME_ZONE, 'H')) * 60 + Number(Utilities.formatDate(now, TIME_ZONE, 'm'));
-  const tomorrow = Utilities.formatDate(new Date(now.getTime() + 24 * 3600 * 1000), TIME_ZONE, 'yyyy-MM-dd');
   const properties = PropertiesService.getScriptProperties();
   const sent = JSON.parse(properties.getProperty('WRAP_SENT') || '[]');
-  for (const film of (readRepo('projects') || []).filter(item => item.type === 'dir').map(item => item.name)) {
-    const key = `${film}|bed|${tomorrow}`;
-    if (sent.includes(key)) continue;
-    const phones = readRepo(`projects/${film}/push`);
+  for (const plan of upcomingPlans(now)) {
+    const key = `${plan.film}|bed|${plan.date}`;
+    const bedtime = plan.wake.getTime() - plan.sleepHours * 3600 * 1000;
+    if (sent.includes(key) || now.getTime() < bedtime || now.getTime() > bedtime + 3 * 3600 * 1000) continue;
+    if (plan.previousWrap && plan.previousWrap.getTime() > bedtime) continue; // still on set at bedtime
+    const phones = readRepo(`projects/${plan.film}/push`);
     if (!phones || !phones.length) continue;
+    startWorkflow(ALERTS, { film: plan.film, title: '💤 Time to sleep', url: './#hours', tag: 'sleep',
+      body: `D${String(plan.day).padStart(2, '0')}: wake ${clockAt(plan.wake)} · call ${clockOf(plan.call)}` });
+    sent.push(key);
+    properties.setProperty('WRAP_SENT', JSON.stringify(sent.slice(-100)));
+    console.log(`Bedtime for ${plan.film}: wake ${clockAt(plan.wake)}`);
+  }
+}
+
+// ---- The wake-up plans --------------------------------------------------------------------------------
+// Every shooting day of the next 3 calendar days with its wake and leave as real moments (Ana, 3 Nov: night
+// shoots — a day 19:00–02:00 can be followed by a call later that SAME calendar day). Per film with a "commute":
+//   start = the ride's call (or Ana's own) · meet = start − meet_before_call
+//   leave = meet − drive − walk_to_ride · wake = leave − get_ready
+// The MAIN unit's call only (a 2nd unit's rows have unit '2nd').
+function upcomingPlans(now) {
+  const plans = [];
+  const dates = [0, 1, 2].map(n => Utilities.formatDate(new Date(now.getTime() + n * 86400000), TIME_ZONE, 'yyyy-MM-dd'));
+  for (const film of (readRepo('projects') || []).filter(item => item.type === 'dir').map(item => item.name)) {
     const settings = readRepo(`projects/${film}/settings.json`, true);
     if (!settings || !settings.commute) continue;
     const c = Object.assign({}, COMMUTE, settings.commute);
-    const day = (readRepo(`projects/${film}/schedule.json`, true) || [])
-      .filter(row => row.date === tomorrow && row.call && !row.unit).sort((a, b) => a.order - b.order)[0]; // main unit only
+    const schedule = withWaitingOdgTimes(readRepo(`projects/${film}/schedule.json`, true) || [], openOdgs(film));
+    const main = schedule.filter(row => row.date && row.call && !row.unit);
     const calls = c.ride_with || c.my_name ? readRepo(`projects/${film}/calls.json`, true) || {} : {};
-    const own = day ? ownCall(c, day.call, calls[day.date]) : null;
-    const call = day && rideStart(c, own, calls[day.date]);
-    if (call === null || call === undefined) continue;
-    const wake = call - c.meet_before_call - c.travel_max - c.get_ready;
-    const bedtime = 24 * 60 + wake - c.sleep_hours * 60; // minutes from today's midnight
-    if (minute < bedtime || minute > bedtime + 180) continue;
-    const clock = m => `${String(Math.floor(((m % 1440) + 1440) % 1440 / 60)).padStart(2, '0')}:${String(((m % 60) + 60) % 60).padStart(2, '0')}`;
-    startWorkflow(ALERTS, { film, title: '💤 Time to sleep', url: './#hours', tag: 'sleep',
-      body: `Tomorrow D${String(day.day).padStart(2, '0')}: wake ${clock(wake)} · call ${clock(own)}` });
-    sent.push(key);
-    properties.setProperty('WRAP_SENT', JSON.stringify(sent.slice(-100)));
-    console.log(`Bedtime for ${film}: wake ${clock(wake)}`);
+    const places = c.travel === 'maps' ? readRepo(`projects/${film}/locations.json`, true) || {} : {};
+    for (const date of dates) {
+      const row = main.filter(r => r.date === date).sort((a, b) => a.order - b.order)[0];
+      if (!row) continue;
+      const own = ownCall(c, row.call, calls[date]);
+      const start = rideStart(c, own, calls[date]);
+      if (start === null || start === undefined) continue;
+      const meet = start - c.meet_before_call;
+      const drive = travelMinutes(c, places[date], date, meet);
+      const leave = meet - drive.minutes - c.walk_to_ride;
+      const before = main.filter(r => r.date < date && r.wrap).sort((a, b) => (a.date < b.date ? 1 : -1))[0];
+      plans.push({ film, date, day: row.day, call: own, sleepHours: c.sleep_hours, drive,
+        leave: moment(date, leave), wake: moment(date, leave - c.get_ready),
+        previousWrap: before ? wrapMoment(before) : null });
+    }
+  }
+  return plans;
+}
+
+// the end of a day: its wrap, the next calendar day when it is earlier than the call (17:00–01:00)
+function wrapMoment(row) {
+  const call = minutesOf(row.call);
+  const wrap = minutesOf(row.wrap);
+  return moment(row.date, call !== null && wrap <= call ? wrap + 24 * 60 : wrap);
+}
+
+// The drive from the ride's house to that day's place (locations.json, from the ODG: crew parking, else the
+// set), asked to Google Maps for the time you leave, + travel_margin (15). The ride's address is ONLY the script
+// property RIDE_FROM (never in the data). No address, no place, or Maps fails → travel_max, as before.
+function travelMinutes(c, place, date, meet) {
+  const from = PropertiesService.getScriptProperties().getProperty('RIDE_FROM');
+  if (c.travel !== 'maps' || !from || !place) return { minutes: c.travel_max, maps: false };
+  const to = placeOf(place);
+  const margin = c.travel_margin == null ? 15 : c.travel_margin;
+  const cache = CacheService.getScriptCache();
+  const key = `drive|${date}|${meet}|${to}`.slice(0, 240);
+  const kept = cache.get(key);
+  if (kept) return { minutes: Number(kept) + margin, maps: true };
+  try {
+    let minutes = c.travel_max;
+    for (let pass = 0; pass < 2; pass++) {  // leaving earlier changes the traffic: ask again with the new time
+      const depart = moment(date, meet - minutes);
+      const finder = Maps.newDirectionFinder().setOrigin(from).setDestination(to).setMode(Maps.DirectionFinder.Mode.DRIVING);
+      if (depart.getTime() > Date.now()) finder.setDepart(depart);
+      const leg = (((finder.getDirections().routes || [])[0] || {}).legs || [])[0];
+      if (!leg) throw new Error(`no route to ${to}`);
+      minutes = Math.ceil(Math.max(leg.duration.value, (leg.duration_in_traffic || leg.duration).value) / 60);
+    }
+    cache.put(key, String(minutes), 6 * 3600);
+    return { minutes: minutes + margin, maps: true };
+  } catch (error) {
+    console.warn(`Travel time: ${error.message}`);
+    return { minutes: c.travel_max, maps: false };
   }
 }
+
+// An ODG's Google Maps link → 'lat,lng' or the full address in the link (one redirect, kept 6 hours):
+//   …/place/Campo+di+mare/@41.97,12.03…!3d41.9729408!4d12.0376639 · maps.google.com/?q=41.732979,12.318095 ·
+//   …/place/Via+Furbara+Sasso,+94e,+00052+Cerveteri+RM/… (the ODG's own text has no town: "Via Furbara Sasso 94 E")
+function placeOf(place) {
+  if (!place.link) return place.text;
+  const cache = CacheService.getScriptCache();
+  const kept = cache.get(`place|${place.link}`.slice(0, 240));
+  if (kept) return kept;
+  let found = place.text;
+  try {
+    const headers = UrlFetchApp.fetch(place.link, { followRedirects: false, muteHttpExceptions: true }).getHeaders();
+    const where = headers.Location || headers.location || '';
+    const exact = /!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/.exec(where) || /[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/.exec(where);
+    const named = /\/maps\/place\/([^/@]+)/.exec(where);
+    if (exact) found = `${exact[1]},${exact[2]}`;
+    else if (named) found = decodeURIComponent(named[1].replace(/\+/g, ' '));
+  } catch (error) {
+    console.warn(`Map link: ${error.message}`);
+  }
+  cache.put(`place|${place.link}`.slice(0, 240), found, 6 * 3600);
+  return found;
+}
+
+// 'YYYY-MM-DD' + minutes from that day's midnight in Rome (negative = the day before) → the real moment
+function moment(date, minutes) {
+  return new Date(Utilities.parseDate(`${date} 00:00`, TIME_ZONE, 'yyyy-MM-dd HH:mm').getTime() + minutes * 60000);
+}
+const clockAt = when => Utilities.formatDate(when, TIME_ZONE, 'HH:mm');
 
 // ---- Alarms, automatic ----------------------------------------------------------------------------
 // The iPhone asks this every evening (a Shortcuts automation at 21:00 and 23:00, Ana 9 Oct: she didn't
 // tap ⏰ and the alarm wasn't set): https://script.google.com/macros/s/…/exec?key=<ALARM_KEY>
 // Answer, as plain text:
-//   06:00;06:45  the next morning is a shooting day: wake and leave (the same as the app's ⏰ Set alarms)
-//   none         no shooting tomorrow (weekend, day off): the shortcut deletes the soundcheck alarms
+//   06:00;06:45  the next wake-up within 24 hours: wake and leave (the same sums as the app's ⏰ Set alarms)
+//   none         no wake-up in the next 24 hours (weekend, day off): the shortcut deletes the soundcheck alarms
 //   error        something failed: the shortcut keeps the alarms as they are and says so
-// "The next morning" = today when asked before noon (after midnight), else tomorrow; a Monday call is
-// never set on Friday (Sunday's run sets it). The times of an ODG not yet reviewed count already, like
+// "Next" = the first wake still ahead (alarmAnswer): after a night shoot, the same day's afternoon call; a Monday
+// call is never set on Friday (Sunday's run sets it). The times of an ODG not yet reviewed count already, like
 // in the app (hours-rules.js → withWaitingOdgTimes). Several films shooting: the earliest wake.
 // Setup: Script properties → ALARM_KEY = a long random word; Deploy → New deployment → Web app,
 // Execute as: Me, Who has access: Anyone. See docs/HOW_IT_WORKS.md → "Automatic alarms".
@@ -164,24 +255,15 @@ function doGet(e) {
   return ContentService.createTextOutput(answer);
 }
 
+// The next wake-up that is still ahead and within 24 hours (Ana, 3 Nov, night shoots: after a 19:00–02:00 day
+// the next call can be that same afternoon). More than 24 hours away (Friday → Monday) → 'none': an iPhone
+// alarm is a time of day, so a far one would ring too early; a run within the 24 hours sets it.
 function alarmAnswer(now) {
-  const hour = Number(Utilities.formatDate(now, TIME_ZONE, 'H'));
-  const target = Utilities.formatDate(new Date(now.getTime() + (hour < 12 ? 0 : 24 * 3600 * 1000)), TIME_ZONE, 'yyyy-MM-dd');
-  const plans = [];
-  for (const film of (readRepo('projects') || []).filter(item => item.type === 'dir').map(item => item.name)) {
-    const settings = readRepo(`projects/${film}/settings.json`, true);
-    if (!settings || !settings.commute) continue;
-    const schedule = withWaitingOdgTimes(readRepo(`projects/${film}/schedule.json`, true) || [], openOdgs(film));
-    // the MAIN unit's call: a 2nd unit's rows (unit '2nd', 3 Nov) also start at order 1, with their own call
-    const day = schedule.filter(row => row.date === target && row.call && !row.unit).sort((a, b) => a.order - b.order)[0];
-    const commute = Object.assign({}, COMMUTE, settings.commute);
-    const calls = commute.ride_with || commute.my_name ? readRepo(`projects/${film}/calls.json`, true) || {} : {};
-    const plan = day && wakeAndLeave(commute, rideStart(commute, ownCall(commute, day.call, calls[day.date]), calls[day.date]));
-    if (plan) plans.push(plan);
-  }
-  if (!plans.length) return 'none';
-  const first = plans.sort((a, b) => a.wake - b.wake)[0];
-  return `${clockOf(first.wake)};${clockOf(first.leave)}`;
+  const ahead = upcomingPlans(now)
+    .filter(plan => plan.wake.getTime() > now.getTime() && plan.wake.getTime() - now.getTime() <= 24 * 3600 * 1000)
+    .sort((a, b) => a.wake - b.wake);
+  if (!ahead.length) return 'none';
+  return `${clockAt(ahead[0].wake)};${clockAt(ahead[0].leave)}`;
 }
 
 // ---- Phone calendar -------------------------------------------------------------------------------
@@ -203,7 +285,6 @@ function calendarOf(film, now) {
   }
   const wanted = Object.values(days).filter(d => d.main && d.main.date && (settings.calendar !== 'days_with_2nd_unit' || d.second));
   const stamp = when => Utilities.formatDate(when, 'UTC', "yyyyMMdd'T'HHmmss'Z'");
-  const moment = (date, minutes) => new Date(Utilities.parseDate(`${date} 00:00`, TIME_ZONE, 'yyyy-MM-dd HH:mm').getTime() + minutes * 60000);
   const text = value => String(value).replace(/[\\;,]/g, m => `\\${m}`);
   const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//soundcheck//calendar//EN', 'CALSCALE:GREGORIAN',
     `X-WR-CALNAME:soundcheck · ${tag}`, 'REFRESH-INTERVAL;VALUE=DURATION:PT1H', 'X-PUBLISHED-TTL:PT1H'];
@@ -227,12 +308,6 @@ function calendarOf(film, now) {
   return lines.join('\r\n') + '\r\n';
 }
 
-// call → { wake, leave } in minutes (the same sums as hours-rules.js → wakePlan)
-function wakeAndLeave(c, call) {
-  if (call === null || call === undefined) return null;
-  const leave = call - c.meet_before_call - c.travel_max;
-  return { wake: leave - c.get_ready, leave };
-}
 
 // Riding with someone (settings commute.ride_with, Ana 11 Oct: a colleague from costumes): the plan starts from
 // THAT person's call on the ODG (calls.json, written by pipeline/run.py); not known yet → Ana's call −

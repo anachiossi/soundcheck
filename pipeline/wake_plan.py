@@ -1,6 +1,7 @@
 """wake_plan.py — the night before a shooting day, from its call (same rules as the app's
 src/hours-rules.js wakePlan; Ana's "hora de acordar" calculator, 1 Oct 2026):
     meeting point = call − meet_before_call · leave = meeting − travel_max … meeting − travel_min
+    (− walk_to_ride: minutes on foot to the ride's house first, Il colpo 3 Nov; 0 = none)
     wake = leave − get_ready · sleep = wake − sleep_hours
 Riding with someone ("ride_with": "<name as printed on the ODG>", Ana 11 Oct): the sums start from THAT person's
 call on the ODG (calls.json); not known yet → Ana's call − ride_gap_if_unknown (40: the widest gap seen).
@@ -17,7 +18,7 @@ import unicodedata
 from pathlib import Path
 
 COMMUTE = {"meet_before_call": 45, "travel_min": 75, "travel_max": 90, "get_ready": 45, "sleep_hours": 8,
-           "ride_with": "", "ride_gap_if_unknown": 40, "my_name": ""}
+           "ride_with": "", "ride_gap_if_unknown": 40, "my_name": "", "walk_to_ride": 0}
 
 
 def commute_of(film):
@@ -76,10 +77,11 @@ def wake_plan(commute, call, calls=None):
         return None
     start, shown = ride_call(commute, own, calls or {})
     meet = start - commute["meet_before_call"]
-    leave_from = meet - commute["travel_max"]
+    walk = commute["walk_to_ride"]  # on foot to the ride's house first (Il colpo: 20, Ana 3 Nov)
+    leave_from = meet - commute["travel_max"] - walk
     wake = leave_from - commute["get_ready"]
     return {"call": clock(own), "ride_call": shown, "meet": clock(meet), "leave_from": clock(leave_from),
-            "leave_to": clock(meet - commute["travel_min"]), "wake": clock(wake),
+            "leave_to": clock(meet - commute["travel_min"] - walk), "wake": clock(wake),
             "sleep": clock(int(wake - commute["sleep_hours"] * 60))}
 
 

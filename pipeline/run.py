@@ -128,7 +128,7 @@ def run(film_folder, include_past=False):
             git(repo, "add", str(proposals))
         if documents:
             git(repo, "add", str(film / "docs"), str(film / "lines"),
-                *([str(film / "calls.json")] if (film / "calls.json").exists() else []))
+                *[str(film / name) for name in ("calls.json", "locations.json") if (film / name).exists()])
         titles = ", ".join([p["title"] for p in written] + ([f"{len(documents)} document(s)"] if documents else []))
         # documents already saved by an earlier run are filed again identical: nothing to commit is not an
         # error (18–19 Oct: "git commit" stopped every run with "nothing to commit")
@@ -231,7 +231,31 @@ def file_documents(film, other_sides):
     changed += file_latest_pdl(film)
     changed += file_archive(film)
     changed += file_crew_calls(film)
+    changed += file_locations(film)
     return changed
+
+
+def file_locations(film):
+    """Where to drive to on each ODG's date → locations.json { "2026-11-03": { label, text, link } }
+    (read_location.py). The Apps Script asks Google Maps for the drive there from the ride's address
+    (a private script property, never in the data). Only films with a "commute" in their settings."""
+    from odg_reader import odg_reader_for
+    from read_location import where_from_pdf
+    settings = json.loads((film / "settings.json").read_text(encoding="utf-8")) if (film / "settings.json").exists() else {}
+    if "commute" not in settings:
+        return []
+    read_odg = odg_reader_for(film)
+    target = film / "locations.json"
+    places = json.loads(target.read_text(encoding="utf-8")) if target.exists() else {}
+    for odg in sorted((film / "docs").glob("day-*/odg.pdf")):
+        date = read_odg(odg)["date"]
+        place = where_from_pdf(odg) if date else None
+        if place:
+            places[date] = place
+    if target.exists() and json.loads(target.read_text(encoding="utf-8")) == places:
+        return []
+    write_json(target, dict(sorted(places.items())))
+    return ["where to drive"]
 
 
 def file_crew_calls(film):

@@ -196,8 +196,12 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   Next (asked, not built): kits per unit (TX/lav/IFB `unit: "2nd"`), after the 1st unit kit is filled.
 - v206 (3 Nov): **Schedule → Calendar** (first of Calendar · Day · Week · All film; `src/parts/month-calendar.js`):
   month grids, every shooting day "D56", 2nd-unit days violet "2nd" (Ana's work days on Il colpo), past days
-  faded, today ringed; tap → Day view. Follows the schedule (a new PDL moves it). Phone calendar: options given
-  to Ana (subscribed .ics feed), not built.
+  faded, today ringed; tap → Day view. Follows the schedule (a new PDL moves it).
+- v207 (3 Nov): **phone calendar + real travel times** (Apps Script, Ana pastes it: see HOW_IT_WORKS →
+  Automatic alarms). Subscribed calendar of the days with a 2nd unit; alarms = next wake within 24 h (night
+  shoots), main unit only, `walk_to_ride` + Google Maps drive from the ride's address (script property only)
+  to the ODG's crew parking (`locations.json`, `pipeline/read_location.py`). Il colpo commute: ride with a
+  colleague, walk 20, get ready 45, meet 30 before call (to confirm), Maps + 15 margin.
 - v190 (23 Oct): exported mic-list images (Ana). **Sound assistants**: a SPEAKS column (YES/NO, as the mixer's) and
   each accessory as a small pill in its own colour (Ankle black, Plush sleeve beige…), stacked when a row has several.
   **Sound mixer**: the TX pill shows its model under the number (4 / TRXLA3.5) and is wider, the lav pill narrower.

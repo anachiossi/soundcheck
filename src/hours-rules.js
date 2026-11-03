@@ -153,7 +153,8 @@ export function nowRounded(now = new Date()) {
 //              on the ODG (calls.json) — the app shows Ana's own call everywhere else. Not known yet →
 //              Ana's call − ride_gap_if_unknown (40: the widest gap seen in the ODGs so far)
 //   day.call = the person's own call ("My call", my-call.js: the crew call unless they chose Personal)
-export const COMMUTE = { meet_before_call: 45, travel_min: 75, travel_max: 90, get_ready: 45, sleep_hours: 8 };
+//   walk_to_ride      on foot to the ride's house before the drive (0; Il colpo 20)
+export const COMMUTE = { meet_before_call: 45, travel_min: 75, travel_max: 90, get_ready: 45, sleep_hours: 8, walk_to_ride: 0 };
 export const commuteOf = project => (project.settings?.commute ? { ...COMMUTE, ...project.settings.commute } : null);
 
 const clock = minutes => timeOf(((minutes % 1440) + 1440) % 1440); // -45 → '23:15'
@@ -164,11 +165,12 @@ export function wakePlan(project, day) {
   if (!commute || call === null) return null;
   const ride = rideCall(project, commute, day, call);
   const meet = ride.minutes - commute.meet_before_call;
-  const leaveFrom = meet - commute.travel_max;
+  const walk = commute.walk_to_ride; // on foot to the ride's house first (Il colpo: 20, Ana 3 Nov)
+  const leaveFrom = meet - commute.travel_max - walk;
   const wake = leaveFrom - commute.get_ready;
   return { day: day.day, date: day.date, call: day.call, rideWith: ride.name, rideCall: ride.call,
     meet: clock(meet), leaveFrom: clock(leaveFrom),
-    leaveTo: clock(meet - commute.travel_min), wake: clock(wake), sleep: clock(wake - commute.sleep_hours * 60) };
+    leaveTo: clock(meet - commute.travel_min - walk), wake: clock(wake), sleep: clock(wake - commute.sleep_hours * 60) };
 }
 
 // { minutes, name, call } — call '' = not known yet (the plan then counts ride_gap_if_unknown before Ana's)

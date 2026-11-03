@@ -64,6 +64,15 @@ test('hours/<day>.json travels with the film', () => {
   assert.equal(project.hours['8'].status, 'wrapped');
 });
 
+test('walking to the ride\'s house first moves the leave and the wake earlier', async () => {
+  const { wakePlan } = await import('../src/hours-rules.js');
+  const project = { ...film(), settings: { commute: { walk_to_ride: 20 } } };
+  const plan = wakePlan(project, { day: 10, date: '2026-10-02', call: '09:00' });
+  assert.equal(plan.meet, '08:15', 'the meeting point does not move');
+  assert.equal(plan.leaveFrom, '06:25', 'leave home 20 minutes earlier');
+  assert.equal(plan.wake, '05:40');
+});
+
 test('the night before: meeting, leave window, wake, sleep (Ana\'s calculator)', async () => {
   const { wakePlan, nextShootingDay } = await import('../src/hours-rules.js');
   const project = { ...film(), settings: { commute: {} } };
