@@ -24,7 +24,9 @@ function repo() {
   return PropertiesService.getScriptProperties().getProperty('REPO') || DEFAULT_REPO;
 }
 const WORKFLOW = 'emails.yml';
-const SEARCH = 'has:attachment filename:pdf (subject:ODG OR subject:STRALCI OR subject:PDL) newer_than:3d';
+// subject (LBE: "LBE - ODG #7") or the file names (Il colpo, forwarded from WhatsApp with any subject:
+// "IC - OdgDAY_53_30.10.26.pdf", "IL COLPO_OverTime…", 3 Nov)
+const SEARCH = 'has:attachment filename:pdf (subject:ODG OR subject:STRALCI OR subject:PDL OR filename:odg OR filename:stralci OR filename:pdl OR filename:IC OR filename:colpo) newer_than:3d';
 const REMEMBER = 300; // how many message ids to remember (already seen = no new run)
 const TIME_ZONE = 'Europe/Rome';
 const ALERTS = 'wrap-alerts.yml';
@@ -119,7 +121,7 @@ function checkBedtime() {
     if (!settings || !settings.commute) continue;
     const c = Object.assign({}, COMMUTE, settings.commute);
     const day = (readRepo(`projects/${film}/schedule.json`, true) || [])
-      .filter(row => row.date === tomorrow && row.call).sort((a, b) => a.order - b.order)[0];
+      .filter(row => row.date === tomorrow && row.call && !row.unit).sort((a, b) => a.order - b.order)[0]; // main unit only
     const calls = c.ride_with || c.my_name ? readRepo(`projects/${film}/calls.json`, true) || {} : {};
     const own = day ? ownCall(c, day.call, calls[day.date]) : null;
     const call = day && rideStart(c, own, calls[day.date]);
@@ -151,6 +153,10 @@ function checkBedtime() {
 function doGet(e) {
   const key = PropertiesService.getScriptProperties().getProperty('ALARM_KEY');
   if (!key || !e || !e.parameter || e.parameter.key !== key) return ContentService.createTextOutput('wrong key');
+  if (e.parameter.calendar) {  // the phone's subscribed calendar (see calendarOf below)
+    return ContentService.createTextOutput(calendarOf(e.parameter.calendar, new Date()))
+      .setMimeType(ContentService.MimeType.ICAL);
+  }
   // any failure (GitHub down, a bad file) answers 'error', never 'none': the shortcut deletes alarms only on
   // a clear 'none' (Ana, 10 Oct: "I'm so afraid it could erase a good alarm")
   let answer;
@@ -166,7 +172,8 @@ function alarmAnswer(now) {
     const settings = readRepo(`projects/${film}/settings.json`, true);
     if (!settings || !settings.commute) continue;
     const schedule = withWaitingOdgTimes(readRepo(`projects/${film}/schedule.json`, true) || [], openOdgs(film));
-    const day = schedule.filter(row => row.date === target && row.call).sort((a, b) => a.order - b.order)[0];
+    // the MAIN unit's call: a 2nd unit's rows (unit '2nd', 3 Nov) also start at order 1, with their own call
+    const day = schedule.filter(row => row.date === target && row.call && !row.unit).sort((a, b) => a.order - b.order)[0];
     const commute = Object.assign({}, COMMUTE, settings.commute);
     const calls = commute.ride_with || commute.my_name ? readRepo(`projects/${film}/calls.json`, true) || {} : {};
     const plan = day && wakeAndLeave(commute, rideStart(commute, ownCall(commute, day.call, calls[day.date]), calls[day.date]));
@@ -175,6 +182,49 @@ function alarmAnswer(now) {
   if (!plans.length) return 'none';
   const first = plans.sort((a, b) => a.wake - b.wake)[0];
   return `${clockOf(first.wake)};${clockOf(first.leave)}`;
+}
+
+// ---- Phone calendar -------------------------------------------------------------------------------
+// Apple Calendar subscribes to …/exec?key=<ALARM_KEY>&calendar=<film> (Settings → Calendar → Accounts →
+// Add Account → Other → Add Subscribed Calendar) and reads it again by itself: a new PDL or ODG moves the
+// events, no copy goes stale (Ana, 3 Nov). Which days: the film's settings "calendar":
+//   "days_with_2nd_unit" → only the days with a 2nd unit (Ana's working days on Il colpo); "all" → every day.
+// One event per day, from the MAIN unit's call to its wrap (Ana works the main unit); the 2nd unit's hours
+// are in the notes. Only the day, the times and the unit's name: no scenes, no people.
+function calendarOf(film, now) {
+  const settings = readRepo(`projects/${film}/settings.json`, true) || {};
+  const tag = ((readRepo(`projects/${film}/film.json`, true) || {}).tag || film).toUpperCase();
+  const schedule = withWaitingOdgTimes(readRepo(`projects/${film}/schedule.json`, true) || [], openOdgs(film));
+  const days = {};
+  for (const row of schedule) {
+    const day = days[row.day] = days[row.day] || { day: row.day };
+    if (row.unit) day.second = day.second || row;
+    else if (!day.main || row.order < day.main.order) day.main = row;
+  }
+  const wanted = Object.values(days).filter(d => d.main && d.main.date && (settings.calendar !== 'days_with_2nd_unit' || d.second));
+  const stamp = when => Utilities.formatDate(when, 'UTC', "yyyyMMdd'T'HHmmss'Z'");
+  const moment = (date, minutes) => new Date(Utilities.parseDate(`${date} 00:00`, TIME_ZONE, 'yyyy-MM-dd HH:mm').getTime() + minutes * 60000);
+  const text = value => String(value).replace(/[\\;,]/g, m => `\\${m}`);
+  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//soundcheck//calendar//EN', 'CALSCALE:GREGORIAN',
+    `X-WR-CALNAME:soundcheck · ${tag}`, 'REFRESH-INTERVAL;VALUE=DURATION:PT1H', 'X-PUBLISHED-TTL:PT1H'];
+  for (const d of wanted) {
+    const call = minutesOf(d.main.call);
+    const wrap = minutesOf(d.main.wrap);
+    const second = d.second ? `2nd unit ${d.second.unit_name || ''} ${d.second.call && d.second.wrap ? `${d.second.call}–${d.second.wrap}` : '(hours not given)'}` : '';
+    lines.push('BEGIN:VEVENT', `UID:${film}-day-${d.day}@soundcheck`, `DTSTAMP:${stamp(now)}`,
+      `SUMMARY:${text(`${tag} D${d.day}${call === null ? '' : ` · call ${d.main.call}`}${d.second ? ' · 2nd unit day' : ''}`)}`,
+      `DESCRIPTION:${text(`Main unit ${d.main.call || '?'}–${d.main.wrap || '?'}${second ? `. ${second.trim()}` : ''}. From soundcheck: follows the PDL and ODGs.`)}`);
+    if (call === null) {  // no time yet: an all-day event
+      const next = Utilities.formatDate(moment(d.main.date, 24 * 60 + 60), TIME_ZONE, 'yyyyMMdd');
+      lines.push(`DTSTART;VALUE=DATE:${d.main.date.replace(/-/g, '')}`, `DTEND;VALUE=DATE:${next}`);
+    } else {
+      const end = wrap === null ? call + 10 * 60 : wrap <= call ? wrap + 24 * 60 : wrap; // 17:00–01:00 ends the next day
+      lines.push(`DTSTART:${stamp(moment(d.main.date, call))}`, `DTEND:${stamp(moment(d.main.date, end))}`);
+    }
+    lines.push('END:VEVENT');
+  }
+  lines.push('END:VCALENDAR');
+  return lines.join('\r\n') + '\r\n';
 }
 
 // call → { wake, leave } in minutes (the same sums as hours-rules.js → wakePlan)
@@ -245,13 +295,13 @@ function withWaitingOdgTimes(schedule, odgs) {
   for (const proposal of odgs.sort((a, b) => (a.day || 0) - (b.day || 0))) {
     for (const change of proposal.changes || []) {
       const op = change.op;
-      if ((proposal.decisions || {})[change.id] || !op) continue;
+      if ((proposal.decisions || {})[change.id] || !op || op.unit) continue; // a 2nd unit's times never move the alarm
       const fields = {};
       for (const k of ['date', 'call', 'wrap']) if (op.fields && op.fields[k]) fields[k] = op.fields[k];
       if (!Object.keys(fields).length) continue;
-      const known = schedule.some(row => row.day === op.day);
+      const known = schedule.some(row => row.day === op.day && !row.unit);
       if (op.op === 'set_day' || (op.op === 'set_day_scenes' && known)) {
-        schedule = schedule.map(row => (row.day === op.day ? Object.assign({}, row, fields) : row));
+        schedule = schedule.map(row => (row.day === op.day && !row.unit ? Object.assign({}, row, fields) : row));
       } else if (op.op === 'set_day_scenes') {
         schedule = schedule.concat([Object.assign({ day: op.day, order: 1, scene_id: '' }, fields)]);
       }
