@@ -49,9 +49,15 @@ def lav_blocked(film, scene_id, char_id):
 def gets_mic(film, scene_id, row):
     """In this scene the character wears TX + lav: they speak (YES or ?) — or they are the protagonist,
     who is always wired, even silent — and nothing blocks a lav. Otherwise the row stays (they are in
-    the scene) with no TX and no lav — silent, or in the pool."""
-    protagonist = str(film.get("settings", {}).get("presets", {}).get("protagonist", ""))
-    wired = row.get("speaker") != "no" or str(row["char_id"]) == protagonist
+    the scene) with no TX and no lav — silent, or in the pool.
+    "wire_silent": "recurring" (Il colpo, Ana 3 Nov: "all characters, the important ones we set, even if they
+    don't speak, receive a lav and TX"): every character that is not a one-liner ("small_part") or a voice off
+    set ("off_set") is wired, silent or not."""
+    rules = film.get("settings", {}).get("presets", {})
+    protagonist = str(rules.get("protagonist", ""))
+    character = next((c for c in film.get("characters", []) if str(c["id"]) == str(row["char_id"])), {})
+    recurring = rules.get("wire_silent") == "recurring" and not character.get("small_part") and not character.get("off_set")
+    wired = row.get("speaker") != "no" or str(row["char_id"]) == protagonist or recurring
     return wired and not lav_blocked(film, scene_id, row["char_id"])
 
 
