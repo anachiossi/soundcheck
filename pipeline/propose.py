@@ -65,17 +65,49 @@ def sides_by_day(inbox):
     return found
 
 
-def build_proposal(film_folder, email_folder, other_sides=None):
-    """other_sides = sides_by_day(): used when the ODG's own email has no sides."""
+def check_units(number, date, call, wrap, scenes, second, schedule, label):
+    """The day's main unit, and its 2nd unit when the ODG prints one ("UNIT DE FEUDIS 08:00 – 16:00",
+    read_odg_il_colpo.py → scenes with unit '2nd'): each checked against its own rows (Ana, 3 Nov)."""
+    main_ids = [s["scene_id"] for s in scenes if not s.get("unit")]
+    second_ids = [s["scene_id"] for s in scenes if s.get("unit") == "2nd"]
+    results = [check_day(number, date, call, wrap, main_ids, schedule, label)]
+    if second_ids:
+        results.append(check_day(number, date, second["call"], second["wrap"], second_ids, schedule,
+                                 f"{label} · 2nd unit", unit="2nd", unit_name=second["name"]))
+    return results
+
+
+def pick_sides(settings, email_folder, day, other_sides):
+    """The day's sides PDF. Usually the STRALCI in the ODG's own email, else other_sides (sides_by_day).
+    A film with "sides_by": "date" (Il colpo, sides_by_date.py) trusts other_sides first: there the
+    STRALCI found by date and scenes, never by the number in the name."""
+    own = next((p for p in Path(email_folder).glob("*.pdf") if "STRALCI" in p.name.upper()), None)
+    if settings.get("sides_by") == "date":
+        return (other_sides or {}).get(day)
+    return own or (other_sides or {}).get(day)
+
+
+def sides_for_film(film_folder):
+    """({day: sides PDF}, {day: notes}, [notes for no day]) — by date for "sides_by": "date", else by number."""
+    settings_file = Path(film_folder) / "settings.json"
+    settings = json.loads(settings_file.read_text(encoding="utf-8")) if settings_file.exists() else {}
+    if settings.get("sides_by") == "date":
+        from sides_by_date import sides_and_notes
+        return sides_and_notes(film_folder)
+    return sides_by_day(Path(film_folder) / "_inbox"), {}, []
+
+
+def build_proposal(film_folder, email_folder, other_sides=None, sides_notes=None):
+    """other_sides = sides_for_film()[0]: used when the ODG's own email has no sides (or always, by date);
+    sides_notes = sides_for_film()[1]: what the day's proposal should say about its sides."""
     film_folder, email_folder = Path(film_folder), Path(email_folder)
     film = load_film(film_folder)
     email = json.loads((email_folder / "email.json").read_text(encoding="utf-8"))
     odg_pdf = next(p for p in email_folder.glob("*.pdf") if "ODG" in p.name.upper())
     odg = odg_reader_for(film_folder)(odg_pdf)  # the film's own reader (settings.json "odg_reader")
-    sides_pdf = next((p for p in email_folder.glob("*.pdf") if "STRALCI" in p.name.upper()), None)
-    if sides_pdf is None:
-        sides_pdf = (other_sides or {}).get(odg["number"])
+    sides_pdf = pick_sides(film["settings"], email_folder, odg["number"], other_sides)
     date, warnings = check_date(odg, subject_date(email["subject"], odg["date"][:4] or "2026"))
+    warnings.extend((sides_notes or {}).get(odg["number"], []))  # e.g. "filed as day 55's sides (…)"
     day_ids = [s["scene_id"] for s in odg["scenes"]]
     sides = read_sides(sides_pdf, day_ids) if sides_pdf else {}
     changes, checks, notes = [], [], {}
@@ -84,7 +116,10 @@ def build_proposal(film_folder, email_folder, other_sides=None):
         c, w, k = result if len(result) == 3 else (result[0], [], result[1])
         changes.extend(c), warnings.extend(w), checks.extend(k)
 
-    add(check_day(odg["number"], date, odg["call"], odg["wrap"], day_ids, film["schedule"], f"Day {odg['number']}"))
+    warnings.extend(odg.get("unit_warnings", []))
+    for result in check_units(odg["number"], date, odg["call"], odg["wrap"], odg["scenes"], odg.get("second_unit"),
+                              film["schedule"], f"Day {odg['number']}"):
+        add(result)
     add(check_cast_list(odg["cast"], film["characters"]))
     advance = odg.get("advance") or {}
     days = [(odg["scenes"], odg["notes"], True)]
@@ -93,8 +128,9 @@ def build_proposal(film_folder, email_folder, other_sides=None):
     elif advance.get("day"):
         advance["date"], date_warnings = check_next_day_date(advance, date)
         warnings.extend(date_warnings)
-        add(check_day(advance["day"], advance["date"], advance["call"], advance["wrap"],
-                      [s["scene_id"] for s in advance["scenes"]], film["schedule"], f"Day {advance['day']} (next day)"))
+        for result in check_units(advance["day"], advance["date"], advance["call"], advance["wrap"], advance["scenes"],
+                                  advance.get("second_unit"), film["schedule"], f"Day {advance['day']} (next day)"):
+            add(result)
         days.append((advance["scenes"], advance.get("notes", {}), False))
 
     for scenes, scene_notes, today in days:
@@ -136,7 +172,8 @@ def build_proposal(film_folder, email_folder, other_sides=None):
         "id": f"odg-{odg['number']}",
         "title": f"ODG #{odg['number']} · Day {odg['number']} · {nice_date(date)}",
         "day": odg["number"], "date": date, "call": odg["call"],
-        "scene_ids": day_ids,  # the day's scenes on the ODG (the app's "Day N lavs" share, before review)
+        # the day's MAIN unit scenes on the ODG (the app's "Day N lavs" share, before review)
+        "scene_ids": [s["scene_id"] for s in odg["scenes"] if not s.get("unit")],
         "source": {"subject": email["subject"], "received": email["date"], "files": email["files"]},
         "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
         "status": "open" if changes else "done",  # done when every change is accepted or rejected

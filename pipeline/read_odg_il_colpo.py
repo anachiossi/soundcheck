@@ -89,13 +89,33 @@ def read_cast(lines):
     return cast
 
 
-def read_needs(lines, start_marker, scene_ids):
+def read_needs(lines, start_marker, scene_ids, units=None):
     """FABBISOGNI → {'317': {'Scenografia': 'Crocifisso, …'}}. A note with no scene numbers is for every scene of
     the day; a line that wraps ("…Cellulari," + "Giornali, Buste shopping") goes on with the scenes before it.
-    "ore 08:30" is a time, never scene 08 (scene numbers are followed by ':' and a space or a word)."""
+    "ore 08:30" is a time, never scene 08 (scene numbers are followed by ':' and a space or a word).
+    units = {'ALFIERI': [ids], 'DE FEUDIS': [ids]} (mark_units): "UNIT DE FEUDIS AUTO RAGAZZI…" is only for
+    that unit's scenes; a plain line repeated inside the next UNIT line ("STUNT COORDINATOR" +
+    "UNIT ALFIERI STUNT COORDINATOR") is printed twice: kept once, for that unit (ODG #55, 3 Nov)."""
     body, _ = section(lines, start_marker, ("Direttore di Produzione", "CANALI RADIO"))
     contact = next((i for i, line in enumerate(body) if CONTACT_RE.search(line)), len(body))  # "Name (Role) 320 …"
     body = body[:contact]
+    units = units or {}
+
+    def unit_line(line):  # ('DE FEUDIS', 'AUTO RAGAZZI…') or None
+        for name in sorted(units, key=len, reverse=True):
+            if line.upper().startswith(f"UNIT {name} "):
+                return name, line[len(f"UNIT {name} "):]
+        return None
+
+    scoped = []
+    for i, line in enumerate(body):
+        unit = unit_line(line)
+        if unit:
+            scoped.append((units[unit[0]], unit[1]))
+        elif i + 1 < len(body) and unit_line(body[i + 1]) and unit_line(body[i + 1])[1].strip() == line.strip():
+            continue  # the same text printed again in the next UNIT line
+        else:
+            scoped.append((None, line))
     notes, department, current = {}, None, []
 
     def add(ids, text, joiner="; "):  # a new note after another: "; " · a wrapped line going on: " "
@@ -103,7 +123,7 @@ def read_needs(lines, start_marker, scene_ids):
             old = notes.setdefault(scene_id, {}).get(department, "")
             notes[scene_id][department] = clean(f"{old}{joiner if old else ''}{text.strip()}")
 
-    for line in body:
+    for only, line in scoped:
         if line.upper() in DEPARTMENTS:
             department, current = DEPARTMENTS[line.upper()], []
             continue
@@ -111,10 +131,12 @@ def read_needs(lines, start_marker, scene_ids):
             continue
         parts = re.split(rf"(?:^|\s+)({SCENES_RE})\s*:(?!\d)\s*", line)
         if len(parts) == 1:
-            add(current or scene_ids, line, " ")  # goes on from the scenes before, or the whole day
+            add(only or current or scene_ids, line, " ")  # one unit, or goes on from the scenes before, or the whole day
+            if only:
+                current = only
             continue
         if parts[0].strip():
-            add(current or scene_ids, parts[0], " ")
+            add(only or current or scene_ids, parts[0], " ")
         for ids, text in zip(parts[1::2], parts[2::2]):
             current = re.findall(r"\d+[A-Za-z]*\d*", ids)
             add(current, text)
@@ -123,15 +145,55 @@ def read_needs(lines, start_marker, scene_ids):
             for scene_id, by_department in notes.items()}
 
 
-def read_il_colpo(lines):
+UNIT_RE = re.compile(r"^UNIT\s+(.+?)(?:\s+(\d{1,2}[.:]\d{2})\s*[–-]\s*(\d{1,2}[.:]\d{2}))?$")  # "UNIT DE FEUDIS 08:00 – 16:00"
+
+
+def mark_units(table, scenes, main_unit, groups):
+    """A day with two units prints "UNIT ALFIERI 14:00 – 22:00" before the main unit's scenes and
+    "UNIT DE FEUDIS 08:00 – 16:00" before the 2nd unit's (ODG #55, 3 Nov). The main unit is the one the
+    film's settings name ("main_unit": "ALFIERI"); every other unit is the 2nd: its scenes get
+    unit '2nd' + unit_name. Returns ({name, call, wrap} of the 2nd unit or None, warnings);
+    fills groups = {'ALFIERI': [scene ids], 'DE FEUDIS': [...]} for the needs (read_needs)."""
+    unit_of, current, second, warnings = {}, None, None, []
+    for i, line in enumerate(table):
+        marker = UNIT_RE.match(line)
+        if marker:
+            name, call, wrap = marker.groups()
+            current = (name.strip(), as_time(call) if call else "", as_time(wrap) if wrap else "")
+        elif current and i + 2 < len(table) and SCENE_ID_RE.match(line) \
+                and re.fullmatch(r"[IE](/[IE])?", table[i + 1]) and LIGHT_RE.match(table[i + 2]):
+            unit_of[line] = current
+    names = list(dict.fromkeys(unit[0] for unit in unit_of.values()))
+    groups.update({name.upper(): [sid for sid, unit in unit_of.items() if unit[0] == name] for name in names})
+    if not names:
+        return None, []
+    main = (main_unit or "").upper()
+    if main not in [n.upper() for n in names]:
+        main = names[0].upper()  # not set, or not on this ODG: the first unit printed, said so
+        warnings.append(f'Two units on the ODG ({", ".join(names)}): "{names[0]}" taken as the main unit '
+                        f'(settings.json "main_unit" says "{main_unit or "nothing"}").')
+    for scene in scenes:
+        unit = unit_of.get(scene["scene_id"])
+        if unit and unit[0].upper() != main:
+            scene["unit"], scene["unit_name"] = "2nd", unit[0].title()
+            second = second or {"name": unit[0].title(), "call": unit[1], "wrap": unit[2]}
+    return second, warnings
+
+
+def read_il_colpo(lines, main_unit=None):
     text = "\n".join(lines)
     number = re.search(r"ODG\s*#\s*(\d+)(?:\s*di\s*(\d+))?", text)
     week = re.search(r"Settimana\s*#\s*(\d+)", text)
     date, weekday = read_date(text)
     advance_at = next((i for i, line in enumerate(lines) if line.startswith("Programma del giorno successivo")), len(lines))
     today, advance = lines[:advance_at], lines[advance_at:]
-    scenes = read_scene_table(section(today, "TIMELINE", ("TOT PGS",))[0])
-    advance_scenes = read_scene_table(section(advance, "PGS.", ("TOT PGS",))[0]) if advance else []
+    table = section(today, "TIMELINE", ("TOT PGS",))[0]
+    scenes = read_scene_table(table)
+    groups, advance_groups = {}, {}
+    second, unit_warnings = mark_units(table, scenes, main_unit, groups)
+    advance_table = section(advance, "PGS.", ("TOT PGS",))[0] if advance else []
+    advance_scenes = read_scene_table(advance_table) if advance else []
+    advance_second, advance_warnings = mark_units(advance_table, advance_scenes, main_unit, advance_groups)
     advance_date, advance_weekday = read_date(advance[0]) if advance else ("", "")
     advance_times = re.findall(r"\d{1,2}[.:]\d{2}", advance[0]) if advance else []
     day = int(number.group(1)) if number else None
@@ -143,23 +205,26 @@ def read_il_colpo(lines):
         "ready_to_shoot": time_after(today, "PRONTI A GIRARE"),
         "end_of_shoot": time_after(today, "FINE RIPRESE"), "wrap": time_after(today, "FINE LAVORAZIONE"),
         "scenes": scenes, "cast": read_cast(today),
-        "notes": read_needs(today, "FABBISOGNI", [s["scene_id"] for s in scenes]),
+        "second_unit": second,  # None, or {name, call, wrap}; its scenes have unit '2nd'
+        "unit_warnings": unit_warnings + advance_warnings,
+        "notes": read_needs(today, "FABBISOGNI", [s["scene_id"] for s in scenes], groups),
         "advance": advance and {
             "day": day + 1 if day else None,  # this layout doesn't print the next day's number: the next shooting day
             "date": advance_date, "weekday_printed": advance_weekday,
+            # "orario di lavorazione 14:00 – 22:00 // 08:00 – 16:00": the main unit's hours come first
             "call": as_time(advance_times[0]) if advance_times else "",
             "wrap": as_time(advance_times[1]) if len(advance_times) > 1 else "",
-            "scenes": advance_scenes,
-            "notes": read_needs(advance, "FABBISOGNI SPECIALI", [s["scene_id"] for s in advance_scenes]),
+            "scenes": advance_scenes, "second_unit": advance_second,
+            "notes": read_needs(advance, "FABBISOGNI SPECIALI", [s["scene_id"] for s in advance_scenes], advance_groups),
         },
     }
 
 
-def read_odg_il_colpo(path):
-    """The PDF → the same data as read_odg() in read_odg.py."""
+def read_odg_il_colpo(path, main_unit=None):
+    """The PDF → the same data as read_odg() in read_odg.py. main_unit: the film's settings "main_unit"."""
     import pymupdf as fitz
     lines = [clean(line) for page in fitz.open(path) for line in page.get_text().splitlines()]
-    return read_il_colpo([line for line in lines if line])
+    return read_il_colpo([line for line in lines if line], main_unit)
 
 
 if __name__ == "__main__":

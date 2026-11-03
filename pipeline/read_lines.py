@@ -22,9 +22,9 @@ import sys
 
 import pymupdf as fitz  # the PDF reader (PyMuPDF)
 
-SCENE_X, HEADING_X, CUE_X = (40, 70), (100, 120), (235, 275)
+SCENE_X, HEADING_X, CUE_X = (40, 70), (95, 120), (235, 275)  # heading from 95: Il colpo's Memo pages (x 99.96, 3 Nov)
 DIALOGUE_X, DIRECTION_X = (170, 195), (200, 225)
-HEADING_RE = re.compile(r"^(INT|EST|EXT|I/E|INT/EST)[.\s]", re.I)
+HEADING_RE = re.compile(r"^(INT|EST|EXT|I/E|E/I|INT/EST|EST/INT)[.\s]", re.I)  # E/I.: Il colpo (3 Nov)
 SCENE_ID_RE = re.compile(r"^\d+[A-Za-z]{0,3}$")
 CONTINUED_RE = re.compile(r"\((CONT.{0,3}D|SEGUE|CONTINUA)\)", re.I)
 CUE_SUFFIX_RE = re.compile(r"(\s*\([^)]*\))+\s*$")  # "PINA(CONT'D)  (CONT'D)": every bracket at the end

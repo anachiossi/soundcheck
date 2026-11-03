@@ -31,7 +31,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from fetch_mail import emails_oldest_first, fetch  # noqa: E402
-from propose import build_proposal, sides_by_day, NO_SIDES  # noqa: E402
+from propose import build_proposal, pick_sides, sides_for_film, NO_SIDES  # noqa: E402
 from propose_pdl import build_pdl_proposal  # noqa: E402
 
 
@@ -79,7 +79,9 @@ def run(film_folder, include_past=False):
         known.add(source.get("message_id") or source["subject"])
 
     written = []
-    other_sides = sides_by_day(film / "_inbox")
+    other_sides, sides_notes, loose_sides = sides_for_film(film)  # by number, or by date ("sides_by": "date")
+    for note in loose_sides:
+        print(f"sides: {note}")
     for email_folder in emails_oldest_first(film / "_inbox"):
         info = json.loads((email_folder / "email.json").read_text(encoding="utf-8"))
         if info.get("message_id") in known or info["subject"] in known:
@@ -93,7 +95,7 @@ def run(film_folder, include_past=False):
                 if "PDL" in names:
                     proposal = build_pdl_proposal(film, email_folder)
                 else:
-                    proposal = build_proposal(film, email_folder, other_sides)
+                    proposal = build_proposal(film, email_folder, other_sides, sides_notes)
         except TimeoutError as error:
             print(f"WARNING skipped: {error}")
             continue
@@ -109,7 +111,7 @@ def run(film_folder, include_past=False):
         print(f"proposal {name}: {len(proposal['changes'])} changes, {len(proposal['warnings'])} warnings, "
               f"{len(proposal['checks'])} checks OK")
 
-    written += add_late_sides(film, other_sides)
+    written += add_late_sides(film, other_sides, sides_notes)
     documents = file_documents(film, other_sides)
     if documents:
         print(f"documents: {', '.join(documents)}")
@@ -175,7 +177,7 @@ def tell_lavs(film, odgs):
              f"./#lavs-{odg['day']}", tag=f"lavs-{odg['day']}", audience="owner")
 
 
-def add_late_sides(film, other_sides):
+def add_late_sides(film, other_sides, sides_notes=None):
     """The sides came in a later email than the ODG: make the ODG's proposal again with them,
     but only while Ana hasn't decided anything in it yet."""
     remade = []
@@ -190,7 +192,7 @@ def add_late_sides(film, other_sides):
         missing = any(w.startswith("No sides") for w in old["warnings"])
         if not (untouched and missing and email_folder and old["day"] in other_sides):
             continue
-        proposal = build_proposal(film, email_folder, other_sides)
+        proposal = build_proposal(film, email_folder, other_sides, sides_notes)
         proposal["id"], proposal["source"]["message_id"] = old["id"], old["source"]["message_id"]
         proposal["title"] += " + sides"
         write_json(path, proposal)
@@ -206,6 +208,7 @@ def file_documents(film, other_sides):
     from cue_lines import write_sides_lines
     from odg_reader import odg_reader_for
     read_odg = odg_reader_for(film)  # the film's own reader (settings.json "odg_reader")
+    settings = json.loads((film / "settings.json").read_text(encoding="utf-8")) if (film / "settings.json").exists() else {}
     changed = []
     for email_folder in emails_oldest_first(film / "_inbox"):
         odg = next((p for p in email_folder.glob("*.pdf") if "ODG" in p.name.upper()), None)
@@ -213,8 +216,7 @@ def file_documents(film, other_sides):
             continue
         sheet = read_odg(odg)
         day = sheet["number"]
-        sides = next((p for p in email_folder.glob("*.pdf") if "STRALCI" in p.name.upper()), None) \
-            or other_sides.get(day)
+        sides = pick_sides(settings, email_folder, day, other_sides)  # the same choice as the day's proposal
         if sides:  # the lines of the day's scenes, for 🎙 Cues
             scene_ids = [s["scene_id"] for s in sheet["scenes"]]
             changed += [f"Cues of scene {sid} (sides)" for sid in write_sides_lines(film, sides, day, scene_ids)]

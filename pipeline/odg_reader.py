@@ -7,6 +7,7 @@ Used by: propose.py, run.py
 """
 
 import json
+from functools import partial
 from pathlib import Path
 
 from read_odg import read_odg
@@ -22,4 +23,6 @@ def odg_reader_for(film_folder):
     name = settings.get("odg_reader", "main")
     if name not in READERS:
         raise ValueError(f'settings.json "odg_reader": "{name}" is not one of {", ".join(READERS)}')
+    if name == "il-colpo":  # this layout prints two units on one day: the film says which is the main one
+        return partial(read_odg_il_colpo, main_unit=settings.get("main_unit"))
     return READERS[name]

@@ -7,6 +7,9 @@ Reads the mailbox with an app password:
 Which emails belong to a film is written in the film's folder (private data repo):
     projects/<film>/inbox.json   { "gmail_search": "subject:ODG has:attachment" }
 
+An email with several documents (3 ODGs + a PDL…) is saved as one folder per document,
+<date>_<subject>_<id>-odg-53 · -stralci-55 · -pdl · -other (mail_packets.py), each with its own message_id
+("<Message-ID>#odg-53"), so the robot reads every one.
 PDFs are saved in projects/<film>/_inbox/<date>_<subject>_<id>/ (not committed to git; run.py
 copies every email's PDFs to docs/archive/ in the private data repo, outdated ones too). Each email is recognised by its own Message-ID, so a
 corrected ODG sent again with the same subject is still a new email.
@@ -25,6 +28,8 @@ from email.header import decode_header
 from datetime import timezone
 from email.utils import parsedate_to_datetime
 from pathlib import Path
+
+from mail_packets import packets
 
 
 def read_login():
@@ -45,6 +50,11 @@ def decoded(value):
 
 def safe_name(text):
     return re.sub(r"[^\w .#-]+", "_", text).strip()[:80]
+
+
+def glob_safe(name):
+    """A folder name used in a glob pattern: [ and ] would be read as wildcards."""
+    return re.sub(r"([\[\]*?])", r"[\1]", name)
 
 
 def emails_oldest_first(inbox):
@@ -126,24 +136,27 @@ def fetch(film_folder, open_mail=open_mailbox):
         message_id = (header["Message-ID"] or f"{date}-{subject}").strip()
         short_id = hashlib.sha1(message_id.encode()).hexdigest()[:8]  # unique per email
         folder = inbox / f"{date}_{safe_name(subject)}_{short_id}"
-        if folder.exists():
+        if folder.exists() or any(inbox.glob(f"{glob_safe(folder.name)}-*")):  # saved before (whole, or in packets)
             continue
         message = email.message_from_bytes(ask_gmail(mailbox, uid, WHOLE_EMAIL)[0][1])
-        saved = []
+        pdfs = {}
         for part in message.walk():
             name = decoded(part.get_filename())
             if name.lower().endswith(".pdf"):
-                folder.mkdir(parents=True, exist_ok=True)
-                (folder / safe_name(name)).write_bytes(part.get_payload(decode=True))
-                saved.append(name)
-        if saved:
-            (folder / "email.json").write_text(json.dumps(
+                pdfs[name] = part.get_payload(decode=True)
+        # an email with several documents (ODGs, PDL…) → one folder per document (mail_packets.py)
+        for label, names in packets(list(pdfs)) if pdfs else []:
+            target = folder if not label else inbox / f"{folder.name}-{label}"
+            target.mkdir(parents=True, exist_ok=True)
+            for name in names:
+                (target / safe_name(name)).write_bytes(pdfs[name])
+            (target / "email.json").write_text(json.dumps(
                 {"subject": subject, "date": date, "sent": sent_at.astimezone(timezone.utc).isoformat(),
-                 "from": decoded(message["From"]), "files": saved,
-                 "message_id": message_id},
+                 "from": decoded(message["From"]), "files": names,
+                 "message_id": message_id + (f"#{label}" if label else "")},
                 ensure_ascii=False, indent=2), encoding="utf-8")
-            new.append(folder.name)
-            print(f"  new: {folder.name}  ({', '.join(saved)})")
+            new.append(target.name)
+            print(f"  new: {target.name}  ({', '.join(names)})")
     mailbox["mail"].logout()
     print(f"{len(new)} new email(s) saved in {inbox}")
     return new

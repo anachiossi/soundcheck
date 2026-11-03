@@ -17,9 +17,9 @@ import sys
 import pymupdf as fitz  # the PDF reader (PyMuPDF)
 
 SCENE_X = (40, 70)      # scene number column
-HEADING_X = (100, 120)  # INT./EST. heading column
+HEADING_X = (95, 120)   # INT./EST. heading column (Il colpo's Memo pages: x 99.96, 3 Nov)
 CUE_X = (235, 275)      # speaker names
-HEADING_RE = re.compile(r"^(INT|EST|EXT|I/E|INT/EST)[.\s]", re.I)
+HEADING_RE = re.compile(r"^(INT|EST|EXT|I/E|E/I|INT/EST|EST/INT)[.\s]", re.I)  # E/I.: Il colpo (3 Nov)
 SCENE_ID_RE = re.compile(r"^\d+[A-Za-z]{0,3}$")
 CUE_SUFFIX_RE = re.compile(r"\s*\((CONT.{0,3}D|V\.?O\.?|O\.?S\.?|F\.?C\.?|OFF|O\.?C\.?)\.?\)\s*$", re.I)
 NAME_RE = re.compile(r"^[A-ZÀ-Þ][A-ZÀ-Þ'’ .\-]*$")

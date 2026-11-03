@@ -53,10 +53,47 @@ class IlColpoLayoutTest(unittest.TestCase):
             self.assertIs(odg_reader_for(folder), read_odg)  # no settings.json (like LBE: no "odg_reader")
             settings = Path(folder) / "settings.json"
             settings.write_text(json.dumps({"odg_reader": "il-colpo"}), encoding="utf-8")
-            self.assertIs(odg_reader_for(folder), read_odg_il_colpo)
+            self.assertIs(odg_reader_for(folder).func, read_odg_il_colpo)  # with the film's main_unit
             settings.write_text(json.dumps({"odg_reader": "nonsense"}), encoding="utf-8")
             with self.assertRaises(ValueError):
                 odg_reader_for(folder)
+
+    def test_a_second_unit_on_the_next_day_is_kept_apart(self):
+        unit_table = ["Programma del giorno successivo Mercoledì 4 Novembre 2026 orario di lavorazione 14:00 – 22:00 // 08:00 – 16:00",
+                      "SCENA", "LUCE", "SET/SINOSSI", "DAY", "CAST", "PGS.", "TIMELINE",
+                      "UNIT MAIN 14:00 – 22:00",
+                      "20", "I", "T", "GYM/Ring", "Two friends meet.", "9", "1, 9", "2 2/8",
+                      "UNIT ROSSI 08:00 – 16:00",
+                      "30A", "E", "G", "PETROL STATION", "The kids watch.", "15", "3, 47", "1 1/8",
+                      "TOT PGS.", "2 2/8 + 1 1/8"]
+        odg = read_il_colpo(HEADER + TABLE + CAST + unit_table, main_unit="MAIN")
+        next_day = odg["advance"]
+        self.assertEqual((next_day["call"], next_day["wrap"]), ("14:00", "22:00"), "the main unit's hours")
+        self.assertEqual(next_day["second_unit"], {"name": "Rossi", "call": "08:00", "wrap": "16:00"})
+        units = {s["scene_id"]: s.get("unit") for s in next_day["scenes"]}
+        self.assertEqual(units, {"20": None, "30A": "2nd"})
+        self.assertEqual(odg["unit_warnings"], [])
+
+    def test_a_need_for_one_unit_goes_only_to_that_unit_scenes(self):
+        unit_table = ["Programma del giorno successivo Mercoledì 4 Novembre 2026 orario di lavorazione 14:00 – 22:00",
+                      "SCENA", "LUCE", "SET/SINOSSI", "DAY", "CAST", "PGS.", "TIMELINE",
+                      "UNIT MAIN 14:00 – 22:00", "20", "I", "T", "GYM", "Meet.", "9", "1", "2/8",
+                      "UNIT ROSSI 08:00 – 16:00", "30", "E", "G", "STATION", "Watch.", "15", "3", "1/8", "TOT PGS.",
+                      "FABBISOGNI SPECIALI del giorno successivo",
+                      "ATTREZZATURE SPECIALI", "STUNT COORDINATOR", "UNIT MAIN STUNT COORDINATOR",
+                      "MEZZI DI SCENA", "UNIT ROSSI KIDS CAR", "CANALI RADIO:1) regia"]
+        notes = read_il_colpo(HEADER + TABLE + CAST + unit_table, main_unit="MAIN")["advance"]["notes"]
+        self.assertEqual(notes["20"], {"Camera": "STUNT COORDINATOR"}, "printed twice, kept once")
+        self.assertEqual(notes["30"], {"Veicoli": "KIDS CAR"})
+
+    def test_two_units_with_no_main_unit_set_say_which_was_taken(self):
+        unit_table = ["Programma del giorno successivo Mercoledì 4 Novembre 2026 orario di lavorazione 14:00 – 22:00",
+                      "SCENA", "LUCE", "SET/SINOSSI", "DAY", "CAST", "PGS.", "TIMELINE",
+                      "UNIT MAIN 14:00 – 22:00", "20", "I", "T", "GYM", "Meet.", "9", "1", "2/8",
+                      "UNIT ROSSI 08:00 – 16:00", "30", "E", "G", "STATION", "Watch.", "15", "3", "1/8", "TOT PGS."]
+        odg = read_il_colpo(HEADER + TABLE + CAST + unit_table)
+        self.assertEqual(len(odg["unit_warnings"]), 1)
+        self.assertIn('"MAIN" taken as the main unit', odg["unit_warnings"][0])
 
     def test_the_header_gives_day_date_and_times(self):
         odg = read_il_colpo(ODG)
