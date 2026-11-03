@@ -190,6 +190,10 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   Il colpo filled from PDL 02.11 (days 55–68, checked: pages add up to every day header, two PDF libraries
   agree on all 80 scene numbers, sets/synopses match word for word). No mic rows from that PDL (numbers,
   no names). Next: step 3 "I work on: every day / only days with a 2nd unit".
+- v205 (3 Nov): **episodes** (the first series). `src/episodes.js`: settings `"episodes": "from_number"` →
+  102 = episode 1 (number ÷ 100); a scene's own `"episode"` in scenes.json wins (253bis is in Ep 5's script).
+  Scene numbers stay exactly as the ODG/PDL/sides print them. Scenes page: "Episode 1 · 5 scenes · 5 shot".
+  Next (asked, not built): kits per unit (TX/lav/IFB `unit: "2nd"`), after the 1st unit kit is filled.
 - v190 (23 Oct): exported mic-list images (Ana). **Sound assistants**: a SPEAKS column (YES/NO, as the mixer's) and
   each accessory as a small pill in its own colour (Ankle black, Plush sleeve beige…), stacked when a row has several.
   **Sound mixer**: the TX pill shows its model under the number (4 / TRXLA3.5) and is wider, the lav pill narrower.
