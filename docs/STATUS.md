@@ -201,7 +201,16 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   Automatic alarms). Subscribed calendar of the days with a 2nd unit; alarms = next wake within 24 h (night
   shoots), main unit only, `walk_to_ride` + Google Maps drive from the ride's address (script property only)
   to the ODG's crew parking (`locations.json`, `pipeline/read_location.py`). Il colpo commute: ride with a
-  colleague, walk 20, get ready 45, meet 30 before call (to confirm), Maps + 15 margin.
+  colleague, walk 20, get ready 45, at the parking 15 before the call, Google's time only, leave alarm 15 min before
+  walking out, rain +15 when the ODG's METEO says rain. Work days also written into the account's Google Calendar.
+- v208–v213 (3 Nov, Il colpo): the robot reads the ODG crew table (personal calls, IFB, warnings when the ride's
+  call differs: full names only); 74 characters with colours (21 recurring, one-liners brown, voices grey) and
+  aliases; preset rules (Adriano's lavs by gender, silent recurring characters wired, main unit only);
+  **📋 Film rules** (Projects): every rule in plain words, **what kind of project** (Film / TV series, 1 / 2 units,
+  main unit name), **Copy rules from another film**. Scripts per episode (`cue_lines.py --episode N` →
+  docs/scripts/epN.pdf); the robot files new scripts by itself (settings `"scripts": {"match": "LA LISTA"}`; a
+  series replaces only that episode); 📄 on each scene opens the official script at its page. Film aliases in
+  film.json (`"aliases": ["LA LISTA"]`).
 - v190 (23 Oct): exported mic-list images (Ana). **Sound assistants**: a SPEAKS column (YES/NO, as the mixer's) and
   each accessory as a small pill in its own colour (Ankle black, Plush sleeve beige…), stacked when a row has several.
   **Sound mixer**: the TX pill shows its model under the number (4 / TRXLA3.5) and is wider, the lav pill narrower.
