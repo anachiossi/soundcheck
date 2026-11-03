@@ -30,13 +30,15 @@ LINES = [
     (48, BIG, "41"), (72, SMALL, "Int/Sera"), (123, SMALL, "GYM/RING"), (275, SMALL, "6; 11"), (48, SMALL, "3/8"),
     (123, SMALL, "Someone trains."),
     (228, SMALL, "UNITA' ROSSI: Orario 8.00/16.00"),
-    (48, BIG, "50"), (48, SMALL, "A"), (72, SMALL, "Ext/Giorno"), (123, SMALL, "PETROL STATION/SIDE"),
+    (48, BIG, "50"), (48, BIG, "A"), (72, SMALL, "Ext/Giorno"), (123, SMALL, "PETROL STATION/SIDE"),
     (123, SMALL, "ROAD"), (275, SMALL, "3, 4; 18"), (345, 6.3, "47, VFX: 90s cars"), (48, SMALL, "1 1/8"),
     (123, SMALL, "The kids watch."), (123, SMALL, "Veicoli di Scena: KIDS CAR"),
     (241, SMALL, "Day Off - OFF - Sat 07/11/2026"),
     (172, SMALL, "Day #13 - Orario di lavorazione: 17:00/01:00 - Mon 09/11/2026 - 1"),
     (48, BIG, "60"), (72, SMALL, "I+E/Notte"), (123, SMALL, "CAR PARK"), (275, SMALL, "6"), (48, SMALL, "1"),
     (123, SMALL, "They leave."),
+    (48, BIG, "60"), (48, BIG, "Dpa"), (48, BIG, "rte"), (72, SMALL, "Int/Notte"), (123, SMALL, "CAR PARK"),
+    (48, SMALL, "1/8"), (123, SMALL, "Part of it."),
     (262, SMALL, "UNITA' ROSSI"),
     (48, BIG, "61"), (72, SMALL, "Ext/Giorno"), (123, SMALL, "VILLA"), (275, SMALL, "2"), (48, SMALL, "2/8"),
     (123, SMALL, "A car arrives."),
@@ -81,6 +83,10 @@ class ReadPdlIlColpoTest(unittest.TestCase):
         self.assertEqual(scene["set"], "PETROL STATION/SIDE ROAD")
         self.assertEqual(scene["synopsis"], "The kids watch.")
         self.assertIn("Veicoli di Scena: KIDS CAR", scene["notes"])
+
+    def test_a_long_scene_suffix_broken_over_lines_is_joined(self):
+        self.assertEqual([s["scene_id"] for s in self.day13["scenes"]], ["60", "60Dparte"])
+        self.assertEqual(self.day13["scenes"][1]["pages"], "1/8")
 
     def test_inside_and_outside_is_int_ext(self):
         self.assertEqual(self.day13["scenes"][0]["int_ext"], "INT/EXT")

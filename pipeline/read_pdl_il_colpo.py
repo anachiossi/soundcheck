@@ -8,7 +8,8 @@ What this layout prints (PDL 02.11, days 55–68), read by the POSITION of each 
               "UNITA' DE FEUDIS: Orario 8.00/16.00"   the 2nd unit starts: the rest of the day is its scenes
               any other centred line = a note for the day ("Verificare se 241 può essere DAY")
     a scene, in columns:
-        x≈48   scene number (bigger type), then a letter on its own line ("330" · "A" = 330A); later the pages
+        x≈48   scene number (bigger type), then the rest of it on the next lines in the same type, broken
+               mid-word ("330" · "A" = 330A; "526" · "Dpa" · "rte" = 526Dparte); later the pages (small type)
         x≈72   "Int/Notte" · "Ext/Giorno" · "I+E/Notte" (sometimes with the set after it on the same line)
         x≈123  the set (may wrap), then, after the pages, the synopsis
         x≈275  the cast numbers: "1; 9, 11; 138, 146," (may wrap)
@@ -31,7 +32,6 @@ UNIT_RE = re.compile(r"^UNIT[AÀ]'?\s*(.*)$", re.I)      # "UNITA' DE FEUDIS: Or
 HOURS_RE = re.compile(r"(\d{1,2})(?:[.:](\d{2}))?\s*(?:-|/)\s*(\d{1,2})(?:[.:](\d{2}))?")  # 8.00/16.00 · 16:00 - 24:00 · 17/01
 PAGES_RE = re.compile(r"^(?:\d+\s+\d/8|\d+|\d/8)$")
 SCENE_RE = re.compile(r"^\d+$")
-SUFFIX_RE = re.compile(r"^[A-Z]$")
 INT_EXT = {"INT": "INT", "EXT": "EXT", "I+E": "INT/EXT", "E+I": "INT/EXT"}
 
 # the columns: the left edge of each, in points (the page is 595 wide)
@@ -77,8 +77,10 @@ def add_line(scene, x, size, text):
     """One line of a scene block, put where its column says."""
     where = column(x)
     if where == "scene":
-        if SUFFIX_RE.match(text) and not scene["pages"]:
-            scene["scene_id"] += text                      # "330" then "A" → 330A
+        if size > 9 and not scene["pages"]:
+            # the rest of the scene number, in the same big type, broken mid-word by the narrow column:
+            # "330" "A" → 330A · "526" "Dpa" "rte" → 526Dparte · "634" "Vid" → 634Vid (3 Nov)
+            scene["scene_id"] += text
         elif PAGES_RE.match(text) and not scene["pages"]:
             scene["pages"] = text
     elif where == "int":
