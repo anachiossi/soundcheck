@@ -1,4 +1,4 @@
-// schedule.js — the Schedule screen: the film by Day, by Week or All film.
+// schedule.js — the Schedule screen: the film as a Calendar (parts/month-calendar.js), by Day, by Week or All film.
 // Day:  pick a shooting day → its banner, scene chips, every scene's mic table,
 //       📄 ODG / 📄 Sides (when that day's PDFs are on the device), 📷 Export (the day's image).
 // Week: every day of the week, one after the other, + 📷 Week image.
@@ -21,9 +21,10 @@ import { shareCanvas, shareCanvases } from '../export/share.js';
 import { Icon } from '../parts/icons.js';
 import { ScenePill } from '../parts/scene-pill.js';
 import { DayStrip } from '../parts/day-strip.js';
+import { MonthCalendar } from '../parts/month-calendar.js';
 import { askImageFor } from '../parts/image-for.js';
 
-const MODES = [['day', 'Day'], ['week', 'Week'], ['all', 'All film']];
+const MODES = [['calendar', 'Calendar'], ['day', 'Day'], ['week', 'Week'], ['all', 'All film']];
 
 export function ScheduleScreen({ state }) {
   const { project, scheduleMode } = state;
@@ -32,6 +33,7 @@ export function ScheduleScreen({ state }) {
       ${MODES.map(([mode, label]) => html`
         <button class=${scheduleMode === mode ? 'on' : ''} onClick=${() => setScheduleMode(mode)}>${label}</button>`)}
     </div>
+    ${scheduleMode === 'calendar' && html`<${MonthCalendar} project=${project} />`}
     ${scheduleMode === 'day' && html`<${DayView} project=${project} edit=${state.edit} dayNumber=${state.day} />`}
     ${scheduleMode === 'week' && html`<${WeekView} project=${project} edit=${state.edit} weekNumber=${state.week} />`}
     ${scheduleMode === 'all' && html`<${AllView} project=${project} />`}`;

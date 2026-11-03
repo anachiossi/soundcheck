@@ -128,6 +128,19 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .banner--unit2 { background: var(--unit2-bg); color: var(--unit2-ink); border: 1px solid var(--unit2-line); }
 .unit2-mark { font-size: 10px; font-weight: 700; color: var(--unit2-ink); background: var(--unit2-bg); border-radius: 6px; padding: 0 5px; }
 .day-btn--on .unit2-mark { background: var(--unit2-line); color: var(--ink); }
+.calendar { margin: 10px 0 18px; }
+.calendar__month { font-size: 15px; margin: 0 0 6px; }
+.calendar__grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.calendar__weekday { font-size: 11px; color: var(--muted); text-align: center; }
+.calendar__day { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 46px;
+  border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font-size: 14px; font-weight: 700; padding: 2px 0; }
+.calendar__day small { font-size: 10px; font-weight: 600; color: var(--muted); }
+.calendar__day--off { border-color: transparent; background: none; color: var(--muted-2); font-weight: 400; }
+.calendar__day--unit2 { background: var(--unit2-bg); border-color: var(--unit2-line); color: var(--unit2-ink); }
+.calendar__day--unit2 small { color: var(--unit2-ink); }
+.calendar__unit2 { font-size: 9px; }
+.calendar__day--done { opacity: .45; }
+.calendar__day--today { outline: 2px solid var(--ink); outline-offset: 1px; }
 .episode-title { font-size: 15px; margin: 16px 0 6px; }
 .episode-title small { font-weight: 400; color: var(--muted); }
 .day-line__unit2 { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 4px; }

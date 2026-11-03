@@ -23,7 +23,7 @@ let state = {
   documentFrom: '',      // the screen ‹ Back returns to (Schedule when empty)
   cuesScene: null,          // the scene open in 🎙 Cues (full screen)
   cuesFrom: null,           // the screen to go back to when Cues closes
-  scheduleMode: 'day',      // 'day' | 'week' | 'all'
+  scheduleMode: 'day',      // 'calendar' | 'day' | 'week' | 'all'
   day: null,                // chosen shooting day number
   week: null,               // chosen week number
   lookup: [],               // scene ids chosen in the Scenes screen
