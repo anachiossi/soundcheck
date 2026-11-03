@@ -360,7 +360,10 @@ function syncGoogleCalendar() {
   const films = (readRepo('projects') || []).filter(item => item.type === 'dir').map(item => item.name);
   const wanted = [].concat(...films.map(film => calendarDays(film)));
   const fingerprint = JSON.stringify(wanted.map(d => [d.key, d.title, d.notes, d.date, d.start && d.start.getTime(), d.end && d.end.getTime()]));
-  if (fingerprint === properties.getProperty('CALENDAR_SYNCED')) return; // nothing changed since the last sync
+  if (fingerprint === properties.getProperty('CALENDAR_SYNCED')) {  // nothing changed since the last sync
+    console.log('Calendar: nothing changed since the last sync.');
+    return;
+  }
   const calendar = CalendarApp.getDefaultCalendar();
   const today = moment(Utilities.formatDate(new Date(), TIME_ZONE, 'yyyy-MM-dd'), 0);
   const mine = {};
@@ -379,7 +382,10 @@ function syncGoogleCalendar() {
       event.setTime(d.start, d.end);
       console.log(`Calendar: moved ${d.title} (${d.date})`);
     }
-    if (event.getTitle() !== d.title) event.setTitle(d.title);
+    if (event.getTitle() !== d.title) {
+      console.log(`Calendar: renamed "${event.getTitle()}" → "${d.title}"`);
+      event.setTitle(d.title);
+    }
     if (event.getDescription() !== d.notes) event.setDescription(d.notes);
   }
   for (const key of Object.keys(mine)) {  // the robot's own future events for days that are no longer there
@@ -387,6 +393,16 @@ function syncGoogleCalendar() {
     mine[key].deleteEvent();
   }
   properties.setProperty('CALENDAR_SYNCED', fingerprint);
+}
+
+// Run by hand: every future event in the calendar, and which ones the robot knows as its own (tag "soundcheck").
+// If an "Il colpo · D…" event shows "NOT the robot's", the robot can't move or delete it: delete it by hand once.
+function listRobotEvents() {
+  const today = moment(Utilities.formatDate(new Date(), TIME_ZONE, 'yyyy-MM-dd'), 0);
+  for (const event of CalendarApp.getDefaultCalendar().getEvents(today, new Date(today.getTime() + 400 * 86400000))) {
+    const key = event.getTag('soundcheck');
+    console.log(`${Utilities.formatDate(event.getStartTime(), TIME_ZONE, 'EEE yyyy-MM-dd HH:mm')} · ${event.getTitle()} · ${key ? `robot's (${key})` : "NOT the robot's"}`);
+  }
 }
 
 // Ana's old "Lavoro (bozza)" drafts (3 Nov: the PDL changed, they are no longer true). Two steps, by hand in the
