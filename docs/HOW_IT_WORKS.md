@@ -103,6 +103,9 @@ Script's built-in Maps service: free, no key) from the script property **`RIDE_F
 ONLY there, never in a file) to the day's place in `locations.json` (written by `run.py` from the ODG: crew
 parking, else the set; its map link → coordinates), for the time of leaving, + `travel_margin` (15). No address,
 no place yet, or Maps fails → `travel_max`. The app's Tomorrow card still counts `travel_max`.
+Google's time only (no margin); `leave_alarm_before` = the ⏰ leave rings that many minutes before walking out;
+`rain_penalty` minutes are added when the ODG's METEO says rain/storm (`locations.json` "rain"). To check it all:
+in the Apps Script editor run **`testMyPlan`** → the log lists the next 3 days (drive, Maps or not, rain, wake, leave).
 **Phone calendar:** `<URL>?key=<ALARM_KEY>&calendar=<film>` = an iCalendar feed (settings `"calendar"`:
 `days_with_2nd_unit` | `all`); iPhone → Settings → Calendar → Accounts → Add Account → Other → Add Subscribed Calendar.
 - The robot (`doGet` → `alarmAnswer` in `pipeline/gmail-trigger.gs`) answers `06:00;06:45` (wake;leave, the

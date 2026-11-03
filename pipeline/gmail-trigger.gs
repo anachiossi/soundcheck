@@ -107,8 +107,9 @@ function checkWrapAlerts() {
 // walk_to_ride: minutes on foot to the ride's house first (Il colpo 20, Ana 3 Nov).
 // travel: "maps" → the drive is asked to Google Maps (travelMinutes below), else travel_max.
 // leave_alarm_before: the "leave" alarm rings this many minutes before walking out (0; Il colpo 15).
+// rain_penalty: minutes added to the drive when the ODG's METEO says rain or a storm (0 = never).
 const COMMUTE = { meet_before_call: 45, travel_min: 75, travel_max: 90, get_ready: 45, sleep_hours: 8, walk_to_ride: 0,
-  leave_alarm_before: 0 };
+  leave_alarm_before: 0, rain_penalty: 0 };
 
 // Not when still working: a night shoot (17:00–01:00) ends after the time to sleep for the next call.
 function checkBedtime() {
@@ -155,6 +156,9 @@ function upcomingPlans(now) {
       if (start === null || start === undefined) continue;
       const meet = start - c.meet_before_call;
       const drive = travelMinutes(c, places[date], date, meet);
+      // the ODG's weather says rain or a storm (locations.json "rain", read_location.py) → + rain_penalty
+      drive.rain = Boolean(places[date] && places[date].rain && c.rain_penalty);
+      if (drive.rain) drive.minutes += c.rain_penalty;
       const leave = meet - drive.minutes - c.walk_to_ride;  // walking out of the house
       const before = main.filter(r => r.date < date && r.wrap).sort((a, b) => (a.date < b.date ? 1 : -1))[0];
       plans.push({ film, date, day: row.day, call: own, sleepHours: c.sleep_hours, drive,
@@ -175,7 +179,8 @@ function testMyPlan() {
   if (!plans.length) console.log('No shooting day with a call in the next 3 days (or no film with a "commute").');
   for (const plan of plans) {
     console.log(`${plan.film} D${plan.day} ${plan.date}: call ${clockOf(plan.call)} · drive ${plan.drive.minutes} min ` +
-      `(${plan.drive.maps ? 'Google Maps' : 'travel_max: no address or place for that day yet'}) · ` +
+      `(${plan.drive.maps ? 'Google Maps' : 'travel_max: no address or place for that day yet'}` +
+      `${plan.drive.rain ? `, rain +${Object.assign({}, COMMUTE, (readRepo(`projects/${plan.film}/settings.json`, true) || {}).commute).rain_penalty} from the ODG's METEO` : ''}) · ` +
       `wake ${clockAt(plan.wake)} · leave alarm ${clockAt(plan.leave)}`);
   }
   console.log(`The iPhone would get now: ${alarmAnswer(now)}`);
