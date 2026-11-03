@@ -200,7 +200,7 @@ export function withWaitingOdgTimes(project) {
   for (const proposal of odgs) {
     for (const change of proposal.changes || []) {
       const { op } = change;
-      if (decided(proposal, change) || !op) continue;
+      if (decided(proposal, change) || !op || op.unit) continue; // a 2nd unit's times never move the day's alarm
       const fields = Object.fromEntries(Object.entries(op.fields || {}).filter(([k, v]) => TIME_FIELDS.includes(k) && v));
       if (!Object.keys(fields).length) continue;
       const known = schedule.some(row => row.day === op.day);

@@ -20,7 +20,7 @@ from pathlib import Path
 from compare import check_cast_list, check_day, check_scene_info, nice_date
 from compare_mics import check_scene_mics
 from propose import load_film, subject_date
-from read_pdl import read_pdl
+from pdl_reader import pdl_reader_for
 
 
 def odg_days(film_folder):
@@ -59,6 +59,22 @@ def as_odg_scene(scene):
             "cast": scene["cast"]}
 
 
+def mark_shared_scenes(changes, days):
+    """A scene shot over several days of this PDL (Il colpo: 526 on days 61, 62 and 63) must stay on all of
+    them: each day's change lists those scenes in "shared_ids", so accepting one day never takes them off
+    the others (the app: proposal-rules.js → set_day_scenes)."""
+    count = {}
+    for day in days:
+        for scene in day["scenes"] + day.get("second_unit", {}).get("scenes", []):
+            count[scene["scene_id"]] = count.get(scene["scene_id"], 0) + 1
+    for change in changes:
+        op = change["op"]
+        if op["op"] == "set_day_scenes":
+            shared = [sid for sid in op["scene_ids"] if count.get(sid, 0) > 1]
+            if shared:
+                op["shared_ids"] = shared
+
+
 def build_pdl_proposal(film_folder, email_folder, today=None):
     film_folder, email_folder = Path(film_folder), Path(email_folder)
     today = today or datetime.date.today().isoformat()
@@ -66,7 +82,7 @@ def build_pdl_proposal(film_folder, email_folder, today=None):
     email = json.loads((email_folder / "email.json").read_text(encoding="utf-8"))
     pdl_pdf = next(p for p in email_folder.glob("*.pdf") if "PDL" in p.name.upper())
     scaletta_pdf = next((p for p in email_folder.glob("*.pdf") if "SCALETTA" in p.name.upper()), None)
-    pdl = read_pdl(pdl_pdf, scaletta_pdf)
+    pdl = pdl_reader_for(film_folder)(pdl_pdf, scaletta_pdf)  # the film's own reader (settings.json "pdl_reader")
     changes, warnings, checks = [], [], []
 
     def add(result):
@@ -77,20 +93,32 @@ def build_pdl_proposal(film_folder, email_folder, today=None):
 
     covered = odg_days(film_folder)
     future = [d for d in pdl["days"] if d["date"] >= today]
-    future_scenes = [s for d in future for s in d["scenes"]]
+    future_scenes = [s for d in future for s in d["scenes"] + d.get("second_unit", {}).get("scenes", [])]
     for day in future:
         if day["day"] in covered:
             checks.append(f"Day {day['day']}: left as the ODG says")
             continue
+        week = week_from_date(film["schedule"], day["date"])
         add(check_day(day["day"], day["date"], day["call"], day["wrap"],
-                      [s["scene_id"] for s in day["scenes"]], film["schedule"], f"Day {day['day']}",
-                      week_from_date(film["schedule"], day["date"])))
+                      [s["scene_id"] for s in day["scenes"]], film["schedule"], f"Day {day['day']}", week))
+        second = day.get("second_unit")
+        if second:  # the 2nd unit of the same day: its own scenes and hours (none printed → none)
+            add(check_day(day["day"], day["date"], second["call"], second["wrap"],
+                          [s["scene_id"] for s in second["scenes"]], film["schedule"],
+                          f"Day {day['day']} · 2nd unit", week, unit="2nd", unit_name=second["name"]))
     pdl_days = {d["day"] for d in pdl["days"]}
-    for number in sorted({s["day"] for s in film["schedule"] if s["date"] >= today} - pdl_days - covered):
+    main_rows = [s for s in film["schedule"] if s["date"] >= today and not s.get("unit")]
+    for number in sorted({s["day"] for s in main_rows} - pdl_days - covered):
         changes.append({"text": f"Day {number} is no longer in the PDL: take its scenes off the schedule",
                         "op": {"op": "set_day_scenes", "day": number, "scene_ids": []}})
+    with_second = {d["day"] for d in pdl["days"] if d.get("second_unit")}
+    second_rows = [s for s in film["schedule"] if s["date"] >= today and s.get("unit") == "2nd"]
+    for number in sorted({s["day"] for s in second_rows} - with_second - covered):
+        changes.append({"text": f"Day {number}: no more 2nd unit in the PDL: take its scenes off the schedule",
+                        "op": {"op": "set_day_scenes", "day": number, "unit": "2nd", "scene_ids": []}})
 
-    scheduled = {s["scene_id"] for d in pdl["days"] for s in d["scenes"]}
+    mark_shared_scenes(changes, future)
+    scheduled = {s["scene_id"] for d in pdl["days"] for s in d["scenes"] + d.get("second_unit", {}).get("scenes", [])}
     unscheduled = [s for sid, s in pdl["scenes"].items() if sid not in scheduled]
     for scene in future_scenes + unscheduled:
         add(check_scene_info(as_odg_scene(scene), film["scenes"].get(scene["scene_id"])))

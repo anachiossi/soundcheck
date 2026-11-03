@@ -15,6 +15,9 @@ The film-specific diary (decisions, dates, what Ana said) is private:
   Its ODG layout has its own reader, `pipeline/read_odg_il_colpo.py`, chosen by its settings.json
   `"odg_reader": "il-colpo"` (24 Oct). Main readers untouched: a new film adjusts through its settings only.
   No email robot yet: inbox.json waits for the production's email subject. Crew page (read_crew) not adapted.
+  Its PDL layout has its own reader too, `pipeline/read_pdl_il_colpo.py` (`"pdl_reader": "il-colpo"`, 3 Nov),
+  which reads the **2nd unit** ("UNITA' DE FEUDIS" lines). Ana is a day player: she works the main unit on
+  the days a 2nd unit shoots. No sides, scaletta or full script yet.
 - Rule (Ana): reader/parser configuration lives in the film's data; never change another film's results.
   Before touching a reader, save LBE's readings and compare after (script + every sides PDF).
 
@@ -168,6 +171,14 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   it is syncing. `src/film-close.js`, `deleteProject` in `store/local.js`, tests/film-close.test.js.
 - v202 (2 Nov): Projects is simpler: Film repos, Share with crew and Backup files are folded into one closed
   **More** (Ana: rarely needed; she has never shared a film yet).
+- v203 (3 Nov): **2nd unit, data side** (step 1 of 3). A schedule row may have `unit: "2nd"` + `unit_name`
+  (the name the PDL prints, e.g. the 2nd unit director: shown, never used as the key; Ana: "behind the scenes
+  it is 2nd unit"). No unit = main unit, so old films are unchanged. `shootingDays` takes a day's date/call/wrap
+  from the MAIN unit and adds `day.second = { unit, name, call, wrap, scenes }`; set_day / set_day_scenes
+  change only rows of their own unit; ODG alarm times ignore 2nd unit changes. A PDL proposal lists
+  `shared_ids` (a scene shot over several days stays on all of them). Next: step 2 the Schedule screen shows
+  the 2nd unit as its own band (until then its scenes are not shown); step 3 "I work on: every day / only
+  days with a 2nd unit".
 - v190 (23 Oct): exported mic-list images (Ana). **Sound assistants**: a SPEAKS column (YES/NO, as the mixer's) and
   each accessory as a small pill in its own colour (Ankle black, Plush sleeve beige…), stacked when a row has several.
   **Sound mixer**: the TX pill shows its model under the number (4 / TRXLA3.5) and is wider, the lav pill narrower.

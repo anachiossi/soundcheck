@@ -21,20 +21,27 @@ export function weekFromDate(schedule, date) {
   return before ? before.week + (target - mondayNumber(before.date)) : 0;
 }
 
+// one unit of one shooting day: unit missing = the main unit, '2nd' = the day's 2nd unit (Ana, 3 Nov).
+// The main unit's rows and the 2nd unit's rows of the same day never change each other.
+const sameUnit = (row, day, unit) => row.day === day && (row.unit || '') === (unit || '');
+
 const OPS = {
-  // date / call / wrap of a shooting day
-  set_day(film, { day, fields }) {
-    film.schedule = film.schedule.map(row => (row.day === day ? { ...row, ...fields } : row));
+  // date / call / wrap of a shooting day (of its main unit, or of its 2nd unit)
+  set_day(film, { day, unit, fields }) {
+    film.schedule = film.schedule.map(row => (sameUnit(row, day, unit) ? { ...row, ...fields } : row));
     return ['schedule.json'];
   },
 
-  // the scenes of a shooting day, in order (a scene moved here leaves its old day)
-  // (a brand-new day brings its date, week and times in `fields`)
-  set_day_scenes(film, { day, scene_ids, fields = {} }) {
-    const existing = film.schedule.find(row => row.day === day);
-    const template = { day, date: '', week: 0, call: '', wrap: '', ...existing, ...fields };
+  // the scenes of a shooting day (or of its 2nd unit), in order (a scene moved here leaves its old day)
+  // (a brand-new day brings its date, week and times in `fields`; a 2nd unit also its unit_name)
+  // shared_ids: scenes the same PDL also puts on other days (shot over several days, Il colpo's 526 on days
+  // 61, 62 and 63): those stay on their other days too
+  set_day_scenes(film, { day, unit, scene_ids, shared_ids = [], fields = {} }) {
+    const existing = film.schedule.find(row => sameUnit(row, day, unit));
+    const template = { day, date: '', week: 0, call: '', wrap: '', ...existing, ...fields, ...(unit ? { unit } : {}) };
     if (!template.week) template.week = weekFromDate(film.schedule, template.date); // the ODG has no week (Ana, 12 Oct: "Week 0")
-    const kept = film.schedule.filter(row => row.day !== day && !scene_ids.includes(String(row.scene_id)));
+    const movesHere = row => scene_ids.includes(String(row.scene_id)) && !shared_ids.includes(String(row.scene_id));
+    const kept = film.schedule.filter(row => !sameUnit(row, day, unit) && !movesHere(row));
     const added = scene_ids.map((sceneId, i) => ({ ...template, scene_id: sceneId, order: i + 1 }));
     film.schedule = [...kept, ...added];
     return ['schedule.json'];

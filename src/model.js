@@ -66,13 +66,26 @@ export function toSpeaker(value) {
 // ---- schedule -------------------------------------------------------------
 
 // One entry per shooting day, in day order, each with its scenes in shooting order.
+// The day's date, call and wrap come from its MAIN unit. A day with a 2nd unit (rows with unit: '2nd')
+// also gets day.second = { unit, name, call, wrap, scenes }: its own scenes and hours (Ana, 3 Nov), so
+// the 2nd unit's 08:00 never becomes the day's call (alarms, hours, images).
 export function shootingDays(project) {
   const days = new Map();
   for (const s of project.schedule) {
-    if (!days.has(s.day)) days.set(s.day, { day: s.day, date: s.date, week: s.week, call: s.call, wrap: s.wrap, fromOdg: s.fromOdg, scenes: [] });
-    days.get(s.day).scenes.push(s);
+    if (!days.has(s.day)) days.set(s.day, { day: s.day, date: s.date, week: s.week, call: '', wrap: '', scenes: [] });
+    const day = days.get(s.day);
+    if (s.unit) {
+      day.second = day.second || { unit: s.unit, name: s.unit_name || '', call: s.call || '', wrap: s.wrap || '', scenes: [] };
+      day.second.scenes.push(s);
+    } else {
+      if (!day.scenes.length) Object.assign(day, { date: s.date, week: s.week, call: s.call, wrap: s.wrap, fromOdg: s.fromOdg });
+      day.scenes.push(s);
+    }
   }
-  for (const d of days.values()) d.scenes.sort((a, b) => a.order - b.order);
+  for (const d of days.values()) {
+    d.scenes.sort((a, b) => a.order - b.order);
+    d.second?.scenes.sort((a, b) => a.order - b.order);
+  }
   return [...days.values()].sort((a, b) => a.day - b.day);
 }
 

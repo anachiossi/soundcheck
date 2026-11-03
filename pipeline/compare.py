@@ -93,17 +93,21 @@ def check_next_day_date(advance, after):
     return fixed.isoformat(), [text + f" The weekday is used: {ENGLISH_DAYS[fixed.weekday()]} {fixed.day}/{fixed.month:02d}."]
 
 
-def check_day(day_number, date, call, wrap, scene_ids, schedule, label, week=None):
-    """Date, call/wrap (and week) and the list of scenes of one shooting day."""
+def check_day(day_number, date, call, wrap, scene_ids, schedule, label, week=None, unit=None, unit_name=""):
+    """Date, call/wrap (and week) and the list of scenes of one shooting day.
+    unit: None = the main unit; '2nd' = the day's 2nd unit (its own rows, call and wrap: Ana, 3 Nov), with
+    unit_name = the name the PDL prints for it ("De Feudis"), only to show it.
+    The main unit's rows and the 2nd unit's rows of the same day never change each other."""
     changes, checks = [], []
-    rows = sorted([s for s in schedule if s["day"] == day_number], key=lambda s: s["order"])
+    rows = sorted([s for s in schedule if s["day"] == day_number and s.get("unit") == unit], key=lambda s: s["order"])
     now = [s["scene_id"] for s in rows]
     first = rows[0] if rows else {}
-    wanted = (("date", date), ("call", call), ("wrap", wrap), ("week", week))
+    wanted = (("date", date), ("call", call), ("wrap", wrap), ("week", week), ("unit_name", unit_name))
     fields = {k: v for k, v in wanted if v and v != first.get(k)}
+    which = {"unit": unit} if unit else {}
     if rows and fields:
         before = ", ".join(f"{k} {first.get(k) or '—'} → {v}" for k, v in fields.items())
-        changes.append({"text": f"{label}: {before}", "op": {"op": "set_day", "day": day_number, "fields": fields}})
+        changes.append({"text": f"{label}: {before}", "op": {"op": "set_day", "day": day_number, **which, "fields": fields}})
     elif rows:
         checks.append(f"{label}: date and times match")
     if scene_ids != now:
@@ -111,7 +115,7 @@ def check_day(day_number, date, call, wrap, scene_ids, schedule, label, week=Non
         # last scene to another day, and then the day is rebuilt from these fields alone
         # (18 Oct: ODG #21 moved 49 from day 22 to day 21 → day 22 came back with no date, painted green)
         known = {k: first.get(k) for k in ("date", "call", "wrap", "week") if first.get(k)}
-        op = {"op": "set_day_scenes", "day": day_number, "scene_ids": scene_ids,
+        op = {"op": "set_day_scenes", "day": day_number, **which, "scene_ids": scene_ids,
               "fields": {**known, **{k: v for k, v in wanted if v}}}
         text = (f"{label}: new day, {date}, scenes {' · '.join(scene_ids)}" if not rows
                 else f"{label}: scenes {' · '.join(now) or 'none'} → {' · '.join(scene_ids) or 'none (day removed)'}")
