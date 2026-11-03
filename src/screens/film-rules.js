@@ -1,14 +1,17 @@
 // film-rules.js — the Film rules page (Projects → 📋 Film rules): every rule this film's robots and preset
 // generator follow, in plain words, so Ana can recall them (3 Nov, Il colpo: "make a settings page for these
-// rules so I can recall eventually"). Read-only: the rules live in the film's settings.json (each film its own).
+// rules so I can recall eventually"). The rules live in the film's settings.json (each film its own); at the
+// bottom, "Copy rules from another film" (film-rules-copy.js) brings another film's rules in.
 // Used by: main.js
 
-import { html } from '../../vendor/preact-htm.js';
+import { html, useState } from '../../vendor/preact-htm.js';
 import { setState } from '../state.js';
+import { RULE_GROUPS, otherFilms, copyRules } from '../film-rules-copy.js';
 
 const LAV_NAMES = { cos11: 'Sanken COS-11', 6060: 'DPA 6060', 6061: 'DPA 6061', 4060: 'DPA 4060', 4061: 'DPA 4061' };
 const lavName = model => LAV_NAMES[model] || model;
 const GENDER = { F: 'women', M: 'men' };
+const COLOUR_NAMES = { '#000000': 'black', '#ffffff': 'white', '#faf1d9': 'beige' };
 
 function micRules(project) {
   const rules = project.settings?.presets || {};
@@ -24,6 +27,11 @@ function micRules(project) {
   for (const [gender, model] of Object.entries(lav.by_gender || {})) items.push(`Lav for ${GENDER[gender] || gender}: ${lavName(model)}.`);
   if (lav.loud) items.push(`Screamers: ${lavName(lav.loud)}.`);
   if (lav.not_used?.length) items.push(`Never used: ${lav.not_used.map(lavName).join(', ')}.`);
+  for (const [tx, model] of Object.entries(lav.lav_for_tx_model || {})) items.push(`With a ${tx} TX: always ${lavName(model)}.`);
+  const gearName = id => (project.gearItems || []).find(g => g.id === id)?.name || id;
+  for (const rule of rules.lav_accessories || []) {
+    items.push(`${rule.scenes.join(' / ')} scenes, lav colour ${COLOUR_NAMES[rule.lav_colour.toLowerCase()] || rule.lav_colour}: ${gearName(rule.gear)}.`);
+  }
   if (rules.small_day_max_speakers) items.push(`A "small day" has at most ${rules.small_day_max_speakers} speakers per scene.`);
   return items;
 }
@@ -35,15 +43,19 @@ function filmRules(settings) {
   if (settings.sides_by === 'date') items.push("Sides (stralci) are matched to their day by date and scenes, never by the number in their name.");
   if (settings.calendar) items.push(`Phone calendar: ${settings.calendar === 'days_with_2nd_unit' ? 'only the days with a 2nd unit' : 'every shooting day'}.`);
   if (settings.kit) items.push(`Gear: the "${settings.kit}" kit.`);
+  if (settings.group_cues?.length) items.push(`Group cues, not a character: ${settings.group_cues.join(', ')}.`);
+  if (settings.workday) items.push(`Working day: ${settings.workday} from call to wrap.`);
+  if (settings.overtime?.double_after) items.push(`Overtime counts double after the first ${settings.overtime.double_after} min.`);
+  if (settings.voices?.language) items.push(`Voices for hearing the lines: ${settings.voices.language}${settings.voices.male ? ` (men: ${settings.voices.male})` : ''}.`);
   return items;
 }
 
 function alarmRules(commute) {
   if (!commute) return ['No wake-up plan for this film.'];
   const items = [];
-  if (commute.ride_with) items.push(`Riding with ${commute.ride_with}: the alarms follow their call on the ODG.`);
+  if (commute.ride_with) items.push(`Riding with ${commute.ride_with}: the alarms follow their call on the ODG${commute.ride_gap_if_unknown ? ` (not printed yet: ${commute.ride_gap_if_unknown} min before yours)` : ''}.`);
   if (commute.walk_to_ride) items.push(`Walk to their house first: ${commute.walk_to_ride} min.`);
-  items.push(`At the crew parking ${commute.meet_before_call ?? 45} min before the call.`);
+  items.push(`${commute.travel === 'maps' ? 'At the crew parking' : 'Meeting point'} ${commute.meet_before_call ?? 45} min before the call.`);
   items.push(commute.travel === 'maps' ? 'Drive: Google Maps for that day and hour (from the ride\'s address, kept only in the robot).' : `Drive: ${commute.travel_min ?? 75}–${commute.travel_max ?? 90} min.`);
   if (commute.rain_penalty) items.push(`Rain or storm in the ODG's weather: +${commute.rain_penalty} min.`);
   if (commute.leave_alarm_before) items.push(`The leave alarm rings ${commute.leave_alarm_before} min before walking out.`);
@@ -65,5 +77,38 @@ export function FilmRulesScreen({ state }) {
       ${section('Mics', micRules(project))}
       ${section('This film', filmRules(settings))}
       ${section('Alarms', alarmRules(settings.commute))}
+      <${CopyRules} project=${project} />
     </div>`;
+}
+
+// "Copy rules from another film": pick the film and the groups, then a second tap confirms (film-rules-copy.js)
+function CopyRules({ project }) {
+  const films = otherFilms();
+  const [from, setFrom] = useState('');
+  const [groups, setGroups] = useState(['mics']);
+  const [asking, setAsking] = useState(false);
+  if (!films.length) return html`<p class="muted">No other film on this device to copy rules from.</p>`;
+  const toggle = id => setGroups(groups.includes(id) ? groups.filter(g => g !== id) : [...groups, id]);
+  const fromName = films.find(f => f.id === from)?.name;
+  return html`
+    <h2 class="section-title">Copy rules from another film</h2>
+    <p class="muted">The groups you tick replace ${project.name}'s. Never copied: the protagonist, the person you ride
+      with and your name on the call sheet (they belong to that film).</p>
+    <label class="field">From
+      <select value=${from} onChange=${e => { setFrom(e.target.value); setAsking(false); }}>
+        <option value="">choose a film…</option>
+        ${films.map(f => html`<option key=${f.id} value=${f.id}>${f.name}</option>`)}
+      </select>
+    </label>
+    ${RULE_GROUPS.map(g => html`
+      <label class="check" key=${g.id}><input type="checkbox" checked=${groups.includes(g.id)} onChange=${() => toggle(g.id)} /> ${g.label}</label>`)}
+    ${!asking
+      ? html`<button class="btn" disabled=${!from || !groups.length} onClick=${() => setAsking(true)}>Copy rules…</button>`
+      : html`<div class="close-film-ask">
+          <p>Replace ${project.name}'s <b>${RULE_GROUPS.filter(g => groups.includes(g.id)).map(g => g.id).join(', ')}</b> rules with ${fromName}'s?</p>
+          <div class="toolbar">
+            <button class="btn btn--primary" onClick=${() => { copyRules(from, groups); setAsking(false); }}>Copy</button>
+            <button class="btn" onClick=${() => setAsking(false)}>Cancel</button>
+          </div>
+        </div>`}`;
 }

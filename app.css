@@ -142,6 +142,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .calendar__day--done { opacity: .45; }
 .calendar__day--today { outline: 2px solid var(--ink); outline-offset: 1px; }
 .episode-title { font-size: 15px; margin: 16px 0 6px; }
+.help-page .field { display: flex; flex-direction: column; gap: 4px; margin: 8px 0; font-size: 14px; color: var(--muted); }
+.help-page .field select { font-size: 16px; padding: 8px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--card); color: var(--ink); }
+.help-page .check { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 15px; }
 .episode-title small { font-weight: 400; color: var(--muted); }
 .day-line__unit2 { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 4px; }
 .day-line { display: flex; flex-direction: column; gap: 4px; width: 100%; text-align: left; border: 0; border-bottom: 1px solid var(--line); background: none; padding: 10px 4px; }
