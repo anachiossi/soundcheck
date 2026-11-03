@@ -17,7 +17,14 @@ The film-specific diary (decisions, dates, what Ana said) is private:
   No email robot yet: inbox.json waits for the production's email subject. Crew page (read_crew) not adapted.
   Its PDL layout has its own reader too, `pipeline/read_pdl_il_colpo.py` (`"pdl_reader": "il-colpo"`, 3 Nov),
   which reads the **2nd unit** ("UNITA' DE FEUDIS" lines). Ana is a day player: she works the main unit on
-  the days a 2nd unit shoots. No sides, scaletta or full script yet.
+  the days a 2nd unit shoots. No scaletta or full script; sides (STRALCI) per day.
+  **Email robot ON** (3 Nov): files come by WhatsApp, Ana forwards them to the soundcheck mailbox;
+  inbox.json catches attachments named IC… / …COLPO…. One email may carry many documents: it is split
+  into one packet each (`pipeline/mail_packets.py`). Settings: `"main_unit": "ALFIERI"` (the ODG prints
+  "UNIT ALFIERI …" / "UNIT DE FEUDIS …": the other one is the 2nd unit) and `"sides_by": "date"`
+  (`pipeline/sides_by_date.py`: the day numbers printed on Il colpo's sides are wrong, the dates are right).
+  Crew calls (read_crew) still not adapted: calls.json stays empty. The production's weekly overtime sheet
+  is in the data repo at docs/templates/hours-sheet.pdf: the model for a future hours sheet.
 - Rule (Ana): reader/parser configuration lives in the film's data; never change another film's results.
   Before touching a reader, save LBE's readings and compare after (script + every sides PDF).
 
