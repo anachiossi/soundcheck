@@ -321,8 +321,9 @@ function calendarDays(film) {
       const end = wrap === null ? call + 10 * 60 : wrap <= call ? wrap + 24 * 60 : wrap; // 17:00–01:00 ends the next day
       return {
         film, day: d.day, date: d.main.date, key: `${film}-day-${d.day}`,
-        title: `${about.name || film} · D${d.day}${call === null ? '' : ` · call ${d.main.call}`}`,
-        notes: `Main unit ${d.main.call || '?'}–${d.main.wrap || '?'}${second ? `. ${second.trim()}` : ''}.\nFrom soundcheck: follows the PDL and ODGs (made by the robot, it moves by itself).`,
+        // "Il colpo · D56 · 1st unit call 14:00 wrap 22:00" (Ana, 3 Nov: the wrap in the title too)
+        title: `${about.name || film} · D${d.day}${call === null ? '' : ` · 1st unit call ${d.main.call}${d.main.wrap ? ` wrap ${d.main.wrap}` : ''}`}`,
+        notes: `1st unit ${d.main.call || '?'}–${d.main.wrap || '?'}${second ? `. ${second.trim()}` : ''}.\nFrom soundcheck: follows the PDL and ODGs (made by the robot, it moves by itself).`,
         start: call === null ? null : moment(d.main.date, call), end: call === null ? null : moment(d.main.date, end),
       };
     });
