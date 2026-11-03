@@ -1,12 +1,14 @@
 // film-rules.js — the Film rules page (Projects → 📋 Film rules): every rule this film's robots and preset
 // generator follow, in plain words, so Ana can recall them (3 Nov, Il colpo: "make a settings page for these
-// rules so I can recall eventually"). The rules live in the film's settings.json (each film its own); at the
+// rules so I can recall eventually"). At the top, what kind of project (film / TV series, 1 or 2 units), to change
+// here. The rules live in the film's settings.json (each film its own); at the
 // bottom, "Copy rules from another film" (film-rules-copy.js) brings another film's rules in.
 // Used by: main.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
 import { setState } from '../state.js';
 import { RULE_GROUPS, otherFilms, copyRules } from '../film-rules-copy.js';
+import { saveSettings } from '../kit-editing.js';
 
 const LAV_NAMES = { cos11: 'Sanken COS-11', 6060: 'DPA 6060', 6061: 'DPA 6061', 4060: 'DPA 4060', 4061: 'DPA 4061' };
 const lavName = model => LAV_NAMES[model] || model;
@@ -40,6 +42,7 @@ function filmRules(settings) {
   const items = [];
   if (settings.main_unit) items.push(`Main unit: "${settings.main_unit}" on the ODG; any other unit is the 2nd unit (shown apart, never on this kit's TX).`);
   if (settings.episodes === 'from_number') items.push('A series: the episode is the number in front of the scene (102 = episode 1).');
+  if (settings.scripts?.match) items.push(`Scripts: files named "${settings.scripts.match}…" are read by the robot${settings.kind === 'series' ? '; a new episode script (…EP1…) replaces only that episode' : ''}.`);
   if (settings.sides_by === 'date') items.push("Sides (stralci) are matched to their day by date and scenes, never by the number in their name.");
   if (settings.calendar) items.push(`Phone calendar: ${settings.calendar === 'days_with_2nd_unit' ? 'only the days with a 2nd unit' : 'every shooting day'}.`);
   if (settings.kit) items.push(`Gear: the "${settings.kit}" kit.`);
@@ -74,11 +77,38 @@ export function FilmRulesScreen({ state }) {
     <div class="help-page">
       <button class="btn" onClick=${() => setState({ screen: 'projects' })}>‹ Projects</button>
       <p class="muted">${project.name}'s own rules. Another film keeps its own.</p>
+      ${project.aliases?.length > 0 && html`<p>Also called: <b>${project.aliases.join(', ')}</b></p>`}
+      <${ProjectKind} settings=${settings} />
       ${section('Mics', micRules(project))}
       ${section('This film', filmRules(settings))}
       ${section('Alarms', alarmRules(settings.commute))}
       <${CopyRules} project=${project} />
     </div>`;
+}
+
+// What kind of project (Ana, 3 Nov): a film or a TV series (scenes by episode, one script per episode: a new
+// Ep 1 script replaces only Ep 1), and 1 or 2 units (with 2: the main unit's name as the ODG prints it).
+function ProjectKind({ settings }) {
+  const series = settings.kind === 'series' || settings.episodes === 'from_number';
+  const units = settings.units === 2 || settings.main_unit ? 2 : 1;
+  const [unitName, setUnitName] = useState(settings.main_unit || '');
+  const choose = (label, on, onClick) => html`<button class=${on ? 'on' : ''} onClick=${onClick}>${label}</button>`;
+  return html`
+    <h2 class="section-title">What kind of project</h2>
+    <div class="segmented">
+      ${choose('Film', !series, () => saveSettings({ kind: 'film', episodes: null }, 'A film: one script, scenes in one list.'))}
+      ${choose('TV series', series, () => saveSettings({ kind: 'series', episodes: 'from_number' }, 'A TV series: scenes by episode (102 = episode 1), one script per episode.'))}
+    </div>
+    <div class="segmented">
+      ${choose('1 unit', units === 1, () => saveSettings({ units: 1, main_unit: null }, 'One unit.'))}
+      ${choose('2 units', units === 2, () => saveSettings({ units: 2 }, 'Two units: the 2nd unit is shown apart and never takes this kit.'))}
+    </div>
+    ${units === 2 && html`
+      <form class="field" onSubmit=${e => { e.preventDefault(); saveSettings({ main_unit: unitName.trim().toUpperCase() }, `Main unit: "${unitName.trim().toUpperCase()}".`); }}>
+        Main unit's name on the ODG ("UNIT ALFIERI" → ALFIERI)
+        <span class="toolbar"><input value=${unitName} onInput=${e => setUnitName(e.target.value)} placeholder="e.g. ALFIERI" />
+          <button class="btn btn--small">Save</button></span>
+      </form>`}`;
 }
 
 // "Copy rules from another film": pick the film and the groups, then a second tap confirms (film-rules-copy.js)

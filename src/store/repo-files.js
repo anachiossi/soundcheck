@@ -58,7 +58,9 @@ export const IFB_FILES = { 'ifb/crew.json': 'crew', 'ifb/receivers.json': 'ifbRe
 // files kept under a name in the device's copy of the film (IFB and Gear lists, crew calls)
 const NAMED_FILES = { ...IFB_FILES, ...GEAR_FILES, 'calls.json': 'crewCalls', 'costumes.json': 'costumes' };
 
-const filmFile = project => ({ format: FILM_FORMAT, version: 1, id: project.id, name: project.name, ...(project.tag ? { tag: project.tag } : {}) });
+// aliases: the film's other titles (Il colpo = "LA LISTA", its scripts' working title, Ana 3 Nov)
+const filmFile = project => ({ format: FILM_FORMAT, version: 1, id: project.id, name: project.name, ...(project.tag ? { tag: project.tag } : {}),
+  ...(project.aliases?.length ? { aliases: project.aliases } : {}) });
 
 export const presetFile = sceneId => `presets/${sceneId}.json`;
 
@@ -157,7 +159,7 @@ export function setFileContent(project, path, content) {
   else if (hoursFromPath(path)) project.hours = { ...project.hours, [hoursFromPath(path)]: content };
   else if (pushFromPath(path)) project.push = { ...project.push, [pushFromPath(path)]: content };
   else if (NAMED_FILES[path]) project[NAMED_FILES[path]] = content;
-  else if (key === 'film') Object.assign(project, { name: content.name, tag: content.tag || '' });
+  else if (key === 'film') Object.assign(project, { name: content.name, tag: content.tag || '', aliases: content.aliases || [] });
   else if (LISTS.includes(key) || key === 'scenes' || key === 'settings') project[key] = content;
 }
 

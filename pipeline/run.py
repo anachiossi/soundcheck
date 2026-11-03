@@ -23,6 +23,7 @@ Only proposals are written. The film's data changes only when Ana accepts them i
 import datetime
 import json
 import os
+import re
 import signal
 import subprocess
 import sys
@@ -232,6 +233,40 @@ def file_documents(film, other_sides):
     changed += file_archive(film)
     changed += file_crew_calls(film)
     changed += file_locations(film)
+    changed += file_scripts(film)
+    return changed
+
+
+def file_scripts(film):
+    """New scripts from the production emails → the lines for 🎙 Cues and the PDF (cue_lines.py), by themselves
+    (Ana, 3 Nov: "if a new script arrives for ep01 then only that should be replaced"). The film's settings say
+    which files are scripts: "scripts": {"match": "LA LISTA"} (a word in the file name). A series ("kind":
+    "series") reads the episode from the name ("…_EP1_…") and replaces only that episode; a film replaces its one
+    script. The version is the name's "REV.5" + date. The emails go oldest first, so the newest version wins."""
+    from cue_lines import write_script_lines
+    settings = json.loads((film / "settings.json").read_text(encoding="utf-8")) if (film / "settings.json").exists() else {}
+    match = (settings.get("scripts") or {}).get("match", "").upper()
+    if not match:
+        return []
+    series = settings.get("kind") == "series"
+    changed = []
+    for email_folder in emails_oldest_first(film / "_inbox"):
+        for pdf in sorted(email_folder.glob("*.pdf")):
+            name = pdf.name.upper()
+            if match not in name:
+                continue
+            episode = re.search(r"EP\.?\s*_?(\d+)", name)
+            if series and not episode:
+                print(f"script {pdf.name}: no episode in the name, not filed")
+                continue
+            rev = re.search(r"REV\.?\s*(\d+)", name)
+            # "…_REV.5_17_08_2026.pdf": the date with a 4-digit year first (else "5_17_08" would look like a date)
+            date = re.search(r"(?<!\d)(\d{1,2})[_.](\d{1,2})[_.](\d{4})(?!\d)", name) \
+                or re.search(r"(?<![\d.])(\d{1,2})[_.](\d{1,2})[_.](\d{2})(?!\d)", name)
+            version = " ".join(filter(None, [f"REV.{rev.group(1)}" if rev else "", ".".join(date.groups()) if date else ""])) or email_folder.name[:10]
+            scenes, files = write_script_lines(film, pdf, version, int(episode.group(1)) if series else None)
+            if files:
+                changed.append(f"script {'Ep ' + episode.group(1) if series else ''} {version}: {len(files)} scenes".strip())
     return changed
 
 
