@@ -13,7 +13,8 @@ For every shooting day (a character keeps the SAME TX and lav all day):
      Otherwise ("big day"): each character's preferred TX if free, else the next free in tx_order.
      After tx_order, any other TX of the kit that isn't in `not_for_actors` (the booms).
   3. lav — the lav the character already has that day stays if it fits; a screamer (warning "loud") gets the model in `lav_rules.loud` (6061); others their
-     preferred model + colour if free; else a free lav of the same model; else any free lav.
+     preferred model + colour if free (no preference: `lav_rules.by_gender` by the character's "gender" F/M,
+     Il colpo: F cos11, M 6060); else a free lav of the same model; else any free lav.
      Who doesn't get a mic in any scene that day gets no TX and no lav at all.
 Used by: propose_presets.py
 """
@@ -114,7 +115,10 @@ def day_plan(film, settings, scene_ids):
             continue
         loud = loud_model and any(str(w["char_id"]) == cid and w["kind"] == "loud"
                                   for sid in presets for w in film["sound"].get(sid, {}).get("warnings", []))
-        model = loud_model if loud else character.get("pref_lav_model")
+        # the character's own lav, else the film's lav by gender (Il colpo, Adriano's rule, 3 Nov:
+        # "girls get Sanken, boys get DPA 6060, screamers get 6061" → lav_rules.by_gender {F: cos11, M: 6060})
+        by_gender = rules.get("lav_rules", {}).get("by_gender", {}).get(character.get("gender", ""))
+        model = loud_model if loud else (character.get("pref_lav_model") or by_gender)
         colour = (character.get("pref_lav_color") or "").lower()
         free = [l for l in lavs if l["id"] not in taken]
         # the lav this character already has today stays, if it still fits (fewer changes on set)

@@ -22,7 +22,12 @@ GENERATED_BY = ("import from Sheets", "Claude")  # presets not edited by Ana (ye
 def load_film(folder):
     folder = Path(folder)
     read = lambda path: json.loads(path.read_text(encoding="utf-8"))
-    film = {key: read(folder / f"{key}.json") for key in ("characters", "transmitters", "lavaliers", "schedule")}
+    settings = read(folder / "settings.json")
+    # a film with a kit (settings "kit": "adriano", src/store/kit-files.js) keeps its TX and lavs in kits/<kit>/
+    kit = folder.parent.parent / "kits" / settings["kit"] if settings.get("kit") else None
+    gear = lambda name: read(folder / name) if (folder / name).exists() or not kit else read(kit / name)
+    film = {"characters": read(folder / "characters.json"), "schedule": read(folder / "schedule.json"),
+            "transmitters": gear("transmitters.json"), "lavaliers": gear("lavaliers.json")}
     film["presets"] = {p.stem: read(p) for p in (folder / "presets").glob("*.json")}
     film["sound"] = {p.stem: read(p) for p in (folder / "sound").glob("*.json")} if (folder / "sound").exists() else {}
     film["lines"] = {f"{p.parent.name}/{p.stem}": read(p) for p in (folder / "lines").glob("*/*.json")}
@@ -47,8 +52,12 @@ def hand_edited(film, scene_id):
 
 
 def days_of(film):
+    """The MAIN unit's scenes of each day: a 2nd unit (rows with unit '2nd') has its own sound team and kit,
+    so its scenes never take this kit's TX (Il colpo D56, 3 Nov). Kits per unit: later."""
     days = {}
     for item in sorted(film["schedule"], key=lambda s: (s["day"], s.get("order", 0))):
+        if item.get("unit"):
+            continue
         days.setdefault(item["day"], {"date": item["date"], "scenes": []})["scenes"].append(str(item["scene_id"]))
     return days
 
