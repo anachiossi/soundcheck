@@ -24,7 +24,7 @@ export const SHORTCUT = 'soundcheck alarms';
 // shortcuts://run-shortcut?name=soundcheck%20alarms&input=text&text=06:00;06:45 — just the two times, so
 // the shortcut takes the First Item (wake) and the Last Item (leave): no index to type (Ana, iOS 27)
 export const alarmsLink = (project, plan) => `shortcuts://run-shortcut?name=${encodeURIComponent(SHORTCUT)}&input=text&text=${
-  encodeURIComponent(`${plan.wake};${plan.leaveFrom}`)}`;
+  encodeURIComponent(`${plan.wake};${plan.leaveAlarm}`)}`; // leaveAlarm: the heads-up before walking out
 
 export function Tomorrow({ project, myCall }) {
   const day = nextShootingDay(project);
@@ -41,14 +41,14 @@ export function Tomorrow({ project, myCall }) {
         <div class="tomorrow__times">
           <span><small>💤 sleep</small><b>${plan.sleep}</b></span>
           <span><small>⏰ wake</small><b>${plan.wake}</b></span>
-          <span><small>🚪 leave</small><b>${plan.leaveFrom}</b><small>to ${plan.leaveTo}</small></span>
+          <span><small>🚪 leave</small><b>${plan.leaveFrom}</b><small>${plan.leaveAlarm !== plan.leaveFrom ? `⏰ ${plan.leaveAlarm}` : `to ${plan.leaveTo}`}</small></span>
           <span><small>📍 ${plan.rideWith ? 'ride leaves' : 'meet'}</small><b>${plan.meet}</b></span>
         </div>
         ${waiting.map(p => html`<button key=${p.id} class="btn tomorrow__odg" onClick=${() => setState({ screen: 'proposal', proposalId: p.id })}>
           📬 ${p.title} waits for your review — the alarms already use its call</button>`)}
         ${getState().sync?.running
           ? html`<span class="btn" aria-disabled="true">⏳ Checking for a new ODG…</span>`
-          : html`<a class="btn btn--primary" href=${alarmsLink(project, plan)}>⏰ Set alarms ${plan.wake} · ${plan.leaveFrom}</a>`}`
+          : html`<a class="btn btn--primary" href=${alarmsLink(project, plan)}>⏰ Set alarms ${plan.wake} · ${plan.leaveAlarm}</a>`}`
       : html`<p class="muted">No next shooting day with a call time yet.</p>`}
       <${CommuteSettings} project=${project} />
     </section>`;

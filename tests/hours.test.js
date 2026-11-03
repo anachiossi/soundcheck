@@ -73,11 +73,20 @@ test('walking to the ride\'s house first moves the leave and the wake earlier', 
   assert.equal(plan.wake, '05:40');
 });
 
+test('the leave alarm rings its heads-up minutes before walking out', async () => {
+  const { wakePlan } = await import('../src/hours-rules.js');
+  const project = { ...film(), settings: { commute: { walk_to_ride: 20, leave_alarm_before: 15 } } };
+  const plan = wakePlan(project, { day: 10, date: '2026-10-02', call: '09:00' });
+  assert.equal(plan.leaveFrom, '06:25', 'walking out does not move');
+  assert.equal(plan.leaveAlarm, '06:10');
+  assert.equal(plan.wake, '05:40', 'waking does not move');
+});
+
 test('the night before: meeting, leave window, wake, sleep (Ana\'s calculator)', async () => {
   const { wakePlan, nextShootingDay } = await import('../src/hours-rules.js');
   const project = { ...film(), settings: { commute: {} } };
   assert.deepEqual(wakePlan(project, { day: 10, date: '2026-10-02', call: '09:00' }),
-    { day: 10, date: '2026-10-02', call: '09:00', rideWith: '', rideCall: '', meet: '08:15', leaveFrom: '06:45', leaveTo: '07:00', wake: '06:00', sleep: '22:00' });
+    { day: 10, date: '2026-10-02', call: '09:00', rideWith: '', rideCall: '', meet: '08:15', leaveFrom: '06:45', leaveAlarm: '06:45', leaveTo: '07:00', wake: '06:00', sleep: '22:00' });
   assert.equal(wakePlan(project, { day: 1, call: '06:00' }).sleep, '19:00');
   assert.equal(wakePlan(project, { day: 1, call: '03:00' }).wake, '00:00');
   assert.equal(wakePlan({ settings: {} }, { call: '09:00' }), null, 'no commute settings: no plan');

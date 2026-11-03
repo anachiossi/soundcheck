@@ -106,7 +106,9 @@ function checkWrapAlerts() {
 // "commute": call − meeting − travel − getting ready − sleep hours; same as the app): "💤 Time to sleep".
 // walk_to_ride: minutes on foot to the ride's house first (Il colpo 20, Ana 3 Nov).
 // travel: "maps" → the drive is asked to Google Maps (travelMinutes below), else travel_max.
-const COMMUTE = { meet_before_call: 45, travel_min: 75, travel_max: 90, get_ready: 45, sleep_hours: 8, walk_to_ride: 0 };
+// leave_alarm_before: the "leave" alarm rings this many minutes before walking out (0; Il colpo 15).
+const COMMUTE = { meet_before_call: 45, travel_min: 75, travel_max: 90, get_ready: 45, sleep_hours: 8, walk_to_ride: 0,
+  leave_alarm_before: 0 };
 
 // Not when still working: a night shoot (17:00–01:00) ends after the time to sleep for the next call.
 function checkBedtime() {
@@ -153,10 +155,11 @@ function upcomingPlans(now) {
       if (start === null || start === undefined) continue;
       const meet = start - c.meet_before_call;
       const drive = travelMinutes(c, places[date], date, meet);
-      const leave = meet - drive.minutes - c.walk_to_ride;
+      const leave = meet - drive.minutes - c.walk_to_ride;  // walking out of the house
       const before = main.filter(r => r.date < date && r.wrap).sort((a, b) => (a.date < b.date ? 1 : -1))[0];
       plans.push({ film, date, day: row.day, call: own, sleepHours: c.sleep_hours, drive,
-        leave: moment(date, leave), wake: moment(date, leave - c.get_ready),
+        // the "leave" alarm rings leave_alarm_before minutes before walking out (Ana, 3 Nov: a 15-minute heads-up)
+        leave: moment(date, leave - c.leave_alarm_before), wake: moment(date, leave - c.get_ready),
         previousWrap: before ? wrapMoment(before) : null });
     }
   }
@@ -171,17 +174,17 @@ function wrapMoment(row) {
 }
 
 // The drive from the ride's house to that day's place (locations.json, from the ODG: crew parking, else the
-// set), asked to Google Maps for the time you leave, + travel_margin (15). The ride's address is ONLY the script
-// property RIDE_FROM (never in the data). No address, no place, or Maps fails → travel_max, as before.
+// set), asked to Google Maps for the time you leave — Google's time only (Ana, 3 Nov: the margin is the leave
+// alarm's heads-up, not the drive). The ride's address is ONLY the script property RIDE_FROM (never in the data).
+// No address, no place, or Maps fails → travel_max, as before.
 function travelMinutes(c, place, date, meet) {
   const from = PropertiesService.getScriptProperties().getProperty('RIDE_FROM');
   if (c.travel !== 'maps' || !from || !place) return { minutes: c.travel_max, maps: false };
   const to = placeOf(place);
-  const margin = c.travel_margin == null ? 15 : c.travel_margin;
   const cache = CacheService.getScriptCache();
   const key = `drive|${date}|${meet}|${to}`.slice(0, 240);
   const kept = cache.get(key);
-  if (kept) return { minutes: Number(kept) + margin, maps: true };
+  if (kept) return { minutes: Number(kept), maps: true };
   try {
     let minutes = c.travel_max;
     for (let pass = 0; pass < 2; pass++) {  // leaving earlier changes the traffic: ask again with the new time
@@ -190,10 +193,13 @@ function travelMinutes(c, place, date, meet) {
       if (depart.getTime() > Date.now()) finder.setDepart(depart);
       const leg = (((finder.getDirections().routes || [])[0] || {}).legs || [])[0];
       if (!leg) throw new Error(`no route to ${to}`);
+      // duration = Google's usual time for that road; duration_in_traffic (when Google gives it for a time of
+      // leaving) = its best guess with the traffic of that weekday and hour. The longer of the two is used.
       minutes = Math.ceil(Math.max(leg.duration.value, (leg.duration_in_traffic || leg.duration).value) / 60);
+      console.log(`Drive on ${date}: ${minutes} min (${leg.duration_in_traffic ? 'with traffic' : 'usual time, no traffic figure'})`);
     }
     cache.put(key, String(minutes), 6 * 3600);
-    return { minutes: minutes + margin, maps: true };
+    return { minutes, maps: true };
   } catch (error) {
     console.warn(`Travel time: ${error.message}`);
     return { minutes: c.travel_max, maps: false };
