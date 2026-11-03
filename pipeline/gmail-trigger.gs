@@ -58,6 +58,7 @@ function checkForProductionEmails() {
   try { checkWrapAlerts(); } catch (error) { console.warn(`Wrap alerts: ${error.message}`); } // never stops the emails
   try { checkBedtime(); } catch (error) { console.warn(`Bedtime: ${error.message}`); }
   try { checkAlarmChange(); } catch (error) { console.warn(`Alarm email: ${error.message}`); }
+  try { syncGoogleCalendar(); } catch (error) { console.warn(`Calendar: ${error.message}`); }
 }
 
 // ---- Wrap alerts ------------------------------------------------------------------------------
@@ -299,9 +300,12 @@ function alarmAnswer(now) {
 //   "days_with_2nd_unit" → only the days with a 2nd unit (Ana's working days on Il colpo); "all" → every day.
 // One event per day, from the MAIN unit's call to its wrap (Ana works the main unit); the 2nd unit's hours
 // are in the notes. Only the day, the times and the unit's name: no scenes, no people.
-function calendarOf(film, now) {
+// The days the film's settings "calendar" asks for, each with its title, notes and times (the feed below and
+// the Google Calendar sync use the same list, so they never disagree).
+function calendarDays(film) {
   const settings = readRepo(`projects/${film}/settings.json`, true) || {};
-  const tag = ((readRepo(`projects/${film}/film.json`, true) || {}).tag || film).toUpperCase();
+  if (!settings.calendar) return [];
+  const about = readRepo(`projects/${film}/film.json`, true) || {};
   const schedule = withWaitingOdgTimes(readRepo(`projects/${film}/schedule.json`, true) || [], openOdgs(film));
   const days = {};
   for (const row of schedule) {
@@ -309,29 +313,107 @@ function calendarOf(film, now) {
     if (row.unit) day.second = day.second || row;
     else if (!day.main || row.order < day.main.order) day.main = row;
   }
-  const wanted = Object.values(days).filter(d => d.main && d.main.date && (settings.calendar !== 'days_with_2nd_unit' || d.second));
+  return Object.values(days).filter(d => d.main && d.main.date && (settings.calendar !== 'days_with_2nd_unit' || d.second))
+    .map(d => {
+      const call = minutesOf(d.main.call);
+      const wrap = minutesOf(d.main.wrap);
+      const second = d.second ? `2nd unit ${d.second.unit_name || ''} ${d.second.call && d.second.wrap ? `${d.second.call}–${d.second.wrap}` : '(hours not given)'}` : '';
+      const end = wrap === null ? call + 10 * 60 : wrap <= call ? wrap + 24 * 60 : wrap; // 17:00–01:00 ends the next day
+      return {
+        film, day: d.day, date: d.main.date, key: `${film}-day-${d.day}`,
+        title: `${about.name || film} · D${d.day}${call === null ? '' : ` · call ${d.main.call}`}`,
+        notes: `Main unit ${d.main.call || '?'}–${d.main.wrap || '?'}${second ? `. ${second.trim()}` : ''}.\nFrom soundcheck: follows the PDL and ODGs (made by the robot, it moves by itself).`,
+        start: call === null ? null : moment(d.main.date, call), end: call === null ? null : moment(d.main.date, end),
+      };
+    });
+}
+
+function calendarOf(film, now) {
+  const tag = ((readRepo(`projects/${film}/film.json`, true) || {}).tag || film).toUpperCase();
   const stamp = when => Utilities.formatDate(when, 'UTC', "yyyyMMdd'T'HHmmss'Z'");
-  const text = value => String(value).replace(/[\\;,]/g, m => `\\${m}`);
+  const text = value => String(value).replace(/[\\;,]/g, m => `\\${m}`).replace(/\n/g, '\\n');
   const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//soundcheck//calendar//EN', 'CALSCALE:GREGORIAN',
     `X-WR-CALNAME:soundcheck · ${tag}`, 'REFRESH-INTERVAL;VALUE=DURATION:PT1H', 'X-PUBLISHED-TTL:PT1H'];
-  for (const d of wanted) {
-    const call = minutesOf(d.main.call);
-    const wrap = minutesOf(d.main.wrap);
-    const second = d.second ? `2nd unit ${d.second.unit_name || ''} ${d.second.call && d.second.wrap ? `${d.second.call}–${d.second.wrap}` : '(hours not given)'}` : '';
-    lines.push('BEGIN:VEVENT', `UID:${film}-day-${d.day}@soundcheck`, `DTSTAMP:${stamp(now)}`,
-      `SUMMARY:${text(`${tag} D${d.day}${call === null ? '' : ` · call ${d.main.call}`}${d.second ? ' · 2nd unit day' : ''}`)}`,
-      `DESCRIPTION:${text(`Main unit ${d.main.call || '?'}–${d.main.wrap || '?'}${second ? `. ${second.trim()}` : ''}. From soundcheck: follows the PDL and ODGs.`)}`);
-    if (call === null) {  // no time yet: an all-day event
-      const next = Utilities.formatDate(moment(d.main.date, 24 * 60 + 60), TIME_ZONE, 'yyyyMMdd');
-      lines.push(`DTSTART;VALUE=DATE:${d.main.date.replace(/-/g, '')}`, `DTEND;VALUE=DATE:${next}`);
+  for (const d of calendarDays(film)) {
+    lines.push('BEGIN:VEVENT', `UID:${d.key}@soundcheck`, `DTSTAMP:${stamp(now)}`, `SUMMARY:${text(d.title)}`,
+      `DESCRIPTION:${text(d.notes)}`);
+    if (!d.start) {  // no time yet: an all-day event
+      const next = Utilities.formatDate(moment(d.date, 24 * 60 + 60), TIME_ZONE, 'yyyyMMdd');
+      lines.push(`DTSTART;VALUE=DATE:${d.date.replace(/-/g, '')}`, `DTEND;VALUE=DATE:${next}`);
     } else {
-      const end = wrap === null ? call + 10 * 60 : wrap <= call ? wrap + 24 * 60 : wrap; // 17:00–01:00 ends the next day
-      lines.push(`DTSTART:${stamp(moment(d.main.date, call))}`, `DTEND:${stamp(moment(d.main.date, end))}`);
+      lines.push(`DTSTART:${stamp(d.start)}`, `DTEND:${stamp(d.end)}`);
     }
     lines.push('END:VEVENT');
   }
   lines.push('END:VCALENDAR');
   return lines.join('\r\n') + '\r\n';
+}
+
+// ---- Google Calendar (the soundchiossi account's own calendar, which the iPhone already shows) -----------
+// Every 10 minutes (when something changed): each film's days (calendarDays) are written as events
+// "Il colpo · D56 · call 14:00", moved when the PDL/ODG moves them, removed when a day disappears.
+// The robot ONLY touches events it made itself (tag "soundcheck" = the day's key): Ana's own events are never
+// changed. Past events stay as they are (the record of the days worked).
+function syncGoogleCalendar() {
+  const properties = PropertiesService.getScriptProperties();
+  const films = (readRepo('projects') || []).filter(item => item.type === 'dir').map(item => item.name);
+  const wanted = [].concat(...films.map(film => calendarDays(film)));
+  const fingerprint = JSON.stringify(wanted.map(d => [d.key, d.title, d.notes, d.date, d.start && d.start.getTime(), d.end && d.end.getTime()]));
+  if (fingerprint === properties.getProperty('CALENDAR_SYNCED')) return; // nothing changed since the last sync
+  const calendar = CalendarApp.getDefaultCalendar();
+  const today = moment(Utilities.formatDate(new Date(), TIME_ZONE, 'yyyy-MM-dd'), 0);
+  const mine = {};
+  for (const event of calendar.getEvents(today, new Date(today.getTime() + 400 * 86400000))) {
+    const key = event.getTag('soundcheck');
+    if (key) mine[key] = event;
+  }
+  for (const d of wanted.filter(day => !day.end || day.end >= today)) {
+    let event = mine[d.key];
+    delete mine[d.key];
+    if (!event) {
+      event = d.start ? calendar.createEvent(d.title, d.start, d.end) : calendar.createAllDayEvent(d.title, moment(d.date, 12 * 60));
+      event.setTag('soundcheck', d.key);
+      console.log(`Calendar: added ${d.title} (${d.date})`);
+    } else if (d.start && (event.getStartTime().getTime() !== d.start.getTime() || event.getEndTime().getTime() !== d.end.getTime())) {
+      event.setTime(d.start, d.end);
+      console.log(`Calendar: moved ${d.title} (${d.date})`);
+    }
+    if (event.getTitle() !== d.title) event.setTitle(d.title);
+    if (event.getDescription() !== d.notes) event.setDescription(d.notes);
+  }
+  for (const key of Object.keys(mine)) {  // the robot's own future events for days that are no longer there
+    console.log(`Calendar: removed ${mine[key].getTitle()} (no longer in the schedule)`);
+    mine[key].deleteEvent();
+  }
+  properties.setProperty('CALENDAR_SYNCED', fingerprint);
+}
+
+// Ana's old "Lavoro (bozza)" drafts (3 Nov: the PDL changed, they are no longer true). Two steps, by hand in the
+// editor: 1. listDrafts → the log shows every one with its date; 2. deleteFutureDrafts (from today on: the
+// past ones are the record of the days worked) or deleteAllDrafts. Only events titled "Lavoro (bozza)".
+const DRAFT = /^\s*lavoro\s*\(bozza\)\s*$/i;
+function draftsFrom(start) {
+  const calendar = CalendarApp.getDefaultCalendar();
+  return calendar.getEvents(start, new Date(start.getTime() + 500 * 86400000)).filter(event => DRAFT.test(event.getTitle()));
+}
+function listDrafts() {
+  const drafts = draftsFrom(new Date('2026-01-01T00:00:00Z'));
+  const today = Utilities.formatDate(new Date(), TIME_ZONE, 'yyyy-MM-dd');
+  drafts.forEach(event => {
+    const day = Utilities.formatDate(event.getStartTime(), TIME_ZONE, 'EEE yyyy-MM-dd HH:mm');
+    console.log(`${day.slice(4, 14) < today ? 'past  ' : 'FUTURE'} ${day} · ${event.getTitle()}`);
+  });
+  console.log(`${drafts.length} "Lavoro (bozza)" events. Nothing deleted.`);
+}
+function deleteFutureDrafts() {
+  const drafts = draftsFrom(moment(Utilities.formatDate(new Date(), TIME_ZONE, 'yyyy-MM-dd'), 0));
+  drafts.forEach(event => { console.log(`deleted ${Utilities.formatDate(event.getStartTime(), TIME_ZONE, 'EEE yyyy-MM-dd')}`); event.deleteEvent(); });
+  console.log(`${drafts.length} future drafts deleted; the past ones stay.`);
+}
+function deleteAllDrafts() {
+  const drafts = draftsFrom(new Date('2026-01-01T00:00:00Z'));
+  drafts.forEach(event => { console.log(`deleted ${Utilities.formatDate(event.getStartTime(), TIME_ZONE, 'EEE yyyy-MM-dd')}`); event.deleteEvent(); });
+  console.log(`${drafts.length} drafts deleted.`);
 }
 
 
