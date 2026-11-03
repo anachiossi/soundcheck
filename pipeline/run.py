@@ -238,11 +238,11 @@ def file_documents(film, other_sides):
 def file_locations(film):
     """Where to drive to on each ODG's date → locations.json { "2026-11-03": { label, text, link } }
     (read_location.py). The Apps Script asks Google Maps for the drive there from the ride's address
-    (a private script property, never in the data). Only films with a "commute" in their settings."""
+    (a private script property, never in the data). Only films whose commute says "travel": "maps"."""
     from odg_reader import odg_reader_for
     from read_location import where_from_pdf
     settings = json.loads((film / "settings.json").read_text(encoding="utf-8")) if (film / "settings.json").exists() else {}
-    if "commute" not in settings:
+    if (settings.get("commute") or {}).get("travel") != "maps":  # only the films that ask Google Maps (not LBE)
         return []
     read_odg = odg_reader_for(film)
     target = film / "locations.json"
