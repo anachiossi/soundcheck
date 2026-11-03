@@ -176,9 +176,13 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   it is 2nd unit"). No unit = main unit, so old films are unchanged. `shootingDays` takes a day's date/call/wrap
   from the MAIN unit and adds `day.second = { unit, name, call, wrap, scenes }`; set_day / set_day_scenes
   change only rows of their own unit; ODG alarm times ignore 2nd unit changes. A PDL proposal lists
-  `shared_ids` (a scene shot over several days stays on all of them). Next: step 2 the Schedule screen shows
-  the 2nd unit as its own band (until then its scenes are not shown); step 3 "I work on: every day / only
-  days with a 2nd unit".
+  `shared_ids` (a scene shot over several days stays on all of them).
+- v204 (3 Nov): **2nd unit on screen** (step 2 of 3). Schedule Day/Week: after the main unit, a violet
+  "2nd unit · <name> · hours" banner (or "hours not given") with its chips, scenes and 📷 Export 2nd unit;
+  All film: a "2nd unit" line of pills; day pills show a small "2nd"; week/film images draw the 2nd unit too.
+  Il colpo filled from PDL 02.11 (days 55–68, checked: pages add up to every day header, two PDF libraries
+  agree on all 80 scene numbers, sets/synopses match word for word). No mic rows from that PDL (numbers,
+  no names). Next: step 3 "I work on: every day / only days with a 2nd unit".
 - v190 (23 Oct): exported mic-list images (Ana). **Sound assistants**: a SPEAKS column (YES/NO, as the mixer's) and
   each accessory as a small pill in its own colour (Ankle black, Plush sleeve beige…), stacked when a row has several.
   **Sound mixer**: the TX pill shows its model under the number (4 / TRXLA3.5) and is wider, the lav pill narrower.

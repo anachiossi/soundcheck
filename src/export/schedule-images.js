@@ -49,10 +49,13 @@ export async function scheduleImages(project, dayNumbers, title) {
   });
 }
 
-// One day: slate-grey banner, then every scene of the day.
+// One day: slate-grey banner, then every scene of the day; a 2nd unit (model.js → day.second) follows
+// under its own violet banner with its hours (Ana, 3 Nov).
 function dayStrip(project, day) {
   const sceneIds = day.scenes.map(s => String(s.scene_id));
-  const rough = 200 + sceneIds.length * 500 + sceneIds.reduce((n, id) => n + (project.presets[id]?.rows.length || 1) * 96, 0);
+  const secondIds = (day.second?.scenes || []).map(s => String(s.scene_id));
+  const all = [...sceneIds, ...secondIds];
+  const rough = 300 + all.length * 500 + all.reduce((n, id) => n + (project.presets[id]?.rows.length || 1) * 96, 0);
   const { canvas, ctx } = newCanvas(WIDTH, rough);
 
   box(ctx, PAD, 20, WIDTH - 2 * PAD, 76, 12, '#1e293b');
@@ -64,5 +67,16 @@ function dayStrip(project, day) {
 
   let y = 120;
   for (const id of sceneIds) y = drawScene(ctx, project, id, y);
+  if (day.second) {
+    const second = day.second;
+    box(ctx, PAD, y + 10, WIDTH - 2 * PAD, 64, 12, '#5b21b6');
+    font(ctx, 800, 30);
+    text(ctx, '2nd unit', PAD + 24, y + 42, 0, '#ffffff');
+    font(ctx, 400, 26);
+    const hours = second.call && second.wrap ? `${second.call}–${second.wrap}` : 'hours not given';
+    text(ctx, `${second.name ? `${second.name} · ` : ''}${hours}`, PAD + 180, y + 42, 700, '#ede9fe');
+    y += 94;
+    for (const id of secondIds) y = drawScene(ctx, project, id, y);
+  }
   return cropHeight(canvas, y + 20);
 }

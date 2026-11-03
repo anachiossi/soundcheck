@@ -37,6 +37,7 @@
   --amber-bg: #fef3c7; --amber-ink: #92400e;                       /* IFB OUT, proposal IFB */
   --frozen-bg: #dbeafe; --frozen: #1d4ed8;                         /* a TX asleep: its time is frozen (Ana, 22 Oct) */
   --done-bg: #dcfce7; --done-line: #86efac; --done-on: #166534;    /* finished days */
+  --unit2-bg: #ede9fe; --unit2-line: #c4b5fd; --unit2-ink: #5b21b6; /* the 2nd unit: its band and the "2nd" mark (3 Nov) */
   --cue-more: #6b5a2e;
   --tab-bg: rgba(255,255,255,.6);   /* tabs not selected */
   --stripe: #0f172a;                /* the slate's side stripe */
@@ -124,6 +125,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .banner b { font-size: 16px; }
 .banner--week { background: var(--accent-soft); }
 .banner--day { background: var(--day); }
+.banner--unit2 { background: var(--unit2-bg); color: var(--unit2-ink); border: 1px solid var(--unit2-line); }
+.unit2-mark { font-size: 10px; font-weight: 700; color: var(--unit2-ink); background: var(--unit2-bg); border-radius: 6px; padding: 0 5px; }
+.day-btn--on .unit2-mark { background: var(--unit2-line); color: var(--ink); }
+.day-line__unit2 { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 4px; }
 .day-line { display: flex; flex-direction: column; gap: 4px; width: 100%; text-align: left; border: 0; border-bottom: 1px solid var(--line); background: none; padding: 10px 4px; }
 .day-line__scenes { display: flex; flex-wrap: wrap; gap: 4px; }
 
@@ -679,6 +684,7 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
   --t-dusk: #3b1d0a; --t-dusk-ink: #fdba74; --t-morning: #0c2a3a; --t-morning-ink: #7dd3fc;
   --cue-paper: #1b1a17; --cue-ink: #ece6d6; --cue-more: #c9b78a;
   --tab-bg: #1d2127; --stripe: #4b5563;
+  --unit2-bg: #241b3d; --unit2-line: #4c3a8a; --unit2-ink: #c4b5fd;
 }
 /* Cues at night: a dark screen; the speaker's colour frames the text and colours the name */
 :root[data-theme="dark"] .cues:not(.cues--end) { background: var(--page) !important; color: var(--ink) !important; }

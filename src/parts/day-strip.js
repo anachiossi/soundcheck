@@ -1,6 +1,7 @@
 // day-strip.js — THE row of day pills (D1, D2…), the same in Schedule and Cues: finished days are green
 // (date past, or today after the ODG's wrap time), the chosen day is black and sits in the middle of the
 // row. Tapping a pill chooses that day (for both tabs: they share the chosen day).
+// A day with a 2nd unit has a small violet "2nd" under its date (Ana works those days, 3 Nov).
 // Used by: screens/schedule.js, screens/cues-picker.js
 
 import { html, useEffect, useRef } from '../../vendor/preact-htm.js';
@@ -21,6 +22,7 @@ export function DayStrip({ days, chosen }) {
         <button key=${d.day} class=${'day-btn' + (d.day === chosen ? ' day-btn--on' : '') + (dayIsDone(d) ? ' day-btn--done' : '')}
                 onClick=${() => pickDay(d.day)}>
           <b>D${d.day}</b><small>${formatDate(d.date, { weekday: true })}</small>
+          ${d.second && html`<span class="unit2-mark">2nd</span>`}
         </button>`)}
     </div>`;
 }

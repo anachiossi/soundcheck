@@ -3,6 +3,8 @@
 //       📄 ODG / 📄 Sides (when that day's PDFs are on the device), 📷 Export (the day's image).
 // Week: every day of the week, one after the other, + 📷 Week image.
 // All:  an overview of every week and day; tap a day to open it. + 📷 All film.
+// A day with a 2nd unit (model.js → day.second) shows it after the main unit, under a violet
+// "2nd unit" banner with its own hours, chips and 📷 Export 2nd unit (Ana, 3 Nov).
 // Every scene can be edited right here (✎ on its title bar).
 // Day pills (parts/day-strip.js, the same in Cues) turn green when the day is over;
 // tapping the Schedule tab opens the day we are in.
@@ -11,7 +13,7 @@
 import { html } from '../../vendor/preact-htm.js';
 import { shootingDays, weeks, unscheduledScenes, formatDate, exportName, dayTag, weekTag, shortDate, scheduleFor } from '../model.js';
 import { setScheduleMode, pickDay, pickWeek, setState } from '../state.js';
-import { WeekBanner, DayBanner, SceneChips } from '../parts/banners.js';
+import { WeekBanner, DayBanner, SecondUnitBanner, SceneChips } from '../parts/banners.js';
 import { SceneTable } from '../parts/scene-table.js';
 import { sceneSheet } from '../export/image.js';
 import { scheduleImages } from '../export/schedule-images.js';
@@ -79,6 +81,7 @@ function DayView({ project, edit, dayNumber }) {
   const day = days.find(d => d.day === dayNumber) || days[0];
   if (!day) return html`<p class="empty">No schedule in this project.</p>`;
   const sceneIds = day.scenes.map(s => String(s.scene_id));
+  const secondIds = (day.second?.scenes || []).map(s => String(s.scene_id));
 
   return html`
     <${DayStrip} days=${days} chosen=${day.day} />
@@ -88,7 +91,14 @@ function DayView({ project, edit, dayNumber }) {
       <${DocumentButtons} project=${project} day=${day.day} />
       <button class="btn" onClick=${() => shareMics(project, sceneIds, `Day ${day.day} · mic list`, `mics_${dayTag(day.day)}_${shortDate(day.date)}.png`)}><${Icon} name="image" /> Export</button>
     </div>
-    ${sceneIds.map(id => html`<${SceneTable} key=${id} project=${project} edit=${edit} sceneId=${id} onExport=${id => exportScene(project, id)} />`)}`;
+    ${sceneIds.map(id => html`<${SceneTable} key=${id} project=${project} edit=${edit} sceneId=${id} onExport=${id => exportScene(project, id)} />`)}
+    ${day.second && html`
+      <${SecondUnitBanner} second=${day.second} />
+      <${SceneChips} project=${project} sceneIds=${secondIds} onPick=${scrollToScene} />
+      <div class="toolbar">
+        <button class="btn" onClick=${() => shareMics(project, secondIds, `Day ${day.day} · 2nd unit · mic list`, `mics_${dayTag(day.day)}_2nd-unit_${shortDate(day.date)}.png`)}><${Icon} name="image" /> Export 2nd unit</button>
+      </div>
+      ${secondIds.map(id => html`<${SceneTable} key=${id} project=${project} edit=${edit} sceneId=${id} onExport=${id => exportScene(project, id)} />`)}`}`;
 }
 
 function WeekView({ project, edit, weekNumber }) {
@@ -108,6 +118,11 @@ function WeekView({ project, edit, weekNumber }) {
       <${DayBanner} key=${day.day} day=${day}>
         ${day.scenes.map(s => html`<${SceneTable} key=${s.scene_id} project=${project} edit=${edit} sceneId=${String(s.scene_id)}
                                                  onExport=${id => exportScene(project, id)} />`)}
+        ${day.second && html`
+          <${SecondUnitBanner} second=${day.second}>
+            ${day.second.scenes.map(s => html`<${SceneTable} key=${s.scene_id} project=${project} edit=${edit} sceneId=${String(s.scene_id)}
+                                                            onExport=${id => exportScene(project, id)} />`)}
+          <//>`}
       <//>`)}`;
 }
 
@@ -128,6 +143,9 @@ function AllView({ project }) {
             <span class="day-line__title"><b>Day ${day.day}</b> · ${formatDate(day.date, { weekday: true })}
               ${day.call && html`<small> · ${day.call}–${day.wrap}</small>`}</span>
             <span class="day-line__scenes">${day.scenes.map(s => html`<${ScenePill} key=${s.scene_id} project=${project} sceneId=${String(s.scene_id)} />`)}</span>
+            ${day.second && html`
+              <span class="day-line__unit2"><span class="unit2-mark">2nd unit</span>
+                ${day.second.scenes.map(s => html`<${ScenePill} key=${s.scene_id} project=${project} sceneId=${String(s.scene_id)} />`)}</span>`}
           </button>`)}
       </div>`)}
     ${unscheduled.length > 0 && html`
