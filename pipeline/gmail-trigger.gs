@@ -166,6 +166,21 @@ function upcomingPlans(now) {
   return plans;
 }
 
+// Run this by hand in the Apps Script editor (choose testMyPlan → ▶ Run, then look at the log below the code):
+// the next 3 days' plans with the drive Google Maps gave — the way to check RIDE_FROM, the places and the sums.
+function testMyPlan() {
+  const now = new Date();
+  console.log(`Now: ${Utilities.formatDate(now, TIME_ZONE, 'EEE yyyy-MM-dd HH:mm')} · RIDE_FROM is ${PropertiesService.getScriptProperties().getProperty('RIDE_FROM') ? 'set' : 'NOT set (the drive counts travel_max)'}`);
+  const plans = upcomingPlans(now);
+  if (!plans.length) console.log('No shooting day with a call in the next 3 days (or no film with a "commute").');
+  for (const plan of plans) {
+    console.log(`${plan.film} D${plan.day} ${plan.date}: call ${clockOf(plan.call)} · drive ${plan.drive.minutes} min ` +
+      `(${plan.drive.maps ? 'Google Maps' : 'travel_max: no address or place for that day yet'}) · ` +
+      `wake ${clockAt(plan.wake)} · leave alarm ${clockAt(plan.leave)}`);
+  }
+  console.log(`The iPhone would get now: ${alarmAnswer(now)}`);
+}
+
 // the end of a day: its wrap, the next calendar day when it is earlier than the call (17:00–01:00)
 function wrapMoment(row) {
   const call = minutesOf(row.call);
