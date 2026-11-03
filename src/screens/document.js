@@ -5,12 +5,14 @@
 // Used by: main.js (opened from the 📄 buttons in the Schedule)
 
 import { html, useEffect, useRef, useState } from '../../vendor/preact-htm.js';
-import { showScreen, getState } from '../state.js';
+import { showScreen, getState, setState } from '../state.js';
 import { exportName } from '../model.js';
 import { loadDocument } from '../store/local.js';
 import { shareFile } from '../export/share.js';
 
-async function drawPages(blob, holder, isCancelled) {
+// goTo: the page to show first (a scene's page in the script, script-page.js): the screen scrolls there as soon
+// as that page is drawn; the pages before it are drawn too, so you can scroll back
+async function drawPages(blob, holder, isCancelled, goTo) {
   const pdfjs = await import('../../vendor/pdfjs/pdf.min.mjs');
   pdfjs.GlobalWorkerOptions.workerSrc = new URL('../../vendor/pdfjs/pdf.worker.min.mjs', import.meta.url).href;
   const pdf = await pdfjs.getDocument({ data: new Uint8Array(await blob.arrayBuffer()) }).promise;
@@ -23,6 +25,7 @@ async function drawPages(blob, holder, isCancelled) {
     canvas.className = 'pdf-page';
     holder.appendChild(canvas);
     await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+    if (number === goTo) canvas.scrollIntoView({ block: 'start' });
   }
 }
 
@@ -39,7 +42,9 @@ export function DocumentScreen({ state }) {
       .then(found => {
         if (!found) throw new Error('This document is not on this device yet. Open the app once with signal.');
         setBlob(found);
-        return drawPages(found, holder.current, () => cancelled);
+        const goTo = getState().documentPage;
+        if (goTo) setState({ documentPage: null }); // used once: the next ODG or manual opens at its first page
+        return drawPages(found, holder.current, () => cancelled, goTo);
       })
       .catch(error => !cancelled && setProblem(error.message));
     return () => { cancelled = true; };

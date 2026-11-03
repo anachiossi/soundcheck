@@ -36,6 +36,7 @@ import { staysOnPhone } from '../crew-sync.js';
 import { FilmRepos } from '../parts/film-repos.js';
 import { onDevice } from '../film-source.js';
 import { closeFilm } from '../film-close.js';
+import { episodeScripts } from '../script-page.js';
 
 export function ProjectsScreen({ state }) {
   const { project, projects, connection, films, online } = state;
@@ -147,6 +148,9 @@ function FilmDocuments({ project }) {
   return html`
     <div class="toolbar film-docs">
       ${doc('script.pdf', `Script${script.version ? ` ${script.version}` : ''}`)}
+      ${episodeScripts(project).map(({ episode, path }) => html`
+        <button key=${path} class="btn btn--doc" onClick=${() => setState({ screen: 'document', documentPath: path, documentTitle: `Script Ep ${episode}`, documentFile: `Script_Ep${episode}.pdf`, documentFrom: 'projects' })}>
+          <${Icon} name="document" /> Ep ${episode}</button>`)}
       ${doc('pdl.pdf', 'PDL')}
       <button class="btn" onClick=${() => setState({ screen: 'hours' })}>⏱ Hours</button>
       <button class="btn" onClick=${() => setState({ screen: 'film-rules' })}>📋 Film rules</button>

@@ -7,6 +7,8 @@ The full script PDF is also kept as docs/script.pdf (📄 in Kit, readable offli
 
 New script version (by hand, on the laptop):
     python pipeline/cue_lines.py <film folder> "<script.pdf>" "21.08.26"
+A series, one PDF per episode (→ docs/scripts/ep2.pdf; each scene file also keeps "pdf" + "page"):
+    python pipeline/cue_lines.py <film folder> "<LA LISTA_EP2….pdf>" "REV.5 17.08.26" --episode 2
 Sides: run.py calls write_sides_lines() for every ODG email that has sides.
 """
 
@@ -35,6 +37,7 @@ def write_scene_files(folder, scenes, source, characters):
     folder.mkdir(parents=True, exist_ok=True)
     for scene_id, scene in scenes.items():
         content = {"scene_id": scene_id, "source": source, "heading": scene["heading"],
+                   **({"pdf": scene["pdf"], "page": scene["page"]} if scene.get("pdf") else {}),
                    "lines": with_characters(scene["lines"], characters)}
         text = json.dumps(content, ensure_ascii=False, indent=2) + "\n"
         path = folder / f"{scene_id}.json"
@@ -59,24 +62,49 @@ def write_sides_lines(film, sides_pdf, day, scene_ids):
     return write_scene_files(Path(film) / "lines" / "sides", scenes, f"Sides · Day {day}", characters_of(Path(film)))
 
 
-def write_script_lines(film, script_pdf, version):
+def scene_pages(script_pdf):
+    """{scene id: page number (1 = first)} where each scene starts in the PDF (the 📄 Script button opens there)."""
+    from read_sides import page_lines, SCENE_X, SCENE_ID_RE
+    pages = {}
+    for page, y, x, text in page_lines(script_pdf):
+        if SCENE_X[0] <= x <= SCENE_X[1] and SCENE_ID_RE.match(text):
+            pages.setdefault(text, page + 1)
+    return pages
+
+
+def write_script_lines(film, script_pdf, version, episode=None):
+    """One script → lines/script/<scene>.json. A series (episode = 2): the PDF is docs/scripts/ep2.pdf and only
+    that episode's old scenes can be removed — loading episode 2 never touches episode 1 (Il colpo, 3 Nov)."""
     film = Path(film)
     scenes = read_lines(script_pdf, options=reader_options(film))
+    pdf_path = f"docs/scripts/ep{episode}.pdf" if episode else "docs/script.pdf"
+    source = f"Script Ep{episode} {version}" if episode else f"Script {version}"
+    pages = scene_pages(script_pdf)
+    for scene_id, scene in scenes.items():  # where the scene is in the official script, for the 📄 button
+        if scene_id in pages:
+            scene["pdf"], scene["page"] = pdf_path, pages[scene_id]
     folder = film / "lines" / "script"
     for old in folder.glob("*.json") if folder.exists() else []:
-        if old.stem not in scenes:  # a scene cut from the new version
+        mine = not episode or json.loads(old.read_text(encoding="utf-8")).get("source", "").startswith(f"Script Ep{episode} ")
+        if mine and old.stem not in scenes:  # a scene cut from the new version (of this episode)
             old.unlink()
-    changed = write_scene_files(folder, scenes, f"Script {version}", characters_of(film))
-    (film / "docs").mkdir(exist_ok=True)
-    shutil.copyfile(script_pdf, film / "docs" / "script.pdf")
-    (film / "docs" / "script.json").write_text(
-        json.dumps({"version": version, "file": Path(script_pdf).name}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    changed = write_scene_files(folder, scenes, source, characters_of(film))
+    (film / pdf_path).parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(script_pdf, film / pdf_path)
+    about = film / "docs" / "script.json"
+    info = json.loads(about.read_text(encoding="utf-8")) if about.exists() and episode else {}
+    if episode:
+        info.setdefault("episodes", {})[str(episode)] = {"version": version, "file": Path(script_pdf).name, "pdf": pdf_path}
+    else:
+        info = {"version": version, "file": Path(script_pdf).name}
+    about.write_text(json.dumps(info, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return scenes, changed
 
 
 if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8")
-    scenes, changed = write_script_lines(sys.argv[1], sys.argv[2], sys.argv[3])
+    episode = int(sys.argv[sys.argv.index("--episode") + 1]) if "--episode" in sys.argv else None
+    scenes, changed = write_script_lines(sys.argv[1], sys.argv[2], sys.argv[3], episode)
     unknown = sorted({l["name"] for s in scenes.values() for l in s["lines"]
                       if not find_character(l["name"], characters_of(Path(sys.argv[1])))[0]})
     print(f"{len(scenes)} scenes, {sum(len(s['lines']) for s in scenes.values())} lines, {len(changed)} files written")

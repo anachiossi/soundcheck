@@ -18,6 +18,7 @@ let state = {
   screen: 'schedule',       // 'schedule' | 'scenes' | 'cues-picker' | 'kit' | 'projects' | 'proposal' | 'document' | 'cues'
   proposalId: null,         // the proposal open in the 'proposal' screen
   documentPath: null,       // the PDF open in the 'document' screen, e.g. '…/docs/day-6/odg.pdf'
+  documentPage: null,       // the page to open it at (a scene in the script, script-page.js); null = the first
   documentTitle: '',
   documentFile: '',      // the name it gets when shared: 'DAY09_ODG.pdf' (the film's tag goes in front)
   documentFrom: '',      // the screen ‹ Back returns to (Schedule when empty)
