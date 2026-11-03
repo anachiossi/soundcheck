@@ -150,7 +150,7 @@ function FilmDocuments({ project }) {
       ${doc('script.pdf', `Script${script.version ? ` ${script.version}` : ''}`)}
       ${episodeScripts(project).map(({ episode, path }) => html`
         <button key=${path} class="btn btn--doc" onClick=${() => setState({ screen: 'document', documentPath: path, documentTitle: `Script Ep ${episode}`, documentFile: `Script_Ep${episode}.pdf`, documentFrom: 'projects' })}>
-          <${Icon} name="document" /> Ep ${episode}</button>`)}
+          <${Icon} name="book" /> Ep ${episode}</button>`)}
       ${doc('pdl.pdf', 'PDL')}
       <button class="btn" onClick=${() => setState({ screen: 'hours' })}>⏱ Hours</button>
       <button class="btn" onClick=${() => setState({ screen: 'film-rules' })}>📋 Film rules</button>

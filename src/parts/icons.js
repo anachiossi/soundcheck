@@ -1,6 +1,6 @@
 // icons.js — small drawn icons for buttons (instead of emoji), thin lines in the
 // button's own text colour, so they look the same on every phone.
-//   <${Icon} name="edit" />   names: edit · mic · image · document · close · up · pin ·
+//   <${Icon} name="edit" />   names: edit · mic · image · document · book · close · up · pin ·
 //                              download · inbox · headphones · map · timeline · cues · battery · game
 // Used by: the scene bar, Schedule, Cues, Kit, pickers, the top bar.
 
@@ -11,6 +11,8 @@ const DRAWINGS = {
   mic: html`<rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5.5 11a6.5 6.5 0 0 0 13 0" /><path d="M12 17.5V21" />`,
   image: html`<rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="9" cy="10" r="1.8" /><path d="M21 16l-5-5-9 8" />`,
   document: html`<path d="M6 3h8l4 4v14H6z" /><path d="M14 3v4h4" /><path d="M9 12h6M9 16h6" />`,
+  // an open book: the official script (script-page.js), apart from the ODG / sides documents
+  book: html`<path d="M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5z" /><path d="M12 6.5v13" />`,
   close: html`<path d="M6 6l12 12M18 6L6 18" />`,
   up: html`<path d="M12 19V5M6 11l6-6 6 6" />`,
   back: html`<path d="M15 5l-7 7 7 7" />`,

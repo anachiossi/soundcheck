@@ -1,7 +1,7 @@
 // scene-table.js — one scene: the grey "slate" title bar and its mic table. The slate shows #12, INT/EXT, time of day
 // and the set, then location · pages · story day, the synopsis, the notes that can impact sound
 // (orange) and "ⓘ more info" (director / costume / production notes, closed until tapped).
-// 🎙 opens Cues (learn the lines), 📄 the official script at this scene's page (script-page.js), ✎ the editor.
+// 🎙 opens Cues (learn the lines), the book the official script at this scene's page (script-page.js), ✎ the editor.
 // The mic table (v149, Ana 13 Oct: "the fluidity of horizontal pages to survive adding more columns"): the Character
 // stays pinned on the left; every other column sits in COLUMNS, in Ana's order, and fills pages as wide as the phone
 // allows — swipe sideways for the next page, the dots on the right say which one. A new column = one more entry.
@@ -62,7 +62,7 @@ export function SceneTable({ project, sceneId, edit, showDay = false, onRemove, 
             ${!editing && cueLines(project, sceneId) && html`<button class="icon-btn" title="Cues: learn the lines"
               onClick=${() => setState({ screen: 'cues', cuesScene: sceneId, cuesFrom: getState().screen })}><${Icon} name="cues" /></button>`}
             ${!editing && scriptPage(project, sceneId) && html`<button class="icon-btn" title="This scene in the official script"
-              onClick=${() => openScriptPage(scriptPage(project, sceneId))}><${Icon} name="document" /></button>`}
+              onClick=${() => openScriptPage(scriptPage(project, sceneId))}><${Icon} name="book" /></button>`}
             ${!editing && html`<button class="icon-btn" onClick=${() => startEdit(sceneId)} title="Edit"><${Icon} name="edit" /></button>`}
             ${!editing && onExport && html`<button class="icon-btn" onClick=${() => onExport(sceneId)} title="Export image"><${Icon} name="image" /></button>`}
             ${!editing && onRemove && html`<button class="icon-btn icon-btn--remove" onClick=${() => onRemove(sceneId)} title="Remove"><${Icon} name="close" /></button>`}
