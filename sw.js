@@ -1,4 +1,4 @@
-﻿// sw.js â€” the "service worker": stores every app file on the device the first
+// sw.js â€” the "service worker": stores every app file on the device the first
 // time the app is opened, so it opens with no signal afterwards.
 // When you change any app file, bump VERSION so devices pick up the new files.
 // (Film data is NOT stored here; it lives in the per-film database.)
