@@ -21,8 +21,7 @@ from pathlib import Path
 from compare import NOTE_ICONS, note_kind, check_cast_list, check_date, check_next_day_date, check_day, check_scene_info, nice_date
 from compare_mics import check_scene_mics
 from compare_crew import check_crew
-from read_crew import read_crew
-from odg_reader import odg_reader_for
+from odg_reader import odg_reader_for, crew_reader_for
 from read_sides import read_sides
 from fetch_mail import emails_oldest_first
 
@@ -63,6 +62,35 @@ def sides_by_day(inbox):
             if number:
                 found[int(number.group(1))] = pdf
     return found
+
+
+def personal_call_warnings(commute, odg_crew, odg):
+    """The alarms follow the call of the person Ana rides with (commute "ride_with") and her own ("my_name").
+    Ana, 3 Nov: "if the personal call is different from the crew call or has some differences about unit,
+    beware" — and there are two Tommasos in sound: only the FULL name matches (wake_plan.plain_name)."""
+    from read_odg import as_time
+    from wake_plan import plain_name, minutes_of
+    warnings = []
+    crew_call = minutes_of(odg.get("call") or "")
+    second = odg.get("second_unit") or {}
+    for key, who in (("ride_with", "rides with you"), ("my_name", "is you")):
+        name = (commute.get(key) or "").strip()
+        if not name:
+            continue
+        found = [p for p in odg_crew if plain_name(p["name"]) == plain_name(name)]
+        if not found:
+            warnings.append(f"{name} ({who}) is not on this ODG's crew list: the alarms count the crew call.")
+            continue
+        person = found[0]
+        call = as_time(person["call"])
+        if not call:
+            warnings.append(f"{name} ({who}): call printed as \"{person['call']}\" (no time) — the alarms count the crew call.")
+        elif crew_call is not None and minutes_of(call) != crew_call:
+            unit = (f" It is the 2nd unit's call ({second['call']}): is {name.split()[0]} on the 2nd unit today?"
+                    if second.get("call") == call else "")
+            warnings.append(f"{name} ({who}): personal call {call}, the crew call is {odg['call']}. "
+                            f"The alarms follow {call}.{unit}")
+    return warnings
 
 
 def check_units(number, date, call, wrap, scenes, second, schedule, label):
@@ -161,10 +189,12 @@ def build_proposal(film_folder, email_folder, other_sides=None, sides_notes=None
         warnings.append(NO_SIDES)
 
     # IFB: the crew printed on the call sheet against the IFB crew list
+    odg_crew = crew_reader_for(film_folder)(odg_pdf)  # the film's own crew table reader
     ifb_today = []
     if film["crew"]:
-        crew_changes, crew_checks, ifb_today = check_crew(read_crew(odg_pdf), film["crew"], film["ifb_rows"])
+        crew_changes, crew_checks, ifb_today = check_crew(odg_crew, film["crew"], film["ifb_rows"])
         changes.extend(crew_changes), checks.extend(crew_checks)
+    warnings.extend(personal_call_warnings(film["settings"].get("commute") or {}, odg_crew, odg))
 
     for number, change in enumerate(changes, 1):
         change["id"] = f"c{number}"

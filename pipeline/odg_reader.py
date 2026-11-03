@@ -3,6 +3,7 @@
     nothing                   → read_odg.py, the main reader (LBE, Memo Films layout)
 Each film chooses its own; the main reader is never changed for another film (Ana, 24 Oct).
 Both readers give the same data, so the robot (run.py, propose.py) works the same for every film.
+crew_reader_for: the reader of the crew table on the back of the ODG, chosen the same way.
 Used by: propose.py, run.py
 """
 
@@ -26,3 +27,13 @@ def odg_reader_for(film_folder):
     if name == "il-colpo":  # this layout prints two units on one day: the film says which is the main one
         return partial(read_odg_il_colpo, main_unit=settings.get("main_unit"))
     return READERS[name]
+
+
+def crew_reader_for(film_folder):
+    """The reader of the crew table on the back of the film's ODGs (same choice as odg_reader_for):
+    Il colpo's layout → read_crew_il_colpo.py (four column groups, by position), else read_crew.py (LBE)."""
+    from read_crew import read_crew
+    from read_crew_il_colpo import read_crew_il_colpo
+    settings_file = Path(film_folder) / "settings.json"
+    settings = json.loads(settings_file.read_text(encoding="utf-8")) if settings_file.exists() else {}
+    return read_crew_il_colpo if settings.get("odg_reader") == "il-colpo" else read_crew

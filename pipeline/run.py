@@ -263,10 +263,10 @@ def file_crew_calls(film):
     The alarms follow the call of the person Ana rides with (settings "commute" → "ride_with",
     Ana, 11 Oct); the app keeps Ana's own call everywhere else.
     Read from the filed ODGs (docs/day-<n>/odg.pdf, the newest of each day), after file_documents."""
-    from read_crew import read_crew
-    from odg_reader import odg_reader_for
+    from odg_reader import odg_reader_for, crew_reader_for
     from read_odg import as_time
     read_odg = odg_reader_for(film)
+    read_crew = crew_reader_for(film)  # Il colpo: its own crew table layout (read_crew_il_colpo.py)
     target = film / "calls.json"
     calls = json.loads(target.read_text(encoding="utf-8")) if target.exists() else {}
     for odg in sorted((film / "docs").glob("day-*/odg.pdf")):
