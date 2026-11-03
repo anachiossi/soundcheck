@@ -34,6 +34,7 @@ import { IfbPicker } from './parts/ifb-picker.js';
 import { ImageForQuestion } from './parts/image-for.js';
 import { HoursScreen } from './screens/hours.js';
 import { HelpScreen } from './screens/help.js';
+import { FilmRulesScreen } from './screens/film-rules.js';
 import { LavShareScreen } from './screens/lav-share.js';
 import { GearTruckScreen, GearInventoryScreen, GearManualsScreen } from './screens/gear.js';
 import { GearBatteriesScreen } from './screens/gear-batteries.js';
@@ -128,6 +129,7 @@ function App() {
     : current === 'document' ? DocumentScreen
     : current === 'hours' ? HoursScreen
     : current === 'help' ? HelpScreen
+    : current === 'film-rules' ? FilmRulesScreen
     : current === 'lav-share' ? LavShareScreen
     : current === 'cues-map' ? CuesMapScreen
     : current === 'cues-timeline' ? CuesTimelineScreen

@@ -149,6 +149,7 @@ function FilmDocuments({ project }) {
       ${doc('script.pdf', `Script${script.version ? ` ${script.version}` : ''}`)}
       ${doc('pdl.pdf', 'PDL')}
       <button class="btn" onClick=${() => setState({ screen: 'hours' })}>⏱ Hours</button>
+      <button class="btn" onClick=${() => setState({ screen: 'film-rules' })}>📋 Film rules</button>
     </div>
     ${script.script > 0 && html`<p class="muted with-icon"><${Icon} name="cues" /> Cues for ${script.script} scenes${script.sides ? `, ${script.sides} updated from the sides` : ''}</p>`}`;
 }
