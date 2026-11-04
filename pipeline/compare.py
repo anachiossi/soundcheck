@@ -18,7 +18,7 @@ NOTE_ICONS = {"Suono": "🔊", "Regia": "🎬", "Costumi": "👗"}
 AUDIBLE = re.compile(r"\bspar(a|ano|ante|o|i)\b|\bcolpo\b|esplo|rumor|\burl(a|o|i)\b|\bgrid|music|canzon|\bcanta|"
                      r"motore|\b(auto|macchina|forno|lavello)\b[^,;]*\bfa azione\b|gruppett|gruppo elettrogeno|generator|"
                      r"\btuff|bagnat|pioggia|acqua bollente|\bvento\b|elicott|\bdrone\b|stunt|clacson|campanell|"
-                     r"squill|abbai", re.I)
+                     r"squill|abbai|\bmoto\b", re.I)  # moto: Confine's "Moto Giorgio" (5 Nov)
 
 
 def note_kind(department, text):

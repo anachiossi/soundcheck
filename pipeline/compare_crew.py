@@ -14,7 +14,7 @@ import difflib
 import re
 import unicodedata
 
-DAILY = "PERSONALE AGGIUNTO"
+DAILY = {"PERSONALE AGGIUNTO", "AGGIUNTI"}  # AGGIUNTI: Lux Vide (Confine, 5 Nov)
 
 
 def plain(text):
@@ -45,13 +45,20 @@ def same_role(a, b):
     return bool(first and second) and len(first & second) / len(first | second) >= 0.6
 
 
-def find_person(name, crew):
-    """(crew member, exact?) for a name on the ODG."""
+def find_person(name, crew, role=None):
+    """(crew member, exact?) for a name on the ODG. A name spelled a bit differently is the same person only
+    when the job is the same too: Francesco Martello (Autista Regista) is not Francesco Masello (Autista MDP),
+    Confine ODG #26."""
     for person in crew:
         if plain(person["name"]) == plain(name):
             return person, True
-    best = max(crew, key=lambda person: similar(person["name"], name), default=None)
-    if best and similar(best["name"], name) >= 0.85:
+    def close_enough(person):
+        # same job, or same surname ("M. Federica Razza" = "Maria Federica Razza"), or a one-letter slip (Chiosi / Chiossi)
+        same_job = not role or not person.get("job") or same_role(person["job"], role)
+        same_surname = plain(person["name"]).split()[-1:] == plain(name).split()[-1:]
+        return similar(person["name"], name) >= (0.85 if same_job or same_surname else 0.94)
+    best = max((p for p in crew if close_enough(p)), key=lambda person: similar(person["name"], name), default=None)
+    if best:
         return best, False
     return None, False
 
@@ -64,7 +71,7 @@ def check_crew(odg_crew, crew, ifb_rows):
     department_of = {}                                  # crew name → ODG department (from matches)
 
     for entry in odg_crew:
-        person, exact = find_person(entry["name"], order)
+        person, exact = find_person(entry["name"], order, entry["role"])
         if person:
             found[person["name"]] = entry
             department_of[person["name"]] = entry["department"]
@@ -72,7 +79,7 @@ def check_crew(odg_crew, crew, ifb_rows):
                 notes.append(f"{entry['name']} = {person['name']}")
             continue
         # New: after the last person with the same role, else after the last one of the department.
-        daily = entry["department"] == DAILY
+        daily = entry["department"] in DAILY
         with_role = [p for p in order if same_role(p.get("job"), entry["role"])]
         # a daily hire with no known role goes after the other daily people, at the end
         others = [p for p in order if p.get("daily")] if daily else                  [p for p in order if department_of.get(p["name"]) == entry["department"]]

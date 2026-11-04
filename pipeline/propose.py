@@ -48,7 +48,15 @@ def subject_date(subject, year):
 NO_SIDES = "No sides (STRALCI) for this day yet: speakers were not checked."
 
 
-def sides_by_day(inbox):
+def is_sides(pdf, settings):
+    """A sides PDF: "STRALCI" in its name, or the film's own word for them (settings "sides_name": Confine's sides
+    are "DAY_26_Giovedì 5 novembre.pdf", Lux Vide, 5 Nov)."""
+    name = Path(pdf).name.upper()
+    own_word = (settings or {}).get("sides_name", "").upper()
+    return "STRALCI" in name or bool(own_word and own_word in name and "ODG" not in name)
+
+
+def sides_by_day(inbox, settings=None):
     """{day number: sides PDF} from every email in the inbox — production sometimes sends the
     sides in a separate email ("Re: LBE - ODG #7" with only STRALCI DAY #7.pdf).
     The day comes from the file name ("DAY #7") or else the subject ("ODG #7"); a later email wins."""
@@ -56,7 +64,7 @@ def sides_by_day(inbox):
     for email_folder in emails_oldest_first(inbox):
         subject = json.loads((email_folder / "email.json").read_text(encoding="utf-8"))["subject"]
         for pdf in email_folder.glob("*.pdf"):
-            if "STRALCI" not in pdf.name.upper():
+            if not is_sides(pdf, settings):
                 continue
             number = re.search(r"DAY\s*#?\s*(\d+)", pdf.name, re.I) or re.search(r"ODG\s*#?\s*(\d+)", subject, re.I)
             if number:
@@ -109,7 +117,7 @@ def pick_sides(settings, email_folder, day, other_sides):
     """The day's sides PDF. Usually the STRALCI in the ODG's own email, else other_sides (sides_by_day).
     A film with "sides_by": "date" (Il colpo, sides_by_date.py) trusts other_sides first: there the
     STRALCI found by date and scenes, never by the number in the name."""
-    own = next((p for p in Path(email_folder).glob("*.pdf") if "STRALCI" in p.name.upper()), None)
+    own = next((p for p in Path(email_folder).glob("*.pdf") if is_sides(p, settings)), None)
     if settings.get("sides_by") == "date":
         return (other_sides or {}).get(day)
     return own or (other_sides or {}).get(day)
@@ -122,7 +130,7 @@ def sides_for_film(film_folder):
     if settings.get("sides_by") == "date":
         from sides_by_date import sides_and_notes
         return sides_and_notes(film_folder)
-    return sides_by_day(Path(film_folder) / "_inbox"), {}, []
+    return sides_by_day(Path(film_folder) / "_inbox", settings), {}, []
 
 
 def build_proposal(film_folder, email_folder, other_sides=None, sides_notes=None):
@@ -137,7 +145,7 @@ def build_proposal(film_folder, email_folder, other_sides=None, sides_notes=None
     date, warnings = check_date(odg, subject_date(email["subject"], odg["date"][:4] or "2026"))
     warnings.extend((sides_notes or {}).get(odg["number"], []))  # e.g. "filed as day 55's sides (…)"
     day_ids = [s["scene_id"] for s in odg["scenes"]]
-    sides = read_sides(sides_pdf, day_ids) if sides_pdf else {}
+    sides = read_sides(sides_pdf, day_ids, film["settings"].get("script_reader")) if sides_pdf else {}
     changes, checks, notes = [], [], {}
 
     def add(result):

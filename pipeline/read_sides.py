@@ -38,21 +38,24 @@ def page_lines(path):
     return sorted(out)
 
 
-def read_sides(path, wanted_scenes=None):
-    """{'2': {'speakers': ['INES', 'PRINCE JOHN', …], 'heading': 'INT. CASTELLO, CUCINA. GIORNO'}}"""
+def read_sides(path, wanted_scenes=None, options=None):
+    """{'2': {'speakers': ['INES', 'PRINCE JOHN', …], 'heading': 'INT. CASTELLO, CUCINA. GIORNO'}}
+    options: the film's "script_reader" settings; "columns" moves the heading and name columns (read_lines.py)."""
     lines = page_lines(path)
+    columns = (options or {}).get("columns", {})
+    heading_x, cue_x = columns.get("heading", HEADING_X), columns.get("cue", CUE_X)
     scenes, current = {}, None
     for i, (page, y, x, text) in enumerate(lines):
         # A scene starts where a number (left) and an INT./EST. heading share the same line.
         if SCENE_X[0] <= x <= SCENE_X[1] and SCENE_ID_RE.match(text):
             heading = next((t for p, yy, xx, t in lines
-                            if p == page and abs(yy - y) <= 2 and HEADING_X[0] <= xx <= HEADING_X[1]
+                            if p == page and abs(yy - y) <= 2 and heading_x[0] <= xx <= heading_x[1]
                             and HEADING_RE.match(t)), None)
             if heading:
                 current = text
                 scenes.setdefault(current, {"heading": re.sub(r"\s+", " ", heading), "speakers": []})
                 continue
-        if current and CUE_X[0] <= x <= CUE_X[1]:
+        if current and cue_x[0] <= x <= cue_x[1]:
             name = CUE_SUFFIX_RE.sub("", text).strip()
             if NAME_RE.match(name) and name not in NOT_SPEAKERS and len(name) <= 30:
                 if name not in scenes[current]["speakers"]:

@@ -12,6 +12,9 @@ Options, OFF unless the film's settings.json turns them on (so one film never ch
     to one person) is page decoration, never dialogue
   • unnumbered_scenes — a scene heading with no number is a new scene: after 30 → 30A, 30B…
   (both learnt on Vigília, Oct 2026; LBE has neither)
+    "script_reader": { "columns": { "heading": [70, 120], "cue": [230, 275] } }
+  • columns — where this film's script prints the heading/action and the speaker names, when they are not
+    where LBE's are (Confine, 5 Nov: heading x 90, action x 72, names x 234)
 
     python pipeline/read_lines.py "path/to/script.pdf" [scene ids…]
 """
@@ -22,7 +25,7 @@ import sys
 
 import pymupdf as fitz  # the PDF reader (PyMuPDF)
 
-SCENE_X, HEADING_X, CUE_X = (40, 70), (95, 120), (235, 275)  # heading from 95: Il colpo's Memo pages (x 99.96, 3 Nov)
+SCENE_X, HEADING_X_DEFAULT, CUE_X_DEFAULT = (40, 70), (95, 120), (235, 275)  # heading from 95: Il colpo's Memo pages (x 99.96, 3 Nov)
 DIALOGUE_X, DIRECTION_X = (170, 195), (200, 225)
 HEADING_RE = re.compile(r"^(INT|EST|EXT|I/E|E/I|INT/EST|EST/INT)[.\s]", re.I)  # E/I.: Il colpo (3 Nov)
 SCENE_ID_RE = re.compile(r"^\d+[A-Za-z]{0,3}$")
@@ -76,6 +79,8 @@ def read_lines(path, wanted=None, options=None):
     """{'2': {'heading': 'INT. CASTELLO, CUCINA. GIORNO', 'lines': [{'name': 'INES', 'text': '…', 'action': '…'}, …]}}
     action = the action paragraphs printed since the line before (only when there are some)."""
     lines = page_lines(path, options)
+    columns = (options or {}).get("columns", {})
+    heading_x, cue_x = tuple(columns.get("heading", HEADING_X_DEFAULT)), tuple(columns.get("cue", CUE_X_DEFAULT))
     unnumbered = (options or {}).get("unnumbered_scenes")
     scenes, current, speech = {}, None, None
     action = []  # the action read since the last line, for the next one
@@ -94,7 +99,7 @@ def read_lines(path, wanted=None, options=None):
     for page, y, x, text in lines:
         if SCENE_X[0] <= x <= SCENE_X[1] and SCENE_ID_RE.match(text):
             heading = next((t for p, yy, xx, t in lines if p == page and abs(yy - y) <= 2
-                            and HEADING_X[0] <= xx <= HEADING_X[1] and HEADING_RE.match(t)), None)
+                            and heading_x[0] <= xx <= heading_x[1] and HEADING_RE.match(t)), None)
             if heading:
                 finish()
                 action = []
@@ -103,7 +108,7 @@ def read_lines(path, wanted=None, options=None):
                 continue
         if current is None:
             continue
-        if unnumbered and HEADING_X[0] <= x <= HEADING_X[1] and HEADING_RE.match(text) and not any(
+        if unnumbered and heading_x[0] <= x <= heading_x[1] and HEADING_RE.match(text) and not any(
                 p == page and abs(yy - y) <= 2 and SCENE_X[0] <= xx <= SCENE_X[1] and SCENE_ID_RE.match(t)
                 for p, yy, xx, t in lines):
             finish()  # a heading without a number: a new scene all the same
@@ -111,7 +116,7 @@ def read_lines(path, wanted=None, options=None):
             current = next_letter(current, scenes)
             scenes[current] = {"heading": re.sub(r"\s+", " ", text), "lines": []}
             continue
-        if CUE_X[0] <= x <= CUE_X[1] and NAME_RE.match(CUE_SUFFIX_RE.sub("", text).strip()):
+        if cue_x[0] <= x <= cue_x[1] and NAME_RE.match(CUE_SUFFIX_RE.sub("", text).strip()):
             name = CUE_SUFFIX_RE.sub("", text).strip()
             if speech and speech["name"] == name and CONTINUED_RE.search(text) and speech["open"]:
                 continue  # same speech, carried over a page turn
@@ -126,7 +131,7 @@ def read_lines(path, wanted=None, options=None):
         elif speech and DIRECTION_X[0] <= x <= DIRECTION_X[1]:
             if speech["parts"] and speech["parts"][-1] != "\n":
                 speech["parts"].append("\n")  # the words go on after a stage direction
-        elif HEADING_X[0] <= x <= HEADING_X[1] and not HEADING_RE.match(text):
+        elif heading_x[0] <= x <= heading_x[1] and not HEADING_RE.match(text):
             finish()  # action ends the speech
             if not PAGE_FURNITURE.match(text):
                 action.append(text)
