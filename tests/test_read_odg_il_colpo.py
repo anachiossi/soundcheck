@@ -74,6 +74,20 @@ class IlColpoLayoutTest(unittest.TestCase):
         self.assertEqual(units, {"20": None, "30A": "2nd"})
         self.assertEqual(odg["unit_warnings"], [])
 
+    def test_unita_with_an_accent_is_a_unit_and_the_table_goes_on_after_its_total(self):
+        table = ["Programma del giorno successivo Mercoledì 4 Novembre 2026 orario di lavorazione 14:00 – 22:00",
+                 "SCENA", "LUCE", "SET/SINOSSI", "DAY", "CAST", "PGS.", "TIMELINE",
+                 "UNITÀ MAIN 14:00 – 22:00", "20", "I", "T", "GYM", "Meet.", "9", "1", "2/8",
+                 "TOT PGS. UNITA’ MAIN", "2/8",
+                 "UNITÀ ROSSI 08:00 – 16:00", "30", "E", "G", "STATION", "Watch.", "15", "3", "1/8", "TOT PGS."]
+        units = {s["scene_id"]: s.get("unit") for s in read_il_colpo(HEADER + TABLE + CAST + table, main_unit="MAIN")["advance"]["scenes"]}
+        self.assertEqual(units, {"20": None, "30": "2nd"})
+
+    def test_one_actor_in_two_roles_belongs_to_the_first_role(self):
+        cast = ["CAST", "ID", "RUOLO", "NOME", "SCENE", "SET", "11", "MIRKO/MIRKETTO", "Actor Two", "20", "07:00", "08:00", "FABBISOGNI"]
+        person = next(c for c in read_il_colpo(HEADER + TABLE + cast)["cast"] if c["id"] == "11")
+        self.assertEqual((person["role"], person["actor"], person["also_plays"]), ("MIRKO", "Actor Two", ["MIRKETTO"]))
+
     def test_a_need_for_one_unit_goes_only_to_that_unit_scenes(self):
         unit_table = ["Programma del giorno successivo Mercoledì 4 Novembre 2026 orario di lavorazione 14:00 – 22:00",
                       "SCENA", "LUCE", "SET/SINOSSI", "DAY", "CAST", "PGS.", "TIMELINE",

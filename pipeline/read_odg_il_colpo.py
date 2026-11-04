@@ -32,7 +32,8 @@ SCENES_RE = r"\d+[A-Za-z]*\d*(?:\s*-\s*\d+[A-Za-z]*\d*)*"    # '516 - 517pt1 - 3
 # this layout's departments → the names read_odg.py uses (compare.py picks the sound-related notes by them)
 DEPARTMENTS = {"SCEN/ARREDAMENTO": "Scenografia", "PROPS": "Props", "COSTUMI": "Costumi", "MAKE-UP/HAIR": "Trucco/Capelli",
                "VFX": "VFX/AI", "SFX": "SFX/Armi", "MEZZI DI SCENA": "Veicoli", "ATTREZZATURE SPECIALI": "Camera",
-               "SUONO": "Suono", "REGIA": "Regia", "PRODUZIONE": "Produzione", "STUNT": "Stunt", "ANIMALI": "Animali"}
+               "SUONO": "Suono", "REGIA": "Regia", "PRODUZIONE": "Produzione", "STUNT": "Stunt", "ANIMALI": "Animali",
+               "FIGURAZIONI": "Figurazioni"}  # ODG #56
 
 
 def time_after(lines, label):
@@ -79,11 +80,15 @@ def read_cast(lines):
             match = re.fullmatch(r"(.+?)\s*\((.+)\)", body[i + 1])
             role, actor = (match.groups() if match else (body[i + 1], ""))
             cast.append({"id": special.group(1), "role": clean(role).upper(), "actor": clean(actor), "special_extra": True})
-        elif re.fullmatch(r"\d+", line) and re.fullmatch(r"[A-ZÀ-Þ][A-ZÀ-Þ .'’()0-9-]*", body[i + 1]) \
+        elif re.fullmatch(r"\d+", line) and re.fullmatch(r"[A-ZÀ-Þ][A-ZÀ-Þ .'’()0-9/-]*", body[i + 1]) \
                 and not TIME_RE.match(body[i + 2]) and not any(c["id"] == line for c in cast):
-            role = body[i + 1]
-            person = {"id": line, "role": clean(re.sub(r"\s*\(M\)$", "", role)), "actor": clean(body[i + 2])}
-            if role.endswith("(M)"):
+            role = clean(re.sub(r"\s*\(M\)$", "", body[i + 1]))
+            # one actor, two roles: "11 MIRKO/MIRKETTO Samuele Peluzzi" (ODG #56) → the first is the cast number's role
+            first, *others = [part.strip() for part in role.split("/")]
+            person = {"id": line, "role": first, "actor": clean(body[i + 2])}
+            if others:
+                person["also_plays"] = others
+            if body[i + 1].endswith("(M)"):
                 person["minor"] = True
             cast.append(person)
     return cast
@@ -98,14 +103,33 @@ def read_needs(lines, start_marker, scene_ids, units=None):
     "UNIT ALFIERI STUNT COORDINATOR") is printed twice: kept once, for that unit (ODG #55, 3 Nov)."""
     body, _ = section(lines, start_marker, ("Direttore di Produzione", "CANALI RADIO"))
     contact = next((i for i, line in enumerate(body) if CONTACT_RE.search(line)), len(body))  # "Name (Role) 320 …"
-    body = body[:contact]
+    # the crew table can follow straight after the needs (ODG #56): its header "REGIA · SET · FOTOGRAFIA · SET"
+    # ends them (REGIA alone is also a needs department)
+    crew = next((i for i in range(len(body) - 1) if body[i] == "REGIA" and body[i + 1] == "SET"), len(body))
+    body = body[:min(contact, crew)]
     units = units or {}
+    # ODG #56: "208 – 241 - 426:" (long dashes) and "330 A – 331:" (a space in 330A) → "208 - 241 - 426:", "330A - 331:"
+    body = [re.sub(r"\b(\d{2,4}) ([A-Z])\b(?=\s*[-–,:])", r"\1\2", line.replace("–", "-")) for line in body]
 
-    def unit_line(line):  # ('DE FEUDIS', 'AUTO RAGAZZI…') or None
+    def unit_line(line):  # ('DE FEUDIS', 'AUTO RAGAZZI…') or None — also with a typo ("UNITA DE FEUIDIS", ODG #56)
+        import difflib
+        upper = line.upper()
+        if not upper.startswith("UNIT"):
+            return None
+        rest = re.sub(r"^UNIT(?:À|A['’]?)?\s+", "", line)
         for name in sorted(units, key=len, reverse=True):
-            if line.upper().startswith(f"UNIT {name} "):
-                return name, line[len(f"UNIT {name} "):]
+            words = len(name.split())  # compare as many words as the name has ("DE FEUIDIS" = "DE FEUDIS")
+            head = " ".join(rest.split()[:words]).upper()
+            if head == name or difflib.SequenceMatcher(None, head, name).ratio() >= 0.85:
+                return name, " ".join(rest.split()[words:])
         return None
+
+    def parts_of(ids):  # "208" on the needs = every part the day shoots: 208pt1, 208pt2
+        out = []
+        for sid in ids:
+            own = [s for s in scene_ids if s == sid or (re.match(rf"{re.escape(sid)}(?!\d)", s) and sid not in scene_ids)]
+            out += own or [sid]
+        return list(dict.fromkeys(out))
 
     scoped = []
     for i, line in enumerate(body):
@@ -138,7 +162,7 @@ def read_needs(lines, start_marker, scene_ids, units=None):
         if parts[0].strip():
             add(only or current or scene_ids, parts[0], " ")
         for ids, text in zip(parts[1::2], parts[2::2]):
-            current = re.findall(r"\d+[A-Za-z]*\d*", ids)
+            current = parts_of(re.findall(r"\d+[A-Za-z]*\d*", ids))
             add(current, text)
     # tidy the ends only now: a comma at the end of a line is kept while the next line goes on from it
     return {scene_id: {name: text.strip(" ,;") for name, text in by_department.items()}
@@ -180,18 +204,26 @@ def mark_units(table, scenes, main_unit, groups):
     return second, warnings
 
 
+def unit_spelling(line):
+    """ODG #56 (4 Nov) prints "UNITÀ ALFIERI", "UNITA' …", "UNITA’ …": all read as "UNIT ALFIERI"."""
+    return re.sub(r"^UNIT(?:À|A['’]?)(?=\s)", "UNIT", line)
+
+
 def read_il_colpo(lines, main_unit=None):
+    lines = [unit_spelling(line) for line in lines]
     text = "\n".join(lines)
     number = re.search(r"ODG\s*#\s*(\d+)(?:\s*di\s*(\d+))?", text)
     week = re.search(r"Settimana\s*#\s*(\d+)", text)
     date, weekday = read_date(text)
     advance_at = next((i for i, line in enumerate(lines) if line.startswith("Programma del giorno successivo")), len(lines))
     today, advance = lines[:advance_at], lines[advance_at:]
-    table = section(today, "TIMELINE", ("TOT PGS",))[0]
+    # the table runs to the cast list: a two-unit day prints "TOT PGS. UNITA' ALFIERI" between the units (ODG #56),
+    # so stopping at the first "TOT PGS" lost the 2nd unit's scenes
+    table = [line for line in section(today, "TIMELINE", ("CAST",))[0] if not line.startswith("TOT PGS")]
     scenes = read_scene_table(table)
     groups, advance_groups = {}, {}
     second, unit_warnings = mark_units(table, scenes, main_unit, groups)
-    advance_table = section(advance, "PGS.", ("TOT PGS",))[0] if advance else []
+    advance_table = [line for line in section(advance, "PGS.", ("FABBISOGNI",))[0] if not line.startswith("TOT PGS")] if advance else []
     advance_scenes = read_scene_table(advance_table) if advance else []
     advance_second, advance_warnings = mark_units(advance_table, advance_scenes, main_unit, advance_groups)
     advance_date, advance_weekday = read_date(advance[0]) if advance else ("", "")

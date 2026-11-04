@@ -166,7 +166,17 @@ def build_proposal(film_folder, email_folder, other_sides=None, sides_notes=None
             sid = scene["scene_id"]
             add(check_scene_info(scene, film["scenes"].get(sid)))
             speaker_names = sides[sid]["speakers"] if today and sid in sides else None
-            add(check_scene_mics(sid, scene["cast"], speaker_names, film["presets"].get(sid), film["characters"],
+            preset = film["presets"].get(sid)
+            base = re.match(r"\d+", sid).group(0) if re.match(r"\d+", sid) else sid
+            if not preset and base != sid and film["presets"].get(base, {}).get("rows"):
+                # a scene the ODG splits (208 → 208pt1, 208pt2; Ana, 4 Nov: "it could reuse what we had") starts from
+                # the whole scene's mics: same TX and lavs, only the people the ODG puts in this part
+                rows = [dict(r) for r in film["presets"][base]["rows"] if not scene["cast"] or r["char_id"] in scene["cast"]]
+                changes.append({"text": f"Scene {sid}: the same mics as scene {base} (TX, lavs) for "
+                                        f"{len(rows)} character(s)", "scene_id": sid,
+                                "op": {"op": "set_preset", "scene_id": sid, "rows": rows}})
+                preset = {"scene_id": sid, "rows": rows}
+            add(check_scene_mics(sid, scene["cast"], speaker_names, preset, film["characters"],
                                  group_cues=film["settings"].get("group_cues", [])))
             for department, text in scene_notes.get(sid, {}).items():
                 kind, text = note_kind(department, text)  # 'sound' (visible), 'info' (more info) or None

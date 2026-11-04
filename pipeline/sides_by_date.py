@@ -75,12 +75,20 @@ def sides_and_notes(film_folder):
     film_folder = Path(film_folder)
     inbox = film_folder / "_inbox"
     days = odg_days(inbox, odg_reader_for(film_folder))
+    settings_file = film_folder / "settings.json"
+    main_unit = (json.loads(settings_file.read_text(encoding="utf-8")) if settings_file.exists() else {}).get("main_unit", "")
     found, notes, loose = {}, {}, []
     for email_folder in emails_oldest_first(inbox):
         info = json.loads((email_folder / "email.json").read_text(encoding="utf-8"))
         email_id = (info.get("message_id") or email_folder.name).split("#")[0]  # packets of one email: one id
         for pdf in sorted(email_folder.glob("*.pdf")):
             if "STRALCI" not in pdf.name.upper():
+                continue
+            # a two-unit day sends two stralci with the same date (ODG #56: "…UNITÀ ALFIERI", "…UNITÀ DE FEUDIS"):
+            # the other unit's are never the main unit's sides
+            name = re.sub(r"[^A-Z ]", " ", pdf.name.upper())
+            if main_unit and re.search(r"\bUNIT", name) and main_unit.upper() not in name:
+                loose.append(f"{pdf.name}: the other unit's sides, not used for the main unit.")
                 continue
             day, note = day_of(pdf, days)
             if day is None:
