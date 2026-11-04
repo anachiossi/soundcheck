@@ -83,7 +83,7 @@ def day_plan(film, settings, scene_ids):
 
     # 2. TX
     kit_tx = [str(t["id"]) for t in film["transmitters"]]
-    order = [t for t in rules["tx_order"] if t in kit_tx]
+    order = [t for t in rules.get("tx_order", []) if t in kit_tx]  # no order in the settings: the kit's numbers
     order += sorted((t for t in kit_tx if t not in order and t not in rules.get("not_for_actors", [])), key=natural)
     limit = rules.get("small_day_max_speakers", 7)
     small = all(sum(1 for r in p["rows"] if r.get("speaker") == "yes" and not lav_blocked(film, sid, r["char_id"])) <= limit

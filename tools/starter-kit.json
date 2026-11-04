@@ -1,0 +1,35 @@
+{
+  "about": "The kit every new film starts with (Ana, 5 Nov 2026): numbers only, so the presets and the IFB list work before the real kit is known. Rename, recolour or delete each piece in the app once the real gear is seen. Used by tools/new-film-repo.mjs and pipeline/starter_kit.py.",
+  "transmitters": 12,
+  "lavaliers": 12,
+  "ifb_receivers": 12,
+  "ifb_headphones": 12,
+  "neutral_color": "#9ca3af",
+  "ifb_minimum": [
+    {
+      "who": "Director",
+      "jobs": "^regist[ao]$|^regista\\b(?!.*(ii|seconda unit))"
+    },
+    {
+      "who": "Video assist",
+      "jobs": "video assist"
+    },
+    {
+      "who": "1st AD",
+      "jobs": "^aiuto regi|^1.? ?ad\\b|first assistant director"
+    },
+    {
+      "who": "2nd AD",
+      "jobs": "^(secondo|ii.?) (aiuto|assistente alla) regi|^2.? ?ad\\b|second assistant director"
+    },
+    {
+      "who": "Script supervisor",
+      "jobs": "segretari. di ediz|script"
+    },
+    {
+      "who": "Focus puller",
+      "jobs": "^(ass\\.?|assistente) operator|focus|1st ac"
+    }
+  ],
+  "vips": 3
+}

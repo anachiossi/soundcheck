@@ -42,7 +42,14 @@ test('the tool makes a folder with the robots, the README and the film\'s empty 
 
   const film = join(target, 'projects', 'film-x');
   assert.deepEqual(await readJson(join(film, 'film.json')), { format: 'soundcheck-film', version: 1, id: 'film-x', name: 'Film X', tag: 'FX' });
-  for (const list of ['characters', 'transmitters', 'lavaliers', 'schedule']) assert.deepEqual(await readJson(join(film, `${list}.json`)), []);
+  for (const list of ['characters', 'schedule']) assert.deepEqual(await readJson(join(film, `${list}.json`)), []);
+  // the starter kit: numbers only, so presets and the IFB list work before the real kit is known
+  for (const path of ['transmitters.json', 'lavaliers.json', 'ifb/receivers.json', 'ifb/headphones.json']) {
+    const pieces = await readJson(join(film, path));
+    assert.equal(pieces.length, 12, path);
+    assert.deepEqual(pieces.map(piece => piece.id).slice(0, 3), ['1', '2', '3']);
+    assert.equal(pieces[0].model, '');
+  }
   assert.deepEqual(await readJson(join(film, 'scenes.json')), {});
   assert.deepEqual(await readJson(join(film, 'settings.json')), {});
   assert.deepEqual(await readJson(join(film, 'inbox.json')), { gmail_search: '' });

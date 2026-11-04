@@ -6,8 +6,8 @@
 //
 // It copies the robots (.github/workflows/*.yml), README.md and .gitignore from the soundcheck-data
 // clone (--from, default ../soundcheck-data), and creates projects/<film-id>/ with:
-//   film.json (id, name, tag — the same format the app writes), empty characters / transmitters /
-//   lavaliers / schedule ([]), scenes.json ({}), settings.json ({}) and inbox.json with an empty
+//   film.json (id, name, tag — the same format the app writes), the starter kit (tools/starter-kit.json: 12 TX,
+//   12 lavs, 12 IFB receivers and headphones, numbers only), empty characters / schedule ([]), scenes.json ({}), settings.json ({}) and inbox.json with an empty
 //   Gmail search (fill it in before the first production email).
 // It never pushes and never talks to GitHub: the next steps are printed at the end.
 // Uses only node itself (no packages). Tested in tests/new-film-repo.test.js.
@@ -16,6 +16,19 @@ import { readFile, writeFile, mkdir, readdir, copyFile, access } from 'node:fs/p
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { projectToFiles, formatJson } from '../src/store/repo-files.js';
+
+// The kit every new film starts with: numbers only, a neutral colour, no model (tools/starter-kit.json).
+export async function starterKit() {
+  const kit = JSON.parse(await readFile(fileURLToPath(new URL('./starter-kit.json', import.meta.url)), 'utf8'));
+  const numbers = count => Array.from({ length: count }, (_, i) => String(i + 1));
+  const color = kit.neutral_color;
+  return {
+    transmitters: numbers(kit.transmitters).map(id => ({ id, model: '', color, connector: '', order: Number(id), frequency: '' })),
+    lavaliers: numbers(kit.lavaliers).map(id => ({ id, model: '', color, connector: '', attenuated: false, brand: '' })),
+    ifbReceivers: numbers(kit.ifb_receivers).map(id => ({ id, model: '', color, connector: '' })),
+    ifbHeadphones: numbers(kit.ifb_headphones).map(id => ({ id, model: '', color, connector: '', attenuated: false })),
+  };
+}
 
 const USAGE = 'Usage: node tools/new-film-repo.mjs <target-folder> <film-id> "<Film name>" <TAG> [--from <soundcheck-data clone>]';
 
@@ -56,8 +69,9 @@ export async function makeFilmRepo({ target, id, name, tag, from }) {
     if (await exists(join(from, file))) await write(file, await readFile(join(from, file), 'utf8'));
   }
 
-  // the film's starting files, written exactly as the app writes them (repo-files.js)
-  const emptyFilm = { id, name, tag, characters: [], transmitters: [], lavaliers: [], schedule: [],
+  // the film's starting files, written exactly as the app writes them (repo-files.js), with the starter kit
+  // (tools/starter-kit.json: TX, lavs, IFB receivers and headphones, numbers only — Ana, 5 Nov 2026)
+  const emptyFilm = { id, name, tag, characters: [], ...(await starterKit()), schedule: [],
     scenes: {}, settings: {}, presets: {} };
   for (const [path, content] of Object.entries(projectToFiles(emptyFilm))) {
     await write(`projects/${id}/${path}`, formatJson(content));

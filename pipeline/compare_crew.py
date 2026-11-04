@@ -14,6 +14,8 @@ import difflib
 import re
 import unicodedata
 
+from crew_colors import color_for
+
 DAILY = {"PERSONALE AGGIUNTO", "AGGIUNTI"}  # AGGIUNTI: Lux Vide (Confine, 5 Nov)
 
 
@@ -84,8 +86,10 @@ def check_crew(odg_crew, crew, ifb_rows):
         # a daily hire with no known role goes after the other daily people, at the end
         others = [p for p in order if p.get("daily")] if daily else                  [p for p in order if department_of.get(p["name"]) == entry["department"]]
         neighbour = (with_role or others or order[-1:] or [None])[-1]
+        # the colour: the same as someone with the same job on this film, else the usual colour for the job
         person = {"name": entry["name"], "job": entry["role"],
-                  "color": (neighbour or {}).get("color", "#e8e4e1")}
+                  "color": with_role[-1]["color"] if with_role and with_role[-1].get("color")
+                  else color_for(entry["role"], entry["department"])}
         if daily:
             person["daily"] = True
         at = order.index(neighbour) + 1 if neighbour else len(order)
