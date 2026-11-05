@@ -50,6 +50,7 @@ FIRST = page(
     row(478, (35, "ID"), (80, "RUOLO"), (163, "ATTORE"), (304, "SCENE")),
     row(489, (36, "1"), (52, "Marco Bianchi"), (137, "Actor One"), (245, "101"), (417, "06.45")),
     row(501, (36, "4"), (52, "Lea"), (137, "Actor Two"), (245, "101"), (308, "102"), (417, "07.00")),
+    row(512, (34, "12 Pino Lo Russo"), (137, "Actor Three"), (232, "102"), (417, "15.30")),
     row(533, (34, "FABBISOGNI"), (303, "MEZZI DI SCENA")),
     row(545, (34, "101-102: Borsa Lea (telefono,"), (303, "101: Moto Marco")),
     row(557, (34, "chiavi)")),
@@ -90,7 +91,12 @@ class LuxVideLayoutTest(unittest.TestCase):
 
     def test_the_cast_keeps_the_role_as_printed_in_capitals(self):
         self.assertEqual(ODG["cast"], [{"id": "1", "role": "MARCO BIANCHI", "actor": "Actor One"},
-                                       {"id": "4", "role": "LEA", "actor": "Actor Two"}])
+                                       {"id": "4", "role": "LEA", "actor": "Actor Two"},
+                                       {"id": "12", "role": "PINO LO RUSSO", "actor": "Actor Three"}])
+
+    def test_a_two_digit_id_printed_against_its_role_and_a_scene_number_left_of_its_column_are_read(self):
+        third = ODG["cast"][2]
+        self.assertEqual((third["id"], third["actor"]), ("12", "Actor Three"), "the scene 102 is not part of the name")
 
     def test_needs_are_read_column_by_column_and_a_wrapped_line_stays_with_its_item(self):
         notes = ODG["notes"]

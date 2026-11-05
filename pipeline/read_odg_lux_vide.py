@@ -101,8 +101,14 @@ def read_cast(lines, top, bottom):
         for x, text in rows[y]:
             cells.setdefault(column_of(x, CAST_COLUMNS), []).append(text)
         number = " ".join(cells.get("id", []))
+        joined = re.fullmatch(r"(\d+)\s+(.+)", number)  # '12 Filippo Lo Bianco': a 2-digit id printed close to its role
+        if joined:
+            number = joined.group(1)
+            cells["role"] = [joined.group(2)] + cells.get("role", [])
+        # a scene number printed further left than its column ('Valentina Ghelfi 828', ODG #27): names have no digits
+        actor = " ".join(word for word in " ".join(cells.get("actor", [])).split() if not re.match(r"\d", word))
         if re.fullmatch(r"\d+", number) and cells.get("role"):
-            cast.append({"id": number, "role": " ".join(cells["role"]).upper(), "actor": " ".join(cells.get("actor", []))})
+            cast.append({"id": number, "role": " ".join(cells["role"]).upper(), "actor": actor})
     return cast
 
 
