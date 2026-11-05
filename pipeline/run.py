@@ -296,7 +296,7 @@ def file_locations(film):
     places = json.loads(target.read_text(encoding="utf-8")) if target.exists() else {}
     for odg in sorted((film / "docs").glob("day-*/odg.pdf")):
         date = read_odg(odg)["date"]
-        place = where_from_pdf(odg) if date else None
+        place = where_from_pdf(odg, settings["commute"].get("drive_to", "")) if date else None
         if place:
             places[date] = place
     if target.exists() and json.loads(target.read_text(encoding="utf-8")) == places:

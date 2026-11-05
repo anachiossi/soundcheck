@@ -201,8 +201,10 @@ function wrapMoment(row) {
 // set), asked to Google Maps for the time you leave — Google's time only (Ana, 3 Nov: the margin is the leave
 // alarm's heads-up, not the drive). The ride's address is ONLY the script property RIDE_FROM (never in the data).
 // No address, no place, or Maps fails → travel_max, as before.
+// From: the film's commute "ride_from" when the ride starts at a PUBLIC place (Confine, 5 Nov: "Anagnina", the camera
+// truck leaves from there), else the script property RIDE_FROM (a private address: only there, never in the data).
 function travelMinutes(c, place, date, meet) {
-  const from = PropertiesService.getScriptProperties().getProperty('RIDE_FROM');
+  const from = c.ride_from || PropertiesService.getScriptProperties().getProperty('RIDE_FROM');
   if (c.travel !== 'maps' || !from || !place) return { minutes: c.travel_max, maps: false };
   const to = placeOf(place);
   const cache = CacheService.getScriptCache();

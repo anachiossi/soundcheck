@@ -12,9 +12,13 @@ Used by: run.py → file_locations (locations.json)
 
 import re
 
-LABEL = re.compile(r"^(PARCHEGGIO TROUPE[^:]*|LOCATION|CAMPO BASE[^:]*)\s*:\s*(.*)$", re.I)
+LABEL = re.compile(r"^(PARCHEGGIO TROUPE[^:]*|LOCATION|SET|MEZZI TECNICI|CAMPO BASE[^:]*)\s*:\s*(.*)$", re.I)
 LINK = re.compile(r"https://(?:maps\.app\.goo\.gl|goo\.gl/maps|maps\.google\.\w+|www\.google\.\w+/maps)/\S+")
-PREFERENCE = ("PARCHEGGIO", "LOCATION", "CAMPO")  # by car: the crew parking, else the set, else the base camp
+# by car: the crew parking, else the set ("LOCATION", Lux Vide "SET"), else the base camp, else the technical trucks
+PREFERENCE = ("PARCHEGGIO", "LOCATION", "SET", "CAMPO", "MEZZI")
+# a film's commute "drive_to": "mezzi" (Confine, 5 Nov: Ana rides the camera truck, so it goes to the MEZZI TECNICI,
+# Lux Vide also "CAMPO BASE/MEZZI TECNICI"; else the set)
+PREFERENCE_MEZZI = ("MEZZI", "SET", "LOCATION", "PARCHEGGIO", "CAMPO")
 # The ODG's weather ("METEO: Pomeriggio: irregolarmente nuvoloso…", LBE "Meteo: Rovesci intensi dalle 7:00…"):
 # rain or a storm anywhere in it → a rain day: the Apps Script adds the film's commute "rain_penalty" to the drive
 # (Ana, 3 Nov: "if there is rain or storm that day I'll give it a rain penalty").
@@ -33,25 +37,26 @@ def weather_of(lines):
     return {}
 
 
-def where_to_drive(lines):
+def where_to_drive(lines, preference=PREFERENCE):
     found = {}
     for i, line in enumerate(lines[:160]):  # the header block: never the crew list or the needs further down
         match = LABEL.match(line.strip())
         if not match:
             continue
-        kind = match.group(1).upper().split()[0]
+        kind = "MEZZI" if "MEZZI" in match.group(1).upper() else match.group(1).upper().split()[0]
         if kind in found:
             continue
         text = match.group(2)
         link = LINK.search(text) or (LINK.search(lines[i + 1]) if i + 1 < len(lines) else None)
         found[kind] = {"label": " ".join(match.group(1).upper().split()[:2]).rstrip(","),
                        "text": LINK.sub("", text).strip(" -–"), "link": link.group(0) if link else ""}
-    return next((found[kind] for kind in PREFERENCE if kind in found and (found[kind]["link"] or found[kind]["text"])), None)
+    return next((found[kind] for kind in preference if kind in found and (found[kind]["link"] or found[kind]["text"])), None)
 
 
-def where_from_pdf(path):
-    """Where to drive + that day's weather from the ODG: {label, text, link, weather, rain} or None."""
+def where_from_pdf(path, drive_to=""):
+    """Where to drive + that day's weather from the ODG: {label, text, link, weather, rain} or None.
+    drive_to: the film's commute "drive_to" ("mezzi" → the technical trucks first)."""
     import pymupdf as fitz
     lines = [line.strip() for page in fitz.open(path) for line in page.get_text().splitlines() if line.strip()]
-    place = where_to_drive(lines)
+    place = where_to_drive(lines, PREFERENCE_MEZZI if drive_to == "mezzi" else PREFERENCE)
     return {**place, **weather_of(lines)} if place else None
