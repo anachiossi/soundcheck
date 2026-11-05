@@ -10,7 +10,7 @@ Which emails belong to a film is written in the film's folder (private data repo
 An email with several documents (3 ODGs + a PDL…) is saved as one folder per document,
 <date>_<subject>_<id>-odg-53 · -stralci-55 · -pdl · -other (mail_packets.py), each with its own message_id
 ("<Message-ID>#odg-53"), so the robot reads every one.
-PDFs are saved in projects/<film>/_inbox/<date>_<subject>_<id>/ (not committed to git; run.py
+The PDFs (and a map sent as a photo; never the transport list, Ana 5 Nov) are saved in projects/<film>/_inbox/<date>_<subject>_<id>/ (not committed to git; run.py
 copies every email's PDFs to docs/archive/ in the private data repo, outdated ones too). Each email is recognised by its own Message-ID, so a
 corrected ODG sent again with the same subject is still a new email.
 
@@ -29,6 +29,7 @@ from datetime import timezone
 from email.utils import parsedate_to_datetime
 from pathlib import Path
 
+from day_documents import KEPT, is_map, is_transport
 from mail_packets import packets
 
 
@@ -139,10 +140,13 @@ def fetch(film_folder, open_mail=open_mailbox):
         if folder.exists() or any(inbox.glob(f"{glob_safe(folder.name)}-*")):  # saved before (whole, or in packets)
             continue
         message = email.message_from_bytes(ask_gmail(mailbox, uid, WHOLE_EMAIL)[0][1])
-        pdfs = {}
+        pdfs = {}  # the email's documents: PDFs, and photos sent as attachments (a map), never the transport list
         for part in message.walk():
             name = decoded(part.get_filename())
-            if name.lower().endswith(".pdf"):
+            if not name.lower().endswith(KEPT) or is_transport(name):
+                continue
+            logo = not name.lower().endswith(".pdf") and part.get_content_disposition() != "attachment" and not is_map(name)
+            if not logo:  # 'image.png' inside the signature: not a document
                 pdfs[name] = part.get_payload(decode=True)
         # an email with several documents (ODGs, PDL…) → one folder per document (mail_packets.py)
         for label, names in packets(list(pdfs)) if pdfs else []:

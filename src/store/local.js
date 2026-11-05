@@ -59,7 +59,14 @@ export async function loadDocument(projectId, path) {
   const db = await openDb(projectId);
   const bytes = await run(db, 'readonly', store => store.get(path), DOCS);
   db.close();
-  return bytes ? new Blob([bytes], { type: 'application/pdf' }) : null;
+  return bytes ? new Blob([bytes], { type: documentType(path) }) : null;
+}
+
+// 'docs/day-27/map.jpg' → 'image/jpeg' (a map sent as a photo); everything else is a PDF
+export function documentType(path) {
+  if (/\.jpe?g$/i.test(path)) return 'image/jpeg';
+  if (/\.png$/i.test(path)) return 'image/png';
+  return 'application/pdf';
 }
 
 // Costume and kit photos (photos.js), in the same place as the PDFs, by their path in the photos repo

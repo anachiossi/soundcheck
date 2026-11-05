@@ -67,15 +67,29 @@ export async function shareMics(project, sceneIds, title, fileName) {
 
 const exportScene = (project, sceneId) => shareMics(project, [sceneId], `Scene ${sceneId}`, sceneFileName(project, sceneId));
 
-// 📄 ODG / 📄 Sides: only shown once that day's PDF is on this device.
-function DocumentButtons({ project, day }) {
-  const kinds = [['odg', 'ODG'], ['sides', 'Sides']];
-  return kinds.map(([file, label]) => {
-    const path = `${project.folder}/docs/day-${day}/${file}.pdf`;
-    if (!project.documents?.[path]) return null;
-    return html`<button class="btn btn--doc" key=${file}
-      onClick=${() => setState({ screen: 'document', documentPath: path, documentTitle: `${label} · Day ${day}`, documentFile: `${label === 'Sides' ? 'sides' : label}_${dayTag(day)}_${shortDate(shootingDays(project).find(d => d.day === day)?.date)}.pdf`, documentFrom: 'schedule' })}><${Icon} name="document" /> ${label}</button>`;
+// 📄 ODG / 📄 Sides / 🗺 Map, then the day's other papers by their own name ('IC PROTOCOLLO SET CHIUSO'):
+// every file the robot filed in docs/day-<n>/ (pipeline/day_documents.py), shown once it is on this device.
+const FIRST = { odg: 'ODG', sides: 'Sides', map: 'Map' };
+
+function dayDocuments(project, day) {
+  const folder = `${project.folder}/docs/day-${day}/`;
+  const found = Object.keys(project.documents || {}).filter(path => path.startsWith(folder)).map(path => {
+    const [, name, extension] = /^(.*)\.(\w+)$/.exec(path.slice(folder.length));
+    const map = /^map(-\d+)?$/.exec(name);
+    const label = FIRST[name] || (map ? `Map ${map[1] ? map[1].slice(1) : ''}`.trim() : name.replace(/_/g, ' '));
+    return { path, name, extension, label, icon: map ? 'map' : 'document' };
   });
+  const order = paper => { // ODG, Sides, Map first; the other papers after them
+    const place = Object.keys(FIRST).indexOf(paper.name.replace(/-\d+$/, ''));
+    return place === -1 ? 99 : place;
+  };
+  return found.sort((a, b) => order(a) - order(b) || a.name.localeCompare(b.name));
+}
+
+function DocumentButtons({ project, day }) {
+  const date = shortDate(shootingDays(project).find(d => d.day === day)?.date);
+  return dayDocuments(project, day).map(paper => html`<button class="btn btn--doc" key=${paper.path}
+      onClick=${() => setState({ screen: 'document', documentPath: paper.path, documentTitle: `${paper.label} · Day ${day}`, documentFile: `${paper.name === 'odg' ? 'ODG' : paper.name}_${dayTag(day)}_${date}.${paper.extension}`, documentFrom: 'schedule' })}><${Icon} name=${paper.icon} /> ${paper.label}</button>`);
 }
 
 function DayView({ project, edit, dayNumber }) {

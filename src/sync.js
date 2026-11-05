@@ -133,8 +133,9 @@ async function download(connection, tree, store) {
   if (kitOf(merged) !== kitOf(project)) await download(connection, tree, store);
 }
 
-// PDFs: every 'docs/day-<n>/odg.pdf' and 'sides.pdf', and 'docs/script.pdf', when new or
-// changed (a film's worth is ~25 MB). Yesterday on first: on weak signal those matter most.
+// PDFs: every 'docs/day-<n>/odg.pdf', 'sides.pdf', the day's map ('map.pdf' or a photo, 'map.jpg') and its other
+// papers, and 'docs/script.pdf', when new or changed (a film's worth is ~25 MB). Yesterday on first: on weak
+// signal those matter most.
 async function downloadDocuments(connection, tree, store) {
   const project = store.read();
   const prefix = project.folder + '/docs/';
@@ -146,7 +147,7 @@ async function downloadDocuments(connection, tree, store) {
   // docs/archive/ (every official email, outdated too — pipeline/run.py file_archive) stays in the repo only
   const wanted = Object.entries(tree.files)
     .filter(([path, sha]) => ((path.startsWith(prefix) && !path.startsWith(`${prefix}archive/`)) || (manuals && path.startsWith(manuals)))
-      && path.endsWith('.pdf') && documents[path] !== sha)
+      && /\.(pdf|jpe?g|png)$/i.test(path) && documents[path] !== sha)
     .sort(([a], [b]) => (dateOf(a) < yesterday) - (dateOf(b) < yesterday));
   let fetched = 0;
   for (const [path, sha] of wanted) {

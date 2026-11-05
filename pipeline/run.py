@@ -203,25 +203,33 @@ def add_late_sides(film, other_sides, sides_notes=None):
 
 
 def file_documents(film, other_sides):
-    """Copy each ODG email's PDFs to docs/day-<n>/ and the sides' lines to lines/sides/
-    (only when new or changed)."""
+    """Copy each ODG email's PDFs to docs/day-<n>/ (odg.pdf, sides.pdf, map.pdf and the day's other papers,
+    day_documents.py) and the sides' lines to lines/sides/ (only when new or changed)."""
     import shutil
     from cue_lines import write_sides_lines
+    from day_documents import day_in_subject, extra_documents
     from odg_reader import odg_reader_for
     read_odg = odg_reader_for(film)  # the film's own reader (settings.json "odg_reader")
     settings = json.loads((film / "settings.json").read_text(encoding="utf-8")) if (film / "settings.json").exists() else {}
     changed = []
     for email_folder in emails_oldest_first(film / "_inbox"):
         odg = next((p for p in email_folder.glob("*.pdf") if "ODG" in p.name.upper()), None)
-        if not odg:
-            continue
-        sheet = read_odg(odg)
-        day = sheet["number"]
-        sides = pick_sides(settings, email_folder, day, other_sides)  # the same choice as the day's proposal
-        if sides:  # the lines of the day's scenes, for 🎙 Cues
-            scene_ids = [s["scene_id"] for s in sheet["scenes"]]
-            changed += [f"Cues of scene {sid} (sides)" for sid in write_sides_lines(film, sides, day, scene_ids)]
-        for source, name in ((odg, "odg.pdf"), (sides, "sides.pdf")):
+        sides = None
+        if odg:
+            sheet = read_odg(odg)
+            day = sheet["number"]
+            sides = pick_sides(settings, email_folder, day, other_sides)  # the same choice as the day's proposal
+            if sides:  # the lines of the day's scenes, for 🎙 Cues
+                scene_ids = [s["scene_id"] for s in sheet["scenes"]]
+                changed += [f"Cues of scene {sid} (sides)" for sid in write_sides_lines(film, sides, day, scene_ids)]
+        else:  # "R: CONFINE | ODG#27": the day's other papers, sent apart
+            email = json.loads((email_folder / "email.json").read_text(encoding="utf-8"))
+            day = day_in_subject(email.get("subject"))
+            if not day:
+                continue
+        # the map and every other paper of the day, next to the ODG (day_documents.py); never the transport list
+        extras = extra_documents(email_folder, {odg, sides})
+        for source, name in [(odg, "odg.pdf"), (sides, "sides.pdf")] + extras:
             if not source:
                 continue
             target = film / "docs" / f"day-{day}" / name

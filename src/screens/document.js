@@ -1,4 +1,5 @@
-// document.js — reads a day's PDF (ODG or sides) from the copy kept on the device,
+// document.js — reads a day's PDF (ODG, sides, map, other papers) from the copy kept on the device,
+// (a map sent as a photo is shown as a picture),
 // so it opens with no signal. Pages are drawn one under the other, as wide as the
 // screen; pinch to zoom. "Share" hands the PDF to the phone (Files, Books, WhatsApp…).
 // The PDF drawing uses pdf.js (vendor/pdfjs), loaded only when a document is opened.
@@ -34,20 +35,28 @@ export function DocumentScreen({ state }) {
   const holder = useRef(null);
   const [problem, setProblem] = useState('');
   const [blob, setBlob] = useState(null);
+  const [picture, setPicture] = useState(''); // a map sent as a photo: its address on this device
 
   useEffect(() => {
     let cancelled = false;
+    let address = '';
     setProblem('');
+    setPicture('');
     loadDocument(project.id, documentPath)
       .then(found => {
         if (!found) throw new Error('This document is not on this device yet. Open the app once with signal.');
         setBlob(found);
+        holder.current.innerHTML = '';
+        if (found.type.startsWith('image/')) {
+          address = URL.createObjectURL(found);
+          return setPicture(address);
+        }
         const goTo = getState().documentPage;
         if (goTo) setState({ documentPage: null }); // used once: the next ODG or manual opens at its first page
         return drawPages(found, holder.current, () => cancelled, goTo);
       })
       .catch(error => !cancelled && setProblem(error.message));
-    return () => { cancelled = true; };
+    return () => { cancelled = true; if (address) URL.revokeObjectURL(address); };
   }, [documentPath]);
 
   const fileName = exportName(getState().project, getState().documentFile || `${documentTitle}.pdf`);
@@ -59,5 +68,6 @@ export function DocumentScreen({ state }) {
     </div>
     ${problem && html`<p class="empty">${problem}</p>`}
     ${!problem && !blob && html`<p class="muted">Opening…</p>`}
+    ${picture && html`<div class="pdf-pages"><img class="pdf-page" src=${picture} alt=${documentTitle} /></div>`}
     <div class="pdf-pages" ref=${holder}></div>`;
 }
