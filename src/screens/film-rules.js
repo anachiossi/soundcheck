@@ -57,6 +57,7 @@ function alarmRules(commute) {
   if (!commute) return ['No wake-up plan for this film.'];
   const items = [];
   if (commute.ride_with) items.push(`Riding with ${commute.ride_with}: the alarms follow their call on the ODG${commute.ride_gap_if_unknown ? ` (not printed yet: ${commute.ride_gap_if_unknown} min before yours)` : ''}.`);
+  if (commute.days === 'days_with_2nd_unit') items.push('Only the days that also have a 2nd unit (you work the main unit those days).');
   if (commute.walk_to_ride) items.push(`Walk to their house first: ${commute.walk_to_ride} min.`);
   items.push(`${commute.travel === 'maps' ? 'At the crew parking' : 'Meeting point'} ${commute.meet_before_call ?? 45} min before the call.`);
   items.push(commute.travel === 'maps' ? 'Drive: Google Maps for that day and hour (from the ride\'s address, kept only in the robot).' : `Drive: ${commute.travel_min ?? 75}–${commute.travel_max ?? 90} min.`);

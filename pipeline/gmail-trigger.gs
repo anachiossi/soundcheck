@@ -138,6 +138,8 @@ function checkBedtime() {
 //   start = the ride's call (or Ana's own) · meet = start − meet_before_call
 //   leave = meet − drive − walk_to_ride · wake = leave − get_ready
 // The MAIN unit's call only (a 2nd unit's rows have unit '2nd').
+// commute "days": "days_with_2nd_unit" → only the dates that also have a 2nd unit (Ana, 5 Nov, Il colpo: "I work ON
+// THE DAYS we have 2nd unit but I work ON THE MAIN unit … never set alarms for a day of main unit only").
 function upcomingPlans(now) {
   const plans = [];
   const dates = [0, 1, 2].map(n => Utilities.formatDate(new Date(now.getTime() + n * 86400000), TIME_ZONE, 'yyyy-MM-dd'));
@@ -152,6 +154,7 @@ function upcomingPlans(now) {
     for (const date of dates) {
       const row = main.filter(r => r.date === date).sort((a, b) => a.order - b.order)[0];
       if (!row) continue;
+      if (c.days === 'days_with_2nd_unit' && !schedule.some(r => r.date === date && r.unit)) continue; // not Ana's day
       const own = ownCall(c, row.call, calls[date]);
       const start = rideStart(c, own, calls[date]);
       if (start === null || start === undefined) continue;

@@ -190,10 +190,13 @@ function rideCall(project, commute, day, call) {
 // The alarms never wait for a review (Ana, 7 Oct: "make sure the alarm works with or without auto
 // approve"): the date / call / wrap of an ODG not yet accepted count already. Only times and dates —
 // the scenes still wait for Ana. day.fromOdg = the ODG it came from (shown on the card).
+// commute "days": "days_with_2nd_unit" → only the days that also have a 2nd unit are Ana's (Il colpo, 5 Nov: she
+// works the main unit, but only on those days); the same rule as the alarms robot (gmail-trigger.gs).
 export function nextShootingDay(project, now = new Date()) {
   const { date: today, minute } = clockOf(now);
   const ahead = d => d.date > today || (d.date === today && (minutesOf(d.call) ?? 0) > minute);
-  return shootingDays(withWaitingOdgTimes(project)).filter(ahead).sort((a, b) => a.date.localeCompare(b.date))[0] || null;
+  const mine = d => commuteOf(project)?.days !== 'days_with_2nd_unit' || Boolean(d.second);
+  return shootingDays(withWaitingOdgTimes(project)).filter(ahead).filter(mine).sort((a, b) => a.date.localeCompare(b.date))[0] || null;
 }
 
 const TIME_FIELDS = ['date', 'call', 'wrap'];

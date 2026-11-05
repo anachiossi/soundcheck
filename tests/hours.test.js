@@ -95,6 +95,19 @@ test('the night before: meeting, leave window, wake, sleep (Ana\'s calculator)',
   assert.equal(nextShootingDay(project, at('2026-10-01', '12:00')), null, 'after its call: the next one');
 });
 
+test('on a film where Ana works only the days with a 2nd unit, a main-unit-only day sets no alarm (Ana, 5 Nov)', async () => {
+  const { nextShootingDay } = await import('../src/hours-rules.js');
+  const schedule = [
+    { scene_id: '1', day: 58, order: 1, date: '2026-11-06', call: '08:00', wrap: '16:00' },
+    { scene_id: '2', day: 59, order: 1, date: '2026-11-09', call: '17:00', wrap: '01:00' },
+    { scene_id: '3', day: 59, order: 2, date: '2026-11-09', call: '08:00', wrap: '16:00', unit: '2nd' }];
+  const project = { schedule, scenes: [], settings: { commute: { days: 'days_with_2nd_unit' } } };
+  const next = nextShootingDay(project, at('2026-11-05', '20:00'));
+  assert.equal(next.day, 59, 'day 58 has no 2nd unit: skipped');
+  assert.equal(next.call, '17:00', 'the main unit\'s call: Ana works the main unit');
+  assert.equal(nextShootingDay({ ...project, settings: { commute: {} } }, at('2026-11-05', '20:00')).day, 58, 'without the rule: every day');
+});
+
 test('the alarms use the call of an ODG still waiting for review (Ana, 7 Oct)', async () => {
   const { nextShootingDay, wakePlan } = await import('../src/hours-rules.js');
   const project = {

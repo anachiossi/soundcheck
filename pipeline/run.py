@@ -157,6 +157,10 @@ def tell_tomorrow(film, odgs):
     from send_push import send
     calls = json.loads((film / "calls.json").read_text(encoding="utf-8")) if (film / "calls.json").exists() else {}
     for odg in odgs:
+        # Il colpo: Ana works only the days that also have a 2nd unit (commute "days", 5 Nov)
+        has_second = any((change.get("op") or {}).get("unit") for change in odg.get("changes", []))
+        if commute.get("days") == "days_with_2nd_unit" and not has_second:
+            continue
         plan = wake_plan(commute, odg.get("call"), calls.get(odg.get("date"), {}))
         if plan:
             ride = f" · {commute['ride_with'].split()[0]} {plan['ride_call']}" if plan["ride_call"] else ""
