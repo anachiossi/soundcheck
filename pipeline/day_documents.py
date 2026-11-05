@@ -22,8 +22,8 @@ KEPT = (".pdf", ".jpg", ".jpeg", ".png")  # the files the robot saves from an em
 
 
 def is_transport(name):
-    """'Lista trasporti Venerdì 6 novembre.pdf', 'TRANSPORT LIST.pdf' → True."""
-    return bool(re.search(r"traspor|transport", name, re.I))
+    """'Lista trasporti Venerdì 6 novembre.pdf', 'TRANSPORT LIST.pdf', 'TL#26 DEL 511.pdf' (Lux Vide's) → True."""
+    return bool(re.search(r"traspor|transport|(?<![a-z])TL\s*#?\s*\d", name, re.I))
 
 
 def is_map(name):

@@ -24,6 +24,8 @@ class DayDocumentsTest(unittest.TestCase):
     def test_the_transport_list_is_never_kept(self):
         self.assertTrue(is_transport("Lista trasporti Venerdì 6 novembre.pdf"))
         self.assertTrue(is_transport("TRANSPORT LIST.pdf"))
+        self.assertTrue(is_transport("TL#26 DEL 511.pdf"), "Lux Vide calls it TL")
+        self.assertFalse(is_transport("CASTLE plan.pdf"))
         self.assertFalse(is_transport("ODG#27.pdf"))
 
     def test_an_email_with_no_odg_finds_its_day_in_the_subject(self):
