@@ -108,8 +108,10 @@ Google's time only (no margin); `leave_alarm_before` = the ⏰ leave rings that 
 in the Apps Script editor run **`testMyPlan`** → the log lists the next 3 days (drive, Maps or not, rain, wake, leave).
 **Phone calendar:** `<URL>?key=<ALARM_KEY>&calendar=<film>` = an iCalendar feed (settings `"calendar"`:
 `days_with_2nd_unit` | `all`); iPhone → Settings → Calendar → Accounts → Add Account → Other → Add Subscribed Calendar.
-- The robot (`doGet` → `alarmAnswer` in `pipeline/gmail-trigger.gs`) answers `06:00;06:45` (wake;leave, the
-  same sums as the app's ⏰) when the next morning is a shooting day, or `none` (weekend, day off). Before noon
+- The robot (`doGet` → `alarmAnswer` in `pipeline/gmail-trigger.gs`) answers `06:00;Il colpo · D59 · 09/11/2026;06:45`
+  (wake;name;leave, the same sums as the app's ⏰) when the next morning is a shooting day, or `none` (weekend, day off).
+  The name sits in the middle (5 Nov) so the shortcut's First Item / Last Item are still the two times; the shortcut
+  uses Item 2 as the alarms' label. Il colpo's commute `"days": "days_with_2nd_unit"`: only the days with a 2nd unit. Before noon
   "next morning" = today; else tomorrow — so Friday's run says `none` and Sunday's sets Monday. An ODG not yet
   reviewed counts already. Tested with a fake Google on the real LBE data (Fri/Sat → none, Sun → 05:30;06:15).
 - In Apps Script: paste the new `gmail-trigger.gs` → Script properties → `ALARM_KEY` = a long random word →

@@ -21,10 +21,13 @@ import { myCallFor } from '../my-call.js';
 
 export const SHORTCUT = 'soundcheck alarms';
 
-// shortcuts://run-shortcut?name=soundcheck%20alarms&input=text&text=06:00;06:45 — just the two times, so
-// the shortcut takes the First Item (wake) and the Last Item (leave): no index to type (Ana, iOS 27)
+// shortcuts://run-shortcut?name=soundcheck%20alarms&input=text&text=06:00;Il colpo · D59 · 09/11/2026;06:45 — the
+// shortcut takes the First Item (wake) and the Last Item (leave): no index to type (Ana, iOS 27); the film, day and
+// date in the middle name the alarms (Ana, 5 Nov), the same answer as the robot's (gmail-trigger.gs alarmLabel)
+export const alarmLabel = (project, plan) =>
+  `${project.name || ''} · D${plan.day} · ${plan.date.split('-').reverse().join('/')}`.replace(/;/g, ',');
 export const alarmsLink = (project, plan) => `shortcuts://run-shortcut?name=${encodeURIComponent(SHORTCUT)}&input=text&text=${
-  encodeURIComponent(`${plan.wake};${plan.leaveAlarm}`)}`; // leaveAlarm: the heads-up before walking out
+  encodeURIComponent(`${plan.wake};${alarmLabel(project, plan)};${plan.leaveAlarm}`)}`; // leaveAlarm: the heads-up before walking out
 
 export function Tomorrow({ project, myCall }) {
   const day = nextShootingDay(project);

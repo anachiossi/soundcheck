@@ -108,6 +108,13 @@ test('on a film where Ana works only the days with a 2nd unit, a main-unit-only 
   assert.equal(nextShootingDay({ ...project, settings: { commute: {} } }, at('2026-11-05', '20:00')).day, 58, 'without the rule: every day');
 });
 
+test('the alarms are named after the film, day and date, between the two times (Ana, 5 Nov)', async () => {
+  const { alarmsLink } = await import('../src/parts/tomorrow.js');
+  const link = alarmsLink({ name: 'Il colpo' }, { day: 59, date: '2026-11-09', wake: '06:00', leaveAlarm: '06:45' });
+  assert.equal(decodeURIComponent(link.split('&text=')[1]), '06:00;Il colpo · D59 · 09/11/2026;06:45',
+    'first item = wake, last item = leave: a shortcut that ignores the name still works');
+});
+
 test('the alarms use the call of an ODG still waiting for review (Ana, 7 Oct)', async () => {
   const { nextShootingDay, wakePlan } = await import('../src/hours-rules.js');
   const project = {

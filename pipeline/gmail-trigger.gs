@@ -293,7 +293,16 @@ function alarmAnswer(now) {
     .filter(plan => plan.wake.getTime() > now.getTime() && plan.wake.getTime() - now.getTime() <= 24 * 3600 * 1000)
     .sort((a, b) => a.wake - b.wake);
   if (!ahead.length) return 'none';
-  return `${clockAt(ahead[0].wake)};${clockAt(ahead[0].leave)}`;
+  return `${clockAt(ahead[0].wake)};${alarmLabel(ahead[0])};${clockAt(ahead[0].leave)}`;
+}
+
+// The alarms' name, in the MIDDLE of the answer (Ana, 5 Nov: "remember the name of the project … alarms set for
+// il colpo 04/11/2026"): '06:00;Il colpo · D59 · 09/11/2026;06:45'. The shortcut's First Item (wake) and Last
+// Item (leave) stay the times, so a shortcut that doesn't use the name yet keeps working.
+function alarmLabel(plan) {
+  const name = (readRepo(`projects/${plan.film}/film.json`, true) || {}).name || plan.film;
+  const [year, month, day] = plan.date.split('-');
+  return `${name} · D${plan.day} · ${day}/${month}/${year}`.replace(/;/g, ',');
 }
 
 // ---- Phone calendar -------------------------------------------------------------------------------
