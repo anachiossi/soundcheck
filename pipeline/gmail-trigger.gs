@@ -159,11 +159,8 @@ function upcomingPlans(now) {
       const start = rideStart(c, own, calls[date]);
       if (start === null || start === undefined) continue;
       const meet = start - c.meet_before_call;
-      const drive = travelMinutes(c, places[date], date, meet);
-      // the ODG's weather says rain or a storm (locations.json "rain", read_location.py) → + rain_penalty
-      drive.rain = Boolean(places[date] && places[date].rain && c.rain_penalty);
-      if (drive.rain) drive.minutes += c.rain_penalty;
-      const leave = meet - drive.minutes - c.walk_to_ride;  // walking out of the house
+      const { drive, toMeeting } = commuteLegs(c, places[date], date, meet);
+      const leave = meet - drive.minutes - toMeeting.minutes;  // walking out of the house
       const before = main.filter(r => r.date < date && r.wrap).sort((a, b) => (a.date < b.date ? 1 : -1))[0];
       plans.push({ film, date, day: row.day, call: own, sleepHours: c.sleep_hours, drive,
         // the "leave" alarm rings leave_alarm_before minutes before walking out (Ana, 3 Nov: a 15-minute heads-up)
@@ -203,6 +200,76 @@ function wrapMoment(row) {
 // No address, no place, or Maps fails → travel_max, as before.
 // From: the film's commute "ride_from" when the ride starts at a PUBLIC place (Confine, 5 Nov: "Anagnina", the camera
 // truck leaves from there), else the script property RIDE_FROM (a private address: only there, never in the data).
+// ---- The two legs: home → meeting point, meeting point → the day's place (the alarms AND the app's alarm page) ----
+// Ana, 6 Nov: "home → meeting point by mezzi or walk (under 1 km), meeting point → location by car".
+//   drive      Google Maps (travelMinutes) to the ODG place the film chose (commute "drive_to": 'mezzi', 'location'…;
+//              read_location.py keeps every place printed), + rain_penalty on a rainy ODG, + drive_margin (minutes
+//              Ana adds to Google's time: the free Maps has no "worst case")
+//   toMeeting  commute "to_meeting": 'auto' (walk under 1 km, else public transport) · 'walk' · 'transit' → asked to
+//              Google from the script property HOME_FROM (Ana's address: only there) to the meeting point, arriving
+//              when the ride leaves; without it (or no answer) the film's walk_to_ride minutes
+// over: the page's unsaved choices ({ drive_to, to_meeting, drive_margin }), to see them before saving.
+function commuteLegs(c, dayPlace, date, meet, over) {
+  const settings = Object.assign({}, c, over || {});
+  const place = placeToDrive(dayPlace, settings.drive_to);
+  const drive = travelMinutes(settings, place, date, meet);
+  drive.rain = Boolean(dayPlace && dayPlace.rain && settings.rain_penalty);
+  drive.google = drive.minutes;
+  drive.minutes += (drive.rain ? Number(settings.rain_penalty) : 0) + (Number(settings.drive_margin) || 0);
+  drive.place = place ? { kind: place.kind || '', label: place.label || '', text: place.text || '' } : null;
+  const toMeeting = meetingMinutes(settings, date, meet - drive.minutes);
+  return { drive, toMeeting };
+}
+
+// The ODG place to drive to: the film's "drive_to" kind when printed that day, else parking · location · set · base
+// camp · trucks (read_location.py PREFERENCE). An older locations.json entry (no "places") is the place itself.
+function placeToDrive(dayPlace, driveTo) {
+  if (!dayPlace) return null;
+  const places = dayPlace.places || [dayPlace];
+  const order = [driveTo, 'parcheggio', 'location', 'set', 'campo', 'mezzi'].filter(Boolean);
+  for (const kind of order) {
+    const found = places.find(p => p.kind === kind);
+    if (found) return found;
+  }
+  return places[0] || null;
+}
+
+// Home → meeting point, arriving by `arrive` (minutes after midnight of `date`): { minutes, mode, maps }
+function meetingMinutes(c, date, arrive) {
+  const fallback = { minutes: Number(c.walk_to_ride) || 0, mode: 'fixed', maps: false };
+  const properties = PropertiesService.getScriptProperties();
+  const home = properties.getProperty('HOME_FROM');
+  const meeting = c.ride_from || properties.getProperty('RIDE_FROM');
+  if (!c.to_meeting || !home || !meeting) return fallback;
+  const cache = CacheService.getScriptCache();
+  const key = `meeting|${date}|${arrive}|${c.to_meeting}|${meeting}`.slice(0, 240);
+  const kept = cache.get(key);
+  if (kept) return JSON.parse(kept);
+  try {
+    const by = moment(date, arrive);
+    const ask = mode => {
+      const finder = Maps.newDirectionFinder().setOrigin(home).setDestination(meeting).setMode(mode);
+      if (mode === Maps.DirectionFinder.Mode.TRANSIT && by.getTime() > Date.now()) finder.setArrive(by);
+      return (((finder.getDirections().routes || [])[0] || {}).legs || [])[0];
+    };
+    let mode = c.to_meeting === 'transit' ? 'transit' : 'walk';
+    let leg = ask(mode === 'walk' ? Maps.DirectionFinder.Mode.WALKING : Maps.DirectionFinder.Mode.TRANSIT);
+    if (c.to_meeting === 'auto' && leg && leg.distance.value >= 1000) {  // "walk (under 1 km)", else public transport
+      mode = 'transit';
+      leg = ask(Maps.DirectionFinder.Mode.TRANSIT);
+    }
+    if (!leg) throw new Error('no route to the meeting point');
+    // public transport: from the moment Google says to leave home to the arrival asked for (the waits included)
+    const waited = mode === 'transit' && leg.departure_time ? (by.getTime() / 1000 - leg.departure_time.value) / 60 : 0;
+    const answer = { minutes: Math.ceil(Math.max(leg.duration.value / 60, waited)), mode, maps: true };
+    cache.put(key, JSON.stringify(answer), 6 * 3600);
+    return answer;
+  } catch (error) {
+    console.warn(`To the meeting point: ${error.message}`);  // never the addresses in the log
+    return fallback;
+  }
+}
+
 function travelMinutes(c, place, date, meet) {
   const from = c.ride_from || PropertiesService.getScriptProperties().getProperty('RIDE_FROM');
   if (c.travel !== 'maps' || !from || !place) return { minutes: c.travel_max, maps: false };
@@ -276,6 +343,11 @@ const clockAt = when => Utilities.formatDate(when, TIME_ZONE, 'HH:mm');
 function doGet(e) {
   const key = PropertiesService.getScriptProperties().getProperty('ALARM_KEY');
   if (!key || !e || !e.parameter || e.parameter.key !== key) return ContentService.createTextOutput('wrong key');
+  if (e.parameter.legs) {  // the app's alarm page asks for the two legs (legsAnswer below)
+    let legs;
+    try { legs = legsAnswer(e.parameter); } catch (error) { legs = { error: error.message }; }
+    return ContentService.createTextOutput(JSON.stringify(legs)).setMimeType(ContentService.MimeType.JSON);
+  }
   if (e.parameter.calendar) {  // the phone's subscribed calendar (see calendarOf below)
     return ContentService.createTextOutput(calendarOf(e.parameter.calendar, new Date()))
       .setMimeType(ContentService.MimeType.ICAL);
@@ -296,6 +368,23 @@ function alarmAnswer(now) {
     .sort((a, b) => a.wake - b.wake);
   if (!ahead.length) return 'none';
   return `${clockAt(ahead[0].wake)};${alarmLabel(ahead[0])};${clockAt(ahead[0].leave)}`;
+}
+
+// The app's alarm page (Ana, 6 Nov: "the app page in soundcheck to be able to send the signal too"):
+// …/exec?key=<ALARM_KEY>&legs=<film>&date=2026-11-09&meet=09:30[&drive_to=mezzi&to_meeting=auto&drive_margin=10]
+// → { drive: { minutes, google, maps, rain, place: { kind, label, text } }, toMeeting: { minutes, mode, maps } } — the
+// same sums as the alarms (commuteLegs); the page's unsaved choices go in the question. Never an address of Ana's.
+function legsAnswer(parameters) {
+  const film = parameters.legs;
+  const settings = readRepo(`projects/${film}/settings.json`, true) || {};
+  const date = parameters.date || '';
+  const meet = minutesOf(parameters.meet);
+  if (!settings.commute || !/^\d{4}-\d{2}-\d{2}$/.test(date) || meet === null) return { error: 'no plan' };
+  const c = Object.assign({}, COMMUTE, settings.commute);
+  const over = {};
+  for (const name of ['drive_to', 'to_meeting', 'drive_margin']) if (parameters[name] !== undefined) over[name] = parameters[name];
+  const dayPlace = c.travel === 'maps' ? (readRepo(`projects/${film}/locations.json`, true) || {})[date] : null;
+  return commuteLegs(c, dayPlace, date, meet, over);
 }
 
 // The alarms' name, in the MIDDLE of the answer (Ana, 5 Nov: "remember the name of the project … alarms set for

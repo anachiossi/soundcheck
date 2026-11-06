@@ -38,6 +38,8 @@
 //                          which kit photo shows which thing (gear-photos.js); the photos live in their own private repo
 //     calls.json           { '2026-10-12': { 'Maria Rossi': '08:50', … } } everyone's call on each ODG
 //                          (pipeline/run.py file_crew_calls); the alarms follow commute.ride_with's call
+//     locations.json       { '2026-11-09': { kind, label, text, link, places: [{ kind, label, text, link }], weather, rain } }
+//                          every place each ODG prints (pipeline/read_location.py) → project.dayPlaces: the alarm page
 //     costumes.json        { photos_repo, changes: [{ char_id, change, note, photos: [{ file, label }] }],
 //                            scenes: { '26': { char_id: change } } }  the costume changes (ch.N) and who wears
 //                          which in each scene; the photos live in their own private repo (costumes.js)
@@ -56,7 +58,8 @@ export const IFB_FILES = { 'ifb/crew.json': 'crew', 'ifb/receivers.json': 'ifbRe
   'ifb/headphones.json': 'ifbHeadphones', 'ifb/list.json': 'ifbList' };
 
 // files kept under a name in the device's copy of the film (IFB and Gear lists, crew calls)
-const NAMED_FILES = { ...IFB_FILES, ...GEAR_FILES, 'calls.json': 'crewCalls', 'costumes.json': 'costumes' };
+const NAMED_FILES = { ...IFB_FILES, ...GEAR_FILES, 'calls.json': 'crewCalls', 'costumes.json': 'costumes',
+  'locations.json': 'dayPlaces' };
 
 // aliases: the film's other titles (Il colpo = "LA LISTA", its scripts' working title, Ana 3 Nov)
 const filmFile = project => ({ format: FILM_FORMAT, version: 1, id: project.id, name: project.name, ...(project.tag ? { tag: project.tag } : {}),

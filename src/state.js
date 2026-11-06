@@ -15,7 +15,7 @@ let state = {
   project: null,            // the open film (see model.js)
   projects: local.listProjects(),
   department: 'mics',       // 'mics' | 'ifb' | 'gear' — which department's tabs are shown
-  screen: 'schedule',       // 'schedule' | 'scenes' | 'cues-picker' | 'kit' | 'projects' | 'proposal' | 'document' | 'cues'
+  screen: 'schedule',       // 'schedule' | 'scenes' | 'cues-picker' | 'kit' | 'projects' | 'proposal' | 'document' | 'alarms' | 'cues'
   proposalId: null,         // the proposal open in the 'proposal' screen
   documentPath: null,       // the PDF open in the 'document' screen, e.g. '…/docs/day-6/odg.pdf'
   documentPage: null,       // the page to open it at (a scene in the script, script-page.js); null = the first

@@ -6,7 +6,8 @@ The ODGs print it near the top, with a Google Maps link (32 of 33 ODGs, LBE and 
     CAMPO BASE ARTISTICO: Area parcheggio tra Viale Tirreno e … - https://maps.app.goo.gl/nwxx…
 The link may be on the next line. Only what the ODG prints: no address is ever guessed.
 
-    where_to_drive(lines) → {"label": "PARCHEGGIO TROUPE", "text": "Via Furbara Sasso 94 E", "link": "https://…"} or None
+    places_of(lines) → [{"kind": "parcheggio", "label": "PARCHEGGIO TROUPE", "text": "Via Furbara Sasso 94 E", "link": "https://…"}, …]
+    chosen_place(places, drive_to) → the one to drive to (the film's "drive_to" first, else PREFERENCE)
 Used by: run.py → file_locations (locations.json)
 """
 
@@ -14,11 +15,9 @@ import re
 
 LABEL = re.compile(r"^(PARCHEGGIO TROUPE[^:]*|LOCATION|SET|MEZZI TECNICI|CAMPO BASE[^:]*)\s*:\s*(.*)$", re.I)
 LINK = re.compile(r"https://(?:maps\.app\.goo\.gl|goo\.gl/maps|maps\.google\.\w+|www\.google\.\w+/maps)/\S+")
-# by car: the crew parking, else the set ("LOCATION", Lux Vide "SET"), else the base camp, else the technical trucks
-PREFERENCE = ("PARCHEGGIO", "LOCATION", "SET", "CAMPO", "MEZZI")
-# a film's commute "drive_to": "mezzi" (Confine, 5 Nov: Ana rides the camera truck, so it goes to the MEZZI TECNICI,
-# Lux Vide also "CAMPO BASE/MEZZI TECNICI"; else the set)
-PREFERENCE_MEZZI = ("MEZZI", "SET", "LOCATION", "PARCHEGGIO", "CAMPO")
+# by car: the crew parking, else the set ("LOCATION", Lux Vide "SET"), else the base camp, else the technical trucks;
+# a film's commute "drive_to" goes first (Confine, 5 Nov: "mezzi", Ana rides the camera truck)
+PREFERENCE = ("parcheggio", "location", "set", "campo", "mezzi")
 # The ODG's weather ("METEO: Pomeriggio: irregolarmente nuvoloso…", LBE "Meteo: Rovesci intensi dalle 7:00…"):
 # rain or a storm anywhere in it → a rain day: the Apps Script adds the film's commute "rain_penalty" to the drive
 # (Ana, 3 Nov: "if there is rain or storm that day I'll give it a rain penalty").
@@ -37,26 +36,40 @@ def weather_of(lines):
     return {}
 
 
-def where_to_drive(lines, preference=PREFERENCE):
-    found = {}
+def places_of(lines):
+    """Every place the ODG's header prints, in its order: [{kind, label, text, link}] (Ana, 6 Nov: the alarm page shows
+    them as buttons). kind: 'parcheggio' · 'mezzi' (also 'CAMPO BASE/MEZZI TECNICI') · 'location' · 'set' (Il colpo prints only the set's
+    name there, Lux Vide its address too) · 'campo'."""
+    found = []
     for i, line in enumerate(lines[:160]):  # the header block: never the crew list or the needs further down
         match = LABEL.match(line.strip())
         if not match:
             continue
-        kind = "MEZZI" if "MEZZI" in match.group(1).upper() else match.group(1).upper().split()[0]
-        if kind in found:
+        label = match.group(1).upper()
+        kind = "mezzi" if "MEZZI" in label else label.split()[0].lower()
+        if any(place["kind"] == kind for place in found):
             continue
         text = match.group(2)
         link = LINK.search(text) or (LINK.search(lines[i + 1]) if i + 1 < len(lines) else None)
-        found[kind] = {"label": " ".join(match.group(1).upper().split()[:2]).rstrip(","),
-                       "text": LINK.sub("", text).strip(" -–"), "link": link.group(0) if link else ""}
-    return next((found[kind] for kind in preference if kind in found and (found[kind]["link"] or found[kind]["text"])), None)
+        place = {"kind": kind, "label": " ".join(label.split()[:2]).rstrip(","),
+                 "text": LINK.sub("", text).strip(" -–"), "link": link.group(0) if link else ""}
+        if place["text"] or place["link"]:
+            found.append(place)
+    return found
+
+
+def chosen_place(places, drive_to=""):
+    """The place to drive to: the film's choice (commute "drive_to": a kind, e.g. 'mezzi') when the
+    ODG prints it, else the crew parking, the set, the base camp, the trucks. None when the ODG prints none."""
+    order = ([drive_to] if drive_to else []) + list(PREFERENCE)
+    return next((place for kind in order for place in places if place["kind"] == kind), None)
 
 
 def where_from_pdf(path, drive_to=""):
-    """Where to drive + that day's weather from the ODG: {label, text, link, weather, rain} or None.
-    drive_to: the film's commute "drive_to" ("mezzi" → the technical trucks first)."""
+    """Where to drive + every place printed + that day's weather from the ODG:
+    {kind, label, text, link, places: [...], weather, rain} or None. drive_to: the film's commute "drive_to"."""
     import pymupdf as fitz
     lines = [line.strip() for page in fitz.open(path) for line in page.get_text().splitlines() if line.strip()]
-    place = where_to_drive(lines, PREFERENCE_MEZZI if drive_to == "mezzi" else PREFERENCE)
-    return {**place, **weather_of(lines)} if place else None
+    places = places_of(lines)
+    place = chosen_place(places, drive_to)
+    return {**place, "places": places, **weather_of(lines)} if place else None

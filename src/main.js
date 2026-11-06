@@ -22,6 +22,7 @@ import { ProposalScreen, ProposalBanner } from './screens/proposal.js';
 import { CrewSuggestionsScreen, CrewSuggestionsBanner } from './screens/crew-suggestions.js';
 import { KitRequestsScreen, KitRequestsBanner } from './screens/kit-requests.js';
 import { DocumentScreen } from './screens/document.js';
+import { AlarmsScreen } from './screens/alarms.js';
 import { CuesScreen } from './screens/cues.js';
 import { CuesPickerScreen } from './screens/cues-picker.js';
 import { CuesMapScreen } from './screens/cues-map.js';
@@ -128,6 +129,7 @@ function App() {
     : current === 'kit-requests' ? KitRequestsScreen
     : current === 'document' ? DocumentScreen
     : current === 'hours' ? HoursScreen
+    : current === 'alarms' ? AlarmsScreen
     : current === 'help' ? HelpScreen
     : current === 'film-rules' ? FilmRulesScreen
     : current === 'lav-share' ? LavShareScreen
@@ -172,6 +174,7 @@ function openFromLink() {
   const lavs = /^#lavs-(\d+)$/.exec(location.hash);
   if (location.hash.startsWith('#join=')) return joinFromLink();
   if (location.hash === '#hours') setState({ screen: 'hours', department: 'mics' });
+  if (location.hash === '#alarms') setState({ screen: 'alarms', department: 'mics' });
   else if (lavs) setState({ screen: 'lav-share', lavDay: Number(lavs[1]), department: 'mics' });
   else return;
   history.replaceState(null, '', location.pathname + location.search);

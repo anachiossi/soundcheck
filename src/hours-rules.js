@@ -175,19 +175,28 @@ export const commuteOf = project => (project.settings?.commute ? { ...COMMUTE, .
 
 const clock = minutes => timeOf(((minutes % 1440) + 1440) % 1440); // -45 → '23:15'
 
-export function wakePlan(project, day) {
-  const commute = commuteOf(project);
+// trip (the alarm page, screens/alarms.js — Ana, 6 Nov):
+//   trip.commute  the page's numbers not saved yet (they win over the film's)
+//   trip.legs     the robot's Google Maps answer (robot-link.js askLegs): { drive: { minutes }, toMeeting: { minutes } }
+//                 → leave = meet − drive − the way to the meeting point, the SAME sums as the automatic alarms
+//                 (gmail-trigger.gs commuteLegs, tests/robot-alarms.test.js); without it travel_max / travel_min
+export function wakePlan(project, day, trip = {}) {
+  const saved = commuteOf(project);
   const call = minutesOf(day?.call);
-  if (!commute || call === null) return null;
+  if (!saved || call === null) return null;
+  const commute = { ...saved, ...trip.commute };
   const ride = rideCall(project, commute, day, call);
   const meet = ride.minutes - commute.meet_before_call;
-  const walk = commute.walk_to_ride; // on foot to the ride's house first (Il colpo: 20, Ana 3 Nov)
-  const leaveFrom = meet - commute.travel_max - walk;
+  const legs = trip.legs?.drive ? trip.legs : null;
+  const walk = legs ? legs.toMeeting.minutes : commute.walk_to_ride; // to the meeting point first (Il colpo: 20, Ana 3 Nov)
+  const longest = legs ? legs.drive.minutes : commute.travel_max;
+  const leaveFrom = meet - longest - walk;
   const wake = leaveFrom - commute.get_ready;
   return { day: day.day, date: day.date, call: day.call, rideWith: ride.name, rideCall: ride.call,
-    meet: clock(meet), leaveFrom: clock(leaveFrom),
+    meet: clock(meet), leaveFrom: clock(leaveFrom), rideLeaves: clock(meet - longest),
     leaveAlarm: clock(leaveFrom - commute.leave_alarm_before), // the ⏰ "leave": a heads-up before walking out
-    leaveTo: clock(meet - commute.travel_min - walk), wake: clock(wake), sleep: clock(wake - commute.sleep_hours * 60) };
+    leaveTo: clock(meet - (legs ? legs.drive.minutes : commute.travel_min) - walk), wake: clock(wake),
+    sleep: clock(wake - commute.sleep_hours * 60) };
 }
 
 // { minutes, name, call } — call '' = not known yet (the plan then counts ride_gap_if_unknown before Ana's)

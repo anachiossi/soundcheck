@@ -51,7 +51,8 @@ export function Tomorrow({ project, myCall }) {
           📬 ${p.title} waits for your review — the alarms already use its call</button>`)}
         ${getState().sync?.running
           ? html`<span class="btn" aria-disabled="true">⏳ Checking for a new ODG…</span>`
-          : html`<a class="btn btn--primary" href=${alarmsLink(project, plan)}>⏰ Set alarms ${plan.wake} · ${plan.leaveAlarm}</a>`}`
+          : html`<a class="btn btn--primary" href=${alarmsLink(project, plan)}>⏰ Set alarms ${plan.wake} · ${plan.leaveAlarm}</a>`}
+        <button class="btn" onClick=${() => setState({ screen: 'alarms' })}>🗺 Alarm page: real drive, meeting point, ODG place</button>`
       : html`<p class="muted">No next shooting day with a call time yet.</p>`}
       <${CommuteSettings} project=${project} />
     </section>`;

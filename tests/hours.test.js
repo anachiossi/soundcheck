@@ -93,7 +93,7 @@ test('the night before: meeting, leave window, wake, sleep (Ana\'s calculator)',
   const { wakePlan, nextShootingDay } = await import('../src/hours-rules.js');
   const project = { ...film(), settings: { commute: {} } };
   assert.deepEqual(wakePlan(project, { day: 10, date: '2026-10-02', call: '09:00' }),
-    { day: 10, date: '2026-10-02', call: '09:00', rideWith: '', rideCall: '', meet: '08:15', leaveFrom: '06:45', leaveAlarm: '06:45', leaveTo: '07:00', wake: '06:00', sleep: '22:00' });
+    { day: 10, date: '2026-10-02', call: '09:00', rideWith: '', rideCall: '', meet: '08:15', leaveFrom: '06:45', rideLeaves: '06:45', leaveAlarm: '06:45', leaveTo: '07:00', wake: '06:00', sleep: '22:00' });
   assert.equal(wakePlan(project, { day: 1, call: '06:00' }).sleep, '19:00');
   assert.equal(wakePlan(project, { day: 1, call: '03:00' }).wake, '00:00');
   assert.equal(wakePlan({ settings: {} }, { call: '09:00' }), null, 'no commute settings: no plan');
@@ -113,6 +113,19 @@ test('on a film where Ana works only the days with a 2nd unit, a main-unit-only 
   assert.equal(next.day, 59, 'day 58 has no 2nd unit: skipped');
   assert.equal(next.call, '17:00', 'the main unit\'s call: Ana works the main unit');
   assert.equal(nextShootingDay({ ...project, settings: { commute: {} } }, at('2026-11-05', '20:00')).day, 58, 'without the rule: every day');
+});
+
+test('the alarm page: Google\'s two legs and the page\'s unsaved numbers give the robot\'s times (Ana, 6 Nov)', async () => {
+  const { wakePlan } = await import('../src/hours-rules.js');
+  const project = { settings: { commute: { meet_before_call: 30, get_ready: 45, sleep_hours: 8, leave_alarm_before: 15, walk_to_ride: 20 } } };
+  const day = { day: 28, date: '2026-11-09', call: '10:00' };
+  const legs = { drive: { minutes: 60 }, toMeeting: { minutes: 25 } };
+  // the same numbers as tests/robot-alarms.test.js: on set 09:30 · truck 08:30 · leave home 08:05 · wake 07:20
+  const plan = wakePlan(project, day, { legs });
+  assert.deepEqual([plan.meet, plan.rideLeaves, plan.leaveFrom, plan.leaveAlarm, plan.wake, plan.sleep],
+    ['09:30', '08:30', '08:05', '07:50', '07:20', '23:20']);
+  assert.equal(wakePlan(project, day, { legs, commute: { meet_before_call: 45 } }).wake, '07:05', 'a number changed on the page, not saved yet');
+  assert.equal(wakePlan(project, day).leaveFrom, '07:40', 'no answer from Google: the longest drive (90) and the fixed 20 min');
 });
 
 test('the alarms are named after the film, day and date, between the two times (Ana, 5 Nov)', async () => {
@@ -177,4 +190,15 @@ test('a worked day whose scenes a later ODG moved away stays in the week (D17, 1
   const week = weekOf(p, mondayOf(at('2026-09-30', '12:00')));
   assert.deepEqual(week.map(d => d.day), [7, 8, 9]);
   assert.equal(week[0].real_wrap, '18:00');
+});
+
+test('saving the alarm page keeps the film\'s other settings and takes out a choice emptied on the page', async () => {
+  const { savedCommute, cleanCommute } = await import('../src/parts/alarm-fields.js');
+  const current = { my_name: 'Someone', days: 'days_with_2nd_unit', to_meeting: 'auto', walk_to_ride: 20, meet_before_call: 30 };
+  const page = cleanCommute({ ...current, to_meeting: '', walk_to_ride: '25', drive_to: 'mezzi', drive_margin: '10' });
+  const saved = savedCommute(current, page);
+  assert.equal(saved.my_name, 'Someone');
+  assert.equal(saved.days, 'days_with_2nd_unit');
+  assert.equal(saved.to_meeting, undefined, '"Fixed minutes": no Google for the way to the meeting point');
+  assert.deepEqual([saved.walk_to_ride, saved.drive_margin, saved.drive_to, saved.travel], [25, 10, 'mezzi', 'maps']);
 });
