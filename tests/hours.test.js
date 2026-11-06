@@ -33,6 +33,13 @@ test('not yet → snoozed for an hour, then "is this a wrap?"', () => {
   assert.equal(today(done, at('2026-09-30', '19:30')).phase, 'wrapped');
 });
 
+test('"As each ODG": overtime starts at that day\'s own wrap, whatever its length (Confine, 6 Nov)', () => {
+  const project = film({ 8: { status: 'wrapped', real_wrap: '18:30' }, 9: { status: 'wrapped', real_wrap: '18:00' } }, 'odg');
+  project.schedule[2] = { ...project.schedule[2], call: '08:00', wrap: '16:00' }; // day 9: 8h continuato
+  assert.deepEqual(workedOf(project, 8), { worked: 510, extra: 30 }, '10:00–18:00 on the ODG, wrapped 18:30');
+  assert.deepEqual(workedOf(project, 9), { worked: 600, extra: 120 }, '08:00–16:00 on the ODG, wrapped 18:00');
+});
+
 test('worked and overtime depend on the working day', () => {
   const day8 = { 8: { status: 'wrapped', real_wrap: '19:00' } };
   assert.deepEqual(workedOf(film(day8), 8), { worked: 540, extra: 60 }, '8h continuate: 9h worked = 1h extra');

@@ -16,7 +16,21 @@ export const WORKDAYS = {
   '10h': { label: '10h continuate', hours: 10 },
   '9h': { label: '9h continuate', hours: 9 },
   '8h': { label: '8h continuate', hours: 8 },
+  // each day as its ODG says: overtime after that day's Fine Lavorazione (Confine, Ana 6 Nov: day 26 "Pausa:
+  // Continuato" 08:00–16:00, day 27 "Pausa: 14.00" 10:00–20:00 — the working day changes from day to day)
+  odg: { label: 'As each ODG (call → its wrap)', hours: null },
 };
+
+// The working day's length that day, in minutes (from its call to where overtime starts); null when unknown.
+export function workdayMinutes(project, day) {
+  const kind = WORKDAYS[workdayOf(project)];
+  if (!kind) return null;
+  if (kind.hours) return kind.hours * 60;
+  const call = minutesOf(day?.call);
+  const wrap = minutesOf(day?.wrap);
+  if (call === null || wrap === null) return null;
+  return wrap >= call ? wrap - call : wrap + 24 * 60 - call;
+}
 export const SNOOZE_MINUTES = 60;
 
 export const workdayOf = project => WORKDAYS[project.settings?.workday] ? project.settings.workday : null;
@@ -58,8 +72,8 @@ export function workedOf(project, day) {
   const wrap = minutesOf(hours?.status === 'wrapped' ? hours.real_wrap : null);
   if (call === null || wrap === null) return null;
   const worked = wrap >= call ? wrap - call : wrap + 24 * 60 - call;
-  const kind = WORKDAYS[workdayOf(project)];
-  return { worked, extra: kind ? countedOvertime(project, Math.max(0, worked - kind.hours * 60)) : null };
+  const length = workdayMinutes(project, info);
+  return { worked, extra: length === null ? null : countedOvertime(project, Math.max(0, worked - length)) };
 }
 
 /*  Today, for the top bar and the question:

@@ -8,7 +8,7 @@
 // A crew phone ("Export my timesheet"): only that person's own block (onlyName = the name in their link).
 // Used by: screens/hours.js
 
-import { WORKDAYS, workdayOf } from '../hours-rules.js';
+import { WORKDAYS, workdayOf, workdayMinutes } from '../hours-rules.js';
 import { xlsxBlob } from './xlsx.js';
 import { sameName } from '../my-call.js';
 
@@ -34,7 +34,7 @@ const HEADER = ['Giorno', 'Data', 'Convocazione', 'Fine ODG', 'Fine reale', 'Ore
 export function timesheetBlob(project, days, weekTitle, onlyName = '') {
   const people = timesheetPeople(project, onlyName);
   const kind = WORKDAYS[workdayOf(project)];
-  const hours = kind?.hours || 8;
+  const hours = kind?.hours || 8; // "As each ODG": each row's own length (workdayMinutes)
   const rows = [
     [{ text: `${project.name} · Foglio ore · Reparto suono`, bold: true }],
     [`Settimana ${weekTitle}`, '', '', `Giornata: ${kind ? kind.label : `${hours}h`}`],
@@ -51,7 +51,7 @@ export function timesheetBlob(project, days, weekTitle, onlyName = '') {
       const r = rows.length + 1;
       rows.push([`D${String(d.day).padStart(2, '0')}`, italianDate(d.date),
         { time: d.call }, { time: d.wrap }, d.real_wrap ? { time: d.real_wrap } : '',
-        { f: `IF(E${r}="","",MOD(E${r}-C${r},1))` }, { f: overtimeFormula(project, `F${r}`, hours) }]);
+        { f: `IF(E${r}="","",MOD(E${r}-C${r},1))` }, { f: overtimeFormula(project, `F${r}`, workdayMinutes(project, d) ?? hours * 60) }]);
     }
     const last = rows.length;
     rows.push(['', '', '', '', '', { text: 'Totale', bold: true }, { f: `SUM(G${first}:G${last})`, bold: true }]);
@@ -63,9 +63,9 @@ export function timesheetBlob(project, days, weekTitle, onlyName = '') {
 
 // the overtime cell: beyond the working day; with settings.overtime.double_after, the minutes after that
 // much overtime count double (hours-rules.js → countedOvertime)
-function overtimeFormula(project, cell, hours) {
+function overtimeFormula(project, cell, minutes) {
   const after = project.settings?.overtime?.double_after;
-  const over = `MAX(0,${cell}-TIME(${hours},0,0))`;
+  const over = `MAX(0,${cell}-TIME(0,${minutes},0))`; // TIME(0,600,0) = 10:00
   if (typeof after !== 'number') return `IF(${cell}="","",${over})`;
   const at = `TIME(0,${after},0)`;
   return `IF(${cell}="","",MIN(${over},${at})+2*MAX(0,${over}-${at}))`;
