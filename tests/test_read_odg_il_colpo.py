@@ -100,6 +100,27 @@ class IlColpoLayoutTest(unittest.TestCase):
         self.assertEqual(notes["20"], {"Camera": "STUNT COORDINATOR"}, "printed twice, kept once")
         self.assertEqual(notes["30"], {"Veicoli": "KIDS CAR"})
 
+    def test_the_2nd_unit_printed_first_still_leaves_the_main_unit_its_own_call_and_scenes(self):
+        # ODG #59 (9 Nov): the 2nd unit starts earlier and is printed first, "– orario" after the name,
+        # "506 A" with a space, "I+E" for a detail shot
+        header = ["ODG #59 di 88", "Lunedì 9 Novembre 2026", "Settimana #13",
+                  "CONVOCAZIONE UNITÀ ROSSI", "CONVOCAZIONE UNITÀ MAIN", "10:30", "17:00",
+                  "FINE LAVORAZIONE UNITÀ ROSSI", "FINE LAVORAZIONE UNITÀMAIN", "18:30", "01:00"]
+        table = ["SCENA", "LUCE", "SET/SINOSSI", "DAY", "CAST", "PGS.", "TIMELINE",
+                 "UNITÀ ROSSI – orario 10:30 – 18:30",
+                 "506 A", "I", "G", "GYM", "Take the bag.", "17", "1, 2", "1", "12:15", "14:45",
+                 "DETTAGLI", "107 A", "I+E", "N", "STREET/Car", "Opens the laptop.", "1", "3", "3/8",
+                 "TOT PGS. 2 7/8",
+                 "UNITÀ MAIN – orario 17:00 – 01:00",
+                 "241 A", "E", "S", "GYM/Parking", "They ride away.", "13", "6", "2 4/8", "18:00", "21:00",
+                 "TOT PGS.", "4 3/8"]
+        odg = read_il_colpo(header + table + CAST, main_unit="MAIN")
+        self.assertEqual((odg["call"], odg["wrap"]), ("17:00", "01:00"))
+        self.assertEqual(odg["second_unit"], {"name": "Rossi", "call": "10:30", "wrap": "18:30"})
+        units = {s["scene_id"]: (s.get("unit"), s["int_ext"]) for s in odg["scenes"]}
+        self.assertEqual(units, {"506A": ("2nd", "INT"), "107A": ("2nd", "INT/EXT"), "241A": (None, "EXT")})
+        self.assertEqual(odg["unit_warnings"], [])
+
     def test_two_units_with_no_main_unit_set_say_which_was_taken(self):
         unit_table = ["Programma del giorno successivo Mercoledì 4 Novembre 2026 orario di lavorazione 14:00 – 22:00",
                       "SCENA", "LUCE", "SET/SINOSSI", "DAY", "CAST", "PGS.", "TIMELINE",

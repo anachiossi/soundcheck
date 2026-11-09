@@ -36,18 +36,40 @@ DEPARTMENTS = {"SCEN/ARREDAMENTO": "Scenografia", "PROPS": "Props", "COSTUMI": "
                "FIGURAZIONI": "Figurazioni"}  # ODG #56
 
 
-def time_after(lines, label):
-    """The first time printed after a label (on the next lines): 'PRONTI A GIRARE DRONE' · '09:15'."""
+def time_after(lines, label, unit=""):
+    """The first time printed after a label (on the next lines): 'PRONTI A GIRARE DRONE' · '09:15'.
+    Two units (ODG #59, 9 Nov) print the label once per unit, then the times in the same order:
+        CONVOCAZIONE UNITÀ DE FEUDIS · CONVOCAZIONE UNITÀ ALFIERI · 10:30 · 17:00
+    → the time of the line that names `unit` (the main unit, ALFIERI: 17:00)."""
     for i, line in enumerate(lines):
         if line.upper().startswith(label):
-            return next((as_time(x) for x in lines[i:i + 3] if TIME_RE.match(x)), "")
+            labels = [i]
+            while labels[-1] + 1 < len(lines) and lines[labels[-1] + 1].upper().startswith(label):
+                labels.append(labels[-1] + 1)
+            times = [as_time(x) for x in lines[labels[-1] + 1:labels[-1] + 1 + len(labels) + 2] if TIME_RE.match(x)]
+            named = [n for n, at in enumerate(labels) if unit and unit.upper() in lines[at].upper()]
+            which = named[0] if named and len(labels) > 1 else 0
+            if len(labels) == 1:  # one label: its time may be on the same line or the next ones
+                times = [as_time(x) for x in lines[i:i + 3] if TIME_RE.match(x)]
+            return times[which] if which < len(times) else (times[0] if times else "")
     return ""
+
+
+INT_EXT_RE = re.compile(r"^[IE]([/+][IE])?$")                # I · E · I/E · I+E (ODG #59)
+
+
+def joined_scene_id(line):
+    """ODG #59 (9 Nov) prints "506 A", "241 A", "111 X": the same scenes as 506A, 241A, 111X."""
+    return re.sub(r"^(\d+)\s+([A-Z])$", r"\1\2", line.strip())
+
+
+def is_scene_start(lines, i):
+    return SCENE_ID_RE.match(lines[i]) and INT_EXT_RE.match(lines[i + 1]) and LIGHT_RE.match(lines[i + 2])
 
 
 def read_scene_table(lines):
     """Scenes: id, I/E, light, set, synopsis (may wrap), story day, cast ('-' = nobody), pages, [timeline]."""
-    starts = [i for i in range(len(lines) - 3)
-              if SCENE_ID_RE.match(lines[i]) and re.fullmatch(r"[IE](/[IE])?", lines[i + 1]) and LIGHT_RE.match(lines[i + 2])]
+    starts = [i for i in range(len(lines) - 3) if is_scene_start(lines, i)]
     scenes = []
     for n, start in enumerate(starts):
         end = starts[n + 1] if n + 1 < len(starts) else len(lines)
@@ -169,7 +191,8 @@ def read_needs(lines, start_marker, scene_ids, units=None):
             for scene_id, by_department in notes.items()}
 
 
-UNIT_RE = re.compile(r"^UNIT\s+(.+?)(?:\s+(\d{1,2}[.:]\d{2})\s*[–-]\s*(\d{1,2}[.:]\d{2}))?$")  # "UNIT DE FEUDIS 08:00 – 16:00"
+# "UNIT DE FEUDIS 08:00 – 16:00" (ODG #55) · "UNIT DE FEUDIS – orario 10:30 – 18:30" (ODG #59): the name is DE FEUDIS
+UNIT_RE = re.compile(r"^UNIT\s+(.+?)(?:\s*[–-]?\s*orario)?(?:\s+(\d{1,2}[.:]\d{2})\s*[–-]\s*(\d{1,2}[.:]\d{2}))?$", re.IGNORECASE)
 
 
 def mark_units(table, scenes, main_unit, groups):
@@ -184,8 +207,7 @@ def mark_units(table, scenes, main_unit, groups):
         if marker:
             name, call, wrap = marker.groups()
             current = (name.strip(), as_time(call) if call else "", as_time(wrap) if wrap else "")
-        elif current and i + 2 < len(table) and SCENE_ID_RE.match(line) \
-                and re.fullmatch(r"[IE](/[IE])?", table[i + 1]) and LIGHT_RE.match(table[i + 2]):
+        elif current and i + 2 < len(table) and is_scene_start(table, i):
             unit_of[line] = current
     names = list(dict.fromkeys(unit[0] for unit in unit_of.values()))
     groups.update({name.upper(): [sid for sid, unit in unit_of.items() if unit[0] == name] for name in names})
@@ -210,7 +232,7 @@ def unit_spelling(line):
 
 
 def read_il_colpo(lines, main_unit=None):
-    lines = [unit_spelling(line) for line in lines]
+    lines = [joined_scene_id(unit_spelling(line)) for line in lines]
     text = "\n".join(lines)
     number = re.search(r"ODG\s*#\s*(\d+)(?:\s*di\s*(\d+))?", text)
     week = re.search(r"Settimana\s*#\s*(\d+)", text)
@@ -233,9 +255,10 @@ def read_il_colpo(lines, main_unit=None):
         "number": day, "of_days": int(number.group(2)) if number and number.group(2) else None,
         "week": int(week.group(1)) if week else None,
         "date": date, "weekday_printed": weekday,
-        "call": time_after(today, "CONVOCAZIONE"), "rehearsal": time_after(today, "PROVE"),
-        "ready_to_shoot": time_after(today, "PRONTI A GIRARE"),
-        "end_of_shoot": time_after(today, "FINE RIPRESE"), "wrap": time_after(today, "FINE LAVORAZIONE"),
+        # two units: the main unit's times (settings "main_unit"), even when the 2nd unit is printed first (ODG #59)
+        "call": time_after(today, "CONVOCAZIONE", main_unit), "rehearsal": time_after(today, "PROVE", main_unit),
+        "ready_to_shoot": time_after(today, "PRONTI A GIRARE", main_unit),
+        "end_of_shoot": time_after(today, "FINE RIPRESE", main_unit), "wrap": time_after(today, "FINE LAVORAZIONE", main_unit),
         "scenes": scenes, "cast": read_cast(today),
         "second_unit": second,  # None, or {name, call, wrap}; its scenes have unit '2nd'
         "unit_warnings": unit_warnings + advance_warnings,
