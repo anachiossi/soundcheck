@@ -5,7 +5,9 @@
 
 import { setState, getState } from './state.js';
 
-// { path: '<film folder>/docs/scripts/ep2.pdf', page: 10, title: 'Script Ep 2 · 208' } — or null when not on this device
+// { path: '<film folder>/docs/scripts/ep2.pdf', page: 10, title: 'Sc. 208 · Script Ep 2', file: 'Script_Ep_2_208.pdf' }
+// — or null when not on this device. The scene comes first: it stays in the bar on top while reading, so where to
+// start reading is always in sight (Ana, 9 Nov); a split shows the scene tapped and the script's: 'Sc. 526Dparte (526)'
 export function scriptPage(project, sceneId) {
   const id = String(sceneId);
   const base = id.match(/^\d+/)?.[0];
@@ -14,12 +16,15 @@ export function scriptPage(project, sceneId) {
   const path = `${project.folder}/${entry.pdf}`;
   if (!project.documents?.[path]) return null; // the PDF is not on this device yet
   const episode = entry.pdf.match(/ep(\d+)\.pdf$/)?.[1];
-  return { path, page: entry.page, title: `Script${episode ? ` Ep ${episode}` : ''} · ${entry.scene_id || base || id}` };
+  const inScript = entry.scene_id || base || id;
+  const script = `Script${episode ? ` Ep ${episode}` : ''}`;
+  return { path, page: entry.page, title: `Sc. ${id}${inScript !== id ? ` (${inScript})` : ''} · ${script}`,
+    file: `${script} ${inScript}`.replace(/\s+/g, '_') + '.pdf' };
 }
 
 export function openScriptPage(found) {
   setState({ screen: 'document', documentPath: found.path, documentTitle: found.title, documentPage: found.page,
-    documentFile: `${found.title.replace(/[\s·]+/g, '_')}.pdf`, documentFrom: getState().screen });
+    documentFile: found.file, documentFrom: getState().screen });
 }
 
 // the film's episode scripts on this device: [{ episode: '1', path, title }] (Projects → 📄 Ep 1…)
