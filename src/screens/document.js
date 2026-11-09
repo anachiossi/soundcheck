@@ -1,7 +1,7 @@
 // document.js — reads a day's PDF (ODG, sides, map, other papers) from the copy kept on the device,
 // (a map sent as a photo is shown as a picture),
 // so it opens with no signal. Pages are drawn one under the other, as wide as the
-// screen; pinch to zoom. "Share" hands the PDF to the phone (Files, Books, WhatsApp…).
+// screen; pinch to zoom the pages only (parts/pinch-zoom.js: the bar on top keeps its size). "Share" hands the PDF to the phone (Files, Books, WhatsApp…).
 // The PDF drawing uses pdf.js (vendor/pdfjs), loaded only when a document is opened.
 // Used by: main.js (opened from the 📄 buttons in the Schedule)
 
@@ -10,6 +10,7 @@ import { showScreen, getState, setState } from '../state.js';
 import { exportName } from '../model.js';
 import { loadDocument } from '../store/local.js';
 import { shareFile } from '../export/share.js';
+import { usePinchZoom } from '../parts/pinch-zoom.js';
 
 // goTo: the page to show first (a scene's page in the script, script-page.js): the screen scrolls there as soon
 // as that page is drawn; the pages before it are drawn too, so you can scroll back
@@ -33,6 +34,8 @@ async function drawPages(blob, holder, isCancelled, goTo) {
 export function DocumentScreen({ state }) {
   const { project, documentPath, documentTitle } = state;
   const holder = useRef(null);
+  const zoomBox = useRef(null);
+  const [zoom, resetZoom] = usePinchZoom(zoomBox);
   const [problem, setProblem] = useState('');
   const [blob, setBlob] = useState(null);
   const [picture, setPicture] = useState(''); // a map sent as a photo: its address on this device
@@ -64,10 +67,13 @@ export function DocumentScreen({ state }) {
     <div class="document-bar">
       <button class="link back" onClick=${() => showScreen(getState().documentFrom || 'schedule')}>‹ Back</button>
       <b>${documentTitle}</b>
+      ${zoom > 1 && html`<button class="btn btn--small" onClick=${resetZoom}>↺ 100%</button>`}
       ${blob && html`<button class="btn btn--small" onClick=${() => shareFile(blob, fileName)}>Share</button>`}
     </div>
     ${problem && html`<p class="empty">${problem}</p>`}
     ${!problem && !blob && html`<p class="muted">Opening…</p>`}
-    ${picture && html`<div class="pdf-pages"><img class="pdf-page" src=${picture} alt=${documentTitle} /></div>`}
-    <div class="pdf-pages" ref=${holder}></div>`;
+    <div class="pdf-zoom" ref=${zoomBox}>
+      ${picture && html`<div class="pdf-pages"><img class="pdf-page" src=${picture} alt=${documentTitle} /></div>`}
+      <div class="pdf-pages" ref=${holder}></div>
+    </div>`;
 }
