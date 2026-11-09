@@ -392,7 +392,9 @@ button.kit-item { border: 0; background: none; padding: 4px; border-radius: 12px
 
 /* ---- 10. Documents (ODG, sides) ------------------------------------------- */
 .btn--doc { background: var(--warn-bg); border-color: var(--warn-line); }
-.document-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+/* stays at the top while the script / ODG scrolls: ‹ Back always in reach (Ana, 9 Nov) */
+.document-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px;
+  position: sticky; top: 0; z-index: 3; background: var(--card); padding: calc(6px + env(safe-area-inset-top)) 0 6px; }
 .document-bar .back { margin: 0; }
 .pdf-pages { display: flex; flex-direction: column; gap: 10px; }
 .pdf-page { width: 100%; height: auto; border: 1px solid var(--line); border-radius: 4px; background: #fff; }
