@@ -136,7 +136,11 @@ def read_lines(path, wanted=None, options=None):
             if not PAGE_FURNITURE.match(text):
                 action.append(text)
     finish()
+    # scene ids with their letters in capitals, as the ODG and the app write them: Il colpo's stralci print
+    # "526a", the ODG "526A" (Ana, 11 Nov: day 61's lettered scenes got no lines)
+    scenes = {sid.upper(): scene for sid, scene in scenes.items()}
     if wanted:
+        wanted = {str(sid).upper() for sid in wanted}
         scenes = {sid: scene for sid, scene in scenes.items() if sid in wanted}
     return scenes
 
