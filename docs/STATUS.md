@@ -1,10 +1,21 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-10-25 · live version **v196** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-11-12 · live version **v223** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
 `2026-09-29_soundcheck_handoff.md`.
+
+## Latest (5–12 Nov 2026, session paused 12 Nov)
+- v220 Alarm page (#alarms): live legs from the robot (`commuteLegs` in gmail-trigger.gs, `?legs=`), ⏰ Set alarm now.
+  Ana still to do: script property `HOME_FROM`, `bash /d/apps-script/update-links.sh` (links → new version), paste
+  the robot link on the page. Extra deployment links: delete only after Ana says which ones her phone uses.
+- v221–v223 Documents: sticky ‹ Back bar; script opened from a scene shows "Sc. 208 · Script Ep 2"; pinch zooms
+  only the pages (`src/parts/pinch-zoom.js`), not the bar.
+- Il colpo ODG reader (`pipeline/read_odg_il_colpo.py`): 2nd unit printed first (#59), "UNITÀ X – orario",
+  light+set on one line and "526C pt1" (#61). Proposals odg-59 / odg-61 rebuilt for Ana to review.
+- Open: Il colpo TX/lav for 524 · 526 · 526A · 526Cpt1 (Ana to dictate); notes with "UNITA’ X:" in the middle of a
+  FABBISOGNI line still glue to the previous unit's text; WhatsApp share-shortcut idea undecided; soundlib = plan only.
 
 ## Films
 - **La buona educazione** (LBE) — the main film, 30 days, email robot on. Always comes first.
