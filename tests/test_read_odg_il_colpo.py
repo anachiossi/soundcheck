@@ -121,6 +121,21 @@ class IlColpoLayoutTest(unittest.TestCase):
         self.assertEqual(units, {"506A": ("2nd", "INT"), "107A": ("2nd", "INT/EXT"), "241A": (None, "EXT")})
         self.assertEqual(odg["unit_warnings"], [])
 
+    def test_light_and_set_on_one_line_and_a_spaced_part_are_still_read(self):
+        # ODG #61 (11 Nov): "N PALAZZO…" (light + set on one line), "526C pt1" and "526 A"
+        table = ["SCENA", "LUCE", "SET/SINOSSI", "DAY", "CAST", "PGS.", "TIMELINE",
+                 "UNITA’ MAIN",
+                 "526C pt1", "I", "N PALACE/Garage", "A shoot-out.", "17", "1, 2", "1", "22:15", "00:00",
+                 "526 A", "I", "N PALACE/Garage", "Threats.", "17", "1, 2", "1 2/8", "20:00", "22:00",
+                 "TOT PGS.", "2 2/8",
+                 "UNITA’ ROSSI",
+                 "527", "I", "N", "PALACE/Flat", "Smoke.", "17", "3", "5/8", "18:00", "19:30",
+                 "TOT PGS.", "5/8"]
+        odg = read_il_colpo(HEADER + table + CAST, main_unit="MAIN")
+        scenes = {s["scene_id"]: (s.get("unit"), s["day_night"], s["set"]) for s in odg["scenes"]}
+        self.assertEqual(scenes, {"526Cpt1": (None, "N", "PALACE/Garage"), "526A": (None, "N", "PALACE/Garage"),
+                                  "527": ("2nd", "N", "PALACE/Flat")})
+
     def test_two_units_with_no_main_unit_set_say_which_was_taken(self):
         unit_table = ["Programma del giorno successivo Mercoledì 4 Novembre 2026 orario di lavorazione 14:00 – 22:00",
                       "SCENA", "LUCE", "SET/SINOSSI", "DAY", "CAST", "PGS.", "TIMELINE",

@@ -59,8 +59,24 @@ INT_EXT_RE = re.compile(r"^[IE]([/+][IE])?$")                # I · E · I/E · 
 
 
 def joined_scene_id(line):
-    """ODG #59 (9 Nov) prints "506 A", "241 A", "111 X": the same scenes as 506A, 241A, 111X."""
-    return re.sub(r"^(\d+)\s+([A-Z])$", r"\1\2", line.strip())
+    """ODG #59 (9 Nov) prints "506 A", "241 A", "111 X": the same scenes as 506A, 241A, 111X;
+    ODG #61 (11 Nov) "526C pt1", "526 Cpt2": 526Cpt1, 526Cpt2 (a part, like 208pt1)."""
+    line = line.strip()
+    if " " in line and re.fullmatch(r"\d+\s*[A-Z]?\s*(?:pt\s*\d+)?", line):
+        return line.replace(" ", "")
+    return line
+
+
+def split_light_and_set(lines):
+    """ODG #61 prints the light and the set on one line after I/E: "N PALAZZO TRE DITA/Parcheggio": two lines."""
+    out = []
+    for line in lines:
+        both = re.fullmatch(r"([GNTSMAP])\s+(\S.*)", line)
+        if both and out and INT_EXT_RE.match(out[-1]) and len(out) > 1 and SCENE_ID_RE.match(out[-2]):
+            out.extend(both.groups())
+        else:
+            out.append(line)
+    return out
 
 
 def is_scene_start(lines, i):
@@ -232,7 +248,7 @@ def unit_spelling(line):
 
 
 def read_il_colpo(lines, main_unit=None):
-    lines = [joined_scene_id(unit_spelling(line)) for line in lines]
+    lines = split_light_and_set([joined_scene_id(unit_spelling(line)) for line in lines])
     text = "\n".join(lines)
     number = re.search(r"ODG\s*#\s*(\d+)(?:\s*di\s*(\d+))?", text)
     week = re.search(r"Settimana\s*#\s*(\d+)", text)
