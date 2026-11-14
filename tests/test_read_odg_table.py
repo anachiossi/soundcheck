@@ -82,6 +82,29 @@ class TableReader(unittest.TestCase):
         self.assertEqual([s["scene_id"] for s in odg["scenes"]], ["12"])
         self.assertEqual(odg["cast"], [{"id": "3", "role": "ANNA ROSSI", "actor": "Maria Bianchi"}])
 
+    def test_every_cast_table_is_read_with_minors_double_roles_and_special_extras(self):
+        cast_header = row((20, "ID"), (70, "RUOLO"), (170, "NOME"), (270, "SCENE"))
+        extras_header = row((20, "N."), (70, "RUOLO"), (270, "SCENE"))
+        odg = sheet(HEADER, scene("12"),
+                    cast_header, row((20, "3"), (70, "ANNA (M)"), (170, "Maria Bianchi"), (270, "12")),
+                    row((20, "4"), (70, "BRUNO/BRUNETTO"), (170, "Luca Verdi"), (270, "12")),
+                    row((20, "ID.90"), (70, "PORTIERA (Dora Neri)"), (270, "12")),
+                    row((20, "146"), (70, "4 PUGILI"), (270, "12")),
+                    extras_header, row((20, "2"), (70, "Passanti"), (270, "12")),
+                    cast_header, row((20, "3"), (70, "ANNA (M)"), (170, "Maria Bianchi")), row((20, "7"), (70, "CARLA"), (170, "Ada Blu")))
+        self.assertEqual(odg["cast"], [
+            {"id": "3", "role": "ANNA", "actor": "Maria Bianchi", "minor": True},
+            {"id": "4", "role": "BRUNO", "actor": "Luca Verdi", "also_plays": ["BRUNETTO"]},
+            {"id": "90", "role": "PORTIERA", "actor": "Dora Neri", "special_extra": True},
+            {"id": "7", "role": "CARLA", "actor": "Ada Blu"}])  # the 2nd unit's table; not the counted extras
+
+    def test_a_name_cut_by_the_table_lines_into_neighbour_cells_is_put_together(self):
+        cast_header = row((20, "ID"), (70, "RUOLO"), (170, "NOME"))
+        cut = [{"x0": 20, "x1": 60, "text": "3"}, {"x0": 70, "x1": 110, "text": "ANNA"}, {"x0": 160, "x1": 170, "text": "M"},
+               {"x0": 170, "x1": 210, "text": "aria Francesca Bianch"}, {"x0": 210, "x1": 220, "text": "i"}]
+        odg = sheet(HEADER, scene("12"), cast_header, cut)
+        self.assertEqual(odg["cast"], [{"id": "3", "role": "ANNA", "actor": "Maria Francesca Bianchi"}])
+
     def test_the_scenes_after_the_next_day_announcement_are_tomorrows_and_a_second_one_is_not_read(self):
         odg = sheet(HEADER, scene("12"),
                     row((20, "PROGRAMMA DEL GIORNO SUCCESSIVO, MARTEDÌ 10 NOVEMBRE - ORARIO 09.00 - 17.00")), HEADER, scene("30"),

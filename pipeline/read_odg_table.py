@@ -113,16 +113,50 @@ def read_scene_table(rows, header, template):
     return scenes, units, total
 
 
-def read_cast_table(rows, header):
-    cast = []
+def with_cut_words_joined(row):
+    """A name too long for its column is cut by the PDF's table lines into neighbour cells ("R" | "ita Francesca
+    Siman Maal" | "a"): a cell that starts in small letters right after one ending in a letter continues it.
+    The joined cell stands where its longest piece was."""
+    cells = []
+    for cell in sorted(row, key=lambda c: c["x0"]):
+        before = cells[-1] if cells else None
+        if before and before["text"][-1:].isalpha() and cell["text"][:1].islower() and cell["x0"] - before["x1"] < 3:
+            longest = max(before, cell, key=lambda c: len(c["text"]))
+            cells[-1] = {"x0": longest["x0"], "x1": cell["x1"], "text": before["text"] + cell["text"]}
+        else:
+            cells.append(dict(cell))
+    return cells
+
+
+def read_cast_table(rows, header, cast):
+    """Adds the rows of one cast table to `cast` (a number already there is kept: a two-unit day prints a table
+    per unit, the same actor can be in both).
+      "19 · BIAGIO (M)"                  → a minor: "minor": true
+      "11 · MIRKO/MIRKETTO"              → one actor, two roles: the first is the number's, "also_plays" the others
+      "ID.136 · BIDELLA (Anna Rossi)"    → a special extra with its actor in brackets: "special_extra": true
+    A table of extras or stunts ("N. · RUOLO": how many, not who) has no ID column: none of its rows is read."""
     for row in rows:
         values = {}
-        for cell in row:
+        for cell in with_cut_words_joined(row):
             values.setdefault(column_of(cell, header)["fields"][0], cell["text"])
-        number = clean(values.get("id", ""))
-        if re.fullmatch(r"\d+", number) and values.get("role") and not any(c["id"] == number for c in cast):
-            cast.append({"id": number, "role": clean(values["role"]).upper(), "actor": clean(values.get("actor", ""))})
-    return cast
+        number, role = clean(values.get("id", "")), clean(values.get("role", ""))
+        special = re.fullmatch(r"ID\.\s*(\d+)", number)
+        number = special.group(1) if special else number
+        a_group = re.match(r"\d+\s", role)  # "4 PUGILI", "2 ALLENATORI": extras counted, not a person
+        if not re.fullmatch(r"\d+", number) or not role or a_group or any(c["id"] == number for c in cast):
+            continue
+        person = {"id": number, "role": role.upper(), "actor": clean(values.get("actor", ""))}
+        in_brackets = re.fullmatch(r"(.+?)\s*\((.+)\)", role)
+        if special:
+            person["special_extra"] = True
+            if in_brackets and not person["actor"]:
+                person["role"], person["actor"] = in_brackets.group(1).upper(), in_brackets.group(2)
+        elif role.upper().endswith("(M)"):
+            person["role"], person["minor"] = clean(role[:-3]).upper(), True
+        first, *others = [part.strip() for part in person["role"].split("/")]
+        if others:
+            person["role"], person["also_plays"] = first, others
+        cast.append(person)
 
 
 def time_after(lines, labels, main_unit=None):
@@ -194,8 +228,8 @@ def read_table_pages(pages, template=None, main_unit=None):
             kind, header, part = None, None, []
 
             def close_part():
-                if kind == "cast" and not cast:
-                    cast.extend(read_cast_table(part, header))
+                if kind == "cast":
+                    read_cast_table(part, header, cast)
                 if kind == "scenes":
                     scenes, units, total = read_scene_table(part, header, template)
                     day["scenes"] += scenes

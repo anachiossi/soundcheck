@@ -33,6 +33,7 @@ DEFAULT_TEMPLATE = {
         "id": ["ID"],
         "role": ["RUOLO", "PERSONAGGIO"],
         "actor": ["ATTORE", "NOME", "CAST", "INTERPRETE"],
+        "scenes": ["SCENE"],  # (not kept: named so its cells are not taken for the actor's)
     },
     # the day's times: the label printed before each one
     "labels": {
