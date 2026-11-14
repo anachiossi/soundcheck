@@ -22,6 +22,7 @@ from compare import NOTE_ICONS, note_kind, check_cast_list, check_date, check_ne
 from compare_mics import check_scene_mics
 from compare_crew import check_crew
 from odg_reader import odg_reader_for, crew_reader_for
+from reading_checks import reading_warnings
 from read_sides import read_sides
 from fetch_mail import emails_oldest_first
 
@@ -153,6 +154,8 @@ def build_proposal(film_folder, email_folder, other_sides=None, sides_notes=None
         changes.extend(c), warnings.extend(w), checks.extend(k)
 
     warnings.extend(odg.get("unit_warnings", []))
+    # is the reading believable? sums, counts and a second reader's opinion (reading_checks.py)
+    warnings.extend(reading_warnings(odg, odg_pdf, film["settings"]))
     for result in check_units(odg["number"], date, odg["call"], odg["wrap"], odg["scenes"], odg.get("second_unit"),
                               film["schedule"], f"Day {odg['number']}"):
         add(result)

@@ -24,6 +24,10 @@ def odg_reader_for(film_folder):
     settings_file = Path(film_folder) / "settings.json"
     settings = json.loads(settings_file.read_text(encoding="utf-8")) if settings_file.exists() else {}
     name = settings.get("odg_reader", "main")
+    if name == "table":  # the reader driven by a template of words (read_odg_table.py, odg_template.py)
+        from odg_template import template_for
+        from read_odg_table import read_odg_table
+        return partial(read_odg_table, template=template_for(settings), main_unit=settings.get("main_unit"))
     if name not in READERS:
         raise ValueError(f'settings.json "odg_reader": "{name}" is not one of {", ".join(READERS)}')
     if name == "il-colpo":  # this layout prints two units on one day: the film says which is the main one

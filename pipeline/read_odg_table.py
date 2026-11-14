@@ -18,6 +18,7 @@ import re
 import sys
 
 from odg_template import DEFAULT_TEMPLATE, fields_named, plain
+from pdf_tables import pages_of
 from read_odg import MONTHS, as_time, clean, read_date
 
 SCENE_ID_RE = re.compile(r"^\d+\s*[A-Za-z]{0,6}\s*(?:pt\s*)?\d*$")   # 27 · 27A · "27 fin" · 517pt1 · "526C pt1"
@@ -95,8 +96,16 @@ def read_scene_table(rows, header, template):
             values[field] = (values[field] + " " if field in values else "") + cell["text"]
         if any(plain(whole).startswith(plain(word)) for word in template["total"]):
             total = clean(values.get("pages", "")) or total
-        elif SCENE_ID_RE.match(clean(values.get("scene", ""))):
-            scene = scene_of(values)
+            continue
+        # several scene numbers stacked in one cell ("619⏎626⏎626CV", shot together): one scene each, the
+        # pages on the first. "136⏎DRONE" is one number with a word: 136DRONE.
+        stacked = [line for line in values.get("scene", "").splitlines() if line.strip()]
+        numbers = stacked if len(stacked) > 1 and all(SCENE_ID_RE.match(line.strip()) for line in stacked) \
+            else [clean(values.get("scene", ""))]
+        for position, number in enumerate(numbers):
+            if not SCENE_ID_RE.match(number.strip()):
+                continue
+            scene = scene_of({**values, "scene": number, **({"pages": ""} if position else {})})
             scene["standby"] = standby
             if unit:
                 scene["unit_name"] = unit["name"]
@@ -116,12 +125,15 @@ def read_cast_table(rows, header):
     return cast
 
 
-def time_after(lines, labels):
-    """The first time printed on a label's line or the 4 lines after it."""
-    for i, line in enumerate(lines):
-        if any(line.upper().startswith(label.upper()) for label in labels):
-            found = TIME_RE.findall(" ".join(lines[i:i + 5]))
-            return as_time(found[0]) if found else ""
+def time_after(lines, labels, main_unit=None):
+    """The first time printed on a label's line or the 4 lines after it. A two-unit day prints each label once
+    per unit ("CONVOCAZIONE UNITA’ DE FEUDIS", "CONVOCAZIONE UNITA’ ALFIERI"): the main unit's line is taken."""
+    found = [i for i, line in enumerate(lines) if any(line.upper().startswith(label.upper()) for label in labels)]
+    name = plain(main_unit)
+    of_main = [i for i in found if name and name in plain(lines[i])]
+    for i in (of_main or found)[:1]:
+        times = TIME_RE.findall(" ".join(lines[i:i + 5]))
+        return as_time(times[0]) if times else ""
     return ""
 
 
@@ -218,58 +230,11 @@ def read_table_pages(pages, template=None, main_unit=None):
     labels = template["labels"]
     return {
         "number": number, "date": date, "weekday_printed": weekday,
-        "call": time_after(lines, labels["call"]), "ready_to_shoot": time_after(lines, labels["ready_to_shoot"]),
-        "end_of_shoot": time_after(lines, labels["end_of_shoot"]), "wrap": time_after(lines, labels["wrap"]),
+        "call": time_after(lines, labels["call"], main_unit), "ready_to_shoot": time_after(lines, labels["ready_to_shoot"], main_unit),
+        "end_of_shoot": time_after(lines, labels["end_of_shoot"], main_unit), "wrap": time_after(lines, labels["wrap"], main_unit),
         "scenes": today["scenes"], "cast": cast, "second_unit": second, "unit_warnings": warnings,
         "pages_total_printed": today["total"], "notes": {}, "advance": advance or {}, "reader": "table",
     }
-
-
-def without_stray_letters(text):
-    """A watermark printed down the page leaves single letters on their own line inside the cells
-    ("s⏎Programma del giorno…", "D⏎164", Il colpo): dropped when the cell has real text too."""
-    lines = [line.strip() for line in text.splitlines() if line.strip()]
-    if any(len(line) > 2 for line in lines):
-        lines = [line for line in lines if len(line) > 1 or not line.isalpha()]
-    return "\n".join(lines)
-
-
-def in_reading_order(placed):
-    """[(y, x, text)] → top to bottom, and left to right for what is printed at the same height (within 3 points:
-    a label and its time on one row don't always share the exact height)."""
-    rows = []
-    for y, x, text in sorted(placed):
-        if rows and y - rows[-1][0] < 3:
-            rows[-1][1].append((x, y, text))
-        else:
-            rows.append((y, [(x, y, text)]))
-    return [(y, x, text) for _, row in rows for x, y, text in sorted(row)]
-
-
-def pages_of(path):
-    """The PDF → the plain pages read_table_pages wants (the only part that needs the PDF library)."""
-    import pymupdf as fitz
-    pages = []
-    for page in fitz.open(path):
-        placed = []  # (height on the page, text) of every printed line
-        for block in page.get_text("dict")["blocks"]:
-            for line in block.get("lines", []):
-                text = clean("".join(span["text"] for span in line["spans"]))
-                if len(text) > 1 or not text.isalpha():  # a lone letter: the watermark
-                    placed.append((line["bbox"][1], line["bbox"][0], text))
-        placed = [line for line in in_reading_order(placed) if line[2]]
-        tables = []
-        for table in page.find_tables().tables:
-            rows = []
-            for row, texts in zip(table.rows, table.extract()):
-                cells = [{"x0": box[0], "x1": box[2], "text": without_stray_letters(text)}
-                         for box, text in zip(row.cells, texts) if box and text and without_stray_letters(text)]
-                if cells:
-                    rows.append(cells)
-            top = table.bbox[1]
-            tables.append({"line": sum(1 for y, _, _ in placed if y < top - 1), "rows": rows})
-        pages.append({"lines": [text for _, _, text in placed], "tables": sorted(tables, key=lambda t: t["line"])})
-    return pages
 
 
 def read_odg_table(path, template=None, main_unit=None):
