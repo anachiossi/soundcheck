@@ -1,12 +1,29 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-11-12 · live version **v223** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-11-14 · live version **v224** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
 `2026-09-29_soundcheck_handoff.md`.
 
-## Latest (5–12 Nov 2026, session paused 12 Nov)
+## Latest (14 Nov 2026)
+- v224 review fixes: made-up names in the IFB test, sync remembers its own commit's fingerprints, PDF downloads
+  remembered every 5 files, a cut file list stops the sync. History rewrite of this public repo: planned, NOT run
+  (private plan `2026-11-14_history_rewrite_plan.md`).
+- Call-sheet reader driven by a template of words: `pipeline/read_odg_table.py` + `odg_template.py` +
+  `pdf_tables.py` (settings `"odg_reader": "table"`, a film adds words with `"odg_template"`). No film uses it as
+  its reader yet: it does not read the department notes nor Il colpo's cast list.
+- Reading checks on every ODG proposal (`pipeline/reading_checks.py`): sums and counts + the table reader as a
+  second opinion; a sheet whose scenes the film's reader could not read takes them from the table reader.
+- First presets (`pipeline/first_presets.py`, in `propose_presets.py`): a scene with no preset gets rows from the
+  printed cast (call sheets, else PDL) + who has lines (sides, else script), then the day's TX and lav.
+  `--print` looks without writing. Il colpo: review for days 65, 67 waits in the app.
+- Known: Il colpo's episode-6 script numbers some scenes differently from the PDL (script 631 ≠ schedule 631):
+  those script lines are not trusted for who speaks, and Cues shows the wrong lines until the sides arrive.
+- Not automatic yet: the robot does not run the preset review by itself; ODGs that arrive after their day
+  (#62, #63) get no proposal, so the schedule of those days stays as it was.
+
+## Before (5–12 Nov 2026)
 - v220 Alarm page (#alarms): live legs from the robot (`commuteLegs` in gmail-trigger.gs, `?legs=`), ⏰ Set alarm now.
   Ana still to do: script property `HOME_FROM`, `bash /d/apps-script/update-links.sh` (links → new version), paste
   the robot link on the page. Extra deployment links: delete only after Ana says which ones her phone uses.
