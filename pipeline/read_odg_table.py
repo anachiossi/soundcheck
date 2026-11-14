@@ -22,7 +22,7 @@ from odg_template import DEFAULT_TEMPLATE, fields_named, plain
 from pdf_tables import pages_of
 from read_odg import MONTHS, as_time, clean, read_date
 
-SCENE_ID_RE = re.compile(r"^\d+\s*[A-Za-z]{0,6}\s*(?:pt\s*)?\d*$")   # 27 · 27A · "27 fin" · 517pt1 · "526C pt1"
+SCENE_ID_RE = re.compile(r"^\d+(?:\s*[A-Za-z]{1,6}){0,3}\s*\d*$")   # 27 · 27A · "27 fin" · 517pt1 · "526C pt1" · "434 B afin"
 TIME_RE = re.compile(r"\d{1,2}[.:]\d{2}")
 INT_EXT_RE = re.compile(r"^\s*([IE](?:\s*[-/+]\s*[IE])?)\b")       # I · E · I-E · I/E · I+E
 

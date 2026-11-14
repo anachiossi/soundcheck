@@ -7,6 +7,14 @@ The film-specific diary (decisions, dates, what Ana said) is private:
 `2026-09-29_soundcheck_handoff.md`.
 
 ## Latest (14 Nov 2026)
+- **Il colpo's call sheets are read by the template reader** (data: `"odg_reader": "table"`, with
+  `"odg_second_reader": "il-colpo"` = the old reader as the second opinion, `"crew_reader": "il-colpo"`). It reads
+  the whole cast list (a table per unit, minors, double roles, special extras), the departments' needs
+  (`pipeline/odg_needs.py`, shared), week, day count, rehearsal, scene times. On the 14 filed sheets it equals the
+  old reader or reads more (136 DRONE row, #62's scenes, "434 B a fin(ire)" on #51/#52, #64's next-day date, a cast
+  member on #52); LBE's 30 and Confine's 2 read as before. `read_odg_il_colpo.py` is kept for the second opinion.
+- A character's gender is offered from the actor's first name (`pipeline/name_gender.py`) to films whose lav rule
+  goes by gender.
 - v225 A film can say its script is not to be used: settings `"lines": "sides_only"` (Il colpo, Ana 14 Nov: "the
   sides are the source of truth"). Cues shows only the sides (a part like 526Cfine reads the sides' 526C; a scene
   the sides print with no dialogue shows none), the 📄 button opens the day's sides PDF at the scene's page

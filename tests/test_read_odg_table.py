@@ -108,6 +108,10 @@ class TableReader(unittest.TestCase):
         self.assertEqual(odg["notes"], {"12": {"Props": "Giornale", "Suono": "Playback sul set"}, "13": {"Suono": "Playback sul set"}})
         self.assertEqual(odg["advance"]["notes"], {"30": {"Stunt": "Stunt coordinator"}})
 
+    def test_a_scene_number_printed_in_three_pieces_is_one_scene(self):
+        odg = sheet(HEADER, scene("434 B afin"), scene("526C pt1"), scene("Totale giornata"))
+        self.assertEqual([s["scene_id"] for s in odg["scenes"]], ["434Bafin", "526Cpt1"])
+
     def test_every_cast_table_is_read_with_minors_double_roles_and_special_extras(self):
         cast_header = row((20, "ID"), (70, "RUOLO"), (170, "NOME"), (270, "SCENE"))
         extras_header = row((20, "N."), (70, "RUOLO"), (270, "SCENE"))
