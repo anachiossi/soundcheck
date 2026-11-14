@@ -157,17 +157,26 @@ def check_scene_info(scene, info):
              "op": {"op": "set_scene_info", "scene_id": scene["scene_id"], "fields": fields}}], []
 
 
-def check_cast_list(odg_cast, characters):
-    """Each ODG cast number must be the same character (and actor) as in the film."""
+def check_cast_list(odg_cast, characters, predict_gender=False):
+    """Each ODG cast number must be the same character (and actor) as in the film.
+    predict_gender (a film whose lav rule goes by gender): a character with no gender gets the one its actor's
+    first name suggests (name_gender.py), said in words so Ana can reject it."""
+    from name_gender import gender_from_actor
     changes, warnings, checks = [], [], []
     by_id = {c["id"]: c for c in characters}
     for row in odg_cast:
         own = by_id.get(row["id"])
+        guess = gender_from_actor(row["actor"]) if predict_gender else ""
         if not own:
-            changes.append({"text": f"New character {row['id']} {row['role']} ({row['actor'] or 'no actor yet'})",
+            says = f", gender {guess} from the actor's name" if guess else ""
+            changes.append({"text": f"New character {row['id']} {row['role']} ({row['actor'] or 'no actor yet'}{says})",
                             "op": {"op": "add_character", "character": {"id": row["id"], "name": row["role"],
-                                                                         "actor": row["actor"], "color": "#94a3b8"}}})
+                                                                         "actor": row["actor"], "color": "#94a3b8",
+                                                                         **({"gender": guess} if guess else {})}}})
             continue
+        if guess and not own.get("gender"):
+            changes.append({"text": f"{own['name']}: gender → {guess} (from the actor's name, {row['actor']})",
+                            "op": {"op": "set_character", "id": row["id"], "fields": {"gender": guess}}})
         found, exact = find_character(row["role"], [own])
         if not found:
             warnings.append(f"ODG says ID {row['id']} is {row['role']}, but {row['id']} is {own['name']} here. Check who it is.")

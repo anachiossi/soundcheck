@@ -161,7 +161,8 @@ def build_proposal(film_folder, email_folder, other_sides=None, sides_notes=None
     for result in check_units(odg["number"], date, odg["call"], odg["wrap"], odg["scenes"], odg.get("second_unit"),
                               film["schedule"], f"Day {odg['number']}"):
         add(result)
-    add(check_cast_list(odg["cast"], film["characters"]))
+    by_gender = bool(((film["settings"].get("presets") or {}).get("lav_rules") or {}).get("by_gender"))
+    add(check_cast_list(odg["cast"], film["characters"], predict_gender=by_gender))
     advance = odg.get("advance") or {}
     days = [(odg["scenes"], odg["notes"], True)]
     if advance.get("day") and not advance["scenes"]:  # printed, but no scene read: never remove a day for that

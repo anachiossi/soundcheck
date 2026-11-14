@@ -117,5 +117,26 @@ class ReviewOfNewScenes(unittest.TestCase):
         self.assertEqual(changes, [])
 
 
+class GenderFromTheActorsName(unittest.TestCase):
+    def test_a_known_first_name_or_an_italian_ending_gives_the_gender_and_anything_else_nothing(self):
+        from name_gender import gender_from_actor
+        self.assertEqual([gender_from_actor(name) for name in ("Anna Rossi", "Nicola Verdi", "Andrea Neri", "Ornella Blu",
+                                                               "Renato Gialli", "Kim Lee", "")],
+                         ["F", "M", "M", "F", "M", "", ""])
+
+    def test_a_call_sheet_offers_the_gender_only_to_a_film_that_asks_and_a_character_without_one(self):
+        from compare import check_cast_list
+        characters = [{"id": "1", "name": "ANNA", "actor": "Anna Rossi"}, {"id": "2", "name": "BRUNO", "actor": "Nicola Verdi", "gender": "M"}]
+        cast = [{"id": "1", "role": "ANNA", "actor": "Anna Rossi"}, {"id": "2", "role": "BRUNO", "actor": "Nicola Verdi"},
+                {"id": "3", "role": "CARLA", "actor": "Ornella Blu"}]
+        changes, _, _ = check_cast_list(cast, characters, predict_gender=True)
+        self.assertEqual([c["text"] for c in changes], [
+            "ANNA: gender → F (from the actor's name, Anna Rossi)",
+            "New character 3 CARLA (Ornella Blu, gender F from the actor's name)"])
+        self.assertEqual(changes[1]["op"]["character"]["gender"], "F")
+        changes, _, _ = check_cast_list(cast, characters)
+        self.assertEqual([c["text"] for c in changes], ["New character 3 CARLA (Ornella Blu)"])
+
+
 if __name__ == "__main__":
     unittest.main()
