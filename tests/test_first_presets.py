@@ -67,6 +67,26 @@ class FirstRows(unittest.TestCase):
         self.assertEqual([(r["char_id"], r["speaker"]) for r in rows], [("1", "yes"), ("2", "maybe")])
         self.assertEqual(notes, ["Scene 40A: no lines of its own, only those of the whole scene: who speaks is a guess"])
 
+    def test_a_sides_only_film_never_reads_the_script(self):
+        data = film({"script/40": said("1", "2")})
+        data["settings"]["lines"] = "sides_only"
+        rows, notes = first_rows(data, "40", ["1", "2"])
+        self.assertEqual([r["speaker"] for r in rows], ["maybe", "maybe"])
+        self.assertEqual(notes, ["Scene 40: no sides yet: who speaks is not known"])
+
+    def test_sides_that_print_the_scene_with_no_dialogue_mean_nobody_speaks(self):
+        data = film({"sides/40B": {"lines": []}, "sides/40": said("1")})
+        data["settings"]["lines"] = "sides_only"
+        rows, notes = first_rows(data, "40B", ["1", "2"])
+        self.assertEqual([r["speaker"] for r in rows], ["no", "no"])
+        self.assertEqual(notes, [])
+
+    def test_a_part_like_40Cfine_reads_the_part_the_sides_print(self):
+        data = film({"sides/40C": said("2"), "sides/40": said("1")})
+        rows, notes = first_rows(data, "40Cfine", ["1", "2"])
+        self.assertEqual([(r["char_id"], r["speaker"]) for r in rows], [("1", "maybe"), ("2", "yes")])
+        self.assertEqual(notes, ["Scene 40Cfine: no lines of its own, only those of the whole scene: who speaks is a guess"])
+
     def test_a_cast_number_that_is_no_character_yet_is_said(self):
         _, notes = first_rows(film({"script/40": said("1")}), "40", ["1", "77"])
         self.assertEqual(notes, ["Scene 40: cast number 77 is not a character of the film yet"])

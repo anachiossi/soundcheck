@@ -27,18 +27,35 @@ def natural(value):
     return [int(part) if part.isdigit() else part for part in re.split(r"(\d+)", str(value))]
 
 
-def lines_of(film, scene_id):
-    """The lines Cues shows for a scene: edited on set > sides > script > the base scene (7fin → 7)."""
-    lines = film["lines"]
+def lines_found(film, scene_id):
+    """→ (lines, where they are from: 'set' | 'sides' | 'script' | '', own: they are this very scene's).
+    The order Cues uses (src/cues-rules.js): edited on set > sides > script, then the part the papers print
+    (526Cfine → 526C), then the whole scene (7fin → 7).
+    A film whose script can't be used (settings "lines": "sides_only", Il colpo) never reads the script, and
+    its sides printing a scene with no dialogue mean: nobody speaks."""
+    lines, scene_id = film["lines"], str(scene_id)
+    sides_only = film.get("settings", {}).get("lines") == "sides_only"
     edited = lines.get(f"set/{scene_id}")
     if edited and edited.get("lines"):
-        return edited["lines"]
-    base = re.match(r"\d+", str(scene_id))
-    for key in (f"sides/{scene_id}", f"script/{scene_id}") + (
-            (f"sides/{base.group()}", f"script/{base.group()}") if base and base.group() != str(scene_id) else ()):
-        if lines.get(key, {}).get("lines"):
-            return lines[key]["lines"]
-    return []
+        return edited["lines"], "set", True
+    ids = [scene_id]
+    for pattern in (r"\d+[A-Z]*", r"\d+"):
+        match = re.match(pattern, scene_id)
+        if match and match.group() not in ids:
+            ids.append(match.group())
+    for other in ids:
+        for kind in ("sides",) if sides_only else ("sides", "script"):
+            found = lines.get(f"{kind}/{other}")
+            if found and found.get("lines"):
+                return found["lines"], kind, other == scene_id
+            if found is not None and sides_only and other == scene_id:
+                return [], "sides", True
+    return [], "", False
+
+
+def lines_of(film, scene_id):
+    """The lines Cues shows for a scene (see lines_found)."""
+    return lines_found(film, scene_id)[0]
 
 
 def lav_blocked(film, scene_id, char_id):

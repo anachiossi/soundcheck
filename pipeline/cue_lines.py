@@ -59,6 +59,11 @@ def reader_options(film):
 
 def write_sides_lines(film, sides_pdf, day, scene_ids):
     scenes = read_lines(sides_pdf, scene_ids, reader_options(film))
+    # where each scene starts in the day's sides PDF: the app's 📄 button of a sides-only film opens there
+    pages = {scene_id.upper(): page for scene_id, page in scene_pages(sides_pdf).items()}
+    for scene_id, scene in scenes.items():
+        if scene_id.upper() in pages:
+            scene["pdf"], scene["page"] = f"docs/day-{day}/sides.pdf", pages[scene_id.upper()]
     return write_scene_files(Path(film) / "lines" / "sides", scenes, f"Sides · Day {day}", characters_of(Path(film)))
 
 

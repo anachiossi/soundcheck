@@ -236,6 +236,9 @@ def file_documents(film, other_sides):
         sides = None
         if odg:
             sheet = read_odg(odg)
+            if not sheet.get("scenes"):  # nothing read (Il colpo ODG #62): the second reader's scenes, as in the proposal
+                from reading_checks import checked_reading
+                sheet, _ = checked_reading(sheet, odg, settings)
             day = sheet["number"]
             sides = pick_sides(settings, email_folder, day, other_sides)  # the same choice as the day's proposal
             if sides:  # the lines of the day's scenes, for 🎙 Cues

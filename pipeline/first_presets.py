@@ -9,6 +9,9 @@
   speaker "no"    the scene has lines, none are theirs
   speaker "maybe" no lines are filed for the scene: nobody knows yet
 
+A film whose script can't be used (settings.json "lines": "sides_only", Il colpo: the script numbers its scenes
+another way than the production) reads the sides only; sides that print a scene with no dialogue: everyone "no".
+
 A character with lines who is not in the printed cast gets a row too (and a line for Ana), unless it is a
 voice off set (radio, TV, a crowd). TX and lav are NOT chosen here: presets.day_plan does that for the whole day.
 Used by: propose_presets.py · tests: tests/test_first_presets.py
@@ -17,7 +20,7 @@ Used by: propose_presets.py · tests: tests/test_first_presets.py
 import json
 from pathlib import Path
 
-from presets import lines_of
+from presets import lines_found
 
 
 def first_rows(film, scene_id, cast_ids):
@@ -26,30 +29,30 @@ def first_rows(film, scene_id, cast_ids):
     name = lambda char_id: characters.get(char_id, {}).get("name", f"ID {char_id}")
     cast = [str(number) for number in cast_ids]
     notes = [f"Scene {scene_id}: cast number {c} is not a character of the film yet" for c in cast if c not in characters]
-    lines = lines_of(film, scene_id) or []
+    lines, where, own_lines = lines_found(film, scene_id)
     speaking = []
     for line in lines:
         char_id = str(line.get("char_id") or "")
         if char_id and char_id not in speaking:
             speaking.append(char_id)
-    from_sides = bool(film["lines"].get(f"sides/{scene_id}", {}).get("lines") or film["lines"].get(f"set/{scene_id}", {}).get("lines"))
-    own_lines = from_sides or bool(film["lines"].get(f"script/{scene_id}", {}).get("lines"))
     # the script can number its scenes another way than the production (Il colpo ep. 6: the script's 631 is in
     # the garden with BALLERINO, the schedule's 631 is in the study with MINO and TERRY). A character with a
     # cast number who speaks in the script's scene but is not in the printed cast: those lines are not trusted.
     strangers = [c for c in speaking if c.isdigit() and c not in cast]
-    if lines and not from_sides and strangers and cast:
+    if where == "script" and strangers and cast:
         notes.append(f"Scene {scene_id}: in the script {', '.join(name(c) for c in strangers)} speaks here, but the printed "
                      "cast does not list them: the script's scene may be another one. Who speaks is not known")
-        lines, speaking = [], []
-    elif not lines:
+        where, speaking = "", []
+    elif not where and film.get("settings", {}).get("lines") == "sides_only":
+        notes.append(f"Scene {scene_id}: no sides yet: who speaks is not known")
+    elif not where:
         notes.append(f"Scene {scene_id}: no lines filed (no sides, not found in the script): who speaks is not known")
     elif not own_lines:  # 631A reads the lines of the whole scene 631: who has lines there MAY speak in this part
         notes.append(f"Scene {scene_id}: no lines of its own, only those of the whole scene: who speaks is a guess")
     extra = [c for c in speaking if c not in cast and not characters.get(c, {}).get("off_set")] if own_lines else []
     rows = []
     for char_id in cast + extra:
-        speaker = "yes" if char_id in speaking else ("no" if lines and own_lines else "maybe")
+        speaker = "yes" if char_id in speaking else ("no" if where and own_lines else "maybe")
         rows.append({"char_id": char_id, "tx_id": "", "lav_id": "", "speaker": speaker})
     if extra and cast:
         notes.append(f"Scene {scene_id}: {', '.join(name(c) for c in extra)} has lines but is not in the printed cast")

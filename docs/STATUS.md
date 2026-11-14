@@ -1,12 +1,16 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-11-14 · live version **v224** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-11-14 · live version **v225** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
 `2026-09-29_soundcheck_handoff.md`.
 
 ## Latest (14 Nov 2026)
+- v225 A film can say its script is not to be used: settings `"lines": "sides_only"` (Il colpo, Ana 14 Nov: "the
+  sides are the source of truth"). Cues shows only the sides (a part like 526Cfine reads the sides' 526C; a scene
+  the sides print with no dialogue shows none), the 📄 button opens the day's sides PDF at the scene's page
+  (`src/cues-rules.js`, `src/script-page.js`), and the robot's presets read only the sides (`presets.lines_found`).
 - v224 review fixes: made-up names in the IFB test, sync remembers its own commit's fingerprints, PDF downloads
   remembered every 5 files, a cut file list stops the sync. History rewrite of this public repo: planned, NOT run
   (private plan `2026-11-14_history_rewrite_plan.md`).

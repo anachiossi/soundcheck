@@ -4,11 +4,13 @@
 // Used by: parts/scene-table.js, screens/projects.js
 
 import { setState, getState } from './state.js';
+import { sidesOnly } from './cues-rules.js';
 
 // { path: '<film folder>/docs/scripts/ep2.pdf', page: 10, title: 'Sc. 208 · Script Ep 2', file: 'Script_Ep_2_208.pdf' }
 // — or null when not on this device. The scene comes first: it stays in the bar on top while reading, so where to
 // start reading is always in sight (Ana, 9 Nov); a split shows the scene tapped and the script's: 'Sc. 526Dparte (526)'
 export function scriptPage(project, sceneId) {
+  if (sidesOnly(project)) return sidesPage(project, sceneId);
   const id = String(sceneId);
   const base = id.match(/^\d+/)?.[0];
   const entry = project.lines?.[`script/${id}`] || (base && project.lines?.[`script/${base}`]);
@@ -20,6 +22,22 @@ export function scriptPage(project, sceneId) {
   const script = `Script${episode ? ` Ep ${episode}` : ''}`;
   return { path, page: entry.page, title: `Sc. ${id}${inScript !== id ? ` (${inScript})` : ''} · ${script}`,
     file: `${script} ${inScript}`.replace(/\s+/g, '_') + '.pdf' };
+}
+
+// A film that reads only the sides ("lines": "sides_only"): the 📄 button opens the day's sides PDF where the
+// scene starts — { path: '<film folder>/docs/day-63/sides.pdf', page: 4, title: 'Sc. 529 · Sides Day 63' }.
+// The day is in the lines' source ('Sides · Day 63'); the page is kept by pipeline/cue_lines.py (older files: page 1).
+export function sidesPage(project, sceneId) {
+  const id = String(sceneId);
+  const found = [id, id.match(/^\d+[A-Z]*/)?.[0], id.match(/^\d+/)?.[0]]
+    .map(key => key && project.lines?.[`sides/${key}`]).find(entry => entry);
+  const day = found?.source?.match(/Day (\d+)/)?.[1];
+  if (!day) return null;
+  const path = `${project.folder}/${found.pdf || `docs/day-${day}/sides.pdf`}`;
+  if (!project.documents?.[path]) return null; // the PDF is not on this device yet
+  const inSides = found.scene_id || id;
+  return { path, page: found.page || 1, title: `Sc. ${id}${inSides !== id ? ` (${inSides})` : ''} · Sides Day ${day}`,
+    file: `Sides_Day_${day}_${inSides}.pdf` };
 }
 
 export function openScriptPage(found) {
