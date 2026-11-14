@@ -21,7 +21,8 @@ from first_presets import cast_by_scene, first_rows  # noqa: E402
 GENERATED_BY = ("import from Sheets", "Claude")  # presets not edited by Ana (yet)
 
 
-def load_film(folder):
+def load_film(folder, with_cast=True):
+    """with_cast=False: the printed cast is not read (it means reading every call sheet PDF, slow)."""
     folder = Path(folder)
     read = lambda path: json.loads(path.read_text(encoding="utf-8"))
     settings = read(folder / "settings.json")
@@ -36,7 +37,7 @@ def load_film(folder):
     film["settings"] = read(folder / "settings.json")
     # rows Ana accepted from earlier preset reviews (newest wins): a scene that still matches them was
     # not edited by hand, even though her phone's name is on the file
-    film["cast"] = cast_by_scene(folder)  # the printed cast of each scene (PDL, call sheets): for scenes with no preset
+    film["cast"] = cast_by_scene(folder) if with_cast else {}  # the printed cast of each scene (PDL, call sheets): for scenes with no preset
     film["accepted"] = {}
     for path in sorted((folder / "proposals").glob("presets-*.json"), key=lambda p: read(p)["created_at"]):
         review = read(path)
@@ -90,7 +91,8 @@ def describe_new(film, rows):
     return parts
 
 
-def review(film, first_day, only=None):
+def review(film, first_day, only=None, only_days_with_new=False):
+    """only_days_with_new: leave alone the days where every scene already has a preset (the robot's own review)."""
     changes, warnings = [], []
     for day, info in days_of(film).items():
         if day < first_day or (only and day not in only):
@@ -103,6 +105,8 @@ def review(film, first_day, only=None):
                 film["presets"][sid] = {"scene_id": sid, "rows": rows}
                 warnings += notes
                 new.append(sid)
+        if only_days_with_new and not new:
+            continue
         plan, kind, notes = day_plan(film, film["settings"], [s for s in scene_ids if s in film["presets"]])
         warnings += [f"Day {day}: {note}" for note in notes]
         for sid in scene_ids:
@@ -161,14 +165,26 @@ def main():
         only = [int(d) for d in sys.argv[sys.argv.index("--days") + 1].split(",")]
     first_day = min(only) if only else int(sys.argv[sys.argv.index("--from-day") + 1])
     changes, warnings = review(film, first_day, only)
-    today = datetime.date.today().isoformat()
     last_day = max(days_of(film))
     days_text = f"days {', '.join(map(str, only))}" if only else f"days {first_day}–{last_day}"
+    proposal = proposal_of(folder, changes, warnings, days_text, first_day)
+    sys.stdout.reconfigure(encoding="utf-8")  # (a Windows console can't print "→" otherwise)
+    if "--print" in sys.argv:  # look only: nothing is written
+        for line in [c["text"] for c in changes] + ["! " + w for w in warnings]:
+            print(line)
+        return
+    path = write_proposal(folder, proposal)
+    print(f"{len(changes)} scenes to change, {len(warnings)} things to look at → {path}")
+
+
+def proposal_of(folder, changes, warnings, days_text, first_day):
+    """The review as a proposal for the app, under a name no earlier review has."""
+    today = datetime.date.today().isoformat()
     name, number = f"presets-{today}", 1
-    while (folder / "proposals" / f"{name}.json").exists():  # never overwrite a review Ana decided on
+    while (Path(folder) / "proposals" / f"{name}.json").exists():  # never overwrite a review Ana decided on
         number += 1
         name = f"presets-{today}-{number}"
-    proposal = {
+    return {
         "id": name, "kind": "presets", "title": f"Preset review · {days_text}",
         "day": first_day, "date": today,
         "source": {"subject": "the preset generator (settings.json)", "received": today, "files": []},
@@ -177,14 +193,12 @@ def main():
         "changes": changes, "warnings": warnings,
         "checks": [f"Same TX and lav all day; rules from settings.json"], "notes": {}, "ifb_today": [],
     }
-    sys.stdout.reconfigure(encoding="utf-8")  # (a Windows console can't print "→" otherwise)
-    if "--print" in sys.argv:  # look only: nothing is written
-        for line in [c["text"] for c in changes] + ["! " + w for w in warnings]:
-            print(line)
-        return
-    path = folder / "proposals" / f"{proposal['id']}.json"
+
+
+def write_proposal(folder, proposal):
+    path = Path(folder) / "proposals" / f"{proposal['id']}.json"
     path.write_text(json.dumps(proposal, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(f"{len(changes)} scenes to change, {len(warnings)} things to look at → {path}")
+    return path
 
 
 if __name__ == "__main__":

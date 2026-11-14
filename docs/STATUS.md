@@ -20,8 +20,11 @@ The film-specific diary (decisions, dates, what Ana said) is private:
   `--print` looks without writing. Il colpo: review for days 65, 67 waits in the app.
 - Known: Il colpo's episode-6 script numbers some scenes differently from the PDL (script 631 ≠ schedule 631):
   those script lines are not trusted for who speaks, and Cues shows the wrong lines until the sides arrive.
-- Not automatic yet: the robot does not run the preset review by itself; ODGs that arrive after their day
-  (#62, #63) get no proposal, so the schedule of those days stays as it was.
+- The robot runs that review by itself (`pipeline/auto_presets.py`, called by `run.py` when new papers arrive):
+  scenes of the coming week's work days with no preset; the same rows are never offered twice, new rows (the
+  sides arrived) are.
+- Not automatic yet: ODGs that arrive after their day (#62, #63) get no proposal, so the schedule of those days
+  stays as it was.
 
 ## Before (5–12 Nov 2026)
 - v220 Alarm page (#alarms): live legs from the robot (`commuteLegs` in gmail-trigger.gs, `?legs=`), ⏰ Set alarm now.
