@@ -177,8 +177,8 @@ def main():
         "changes": changes, "warnings": warnings,
         "checks": [f"Same TX and lav all day; rules from settings.json"], "notes": {}, "ifb_today": [],
     }
+    sys.stdout.reconfigure(encoding="utf-8")  # (a Windows console can't print "→" otherwise)
     if "--print" in sys.argv:  # look only: nothing is written
-        sys.stdout.reconfigure(encoding="utf-8")
         for line in [c["text"] for c in changes] + ["! " + w for w in warnings]:
             print(line)
         return
