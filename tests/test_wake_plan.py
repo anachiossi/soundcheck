@@ -92,5 +92,13 @@ class TellTomorrowTest(unittest.TestCase):
         self.assertIn("⏰ wake 07:00", self.sent[0][1])
 
 
+class LateCallSheetTest(unittest.TestCase):
+    def test_a_call_sheet_that_arrives_after_its_day_is_kept_while_its_next_day_is_to_come(self):
+        self.assertFalse(run.all_past({"date": "2026-11-13", "next_date": "2026-11-16"}, "2026-11-14"))
+        self.assertTrue(run.all_past({"date": "2026-11-12", "next_date": "2026-11-13"}, "2026-11-14"))
+        self.assertTrue(run.all_past({"date": "2026-11-12"}, "2026-11-14"))  # an older proposal: no next day kept
+        self.assertFalse(run.all_past({"date": "2026-11-14", "next_date": ""}, "2026-11-14"))
+
+
 if __name__ == "__main__":
     unittest.main()

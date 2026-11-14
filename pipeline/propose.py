@@ -21,6 +21,7 @@ from pathlib import Path
 from compare import NOTE_ICONS, note_kind, check_cast_list, check_date, check_next_day_date, check_day, check_scene_info, nice_date
 from compare_mics import check_scene_mics
 from compare_crew import check_crew
+from odg_presets import odg_first_presets
 from odg_reader import odg_reader_for, crew_reader_for
 from reading_checks import checked_reading
 from read_sides import read_sides
@@ -174,6 +175,9 @@ def build_proposal(film_folder, email_folder, other_sides=None, sides_notes=None
         days.append((advance["scenes"], advance.get("notes", {}), False))
 
     for scenes, scene_notes, today in days:
+        # scenes with no preset: one "first preset" change each, with the day's TX and lav (odg_presets.py)
+        firsts, first_notes = odg_first_presets(film_folder, scenes, sides if today else None)
+        warnings.extend(first_notes)
         for scene in scenes:
             sid = scene["scene_id"]
             add(check_scene_info(scene, film["scenes"].get(sid)))
@@ -188,8 +192,15 @@ def build_proposal(film_folder, email_folder, other_sides=None, sides_notes=None
                                         f"{len(rows)} character(s)", "scene_id": sid,
                                 "op": {"op": "set_preset", "scene_id": sid, "rows": rows}})
                 preset = {"scene_id": sid, "rows": rows}
-            add(check_scene_mics(sid, scene["cast"], speaker_names, preset, film["characters"],
-                                 group_cues=film["settings"].get("group_cues", [])))
+            if sid in firsts:
+                changes.append({"text": firsts[sid]["text"], "scene_id": sid,
+                                "op": {"op": "set_preset", "scene_id": sid, "rows": firsts[sid]["rows"]}})
+                # (kept for the parts of this scene further down the sheet: 617A starts from 617's mics)
+                film["presets"][sid] = {"scene_id": sid, "rows": firsts[sid]["rows"]}
+                checks.append(f"Scene {sid}: first preset from the ODG cast and the lines")
+            else:
+                add(check_scene_mics(sid, scene["cast"], speaker_names, preset, film["characters"],
+                                     group_cues=film["settings"].get("group_cues", [])))
             for department, text in scene_notes.get(sid, {}).items():
                 kind, text = note_kind(department, text)  # 'sound' (visible), 'info' (more info) or None
                 seen = [t.lower() for _, t in notes.get(sid, [])]
@@ -224,6 +235,7 @@ def build_proposal(film_folder, email_folder, other_sides=None, sides_notes=None
         "id": f"odg-{odg['number']}",
         "title": f"ODG #{odg['number']} · Day {odg['number']} · {nice_date(date)}",
         "day": odg["number"], "date": date, "call": odg["call"],
+        "next_date": advance.get("date") or "",  # the day announced for tomorrow (run.py: a late sheet is still wanted)
         # the day's MAIN unit scenes on the ODG (the app's "Day N lavs" share, before review)
         "scene_ids": [s["scene_id"] for s in odg["scenes"] if not s.get("unit")],
         "source": {"subject": email["subject"], "received": email["date"], "files": email["files"]},

@@ -66,6 +66,12 @@ def write_json(path, content):
     path.write_text(json.dumps(content, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def all_past(proposal, today):
+    """A call sheet that arrives after its day is still wanted while the next day it announces is to come
+    (Il colpo ODG #63 of Fri 13 Nov came on the 14th: its day 64, Mon 16 Nov, was lost with it)."""
+    return proposal["date"] < today and (proposal.get("next_date") or "") < today
+
+
 def run(film_folder, include_past=False):
     film = Path(film_folder)
     repo = film.parent.parent
@@ -101,7 +107,7 @@ def run(film_folder, include_past=False):
         except TimeoutError as error:
             print(f"WARNING skipped: {error}")
             continue
-        if "PDL" not in names and proposal["date"] < today and not include_past:
+        if "PDL" not in names and all_past(proposal, today) and not include_past:
             continue
         name = proposal["id"]
         while (proposals / f"{name}.json").exists():  # a corrected ODG with the same number

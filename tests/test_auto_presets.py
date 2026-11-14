@@ -13,6 +13,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "pipeline"))
 
 from auto_presets import auto_review, coming_days  # noqa: E402
+from odg_presets import first_presets_of_day  # noqa: E402
 
 CAST = {"40": ["1", "2"], "50": ["1"], "60": ["2"]}
 
@@ -82,6 +83,28 @@ class AutoPresets(unittest.TestCase):
         film = {"settings": {}, "schedule": [{"day": 4, "date": "2026-11-13", "scene_id": "30", "order": 1},
                                              {"day": 5, "date": "2026-11-17", "scene_id": "40", "order": 1}]}
         self.assertEqual(coming_days(film, "2026-11-14"), [5])
+
+
+class CallSheetFirstPresets(unittest.TestCase):
+    def film(self, presets=None):
+        return {"characters": [{"id": "1", "name": "ANNA"}, {"id": "2", "name": "BRUNO"}], "lines": {}, "sound": {},
+                "presets": presets or {}, "transmitters": [{"id": "1"}, {"id": "2"}],
+                "lavaliers": [{"id": "L1", "model": "a"}, {"id": "L2", "model": "a"}],
+                "settings": {"presets": {"protagonist": "1", "tx_order": ["1", "2"]}}}
+
+    def test_a_call_sheets_new_scene_gets_one_first_preset_with_the_sides_speakers(self):
+        scenes = [{"scene_id": "40", "cast": ["1", "2"]}, {"scene_id": "90", "cast": ["2"], "unit": "2nd"}]
+        found, notes = first_presets_of_day(self.film(), scenes, sides={"40": {"speakers": ["Bruno"]}})
+        self.assertEqual(list(found), ["40"])  # the 2nd unit has its own sound team
+        self.assertEqual(found["40"]["text"], "Scene 40: first preset (small day): ANNA TX 1, lav L1 (silent); "
+                                              "BRUNO TX 2, lav L2 (speaks)")
+        self.assertEqual(notes, [])
+
+    def test_a_scene_with_a_preset_and_a_part_of_such_a_scene_are_left_to_the_proposal(self):
+        rows = [{"char_id": "1", "tx_id": "1", "lav_id": "L1", "speaker": "yes"}]
+        scenes = [{"scene_id": "40", "cast": ["1"]}, {"scene_id": "40pt1", "cast": ["1"]}, {"scene_id": "41", "cast": []}]
+        found, _ = first_presets_of_day(self.film({"40": {"scene_id": "40", "rows": rows}}), scenes)
+        self.assertEqual(found, {})
 
 
 if __name__ == "__main__":

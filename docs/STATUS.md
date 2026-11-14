@@ -23,8 +23,10 @@ The film-specific diary (decisions, dates, what Ana said) is private:
 - The robot runs that review by itself (`pipeline/auto_presets.py`, called by `run.py` when new papers arrive):
   scenes of the coming week's work days with no preset; the same rows are never offered twice, new rows (the
   sides arrived) are.
-- Not automatic yet: ODGs that arrive after their day (#62, #63) get no proposal, so the schedule of those days
-  stays as it was.
+- Call-sheet proposals: a scene with no preset is ONE "first preset" change with TX and lav
+  (`pipeline/odg_presets.py`), no longer one "add …, speaks maybe" per person (ODG #63: 57 changes → 33).
+- A call sheet that arrives after its day still gets its proposal while the next day it announces is to come
+  (`run.all_past`). One whose next day is past too (#62) gets none: that day's schedule stays as it was.
 
 ## Before (5–12 Nov 2026)
 - v220 Alarm page (#alarms): live legs from the robot (`commuteLegs` in gmail-trigger.gs, `?legs=`), ⏰ Set alarm now.
