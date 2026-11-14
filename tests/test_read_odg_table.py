@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "pipeline"))
 from odg_template import fields_named, template_for, DEFAULT_TEMPLATE  # noqa: E402
 from pdf_tables import without_stray_letters  # noqa: E402
 from read_odg_table import read_table_pages  # noqa: E402
-from reading_checks import eighths, odg_problems, readings_differ, reading_warnings  # noqa: E402
+from reading_checks import checked_reading, eighths, odg_problems, readings_differ, reading_warnings  # noqa: E402
 
 
 def row(*cells):
@@ -152,6 +152,21 @@ class ReadingChecks(unittest.TestCase):
         self.assertEqual(reading_warnings(own, "x.pdf", {}, second_reader=broken), [])
         lines = reading_warnings(own, "x.pdf", {}, second_reader=lambda _pdf: self.good(wrap="20:00"))
         self.assertEqual(lines, ["⚠ Two readers disagree — look at the PDF. wrap: read as 16:00, the second reader reads 20:00."])
+
+
+    def test_a_reading_with_no_scene_takes_the_second_readers_scenes_and_says_so(self):
+        empty = {**self.good(scenes=[]), "reader": "main"}
+        odg, lines = checked_reading(empty, "x.pdf", {}, second_reader=lambda _pdf: self.good())
+        self.assertEqual([s["scene_id"] for s in odg["scenes"]], ["12", "13"])
+        self.assertEqual(lines, ["⚠ The film's reader read no scene on this sheet: the scenes here were read by the "
+                                 "second reader (12 · 13). Check them against the PDF."])
+
+    def test_a_reading_with_scenes_is_never_replaced(self):
+        own = {**self.good(), "reader": "main"}
+        own["scenes"] = own["scenes"][:1]
+        odg, lines = checked_reading(own, "x.pdf", {}, second_reader=lambda _pdf: self.good())
+        self.assertEqual([s["scene_id"] for s in odg["scenes"]], ["12"])
+        self.assertIn("⚠ Two readers disagree — look at the PDF. today: the second reader also sees scene 13.", lines)
 
 
 if __name__ == "__main__":

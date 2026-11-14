@@ -7,8 +7,9 @@
      works from the table's header words, another way than the film's own reader). Two readers that go wrong
      the same way are rare: where they disagree, somebody has to look at the PDF.
 
-reading_warnings() runs both and gives the lines that go on top of the proposal, so a misread sheet says so
-before Ana accepts it (ODG #14, #59 and #61 were accepted misreadings). It never changes the reading itself.
+checked_reading() runs both and gives the lines that go on top of the proposal, so a misread sheet says so
+before Ana accepts it (ODG #14, #59 and #61 were accepted misreadings). It changes the reading in one case only:
+the film's reader found no scene at all and the second reader did (then the proposal says whose scenes they are).
 Used by: propose.py · tests: tests/test_reading_checks.py
 """
 
@@ -86,23 +87,47 @@ def readings_differ(own, other):
     return differences
 
 
-def reading_warnings(odg, pdf, settings, second_reader=None):
-    """The lines for the top of the proposal. second_reader(pdf) → a reading; None = the table reader."""
-    lines = [f"⚠ Reading check: {problem}." for problem in odg_problems(odg)]
-    if odg.get("reader") == "table":  # the film already uses the table reader: no second opinion to ask
-        return lines
+def second_opinion(pdf, settings, second_reader=None):
+    """The same PDF read by the table reader (or second_reader, in tests). None when it can't read it:
+    the second opinion must never stop the robot."""
     try:
-        if second_reader is None:
-            from odg_template import template_for
-            from read_odg_table import read_odg_table
-            other = read_odg_table(pdf, template_for(settings), (settings or {}).get("main_unit"))
-        else:
-            other = second_reader(pdf)
-    except Exception:  # the second opinion must never stop the robot
-        return lines
-    if not other.get("scenes"):  # this sheet has no table the second reader knows: nothing to compare
-        return lines
-    lines += [f"⚠ Two readers disagree — look at the PDF. {difference}." for difference in readings_differ(odg, other)]
-    lines += [f"⚠ Reading check: {problem}." for problem in odg_problems({**odg, "pages_total_printed": other.get("pages_total_printed"), "cast": odg.get("cast") or other.get("cast")})
-              if f"⚠ Reading check: {problem}." not in lines]
-    return lines
+        if second_reader is not None:
+            return second_reader(pdf)
+        from odg_template import template_for
+        from read_odg_table import read_odg_table
+        return read_odg_table(pdf, template_for(settings), (settings or {}).get("main_unit"))
+    except Exception:
+        return None
+
+
+def checked_reading(odg, pdf, settings, second_reader=None):
+    """→ (the reading, the lines for the top of the proposal).
+    The reading comes back unchanged, with ONE exception: when the film's reader found no scene at all for
+    the day (or for the next day) and the second reader did, the second reader's scenes are used and a line
+    says so (ODG #62 of Il colpo, 12 Nov: a new way of printing the table, nothing read)."""
+    if odg.get("reader") == "table":  # the film already uses the table reader: no second opinion to ask
+        return odg, [f"⚠ Reading check: {problem}." for problem in odg_problems(odg)]
+    other = second_opinion(pdf, settings, second_reader)
+    lines = []
+    if other and other.get("scenes") and not odg.get("scenes"):
+        odg = {**odg, "scenes": other["scenes"], "second_unit": other.get("second_unit")}
+        lines.append("⚠ The film's reader read no scene on this sheet: the scenes here were read by the second "
+                     f"reader ({' · '.join(s['scene_id'] for s in other['scenes'])}). Check them against the PDF.")
+    their_next = (other or {}).get("advance") or {}
+    if their_next.get("scenes") and odg.get("advance") and not odg["advance"].get("scenes"):
+        odg = {**odg, "advance": {**odg["advance"], "scenes": their_next["scenes"],
+                                  "second_unit": their_next.get("second_unit")}}
+        lines.append("⚠ The film's reader read no scene for the next day: those here were read by the second "
+                     f"reader ({' · '.join(s['scene_id'] for s in their_next['scenes'])}). Check them against the PDF.")
+    if other and other.get("scenes"):  # (no table the second reader knows on this sheet: nothing to compare)
+        lines += [f"⚠ Two readers disagree — look at the PDF. {difference}." for difference in readings_differ(odg, other)]
+        odg_for_sums = {**odg, "pages_total_printed": other.get("pages_total_printed"), "cast": odg.get("cast") or other.get("cast")}
+    else:
+        odg_for_sums = odg
+    lines += [f"⚠ Reading check: {problem}." for problem in odg_problems(odg_for_sums)]
+    return odg, lines
+
+
+def reading_warnings(odg, pdf, settings, second_reader=None):
+    """Only the lines (the reading itself is not wanted)."""
+    return checked_reading(odg, pdf, settings, second_reader)[1]
