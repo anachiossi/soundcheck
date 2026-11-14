@@ -17,6 +17,7 @@ import json
 import re
 import sys
 
+from odg_table_extras import day_count_and_week, needs_of_pages
 from odg_template import DEFAULT_TEMPLATE, fields_named, plain
 from pdf_tables import pages_of
 from read_odg import MONTHS, as_time, clean, read_date
@@ -53,6 +54,13 @@ def column_of(cell, header):
     return best
 
 
+def story_day(text):
+    """'15' · '3A' — and 'a 14' (a watermark letter printed in the cell) → '14'."""
+    text = clean(text)
+    last = re.search(r"\d+[A-Za-z]?$", text)
+    return last.group() if last else text
+
+
 def scene_of(values):
     """One table row's values (by field) → a scene, as read_odg.py gives it."""
     int_ext, light = values.get("int_ext", ""), values.get("light", "")
@@ -61,15 +69,18 @@ def scene_of(values):
     letters = re.sub(r"[\s/+-]", "", match.group(1)) if match else ""
     rest = both[match.end():].strip(" /") if match else both
     set_text, synopsis = values.get("set", ""), values.get("synopsis", "")
+    set_text = re.sub(r"^[^\w\n]+\n", "", set_text)  # a sign alone on the first line ("@", a pin): not the set
     if "set" in values and "synopsis" not in values and "\n" in set_text:
         set_text, synopsis = set_text.split("\n", 1)   # "SET / SINOSSI" in one column: first line, then the rest
     cast = values.get("cast", "")
+    times = TIME_RE.findall(values.get("timeline", ""))  # "10:00 11:30": when the scene is planned
     return {
-        "scene_id": re.sub(r"\s+", "", values["scene"]), "story_day": clean(values.get("story_day", "")),
+        "scene_id": re.sub(r"\s+", "", values["scene"]), "story_day": story_day(values.get("story_day", "")),
         "int_ext": {"I": "INT", "E": "EXT"}.get(letters, "INT/EXT" if letters else ""),
         "day_night": rest.split()[0] if rest else "", "set": clean(set_text), "synopsis": clean(synopsis),
         "cast": re.findall(r"\d+", cast), "pages": clean(values.get("pages", "")),
         "location": clean(values.get("location", "")), "standby": False,
+        **({"start": as_time(times[0]), "end": as_time(times[1])} if len(times) == 2 else {}),
     }
 
 
@@ -166,7 +177,10 @@ def time_after(lines, labels, main_unit=None):
     name = plain(main_unit)
     of_main = [i for i in found if name and name in plain(lines[i])]
     for i in (of_main or found)[:1]:
-        times = TIME_RE.findall(" ".join(lines[i:i + 5]))
+        after = lines[i:i + 5]
+        # "PROVE" then "-" on the next line: no time for this label (never the next label's, ODG #63)
+        dash = next((n for n, line in enumerate(after) if n and line.strip() in ("-", "–", "—")), len(after))
+        times = TIME_RE.findall(" ".join(after[:dash]))
         return as_time(times[0]) if times else ""
     return ""
 
@@ -262,12 +276,18 @@ def read_table_pages(pages, template=None, main_unit=None):
                    "second_unit": advance_second, "notes": {}}
         warnings += more
     labels = template["labels"]
+    of_days, week = day_count_and_week(text, template)
+    notes, next_notes = needs_of_pages(pages, template, (today["scenes"], second),
+                                       (tomorrow["scenes"], (advance or {}).get("second_unit")), main_unit)
+    if advance:
+        advance["notes"] = next_notes
     return {
-        "number": number, "date": date, "weekday_printed": weekday,
-        "call": time_after(lines, labels["call"], main_unit), "ready_to_shoot": time_after(lines, labels["ready_to_shoot"], main_unit),
+        "number": number, "of_days": of_days, "week": week, "date": date, "weekday_printed": weekday,
+        "call": time_after(lines, labels["call"], main_unit), "rehearsal": time_after(lines, labels["rehearsal"], main_unit),
+        "ready_to_shoot": time_after(lines, labels["ready_to_shoot"], main_unit),
         "end_of_shoot": time_after(lines, labels["end_of_shoot"], main_unit), "wrap": time_after(lines, labels["wrap"], main_unit),
         "scenes": today["scenes"], "cast": cast, "second_unit": second, "unit_warnings": warnings,
-        "pages_total_printed": today["total"], "notes": {}, "advance": advance or {}, "reader": "table",
+        "pages_total_printed": today["total"], "notes": notes, "advance": advance or {}, "reader": "table",
     }
 
 

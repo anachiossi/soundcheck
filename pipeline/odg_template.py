@@ -38,9 +38,21 @@ DEFAULT_TEMPLATE = {
     # the day's times: the label printed before each one
     "labels": {
         "call": ["CONVOCAZIONE"],
+        "rehearsal": ["PROVE"],
         "ready_to_shoot": ["PRONTI A GIRARE"],
         "end_of_shoot": ["FINE RIPRESE"],
         "wrap": ["FINE LAVORAZIONE"],
+    },
+    # "Settimana #10" → week 10
+    "week": ["SETTIMANA", "WEEK"],
+    # the departments' needs: the word that starts today's list and the next day's; then each department's
+    # heading as printed → the name the app knows it by (compare.py picks the sound-related notes by these names)
+    "needs": {"today": ["FABBISOGNI"], "next_day": ["FABBISOGNI SPECIALI"]},
+    "departments": {
+        "Scenografia": ["SCEN/ARREDAMENTO"], "Props": ["PROPS"], "Costumi": ["COSTUMI"], "Trucco/Capelli": ["MAKE-UP/HAIR"],
+        "VFX/AI": ["VFX"], "SFX/Armi": ["SFX"], "Veicoli": ["MEZZI DI SCENA"], "Camera": ["ATTREZZATURE SPECIALI"],
+        "Suono": ["SUONO"], "Regia": ["REGIA"], "Produzione": ["PRODUZIONE"], "Stunt": ["STUNT"], "Animali": ["ANIMALI"],
+        "Figurazioni": ["FIGURAZIONI"],
     },
     # the words that start the NEXT day's programme: the scene tables after them are tomorrow's
     "next_day": ["AVANZAMENTO", "PROGRAMMA DEL GIORNO SUCCESSIVO"],

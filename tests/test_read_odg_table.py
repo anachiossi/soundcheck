@@ -82,6 +82,32 @@ class TableReader(unittest.TestCase):
         self.assertEqual([s["scene_id"] for s in odg["scenes"]], ["12"])
         self.assertEqual(odg["cast"], [{"id": "3", "role": "ANNA ROSSI", "actor": "Maria Bianchi"}])
 
+    def test_a_label_followed_by_a_dash_has_no_time_and_the_week_and_day_count_are_read(self):
+        lines = ["ODG #7 di 40", "Lunedì 9 Novembre 2026", "Settimana #3", "CONVOCAZIONE", "08.00", "PROVE", "-",
+                 "PRONTI A GIRARE", "09.00", "FINE LAVORAZIONE", "16.00"]
+        odg = read_table_pages([{"lines": lines, "tables": [{"line": len(lines), "rows": [HEADER, scene("12")]}]}])
+        self.assertEqual((odg["rehearsal"], odg["ready_to_shoot"], odg["call"]), ("", "09:00", "08:00"))
+        self.assertEqual((odg["of_days"], odg["week"]), (40, 3))
+
+    def test_a_scenes_planned_times_a_sign_before_the_set_and_a_stray_letter_before_the_story_day(self):
+        header = row((20, "SCENA"), (70, "I/E"), (120, "LUCE"), (170, "SET/SINOSSI"), (220, "DAY"), (270, "CAST"), (320, "PGS"), (370, "TIMELINE"))
+        odg = sheet(header, row((20, "12"), (70, "E"), (120, "G"), (170, "@\nPIAZZA/Edicola\nAnna compra il giornale."),
+                                (220, "a 14"), (270, "1"), (320, "2/8"), (370, "10:00\n11:30")))
+        only = odg["scenes"][0]
+        self.assertEqual((only["set"], only["synopsis"], only["story_day"]), ("PIAZZA/Edicola", "Anna compra il giornale.", "14"))
+        self.assertEqual((only["start"], only["end"]), ("10:00", "11:30"))
+
+    def test_the_departments_needs_are_read_per_scene_for_today_and_the_next_day(self):
+        text = ["ODG #7", "FABBISOGNI", "PROPS", "12: Giornale", "SUONO", "Playback sul set",
+                "Programma del giorno successivo Martedì 10 novembre 2026", "FABBISOGNI SPECIALI del giorno successivo",
+                "STUNT", "30: Stunt coordinator"]
+        page = {"lines": LINES + ["12 I G CASA ROSSI", "PROGRAMMA DEL GIORNO SUCCESSIVO, MARTEDÌ 10 NOVEMBRE"], "text_lines": text,
+                "tables": [{"line": len(LINES), "rows": [HEADER, scene("12"), scene("13")]},
+                           {"line": len(LINES) + 2, "rows": [HEADER, scene("30")]}]}
+        odg = read_table_pages([page])
+        self.assertEqual(odg["notes"], {"12": {"Props": "Giornale", "Suono": "Playback sul set"}, "13": {"Suono": "Playback sul set"}})
+        self.assertEqual(odg["advance"]["notes"], {"30": {"Stunt": "Stunt coordinator"}})
+
     def test_every_cast_table_is_read_with_minors_double_roles_and_special_extras(self):
         cast_header = row((20, "ID"), (70, "RUOLO"), (170, "NOME"), (270, "SCENE"))
         extras_header = row((20, "N."), (70, "RUOLO"), (270, "SCENE"))

@@ -50,5 +50,8 @@ def pages_of(path):
                     rows.append(cells)
             top = table.bbox[1]
             tables.append({"line": sum(1 for y, _, _ in placed if y < top - 1), "rows": rows})
-        pages.append({"lines": [text for _, _, text in placed], "tables": sorted(tables, key=lambda t: t["line"])})
+        # "text_lines": the page as the PDF library reads it straight (the departments' needs are read from these)
+        text_lines = [clean(line) for line in page.get_text().splitlines() if clean(line)]
+        pages.append({"lines": [text for _, _, text in placed], "tables": sorted(tables, key=lambda t: t["line"]),
+                      "text_lines": text_lines})
     return pages

@@ -44,4 +44,6 @@ def crew_reader_for(film_folder):
     from read_crew_lux_vide import read_crew_lux_vide
     settings_file = Path(film_folder) / "settings.json"
     settings = json.loads(settings_file.read_text(encoding="utf-8")) if settings_file.exists() else {}
-    return {"il-colpo": read_crew_il_colpo, "lux-vide": read_crew_lux_vide}.get(settings.get("odg_reader"), read_crew)
+    # a film on the template reader ("odg_reader": "table") names its crew table's layout apart: "crew_reader"
+    layout = settings.get("crew_reader") or settings.get("odg_reader")
+    return {"il-colpo": read_crew_il_colpo, "lux-vide": read_crew_lux_vide}.get(layout, read_crew)

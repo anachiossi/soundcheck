@@ -20,6 +20,7 @@ import json
 import re
 import sys
 
+from odg_needs import read_needs, unit_spelling
 from read_odg import as_time, clean, read_date, section
 
 SCENE_ID_RE = re.compile(r"^\d+[A-Za-z]*\d*$")            # 315 · 517pt1 · 27A
@@ -27,15 +28,6 @@ LIGHT_RE = re.compile(r"^[GNTSMAP]$")                         # G(iorno) · N(ot
 CAST_RE = re.compile(r"^(-|\d+([\s,]+\d+)*)$")                # '8, 19, 62' · '-' (nobody)
 PAGES_RE = re.compile(r"^(\d+\s+)?\d/8$|^\d+$")
 TIME_RE = re.compile(r"^\d{1,2}[.:]\d{2}$")
-CONTACT_RE = re.compile(r"\)\s*\d{3}[\s\d]{6,}$")           # the crew phone list after the needs: "(Coordinamento) 320 …"
-SCENES_RE = r"\d+[A-Za-z]*\d*(?:\s*-\s*\d+[A-Za-z]*\d*)*"    # '516 - 517pt1 - 316'
-# this layout's departments → the names read_odg.py uses (compare.py picks the sound-related notes by them)
-DEPARTMENTS = {"SCEN/ARREDAMENTO": "Scenografia", "PROPS": "Props", "COSTUMI": "Costumi", "MAKE-UP/HAIR": "Trucco/Capelli",
-               "VFX": "VFX/AI", "SFX": "SFX/Armi", "MEZZI DI SCENA": "Veicoli", "ATTREZZATURE SPECIALI": "Camera",
-               "SUONO": "Suono", "REGIA": "Regia", "PRODUZIONE": "Produzione", "STUNT": "Stunt", "ANIMALI": "Animali",
-               "FIGURAZIONI": "Figurazioni"}  # ODG #56
-
-
 def time_after(lines, label, unit=""):
     """The first time printed after a label (on the next lines): 'PRONTI A GIRARE DRONE' · '09:15'.
     Two units (ODG #59, 9 Nov) print the label once per unit, then the times in the same order:
@@ -132,81 +124,6 @@ def read_cast(lines):
     return cast
 
 
-def read_needs(lines, start_marker, scene_ids, units=None):
-    """FABBISOGNI → {'317': {'Scenografia': 'Crocifisso, …'}}. A note with no scene numbers is for every scene of
-    the day; a line that wraps ("…Cellulari," + "Giornali, Buste shopping") goes on with the scenes before it.
-    "ore 08:30" is a time, never scene 08 (scene numbers are followed by ':' and a space or a word).
-    units = {'ALFIERI': [ids], 'DE FEUDIS': [ids]} (mark_units): "UNIT DE FEUDIS AUTO RAGAZZI…" is only for
-    that unit's scenes; a plain line repeated inside the next UNIT line ("STUNT COORDINATOR" +
-    "UNIT ALFIERI STUNT COORDINATOR") is printed twice: kept once, for that unit (ODG #55, 3 Nov)."""
-    body, _ = section(lines, start_marker, ("Direttore di Produzione", "CANALI RADIO"))
-    contact = next((i for i, line in enumerate(body) if CONTACT_RE.search(line)), len(body))  # "Name (Role) 320 …"
-    # the crew table can follow straight after the needs (ODG #56): its header "REGIA · SET · FOTOGRAFIA · SET"
-    # ends them (REGIA alone is also a needs department)
-    crew = next((i for i in range(len(body) - 1) if body[i] == "REGIA" and body[i + 1] == "SET"), len(body))
-    body = body[:min(contact, crew)]
-    units = units or {}
-    # ODG #56: "208 – 241 - 426:" (long dashes) and "330 A – 331:" (a space in 330A) → "208 - 241 - 426:", "330A - 331:"
-    body = [re.sub(r"\b(\d{2,4}) ([A-Z])\b(?=\s*[-–,:])", r"\1\2", line.replace("–", "-")) for line in body]
-
-    def unit_line(line):  # ('DE FEUDIS', 'AUTO RAGAZZI…') or None — also with a typo ("UNITA DE FEUIDIS", ODG #56)
-        import difflib
-        upper = line.upper()
-        if not upper.startswith("UNIT"):
-            return None
-        rest = re.sub(r"^UNIT(?:À|A['’]?)?\s+", "", line)
-        for name in sorted(units, key=len, reverse=True):
-            words = len(name.split())  # compare as many words as the name has ("DE FEUIDIS" = "DE FEUDIS")
-            head = " ".join(rest.split()[:words]).upper()
-            if head == name or difflib.SequenceMatcher(None, head, name).ratio() >= 0.85:
-                return name, " ".join(rest.split()[words:])
-        return None
-
-    def parts_of(ids):  # "208" on the needs = every part the day shoots: 208pt1, 208pt2
-        out = []
-        for sid in ids:
-            own = [s for s in scene_ids if s == sid or (re.match(rf"{re.escape(sid)}(?!\d)", s) and sid not in scene_ids)]
-            out += own or [sid]
-        return list(dict.fromkeys(out))
-
-    scoped = []
-    for i, line in enumerate(body):
-        unit = unit_line(line)
-        if unit:
-            scoped.append((units[unit[0]], unit[1]))
-        elif i + 1 < len(body) and unit_line(body[i + 1]) and unit_line(body[i + 1])[1].strip() == line.strip():
-            continue  # the same text printed again in the next UNIT line
-        else:
-            scoped.append((None, line))
-    notes, department, current = {}, None, []
-
-    def add(ids, text, joiner="; "):  # a new note after another: "; " · a wrapped line going on: " "
-        for scene_id in ids:
-            old = notes.setdefault(scene_id, {}).get(department, "")
-            notes[scene_id][department] = clean(f"{old}{joiner if old else ''}{text.strip()}")
-
-    for only, line in scoped:
-        if line.upper() in DEPARTMENTS:
-            department, current = DEPARTMENTS[line.upper()], []
-            continue
-        if not department:
-            continue
-        parts = re.split(rf"(?:^|\s+)({SCENES_RE})\s*:(?!\d)\s*", line)
-        if len(parts) == 1:
-            add(only or current or scene_ids, line, " ")  # one unit, or goes on from the scenes before, or the whole day
-            if only:
-                current = only
-            continue
-        if parts[0].strip():
-            add(only or current or scene_ids, parts[0], " ")
-        for ids, text in zip(parts[1::2], parts[2::2]):
-            current = parts_of(re.findall(r"\d+[A-Za-z]*\d*", ids))
-            add(current, text)
-    # tidy the ends only now: a comma at the end of a line is kept while the next line goes on from it
-    return {scene_id: {name: text.strip(" ,;") for name, text in by_department.items()}
-            for scene_id, by_department in notes.items()}
-
-
 # "UNIT DE FEUDIS 08:00 – 16:00" (ODG #55) · "UNIT DE FEUDIS – orario 10:30 – 18:30" (ODG #59): the name is DE FEUDIS
 UNIT_RE = re.compile(r"^UNIT\s+(.+?)(?:\s*[–-]?\s*orario)?(?:\s+(\d{1,2}[.:]\d{2})\s*[–-]\s*(\d{1,2}[.:]\d{2}))?$", re.IGNORECASE)
 
@@ -240,11 +157,6 @@ def mark_units(table, scenes, main_unit, groups):
             scene["unit"], scene["unit_name"] = "2nd", unit[0].title()
             second = second or {"name": unit[0].title(), "call": unit[1], "wrap": unit[2]}
     return second, warnings
-
-
-def unit_spelling(line):
-    """ODG #56 (4 Nov) prints "UNITÀ ALFIERI", "UNITA' …", "UNITA’ …": all read as "UNIT ALFIERI"."""
-    return re.sub(r"^UNIT(?:À|A['’]?)(?=\s)", "UNIT", line)
 
 
 def read_il_colpo(lines, main_unit=None):
