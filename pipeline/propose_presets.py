@@ -2,6 +2,7 @@
 generator's TX / lav for every scene (presets.py + the film's settings.json), as a proposal she
 accepts or rejects scene by scene (op set_preset), plus the checker's findings as warnings.
 Shot days are never touched. Scenes Ana edited by hand are marked in the text.
+A scene with no preset yet gets its FIRST one: the printed cast + who has lines (first_presets.py).
 
     python pipeline/propose_presets.py <film folder> --from-day 8        writes proposals/presets-<date>.json
     python pipeline/propose_presets.py <film folder> --days 9,10,15   only these days (a follow-up)
@@ -15,6 +16,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from presets import day_plan, new_rows, check_scene  # noqa: E402
+from first_presets import cast_by_scene, first_rows  # noqa: E402
 
 GENERATED_BY = ("import from Sheets", "Claude")  # presets not edited by Ana (yet)
 
@@ -34,6 +36,7 @@ def load_film(folder):
     film["settings"] = read(folder / "settings.json")
     # rows Ana accepted from earlier preset reviews (newest wins): a scene that still matches them was
     # not edited by hand, even though her phone's name is on the file
+    film["cast"] = cast_by_scene(folder)  # the printed cast of each scene (PDL, call sheets): for scenes with no preset
     film["accepted"] = {}
     for path in sorted((folder / "proposals").glob("presets-*.json"), key=lambda p: read(p)["created_at"]):
         review = read(path)
@@ -76,20 +79,46 @@ def describe(film, before, after):
     return parts
 
 
+def describe_new(film, rows):
+    """A scene's first preset in words: who gets which TX and lav, who has a row with no mic."""
+    names = {str(c["id"]): c["name"] for c in film["characters"]}
+    speaks = {"yes": "speaks", "no": "silent", "maybe": "speaks?"}
+    parts = []
+    for row in rows:
+        mic = f"TX {row['tx_id']}, lav {row['lav_id'] or '—'}" if row["tx_id"] else "no mic"
+        parts.append(f"{names.get(str(row['char_id']), 'ID ' + str(row['char_id']))} {mic} ({speaks.get(row['speaker'], row['speaker'])})")
+    return parts
+
+
 def review(film, first_day, only=None):
     changes, warnings = [], []
     for day, info in days_of(film).items():
         if day < first_day or (only and day not in only):
             continue
         scene_ids = [sid for sid in info["scenes"]]
+        new = []  # scenes with no preset yet: their first rows come from the printed cast and the lines
+        for sid in scene_ids:
+            if sid not in film["presets"] and film.get("cast", {}).get(sid):
+                rows, notes = first_rows(film, sid, film["cast"][sid])
+                film["presets"][sid] = {"scene_id": sid, "rows": rows}
+                warnings += notes
+                new.append(sid)
         plan, kind, notes = day_plan(film, film["settings"], [s for s in scene_ids if s in film["presets"]])
         warnings += [f"Day {day}: {note}" for note in notes]
         for sid in scene_ids:
-            warnings += check_scene(film, sid)
+            if sid not in new:  # (a new scene's lines for Ana were written with its first rows)
+                warnings += check_scene(film, sid)
             if sid not in film["presets"]:
                 continue
             before = film["presets"][sid]["rows"]
             after = new_rows(film, sid, plan)
+            if sid in new:
+                changes.append({
+                    "id": f"c{len(changes) + 1}", "scene_id": sid,
+                    "text": f"Day {day} · scene {sid}: first preset ({kind} day): " + "; ".join(describe_new(film, after)),
+                    "op": {"op": "set_preset", "scene_id": sid, "rows": after},
+                })
+                continue
             parts = describe(film, before, after)
             if not parts:
                 continue
@@ -148,6 +177,11 @@ def main():
         "changes": changes, "warnings": warnings,
         "checks": [f"Same TX and lav all day; rules from settings.json"], "notes": {}, "ifb_today": [],
     }
+    if "--print" in sys.argv:  # look only: nothing is written
+        sys.stdout.reconfigure(encoding="utf-8")
+        for line in [c["text"] for c in changes] + ["! " + w for w in warnings]:
+            print(line)
+        return
     path = folder / "proposals" / f"{proposal['id']}.json"
     path.write_text(json.dumps(proposal, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"{len(changes)} scenes to change, {len(warnings)} things to look at → {path}")
