@@ -149,13 +149,24 @@ async function downloadDocuments(connection, tree, store) {
     .filter(([path, sha]) => ((path.startsWith(prefix) && !path.startsWith(`${prefix}archive/`)) || (manuals && path.startsWith(manuals)))
       && /\.(pdf|jpe?g|png)$/i.test(path) && documents[path] !== sha)
     .sort(([a], [b]) => (dateOf(a) < yesterday) - (dateOf(b) < yesterday));
-  let fetched = 0;
-  for (const [path, sha] of wanted) {
-    await saveDocument(project.id, path, await github.readFileBytes(connection, sha));
-    documents[path] = sha;
-    fetched++;
+  // Remembered every 5 files, and when the signal drops in the middle: what already arrived is
+  // never downloaded twice.
+  let notRemembered = 0;
+  const remember = async () => {
+    if (!notRemembered) return;
+    notRemembered = 0;
+    await store.save({ ...store.read(), documents });
+  };
+  try {
+    for (const [path, sha] of wanted) {
+      await saveDocument(project.id, path, await github.readFileBytes(connection, sha));
+      documents[path] = sha;
+      notRemembered++;
+      if (notRemembered >= 5) await remember();
+    }
+  } finally {
+    await remember().catch(() => {}); // another film was opened: nothing to remember here
   }
-  if (fetched) await store.save({ ...store.read(), documents });
 }
 
 async function upload(connection, tree, store) {
@@ -173,10 +184,12 @@ async function upload(connection, tree, store) {
   const names = paths.map(path => path.replace(/^presets\//, '#').replace(/\.json$/, '')).join(', ');
   // a file holding an approved crew suggestion: "… — proposed by Davide, approved" (crew-inbox.js)
   const approved = inbox.approvalNote(paths, getState().crewDecisions, project.folder);
-  await github.commitFiles(connection, tree, files, `Edit ${names} — ${connection.device}${approved}`);
+  const commitSha = await github.commitFiles(connection, tree, files, `Edit ${names} — ${connection.device}${approved}`);
 
-  // Uploaded: take these files out of the outbox and remember their new fingerprints.
-  const after = await github.readTree(connection);
+  // Uploaded: take these files out of the outbox and remember their new fingerprints. Read from
+  // OUR commit, not from "the repo now": if another device saved the same file a moment later,
+  // its fingerprint must not be remembered as ours (that change would never be downloaded).
+  const after = await github.readTreeOfCommit(connection, commitSha);
   const latest = store.read();
   const outbox = { ...latest.outbox };
   const shas = { ...latest.shas };

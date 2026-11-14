@@ -14,7 +14,7 @@ export function ifbWarnings(rows) {
   return warnings;
 }
 
-// '+39 338 948 6323' → 'tel:+393389486323' and 'https://wa.me/393389486323'
+// '+39 000 000 0003' → 'tel:+390000000003' and 'https://wa.me/390000000003' (an invented number)
 export function phoneLinks(phone) {
   const digits = String(phone || '').replace(/[^\d+]/g, '');
   if (!digits) return null;

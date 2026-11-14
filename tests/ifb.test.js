@@ -4,12 +4,13 @@ import assert from 'node:assert/strict';
 import { ifbWarnings, phoneLinks, emergencyContacts, searchCrew } from '../src/ifb-rules.js';
 import { applyRemote, filesToDownload, projectToFiles, emptyProject } from '../src/store/repo-files.js';
 
+// Invented people and numbers (this repo is public: never a real name with a real phone).
 const crew = [
-  { id: '1', name: 'Alessandro Roia', job: 'Regista' },
-  { id: '3', name: 'Benedetta Barroero', job: 'Aiuto Regia', phone: '+39 340 546 6826' },
-  { id: '9', name: 'Marco Albertini', job: 'Location Manager', phone: '+39 347 320 4000' },
-  { id: '18', name: 'Giulia Preziosi', job: 'Direttrice di Produzione', phone: '+39 340 231 4328' },
-  { id: '64', name: 'Angelo Bonanni', job: 'Fonico', phone: '+39 328 621 0888' },
+  { id: '1', name: 'Mario Rossi', job: 'Regista' },
+  { id: '3', name: 'Anna Bianchi', job: 'Aiuto Regia', phone: '+39 000 000 0003' },
+  { id: '9', name: 'Luca Verdi', job: 'Location Manager', phone: '+39 000 000 0009' },
+  { id: '18', name: 'Paola Neri', job: 'Direttrice di Produzione', phone: '+39 000 000 0018' },
+  { id: '64', name: 'Carlo Gialli', job: 'Fonico', phone: '+39 000 000 0064' },
 ];
 
 test('the same receiver twice is a warning', () => {
@@ -18,7 +19,7 @@ test('the same receiver twice is a warning', () => {
 });
 
 test('phone numbers become Call and WhatsApp links', () => {
-  assert.deepEqual(phoneLinks('+39 340 546 6826'), { call: 'tel:+393405466826', whatsapp: 'https://wa.me/393405466826' });
+  assert.deepEqual(phoneLinks('+39 000 000 0003'), { call: 'tel:+390000000003', whatsapp: 'https://wa.me/390000000003' });
   assert.equal(phoneLinks(''), null);
 });
 

@@ -85,11 +85,20 @@ export async function checkCanRead(connection) {
 // of the file's content: same sha = same content, nothing to download).
 export async function readTree(connection) {
   const ref = await call(connection, `/git/ref/heads/${connection.branch}`);
-  const commit = await call(connection, `/git/commits/${ref.object.sha}`);
+  return readTreeOfCommit(connection, ref.object.sha);
+}
+
+// The same, for one commit we know (sync.js: the commit this device just made, so the fingerprints
+// it remembers are those of ITS files, even if another device saved a moment later).
+export async function readTreeOfCommit(connection, commitSha) {
+  const commit = await call(connection, `/git/commits/${commitSha}`);
   const tree = await call(connection, `/git/trees/${commit.tree.sha}?recursive=1`);
+  // GitHub cuts a very long list (over 100,000 files) and says so. A cut list would look like
+  // "these files were deleted": stop instead.
+  if (tree.truncated) throw new Error('the repo has too many files for one list');
   const files = {};
   for (const item of tree.tree) if (item.type === 'blob') files[item.path] = item.sha;
-  return { commitSha: ref.object.sha, treeSha: commit.tree.sha, files };
+  return { commitSha, treeSha: commit.tree.sha, files };
 }
 
 // Any file (e.g. a PDF) as raw bytes.

@@ -42,6 +42,7 @@ function fakeRepo(files) {
     const answer = value => ({ ok: true, status: 200, json: async () => value });
     if (path === '/git/ref/heads/main') return answer({ object: { sha: 'c1' } });
     if (path === '/git/commits/c1') return answer({ tree: { sha: 't1' } });
+    if (method === 'GET' && path === '/git/commits/c2') return answer({ tree: { sha: 't1' } }); // the commit just made, read back
     if (path.startsWith('/git/trees/t1')) return answer({ tree: Object.keys(files).map(file => ({ type: 'blob', path: file, sha: file })) });
     if (path.startsWith('/git/blobs/')) return answer({ content: Buffer.from(JSON.stringify(files[decodeURIComponent(path.slice(11))])).toString('base64') });
     if (method === 'POST' && path === '/git/trees') { sent.tree = JSON.parse(options.body).tree; return answer({ sha: 't2' }); }

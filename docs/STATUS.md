@@ -20,7 +20,7 @@ The film-specific diary (decisions, dates, what Ana said) is private:
 ## Films
 - **La buona educazione** (LBE) — the main film, 30 days, email robot on. Always comes first.
 - **Vigília** — short, Italian weekend 3–4 Oct 2026, built by hand (no PDL/ODG):
-  `D:\script_read_claude\projectsigilia\workuild_vigilia.py`. No email robot (no inbox.json).
+  `D:\script_read_claude\projects\vigilia\work\build_vigilia.py`. No email robot (no inbox.json).
   Its script reader options are in its own settings.json (`script_reader`: watermarks, unnumbered_scenes).
 - **Il colpo** (IC) — series, from ODG #48 (24 Oct 2026), built by hand from that ODG.
   Its ODG layout has its own reader, `pipeline/read_odg_il_colpo.py`, chosen by its settings.json

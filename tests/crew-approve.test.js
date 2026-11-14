@@ -45,6 +45,7 @@ function repo({ issues = [], commit = { sha: 'c2' } } = {}) {
   return (method, path) => {
     if (path === '/git/ref/heads/main') return { object: { sha: 'c1' } };
     if (path === '/git/commits/c1') return { tree: { sha: 't1' } };
+    if (method === 'GET' && path === '/git/commits/c2') return { tree: { sha: 't1' } }; // the commit just made, read back
     if (path.startsWith('/git/trees/t1')) return { tree: [{ type: 'blob', path: `${FOLDER}/${PATH}`, sha: 'sha-now' }] };
     if (method === 'POST' && path === '/git/trees') return { sha: 't2' };
     if (method === 'POST' && path === '/git/commits') return commit;
