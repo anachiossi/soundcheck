@@ -38,6 +38,19 @@ def load_film(folder):
             "crew": read("ifb/crew.json", []), "ifb_rows": (read("ifb/list.json", {}) or {}).get("rows", [])}
 
 
+def with_new_cast(characters, changes):
+    """The characters as they will be once the cast changes are accepted: a new one added, one that takes its
+    cast number renamed — so the mic changes further down say "LOLA", not "ID 79"."""
+    characters = list(characters)
+    for change in changes:
+        op = change["op"]
+        if op["op"] == "add_character":
+            characters.append(op["character"])
+        if op["op"] == "number_character":
+            characters = [{**c, **op["character"]} if c["id"] == op["from"] else c for c in characters]
+    return characters
+
+
 def subject_date(subject, year):
     """'LBE - ODG #6 del 28.09.26' → '2026-09-28'."""
     match = re.search(r"(\d{1,2})[./](\d{1,2})[./](\d{2,4})", subject or "")
@@ -163,6 +176,7 @@ def build_proposal(film_folder, email_folder, other_sides=None, sides_notes=None
         add(result)
     by_gender = bool(((film["settings"].get("presets") or {}).get("lav_rules") or {}).get("by_gender"))
     add(check_cast_list(odg["cast"], film["characters"], predict_gender=by_gender))
+    film["characters"] = with_new_cast(film["characters"], changes)  # the rest of the proposal says their names
     advance = odg.get("advance") or {}
     days = [(odg["scenes"], odg["notes"], True)]
     if advance.get("day") and not advance["scenes"]:  # printed, but no scene read: never remove a day for that
@@ -177,7 +191,7 @@ def build_proposal(film_folder, email_folder, other_sides=None, sides_notes=None
 
     for scenes, scene_notes, today in days:
         # scenes with no preset: one "first preset" change each, with the day's TX and lav (odg_presets.py)
-        firsts, first_notes = odg_first_presets(film_folder, scenes, sides if today else None)
+        firsts, first_notes = odg_first_presets(film_folder, scenes, sides if today else None, film["characters"])
         warnings.extend(first_notes)
         for scene in scenes:
             sid = scene["scene_id"]

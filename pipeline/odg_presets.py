@@ -61,10 +61,12 @@ def first_presets_of_day(film, scenes, sides=None):
     return found, notes + plan_notes
 
 
-def odg_first_presets(film_folder, scenes, sides=None):
-    """The same, reading the film from its folder. Anything missing (no rules, no kit): nothing, never an error."""
+def odg_first_presets(film_folder, scenes, sides=None, characters=None):
+    """The same, reading the film from its folder. Anything missing (no rules, no kit): nothing, never an error.
+    characters: the film's, plus those the same call sheet is adding or numbering (propose.with_new_cast)."""
     try:
         film = load_film(film_folder, with_cast=False)
+        film["characters"] = characters or film["characters"]
         if not film["settings"].get("presets"):
             return {}, []
         return first_presets_of_day(film, scenes, sides)

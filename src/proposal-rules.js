@@ -116,6 +116,39 @@ const OPS = {
     return [soundFile(scene_id)];
   },
 
+  // The call sheet gives a cast number to a character the film already had with none ('c-lola' → '79', Ana 15 Nov:
+  // "ODGs are the truth always"): the same character takes the number everywhere it is used — its mic rows,
+  // its lines in Cues, its sound warnings. Its colour and everything else it had stay.
+  number_character(film, { from, character }) {
+    const old = film.characters.find(c => c.id === from);
+    if (!old || film.characters.some(c => c.id === character.id)) return [];
+    const files = ['characters.json'];
+    const renamed = thing => (thing.char_id === from ? { ...thing, char_id: character.id } : thing);
+    film.characters = film.characters.map(c => (c.id === from ? { ...c, ...character } : c));
+    const presets = { ...film.presets };
+    for (const [sceneId, preset] of Object.entries(presets)) {
+      if (!(preset.rows || []).some(row => row.char_id === from)) continue;
+      presets[sceneId] = { ...preset, rows: preset.rows.map(renamed) };
+      files.push(presetFile(sceneId));
+    }
+    film.presets = presets;
+    const lines = { ...film.lines };
+    for (const [key, scene] of Object.entries(lines)) {
+      if (!(scene.lines || []).some(line => line.char_id === from)) continue;
+      lines[key] = { ...scene, lines: scene.lines.map(renamed) };
+      files.push(`lines/${key}.json`);
+    }
+    film.lines = lines;
+    const sound = { ...film.sound };
+    for (const [sceneId, breakdown] of Object.entries(sound)) {
+      if (!(breakdown.warnings || []).some(warning => warning.char_id === from)) continue;
+      sound[sceneId] = { ...breakdown, warnings: breakdown.warnings.map(renamed) };
+      files.push(soundFile(sceneId));
+    }
+    film.sound = sound;
+    return files;
+  },
+
   set_character(film, { id, fields }) {
     film.characters = film.characters.map(c => (c.id === id ? { ...c, ...fields } : c));
     return ['characters.json'];

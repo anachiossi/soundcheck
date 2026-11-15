@@ -167,6 +167,17 @@ def check_cast_list(odg_cast, characters, predict_gender=False):
     for row in odg_cast:
         own = by_id.get(row["id"])
         guess = gender_from_actor(row["actor"]) if predict_gender else ""
+        # the film already has this role with no cast number ("c-lola"): the call sheet's number goes to it
+        # (Ana, 15 Nov: "ODGs are the truth always") — never a second character of the same name
+        unnumbered = next((c for c in characters if not str(c["id"]).isdigit() and norm(row["role"]) in
+                           [norm(c["name"])] + [norm(alias) for alias in c.get("aliases", [])]), None)
+        if not own and unnumbered:
+            fields = {"id": row["id"], "name": row["role"], **({"actor": row["actor"]} if row["actor"] else {}),
+                      **({"gender": guess} if guess and not unnumbered.get("gender") else {})}
+            changes.append({"text": f"{unnumbered['name']} is cast number {row['id']} on the call sheet"
+                                    f"{' (' + row['actor'] + ')' if row['actor'] else ''}: the character takes the number",
+                            "op": {"op": "number_character", "from": unnumbered["id"], "character": fields}})
+            continue
         if not own:
             says = f", gender {guess} from the actor's name" if guess else ""
             changes.append({"text": f"New character {row['id']} {row['role']} ({row['actor'] or 'no actor yet'}{says})",

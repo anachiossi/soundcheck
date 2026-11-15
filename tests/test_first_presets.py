@@ -138,5 +138,26 @@ class GenderFromTheActorsName(unittest.TestCase):
         self.assertEqual([c["text"] for c in changes], ["New character 3 CARLA (Ornella Blu)"])
 
 
+class CastNumbers(unittest.TestCase):
+    def test_a_call_sheet_number_goes_to_the_character_the_film_already_has_with_none(self):
+        from compare import check_cast_list
+        characters = [{"id": "1", "name": "ANNA", "actor": "Anna Rossi", "gender": "F"},
+                      {"id": "c-dora", "name": "DORA", "actor": "", "gender": "F"}]
+        cast = [{"id": "1", "role": "ANNA", "actor": "Anna Rossi"}, {"id": "79", "role": "DORA", "actor": "Ornella Blu"}]
+        changes, _, _ = check_cast_list(cast, characters, predict_gender=True)
+        self.assertEqual([c["text"] for c in changes],
+                         ["DORA is cast number 79 on the call sheet (Ornella Blu): the character takes the number"])
+        self.assertEqual(changes[0]["op"], {"op": "number_character", "from": "c-dora",
+                                            "character": {"id": "79", "name": "DORA", "actor": "Ornella Blu"}})
+
+    def test_the_rest_of_the_proposal_knows_the_characters_the_call_sheet_adds_or_numbers(self):
+        from propose import with_new_cast
+        characters = [{"id": "c-dora", "name": "DORA", "color": "#111111"}]
+        changes = [{"op": {"op": "number_character", "from": "c-dora", "character": {"id": "79", "name": "DORA"}}},
+                   {"op": {"op": "add_character", "character": {"id": "80", "name": "EVA"}}}]
+        self.assertEqual(with_new_cast(characters, changes),
+                         [{"id": "79", "name": "DORA", "color": "#111111"}, {"id": "80", "name": "EVA"}])
+
+
 if __name__ == "__main__":
     unittest.main()

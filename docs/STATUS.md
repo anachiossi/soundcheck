@@ -1,12 +1,15 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-11-14 · live version **v225** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-11-14 · live version **v226** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
 `2026-09-29_soundcheck_handoff.md`.
 
-## Latest (14 Nov 2026)
+## Latest (14–15 Nov 2026)
+- v226 "ODGs are the truth always" (Ana, 15 Nov): a call sheet that gives a cast number to a character the film
+  had with none ("c-lola" → 79) offers ONE change, `number_character`: the character takes the number in its mic
+  rows, Cues lines and sound warnings (`src/proposal-rules.js`, `pipeline/compare.py`), never a second character.
 - **Il colpo's call sheets are read by the template reader** (data: `"odg_reader": "table"`, with
   `"odg_second_reader": "il-colpo"` = the old reader as the second opinion, `"crew_reader": "il-colpo"`). It reads
   the whole cast list (a table per unit, minors, double roles, special extras), the departments' needs

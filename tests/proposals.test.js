@@ -59,6 +59,25 @@ test('characters: add a new one, fill in an actor', () => {
   assert.equal(f.characters[0].actor, 'Maria Rossi');
 });
 
+test('a character with no cast number takes the call sheet\'s number everywhere it is used', () => {
+  const before = {
+    characters: [{ id: '1', name: 'ANNA', actor: '' }, { id: 'c-dora', name: 'DORA', actor: '', color: '#d959e6', gender: 'F' }],
+    presets: { 2: { scene_id: '2', rows: [{ char_id: '1', tx_id: '3' }, { char_id: 'c-dora', tx_id: '4' }] },
+      3: { scene_id: '3', rows: [{ char_id: '1', tx_id: '3' }] } },
+    lines: { 'sides/2': { lines: [{ name: 'DORA', char_id: 'c-dora', text: 'ciao' }, { name: 'ANNA', char_id: '1', text: 'ciao' }] } },
+    sound: { 2: { warnings: [{ char_id: 'c-dora', kind: 'loud' }] } },
+  };
+  const op = { op: 'number_character', from: 'c-dora', character: { id: '79', name: 'DORA', actor: 'Maria Rossi' } };
+  const { film: after, files } = applyChange(before, op);
+  assert.deepEqual(after.characters[1], { id: '79', name: 'DORA', actor: 'Maria Rossi', color: '#d959e6', gender: 'F' });
+  assert.deepEqual(after.presets['2'].rows.map(row => row.char_id), ['1', '79']);
+  assert.equal(after.lines['sides/2'].lines[0].char_id, '79');
+  assert.equal(after.sound['2'].warnings[0].char_id, '79');
+  assert.deepEqual(files, ['characters.json', 'presets/2.json', 'lines/sides/2.json', 'sound/2.json']);
+  assert.equal(before.presets['2'].rows[1].char_id, 'c-dora', 'the film before is not touched');
+  assert.deepEqual(applyChange(after, op).files, [], 'accepted twice: nothing more to do');
+});
+
 test('open proposals and what is left to decide', () => {
   const proposal = { id: 'odg-6', status: 'open', created_at: '1', decisions: { c1: 'accepted' },
     changes: [{ id: 'c1' }, { id: 'c2' }] };
