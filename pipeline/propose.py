@@ -162,8 +162,14 @@ def build_proposal(film_folder, email_folder, other_sides=None, sides_notes=None
     date, warnings = check_date(odg, subject_date(email["subject"], odg["date"][:4] or "2026"))
     warnings.extend((sides_notes or {}).get(odg["number"], []))  # e.g. "filed as day 55's sides (…)"
     day_ids = [s["scene_id"] for s in odg["scenes"]]
-    sides = read_sides(sides_pdf, day_ids, film["settings"].get("script_reader")) if sides_pdf else {}
+    sides = read_sides(sides_pdf, day_ids, film["settings"].get("script_reader"),
+                       whole_scene=film["settings"].get("lines") == "sides_only") if sides_pdf else {}
     changes, checks, notes = [], [], {}
+    if sides_pdf and film["settings"].get("lines") == "sides_only":  # the sides are this film's only lines
+        missing = [s["scene_id"] for s in odg["scenes"] if not s.get("unit") and s["scene_id"] not in sides]
+        if missing:
+            warnings.append(f"⚠ Not in the day's sides: scene {' · '.join(missing)} (on the call sheet). "
+                            "No lines and no speakers for it.")
 
     def add(result):
         c, w, k = result if len(result) == 3 else (result[0], [], result[1])

@@ -7,6 +7,11 @@ The film-specific diary (decisions, dates, what Ana said) is private:
 `2026-09-29_soundcheck_handoff.md`.
 
 ## Latest (14–15 Nov 2026)
+- Sides check: a call-sheet scene written "616B" or "526Cfine" finds the sides' "616b" / "526c" (before, the
+  speakers of lettered scenes were never checked); a sides-only film is warned when a scene of the day is not in
+  the day's sides (`pipeline/read_sides.py`, `propose.py`).
+- New scenes joining a day that is already wired keep each character's TX of that day (`presets.day_plan`
+  `keep_tx`): the same TX all day also across two proposals.
 - v226 "ODGs are the truth always" (Ana, 15 Nov): a call sheet that gives a cast number to a character the film
   had with none ("c-lola" → 79) offers ONE change, `number_character`: the character takes the number in its mic
   rows, Cues lines and sound warnings (`src/proposal-rules.js`, `pipeline/compare.py`), never a second character.

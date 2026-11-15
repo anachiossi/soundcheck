@@ -138,6 +138,14 @@ class GenderFromTheActorsName(unittest.TestCase):
         self.assertEqual([c["text"] for c in changes], ["New character 3 CARLA (Ornella Blu)"])
 
 
+class SidesScenes(unittest.TestCase):
+    def test_a_scene_the_call_sheet_splits_reads_the_part_the_sides_print_and_never_the_whole_scene(self):
+        from read_sides import for_call_sheet_scenes
+        sides = {"5c": {"speakers": ["ANNA"]}, "27": {"speakers": ["BRUNO"]}}
+        found = for_call_sheet_scenes(sides, ["5Cfine", "5Cpt1", "27", "27fin", "30"])
+        self.assertEqual(found, {"5Cfine": {"speakers": ["ANNA"]}, "5Cpt1": {"speakers": ["ANNA"]}, "27": {"speakers": ["BRUNO"]}})
+
+
 class CastNumbers(unittest.TestCase):
     def test_a_call_sheet_number_goes_to_the_character_the_film_already_has_with_none(self):
         from compare import check_cast_list

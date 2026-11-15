@@ -38,7 +38,7 @@ def page_lines(path):
     return sorted(out)
 
 
-def read_sides(path, wanted_scenes=None, options=None):
+def read_sides(path, wanted_scenes=None, options=None, whole_scene=False):
     """{'2': {'speakers': ['INES', 'PRINCE JOHN', …], 'heading': 'INT. CASTELLO, CUCINA. GIORNO'}}
     options: the film's "script_reader" settings; "columns" moves the heading and name columns (read_lines.py)."""
     lines = page_lines(path)
@@ -61,8 +61,25 @@ def read_sides(path, wanted_scenes=None, options=None):
                 if name not in scenes[current]["speakers"]:
                     scenes[current]["speakers"].append(name)
     if wanted_scenes:
-        scenes = {sid: data for sid, data in scenes.items() if sid in wanted_scenes}
+        scenes = for_call_sheet_scenes(scenes, wanted_scenes, whole_scene)
     return scenes
+
+
+def for_call_sheet_scenes(scenes, wanted_scenes, whole_scene=False):
+    """The sides' scenes under the numbers the call sheet uses. The call sheet splits a scene the sides print
+    whole: "526Cfine" and "526Cpt1" are the sides' "526C" (and the sides may print "526c"). A scene the sides
+    don't print is left out.
+    whole_scene (a film that reads only the sides): "102fine" also reads the sides' whole scene "102"; other
+    films leave such a part unchecked, as before."""
+    by_plain = {scene_id.upper(): data for scene_id, data in scenes.items()}
+    found = {}
+    for wanted in wanted_scenes:
+        part = re.match(r"\d+[A-Z]*", str(wanted))
+        lettered = part and not part.group().isdigit()  # "526C", not "102"
+        data = by_plain.get(str(wanted).upper()) or ((lettered or whole_scene) and part and by_plain.get(part.group()))
+        if data:
+            found[wanted] = data
+    return found
 
 
 if __name__ == "__main__":
