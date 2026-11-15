@@ -100,6 +100,13 @@ class CallSheetFirstPresets(unittest.TestCase):
                                               "BRUNO TX 2, lav L2 (speaks)")
         self.assertEqual(notes, [])
 
+    def test_a_new_scene_fits_around_the_tx_a_character_already_has_that_day(self):
+        wired = {"41": {"scene_id": "41", "rows": [{"char_id": "2", "tx_id": "1", "lav_id": "L2", "speaker": "yes"}]}}
+        scenes = [{"scene_id": "40", "cast": ["1", "2"]}, {"scene_id": "41", "cast": ["2"]}]
+        found, _ = first_presets_of_day(self.film(wired), scenes, sides={"40": {"speakers": ["Anna", "Bruno"]}})
+        self.assertEqual([(r["char_id"], r["tx_id"], r["lav_id"]) for r in found["40"]["rows"]],
+                         [("2", "1", "L2"), ("1", "2", "L1")])  # BRUNO keeps TX 1 all day; ANNA takes the next
+
     def test_a_scene_with_a_preset_and_a_part_of_such_a_scene_are_left_to_the_proposal(self):
         rows = [{"char_id": "1", "tx_id": "1", "lav_id": "L1", "speaker": "yes"}]
         scenes = [{"scene_id": "40", "cast": ["1"]}, {"scene_id": "40pt1", "cast": ["1"]}, {"scene_id": "41", "cast": []}]

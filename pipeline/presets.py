@@ -78,8 +78,10 @@ def gets_mic(film, scene_id, row):
     return wired and not lav_blocked(film, scene_id, row["char_id"])
 
 
-def day_plan(film, settings, scene_ids):
-    """{ char_id: (tx_id, lav_id) } for one shooting day, plus notes for Ana."""
+def day_plan(film, settings, scene_ids, keep_tx=False):
+    """{ char_id: (tx_id, lav_id) } for one shooting day, plus notes for Ana.
+    keep_tx: a character who already has a TX in one of the day's presets keeps it, and the others fit around
+    (new scenes joining a day that is already wired: Il colpo day 65, NINA had TX 1 in 644 and got 3 in 619)."""
     rules = settings["presets"]
     characters = {str(c["id"]): c for c in film["characters"]}
     presets = {sid: film["presets"][sid] for sid in scene_ids if sid in film["presets"]}
@@ -118,9 +120,15 @@ def day_plan(film, settings, scene_ids):
     wears = {str(r["char_id"]) for sid, p in presets.items() for r in p["rows"] if gets_mic(film, sid, r)}
     tx.update({cid: "" for cid in people if cid not in wears})
     hint = lambda cid: str(characters.get(cid, {}).get("pref_tx") or "")
-    if protagonist in wears:
+    if keep_tx:
+        for cid in people:
+            has = next((str(r["tx_id"]) for p in presets.values() for r in p["rows"]
+                        if str(r["char_id"]) == cid and r.get("tx_id")), "")
+            if cid in wears and has and has not in used:
+                take(cid, has)
+    if protagonist in wears and protagonist not in tx:
         take(protagonist, hint(protagonist) or order[0])
-    others = [cid for cid in people if cid != protagonist and cid in wears]
+    others = [cid for cid in people if cid != protagonist and cid in wears and cid not in tx]
     if not small:  # big day: those with a preferred TX first, so nobody without one takes it
         others = [cid for cid in others if hint(cid)] + [cid for cid in others if not hint(cid)]
     for cid in others:

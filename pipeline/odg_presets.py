@@ -53,7 +53,7 @@ def first_presets_of_day(film, scenes, sides=None):
     if not new:
         return {}, []
     main_ids = [s["scene_id"] for s in scenes if not s.get("unit") and s["scene_id"] in film["presets"]]
-    plan, kind, plan_notes = day_plan(film, film["settings"], main_ids)
+    plan, kind, plan_notes = day_plan(film, film["settings"], main_ids, keep_tx=True)  # the day's wired scenes stay
     found = {}
     for scene_id in new:
         rows = new_rows(film, scene_id, plan)

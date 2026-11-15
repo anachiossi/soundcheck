@@ -107,7 +107,9 @@ def review(film, first_day, only=None, only_days_with_new=False):
                 new.append(sid)
         if only_days_with_new and not new:
             continue
-        plan, kind, notes = day_plan(film, film["settings"], [s for s in scene_ids if s in film["presets"]])
+        # the robot's own review (only_days_with_new) fits the new scenes around the TX already given that day
+        plan, kind, notes = day_plan(film, film["settings"], [s for s in scene_ids if s in film["presets"]],
+                                     keep_tx=only_days_with_new)
         warnings += [f"Day {day}: {note}" for note in notes]
         for sid in scene_ids:
             if sid not in new:  # (a new scene's lines for Ana were written with its first rows)
