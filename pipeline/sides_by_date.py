@@ -31,6 +31,8 @@ def odg_days(inbox, read_odg):
         for pdf in email_folder.glob("*.pdf"):
             if "ODG" in pdf.name.upper():
                 odg = read_odg(pdf)
+                if not odg.get("number") or not odg.get("date"):
+                    continue  # an ODG whose day or date could not be read can't place sides (16 Nov: it crashed the robot)
                 scenes = {s["scene_id"] for s in odg["scenes"]}
                 days[odg["number"]] = {"date": odg["date"], "scenes": scenes}
     return days
