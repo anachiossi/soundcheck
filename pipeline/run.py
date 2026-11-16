@@ -32,6 +32,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from fetch_mail import emails_oldest_first, fetch  # noqa: E402
+from mail_packets import is_odg  # noqa: E402
 from propose import build_proposal, pick_sides, sides_for_film, NO_SIDES  # noqa: E402
 from auto_presets import auto_review  # noqa: E402
 from propose_pdl import build_pdl_proposal  # noqa: E402
@@ -95,8 +96,8 @@ def run(film_folder, include_past=False):
         if info.get("message_id") in known or info["subject"] in known:
             continue
         names = " ".join(info["files"]).upper()
-        if "PDL" not in names and "ODG" not in names:
-            continue
+        if "PDL" not in names and not any(is_odg(name) for name in info["files"]):
+            continue  # no call sheet here (a map named "…ODG…" is not one: mail_packets.py)
         print(f"reading {email_folder.name}")
         try:
             with time_limit(120, email_folder.name):
@@ -232,7 +233,7 @@ def file_documents(film, other_sides):
     settings = json.loads((film / "settings.json").read_text(encoding="utf-8")) if (film / "settings.json").exists() else {}
     changed = []
     for email_folder in emails_oldest_first(film / "_inbox"):
-        odg = next((p for p in email_folder.glob("*.pdf") if "ODG" in p.name.upper()), None)
+        odg = next((p for p in email_folder.glob("*.pdf") if is_odg(p.name)), None)  # never the map (mail_packets.py)
         sides = None
         if odg:
             sheet = read_odg(odg)

@@ -26,6 +26,7 @@ from odg_reader import odg_reader_for, crew_reader_for
 from reading_checks import checked_reading
 from read_sides import read_sides
 from fetch_mail import emails_oldest_first
+from mail_packets import is_odg
 
 
 def load_film(folder):
@@ -154,7 +155,7 @@ def build_proposal(film_folder, email_folder, other_sides=None, sides_notes=None
     film_folder, email_folder = Path(film_folder), Path(email_folder)
     film = load_film(film_folder)
     email = json.loads((email_folder / "email.json").read_text(encoding="utf-8"))
-    odg_pdf = next(p for p in email_folder.glob("*.pdf") if "ODG" in p.name.upper())
+    odg_pdf = next(p for p in email_folder.glob("*.pdf") if is_odg(p.name))  # never the map (mail_packets.py)
     odg = odg_reader_for(film_folder)(odg_pdf)  # the film's own reader (settings.json "odg_reader")
     # is the reading believable? sums, counts and a second reader's opinion (reading_checks.py)
     odg, reading_lines = checked_reading(odg, odg_pdf, film["settings"])

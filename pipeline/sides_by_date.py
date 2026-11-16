@@ -17,6 +17,7 @@ import re
 from pathlib import Path
 
 from fetch_mail import emails_oldest_first
+from mail_packets import is_odg
 from odg_reader import odg_reader_for
 from read_sides import read_sides
 
@@ -29,7 +30,7 @@ def odg_days(inbox, read_odg):
     days = {}
     for email_folder in emails_oldest_first(inbox):
         for pdf in email_folder.glob("*.pdf"):
-            if "ODG" in pdf.name.upper():
+            if is_odg(pdf.name):  # never the map (mail_packets.py)
                 odg = read_odg(pdf)
                 if not odg.get("number") or not odg.get("date"):
                     continue  # an ODG whose day or date could not be read can't place sides (16 Nov: it crashed the robot)

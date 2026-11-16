@@ -51,5 +51,17 @@ class SidesDatesTest(unittest.TestCase):
         self.assertIsNone(name_date(Path("XX - Stralci.pdf")))
 
 
+class MapIsNotAnOdgTest(unittest.TestCase):
+    def test_a_map_named_odg_is_never_read_as_a_call_sheet(self):
+        from mail_packets import is_odg
+        self.assertFalse(is_odg("IC - Mappa_ODG#65_17.11.26.pdf"))
+        self.assertTrue(is_odg("IL COLPO ODG #65 del 17 Novembre 2026.pdf"))
+
+    def test_an_email_with_one_odg_and_its_map_stays_one_packet(self):
+        from mail_packets import packets
+        names = ["IL COLPO ODG #65.pdf", "IC - Mappa_ODG#65_17.11.26.pdf", "IC - Stralci#65_17.11.26.pdf"]
+        self.assertEqual(packets(names), [("", names)])
+
+
 if __name__ == "__main__":
     unittest.main()

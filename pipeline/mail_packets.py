@@ -16,10 +16,22 @@ import re
 KINDS = (("ODG", "odg"), ("PDL", "pdl"), ("STRALCI", "stralci"))
 
 
+# a map is never a call sheet, even when its name says ODG (16 Nov: "IC - Mappa_ODG#65_17.11.26.pdf" was read as
+# a second ODG #65 with no date, and the robot stopped)
+NOT_A_DOCUMENT = re.compile(r"MAPP[AE]|\bMAPS?\b", re.I)
+
+
 def kind_of(name):
     """'IC - OdgDAY_53_30.10.26.pdf' → 'odg'; 'IC - Stralci_55_03.11.26.pdf' → 'stralci'; others → None."""
     upper = name.upper()
+    if NOT_A_DOCUMENT.search(upper):
+        return None
     return next((kind for word, kind in KINDS if word in upper), None)
+
+
+def is_odg(name):
+    """True for a call sheet's file name: 'IC - OdgDAY_53_30.10.26.pdf', 'ODG #7.pdf'; never a map."""
+    return kind_of(name) == "odg"
 
 
 def packets(names):
