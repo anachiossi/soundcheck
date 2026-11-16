@@ -18,6 +18,7 @@ from pathlib import Path
 
 from fetch_mail import emails_oldest_first
 from mail_packets import is_odg
+from reading_checks import checked_reading
 from odg_reader import odg_reader_for
 from read_sides import read_sides
 
@@ -25,16 +26,20 @@ STAMP_RE = re.compile(r"day\s*#\s*(\d+)_\w+_(\d{1,2})\.(\d{1,2})", re.I)   # "da
 NAME_DATE_RE = re.compile(r"(\d{1,2})\.(\d{1,2})\.(\d{2,4})")                # "_03.11.26"
 
 
-def odg_days(inbox, read_odg):
-    """{day: {"date": '2026-11-03', "scenes": {'604', …}}} from every ODG in the inbox (a newer email wins)."""
+def odg_days(inbox, read_odg, settings=None):
+    """{day: {"date": '2026-11-03', "scenes": {'604', …}}} from every ODG in the inbox (a newer email wins).
+    The reading is checked like the proposal's (reading_checks.py): when the film's reader finds no scene, the second
+    reader's are used (16 Nov: Il colpo's reader read none since ODG #62, so no stralci was ever filed)."""
     days = {}
     for email_folder in emails_oldest_first(inbox):
         for pdf in email_folder.glob("*.pdf"):
             if is_odg(pdf.name):  # never the map (mail_packets.py)
                 odg = read_odg(pdf)
+                if not odg.get("scenes"):
+                    odg, _ = checked_reading(odg, pdf, settings or {})
                 if not odg.get("number") or not odg.get("date"):
                     continue  # an ODG whose day or date could not be read can't place sides (16 Nov: it crashed the robot)
-                scenes = {s["scene_id"] for s in odg["scenes"]}
+                scenes = {str(s["scene_id"]).upper() for s in odg["scenes"]}
                 days[odg["number"]] = {"date": odg["date"], "scenes": scenes}
     return days
 
@@ -54,7 +59,7 @@ def name_date(pdf):
 
 def day_of(pdf, days):
     """(day or None, note or None) for one sides PDF."""
-    scenes = set(read_sides(pdf))
+    scenes = {str(scene).upper() for scene in read_sides(pdf)}   # the stralci print "617b", the ODG "617B"
     stamp_number, stamp_date = stamp_of(pdf)
     named = re.search(r"STRALCI\D{0,3}(\d+)", pdf.name, re.I)
     for when, what in ((stamp_date, "the date printed inside"), (name_date(pdf), "the date in its name")):
@@ -77,9 +82,10 @@ def day_of(pdf, days):
 def sides_and_notes(film_folder):
     film_folder = Path(film_folder)
     inbox = film_folder / "_inbox"
-    days = odg_days(inbox, odg_reader_for(film_folder))
     settings_file = film_folder / "settings.json"
-    main_unit = (json.loads(settings_file.read_text(encoding="utf-8")) if settings_file.exists() else {}).get("main_unit", "")
+    settings = json.loads(settings_file.read_text(encoding="utf-8")) if settings_file.exists() else {}
+    days = odg_days(inbox, odg_reader_for(film_folder), settings)
+    main_unit = settings.get("main_unit", "")
     found, notes, loose = {}, {}, []
     for email_folder in emails_oldest_first(inbox):
         info = json.loads((email_folder / "email.json").read_text(encoding="utf-8"))
