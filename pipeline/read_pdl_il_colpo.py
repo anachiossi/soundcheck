@@ -26,12 +26,36 @@ import sys
 
 import pymupdf as fitz  # the PDF reader (PyMuPDF)
 
-DAY_RE = re.compile(r"^Day #(\d+)\s*-\s*Orario di lavorazione:\s*(.*?)\s*-\s*\w{3}\s+(\d{2})/(\d{2})/(\d{4})", re.I)
+DAY_RE = re.compile(r"^Day #(\d+)\s*-\s*Orario di lavorazione:\s*(.*?)\s*-\s*(\w{3})\s+(\d{2})/(\d{2})/(\d{4})", re.I)
+WEEKDAYS = ("lun", "mar", "mer", "gio", "ven", "sab", "dom")   # Monday first, like date.weekday()
+
+
+def iso_date(weekday, first, second, yyyy):
+    """'mar', '17', '11', '2026' → '2026-11-17'. The PDL prints day/month ("mar 17/11/2026") or, exported the
+    American way, month/day ("mar 11/17/2026", 17 Nov PDL "VillaTreDita": the robot stopped on month 17).
+    A number above 12 can only be the day; when both could be either, the printed weekday decides."""
+    import datetime
+    a, b, year = int(first), int(second), int(yyyy)
+    candidates = []
+    for day, month in ((a, b), (b, a)):   # day first (Italian) is tried first
+        try:
+            candidates.append(datetime.date(year, month, day))
+        except ValueError:
+            continue
+    if not candidates:
+        raise ValueError(f"not a date: {first}/{second}/{yyyy}")
+    same_weekday = [d for d in candidates if WEEKDAYS[d.weekday()] == weekday.lower()]
+    return (same_weekday or candidates)[0].isoformat()
 DAY_OFF_RE = re.compile(r"^Day Off\b", re.I)
 UNIT_RE = re.compile(r"^UNIT[AÀ]'?\s*(.*)$", re.I)      # "UNITA' DE FEUDIS: Orario 8.00/16.00"
 HOURS_RE = re.compile(r"(\d{1,2})(?:[.:](\d{2}))?\s*(?:-|/)\s*(\d{1,2})(?:[.:](\d{2}))?")  # 8.00/16.00 · 16:00 - 24:00 · 17/01
 PAGES_RE = re.compile(r"^(?:\d+\s+\d/8|\d+|\d/8)$")
 SCENE_RE = re.compile(r"^\d+$")
+# the PDL of 17 Nov ("VillaTreDita") prints the scene number in the small type, whole on one line ("634A"),
+# the pages right under it ("2/8", "1"), and the story day in the Int/Ext column ("Giorno: 23")
+SMALL_SCENE_RE = re.compile(r"^\d+[A-Z]{0,3}$")
+STORY_DAY_RE = re.compile(r"^Giorno:\s*(\d+)", re.I)
+UNIT_HOURS_RE = re.compile(r"\s+(\d{1,2}(?:[.:]\d{2})?\s*[/-]\s*\d{1,2}(?:[.:]\d{2})?)\s*$")   # "DE FEUDIS 8/16"
 INT_EXT = {"INT": "INT", "EXT": "EXT", "I+E": "INT/EXT", "E+I": "INT/EXT"}
 
 # the columns: the left edge of each, in points (the page is 595 wide)
@@ -83,6 +107,8 @@ def add_line(scene, x, size, text):
             scene["scene_id"] += text
         elif PAGES_RE.match(text) and not scene["pages"]:
             scene["pages"] = text
+    elif where == "int" and STORY_DAY_RE.match(text):     # "Giorno: 23" (17 Nov layout)
+        scene["story_day"] = STORY_DAY_RE.match(text).group(1)
     elif where == "int":
         kind, _, rest = text.partition(" ")                # "Int/Tramonto PALESTRA PAPERO/ZONA RING"
         int_ext, _, time = kind.partition("/")
@@ -124,9 +150,9 @@ def read_il_colpo_lines(lines):
         header = DAY_RE.match(text)
         if header:
             close_scene()
-            number, times, dd, mm, yyyy = header.groups()
+            number, times, weekday, first, second, yyyy = header.groups()
             call, wrap = hours(times)
-            day = {"day": int(number), "date": f"{yyyy}-{mm}-{dd}", "week": None, "call": call, "wrap": wrap,
+            day = {"day": int(number), "date": iso_date(weekday, first, second, yyyy), "week": None, "call": call, "wrap": wrap,
                    "scenes": [], "notes": []}
             days.append(day)
             target = day["scenes"]
@@ -141,6 +167,9 @@ def read_il_colpo_lines(lines):
         if unit:
             close_scene()
             name, _, times = unit.group(1).partition(":")
+            loose = UNIT_HOURS_RE.search(name) if not times else None   # "UNITA' DE FEUDIS 8/16": no colon
+            if loose:
+                name, times = name[:loose.start()], loose.group(1)
             call, wrap = hours(times)
             day["second_unit"] = {"unit": "2nd", "name": name.strip().title(), "call": call, "wrap": wrap, "scenes": []}
             target = day["second_unit"]["scenes"]
@@ -149,6 +178,12 @@ def read_il_colpo_lines(lines):
             day["notes"].append(text)  # a note between the header and the first scene
             continue
         if column(x) == "scene" and SCENE_RE.match(text) and size > 9:
+            close_scene()
+            scene = new_scene(text)
+            continue
+        # small type: a scene number starts a scene, unless it is the pages of the scene just started ("627" · "1")
+        pages_of_open_scene = scene and not scene["pages"] and PAGES_RE.match(text)
+        if column(x) == "scene" and size <= 9 and SMALL_SCENE_RE.match(text) and not pages_of_open_scene:
             close_scene()
             scene = new_scene(text)
             continue

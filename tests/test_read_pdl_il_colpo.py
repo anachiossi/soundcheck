@@ -121,5 +121,47 @@ class CheckSecondUnitTest(unittest.TestCase):
         self.assertEqual(changes, [])
 
 
+SMALL_TYPE_LINES = [   # the 17 Nov layout: everything in one small type, dates month/day, story day under Int/Ext
+    (187, 7.2, "Day #20 - Orario di lavorazione: 08.00/16.00 - mar 11/17/2026 - 2"),
+    (47.5, 7.2, "50"), (87.4, 6.4, "Ext/Giorno"), (128.3, 7.2, "VILLA/GARDEN"), (274.8, 7.2, "6; 20"),
+    (47.5, 7.2, "1 6/8"), (87.4, 7.2, "Giorno: 23"), (128.3, 7.2, "Two friends talk."),
+    (47.5, 7.2, "51A"), (87.4, 6.4, "Int/Notte"), (128.3, 7.2, "VILLA/HALL"), (47.5, 7.2, "1"),
+    (257.9, 7.2, "UNITA' SECOND 8/16"),
+    (47.5, 7.2, "52"), (87.4, 6.4, "Ext/Giorno"), (128.3, 7.2, "ROAD"), (47.5, 7.2, "2/8"),
+]
+
+
+@unittest.skipIf(read_il_colpo_lines is None, "pymupdf is not installed")
+class SmallTypeLayoutTest(unittest.TestCase):
+    def setUp(self):
+        self.day = read_il_colpo_lines(SMALL_TYPE_LINES)["days"][0]
+
+    def test_a_month_first_date_is_read_by_its_weekday(self):
+        self.assertEqual(self.day["date"], "2026-11-17")
+
+    def test_small_scene_numbers_start_scenes_and_a_lone_number_under_one_is_its_pages(self):
+        self.assertEqual([s["scene_id"] for s in self.day["scenes"]], ["50", "51A"])
+        self.assertEqual([s["pages"] for s in self.day["scenes"]], ["1 6/8", "1"])
+
+    def test_the_story_day_does_not_replace_int_ext(self):
+        scene = self.day["scenes"][0]
+        self.assertEqual((scene["int_ext"], scene["time_of_day"], scene["story_day"]), ("EXT", "Giorno", "23"))
+
+    def test_a_second_unit_line_without_a_colon_keeps_its_hours(self):
+        second = self.day["second_unit"]
+        self.assertEqual((second["name"], second["call"], second["wrap"]), ("Second", "08:00", "16:00"))
+        self.assertEqual([s["scene_id"] for s in second["scenes"]], ["52"])
+
+
+@unittest.skipIf(read_il_colpo_lines is None, "pymupdf is not installed")
+class DateOrderTest(unittest.TestCase):
+    def test_day_first_and_month_first_give_the_same_day(self):
+        from read_pdl_il_colpo import iso_date
+        self.assertEqual(iso_date("mar", "17", "11", "2026"), "2026-11-17")
+        self.assertEqual(iso_date("mar", "11", "17", "2026"), "2026-11-17")
+        self.assertEqual(iso_date("lun", "02", "11", "2026"), "2026-11-02")   # both could be a month: the weekday decides
+        self.assertEqual(iso_date("mer", "11", "02", "2026"), "2026-02-11")
+
+
 if __name__ == "__main__":
     unittest.main()
