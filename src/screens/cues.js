@@ -37,6 +37,9 @@ const spokenName = name => String(name || '').toLowerCase().replace(/(^|[\s'’-
 
 const ACTION_GREY = '#6b7280'; // an action line belongs to nobody: no character's colour
 
+// the script's "--" as one dash: it never breaks in two at the end of a line
+const oneDash = text => text.replace(/\s*--\s*$/, '—').replace(/--/g, '—');
+
 // A button's tap must not also reach the page behind it (which would turn the page).
 const only = action => event => { event.stopPropagation(); action(); };
 
@@ -166,10 +169,10 @@ export function CuesScreen({ state }) {
         <div class="cues__text" ref=${textRef}>
           ${isAction
             ? html`<div class="cues__speech" data-kind="action" aria-hidden="true">
-                ${card.sentences.map((sentence, i) => html`<p class="cues__phrase" key=${i}>${sentence}</p>`)}
+                ${card.sentences.map((sentence, i) => html`<p class="cues__phrase" key=${i}>${oneDash(sentence)}</p>`)}
               </div>`
             : html`<div class="cues__speech">
-                ${phraseLines(line.text).split('\n').map((phrase, i) => html`<p class="cues__phrase" key=${i}><${Marked} text=${phrase} query=${search?.query} /></p>`)}
+                ${phraseLines(line.text).split('\n').map((phrase, i) => html`<p class="cues__phrase" key=${i}><${Marked} text=${oneDash(phrase)} query=${search?.query} /></p>`)}
               </div>`}
         </div>
         <div class=${'cues__more' + (moreBelow ? '' : ' cues__more--hidden')} aria-hidden="true">scroll ▾</div>
