@@ -13,7 +13,7 @@ export function cueLines(project, sceneId) {
     const base = paperLines(project, sceneId);
     // newer paper = sides or a script version that arrived after the edit was made from an older one
     const newer = base && base.source !== edited.based_on ? base.source : null;
-    return { ...edited, source: `${edited.based_on || 'Lines'} · edited on set`, note: '', edited: true, newer };
+    return { ...edited, end_action: edited.end_action || base?.end_action, source: `${edited.based_on || 'Lines'} · edited on set`, note: '', edited: true, newer };
   }
   return paperLines(project, sceneId);
 }

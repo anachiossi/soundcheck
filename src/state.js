@@ -38,6 +38,7 @@ let state = {
   feedbackOffered: loadJson('sc_feedback_offered', []), // crew phone: films whose feedback line was offered
   feedbackOpen: false,      // crew phone: the feedback form is open (Projects)
   myCall: loadJson('sc_my_call', { mode: 'general', name: '' }), // Projects → My call: whose call my hours count from (my-call.js)
+  cuesWhole: loadJson('sc_cues_whole', false), // the Dialogs reader: true = whole scene, false = just dialog (this device only)
   crewSuggestions: [],      // owner: the crew's open suggestions, from the last sync (crew-inbox.js)
   crewDecisions: loadJson('sc_crew_decisions', []), // owner: decisions not sent yet (crew-decisions.js)
   crewCantAnswer: false,    // owner: the key can't comment on / close issues (crew-inbox-sync.js)
@@ -118,6 +119,12 @@ export function joinAsCrew(link) {
 export function rememberMyCall(myCall) {
   try { localStorage.setItem('sc_my_call', JSON.stringify(myCall)); } catch { /* not remembered after a reload */ }
   setState({ myCall });
+}
+
+// the Dialogs reader's switch: whole scene or just dialog; this device only
+export function rememberCuesWhole(cuesWhole) {
+  try { localStorage.setItem('sc_cues_whole', JSON.stringify(cuesWhole)); } catch { /* not remembered after a reload */ }
+  setState({ cuesWhole });
 }
 
 export function forgetConnection() {

@@ -1,12 +1,15 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-11-18 · version **v234** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-11-18 · version **v235** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
 `2026-09-29_soundcheck_handoff.md`.
 
 ## Latest (18 Nov 2026)
+- v235 **Dialogs reader: Just dialog · Whole scene** (`src/cues-cards.js`). Whole scene adds the action lines on grey cards, at one
+  fixed text size, divided into whole sentences. The map, timeline and game keep only the speeches. The robot now also files the
+  action after a scene's last speech (`end_action`, `pipeline/read_lines.py`).
 - v234 Overview: with no sides yet every actor counts as a speaker ("3 speakers ?"); the sides confirm it. Gear → Batteries opens
   with what the next shooting day will use (`src/battery-day.js`). Adriano's kit: 24 NP-BX1 and 50 AA numbered, changed at 3 hours.
 - v233 The banners are back on every screen while something waits for an answer (the Messages button and page are gone).

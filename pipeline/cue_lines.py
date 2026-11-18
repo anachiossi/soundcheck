@@ -38,7 +38,8 @@ def write_scene_files(folder, scenes, source, characters):
     for scene_id, scene in scenes.items():
         content = {"scene_id": scene_id, "source": source, "heading": scene["heading"],
                    **({"pdf": scene["pdf"], "page": scene["page"]} if scene.get("pdf") else {}),
-                   "lines": with_characters(scene["lines"], characters)}
+                   "lines": with_characters(scene["lines"], characters),
+                   **({"end_action": scene["end_action"]} if scene.get("end_action") else {})}
         text = json.dumps(content, ensure_ascii=False, indent=2) + "\n"
         path = folder / f"{scene_id}.json"
         if not path.exists() or path.read_text(encoding="utf-8") != text:

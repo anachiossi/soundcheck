@@ -14,15 +14,18 @@
 // this line to the end of the scene in one go (don't tap while it reads). The app itself never speaks
 // (its read aloud was removed in v153, Ana 16 Oct); Speak Screen only starts from Ana's own swipe.
 // The map button opens the Scene Map (cues-map.js). ✎ changes, deletes or adds lines when the director changes them (cue-line-editor.js).
-// Used by: main.js (opened from the Cues tab or the microphone on a scene)
+// The switch under the panel: Just dialog · Whole scene (Ana, 18 Nov). Whole scene adds the action lines on grey cards, in
+// a smaller fixed text, divided into whole sentences (cues-cards.js). Each card is one page; `index` counts cards.
+// Used by: main.js (opened from the Dialogs tab or the microphone on a scene)
 
 import { html, useEffect, useLayoutEffect, useRef, useState } from '../../vendor/preact-htm.js';
 import { ScenePill } from '../parts/scene-pill.js';
 import { byId } from '../model.js';
 import { textColourFor, isNearWhite } from '../colour.js';
 import { cueLines } from '../cues-rules.js';
+import { cardOfLine, hasAction, sceneCards } from '../cues-cards.js';
 import { phraseLines } from '../cues-phrases.js';
-import { setState } from '../state.js';
+import { getState, rememberCuesWhole, setState } from '../state.js';
 import { backToPaper, keepEdits } from '../cues-editing.js';
 import { CueLineEditor } from '../parts/cue-line-editor.js';
 import { Icon } from '../parts/icons.js';
@@ -30,6 +33,8 @@ import { SearchBar, Marked } from '../parts/line-search.js';
 
 // 'PRINCE JOHN' → 'Prince John.' (said as a name, with a stop after it)
 const spokenName = name => String(name || '').toLowerCase().replace(/(^|[\s'’-])(\p{L})/gu, (m, sep, letter) => sep + letter.toUpperCase()) + '.';
+
+const ACTION_GREY = '#6b7280'; // an action line belongs to nobody: no character's colour
 
 // A button's tap must not also reach the page behind it (which would turn the page).
 const only = action => event => { event.stopPropagation(); action(); };
@@ -80,17 +85,21 @@ function useMoreBelow(ref, page) {
 export function CuesScreen({ state }) {
   const { project, cuesScene } = state;
   const cues = cueLines(project, cuesScene);
-  const [index, setIndex] = useState(() => Math.min(state.cuesLine || 0, Math.max(0, (cues?.lines.length || 1) - 1)));
-  const [editor, setEditor] = useState(null); // { index, adding } while ✎ is open
+  const whole = state.cuesWhole;
+  const cards = sceneCards(cues, whole);
+  const [index, setIndex] = useState(() => cardOfLine(cards, Math.min(state.cuesLine || 0, Math.max(0, (cues?.lines.length || 1) - 1))));
+  const [editor, setEditor] = useState(null); // { index, adding } while ✎ is open (index: the speech)
   const [search, setSearch] = useState(null); // 🔍 { query, at } while the search bar is open
   const textRef = useRef(null);
   const moreBelow = useMoreBelow(textRef, index);
   useWakeLock();
   // (hooks run on every page, so the top strip colour is worked out here, before any return)
-  const speaking = cues?.lines[index];
+  const card = cards[index];
+  const speaking = card?.line;
   const speakingColour = byId(project.characters).get(String(speaking?.char_id))?.color;
   const night = document.documentElement.dataset.theme === 'dark'; // dark screen: the top strip stays dark too
-  useTopStripColour(night ? '#0b0d10' : speaking ? (speakingColour && !isNearWhite(speakingColour) ? speakingColour : '#475569') : '#0f172a');
+  useTopStripColour(night ? '#0b0d10' : card?.kind === 'action' ? ACTION_GREY
+    : speaking ? (speakingColour && !isNearWhite(speakingColour) ? speakingColour : '#475569') : '#0f172a');
 
   // back to where Cues was opened from (the Scene Map keeps the scene)
   const close = () => setState({ screen: state.cuesFrom || 'cues-picker', cuesLine: 0,
@@ -98,65 +107,84 @@ export function CuesScreen({ state }) {
   if (!cues) return html`<div class="cues cues--end"><p>No lines for scene ${cuesScene}.</p><button class="btn" onClick=${close}>Close</button></div>`;
 
   const lines = cues.lines;
-  if (index >= lines.length) {
+  // the switch keeps the place: the speech on screen, or the one this action comes before
+  const chooseWhole = next => {
+    if (next === whole) return;
+    const lineIndex = card ? card.lineIndex : lines.length - 1;
+    rememberCuesWhole(next);
+    setIndex(cardOfLine(sceneCards(cues, next), lineIndex));
+  };
+  // the speech at this number, after the editor changed the lines
+  const goToLine = lineIndex => setIndex(cardOfLine(sceneCards(cueLines(getState().project, cuesScene), whole), lineIndex));
+  if (index >= cards.length) {
     return html`
       <div class="cues cues--end">
         <p class="cues__source">#${cuesScene} · ${cues.source}${cues.note ? ` · ${cues.note}` : ''}</p>
         <h1>The end</h1>
         <p>${lines.length} lines</p>
         <button class="btn btn--primary cues__again" onClick=${only(() => setIndex(0))}>▶ Start again</button>
-        <button class="btn" onClick=${only(() => setIndex(lines.length - 1))}>‹ Last line</button>
+        <button class="btn" onClick=${only(() => setIndex(cards.length - 1))}>‹ Last line</button>
         <button class="btn btn--quiet" onClick=${only(close)}>Close</button>
       </div>`;
   }
 
-  const line = lines[index];
-  const next = lines[index + 1];
-  const colour = byId(project.characters).get(String(line.char_id))?.color;
-  const background = colour && !isNearWhite(colour) ? colour : '#475569';
+  const isAction = card.kind === 'action';
+  const line = card.line;
+  const next = cards[index + 1];
+  const colour = byId(project.characters).get(String(line?.char_id))?.color;
+  const background = isAction ? ACTION_GREY : colour && !isNearWhite(colour) ? colour : '#475569';
   const onTap = event => {
-    if (editor || event.target.closest('.cues__top, .cues__bottom, .cues__newer, .line-search')) return; // the bars never turn the page
+    if (editor || event.target.closest('.cues__top, .cues__bottom, .cues__newer, .cues__mode, .line-search')) return; // the bars never turn the page
     const back = event.clientX < innerWidth * 0.3;
-    setIndex(i => (back ? Math.max(0, i - 1) : Math.min(lines.length, i + 1)));
+    setIndex(i => (back ? Math.max(0, i - 1) : Math.min(cards.length, i + 1)));
   };
 
   return html`
     <div class="cues" style=${`background:${background};color:${textColourFor(background)};--speaker:${background}`} onClick=${onTap}>
       <div class="cues__top" aria-hidden="true">
-        <span>${index + 1} / ${lines.length}</span>
+        <span>${index + 1} / ${cards.length}</span>
         <span class="cues__scene"><${ScenePill} project=${project} sceneId=${cuesScene} hash /></span>
         <button class="cues__close" onClick=${only(() => setSearch(search ? null : { query: '', at: 0 }))} aria-label="Search the lines">
           <${Icon} name="search" /></button>
         <button class="cues__close" onClick=${only(() => setState({ screen: 'cues-map', cuesLine: 0 }))} aria-label="Dialogue map">
           <${Icon} name="map" /></button>
-        <button class="cues__close cues__edit" onClick=${only(() => setEditor({ index, adding: false }))} aria-label="Edit this line">
-          <${Icon} name="edit" /></button>
+        ${!isAction && html`<button class="cues__close cues__edit" onClick=${only(() => setEditor({ index: card.lineIndex, adding: false }))} aria-label="Edit this line">
+          <${Icon} name="edit" /></button>`}
         <button class="cues__close" ...${closeProps(close)} aria-label="Close"><${Icon} name="close" /></button>
       </div>
-      ${search && html`<${SearchBar} lines=${lines} search=${search} setSearch=${setSearch} onGo=${match => setIndex(match.line)} />`}
+      ${search && html`<${SearchBar} lines=${lines} search=${search} setSearch=${setSearch} onGo=${match => setIndex(cardOfLine(cards, match.line))} />`}
       ${cues.newer && html`
         <div class="cues__newer" aria-hidden="true">
           <span>New text arrived: ${cues.newer}</span>
           <button class="btn" onClick=${only(() => { backToPaper(cuesScene); setIndex(0); })}>Use it</button>
           <button class="btn" onClick=${only(() => keepEdits(cuesScene))}>Keep my changes</button>
         </div>`}
-      <div class="cues__name" aria-hidden="true"><${Marked} text=${line.name} query=${search?.query} /></div>
-      <p class="sr-only">${spokenName(line.name)}</p>
+      <div class="cues__name" aria-hidden="true">${isAction ? 'Action' : html`<${Marked} text=${line.name} query=${search?.query} />`}</div>
+      ${!isAction && html`<p class="sr-only">${spokenName(line.name)}</p>`}
       <div class="cues__panel">
         <div class="cues__text" ref=${textRef}>
-          <div class="cues__speech">
-            ${phraseLines(line.text).split('\n').map((phrase, i) => html`<p class="cues__phrase" key=${i}><${Marked} text=${phrase} query=${search?.query} /></p>`)}
-          </div>
+          ${isAction
+            ? html`<div class="cues__speech cues__speech--action" aria-hidden="true">
+                ${card.sentences.map((sentence, i) => html`<p class="cues__phrase" key=${i}>${sentence}</p>`)}
+              </div>`
+            : html`<div class="cues__speech">
+                ${phraseLines(line.text).split('\n').map((phrase, i) => html`<p class="cues__phrase" key=${i}><${Marked} text=${phrase} query=${search?.query} /></p>`)}
+              </div>`}
         </div>
         <div class=${'cues__more' + (moreBelow ? '' : ' cues__more--hidden')} aria-hidden="true">scroll ▾</div>
       </div>
-      <div class="sr-only">${lines.slice(index + 1).map((later, i) => html`
+      <div class="sr-only">${lines.slice(isAction ? card.lineIndex : card.lineIndex + 1).map((later, i) => html`
         <p key=${'n' + i}>${spokenName(later.name)}</p><p key=${'t' + i}>${later.text}</p>`)}</div>
+      ${hasAction(cues) && html`
+        <div class="cues__mode" role="group" aria-label="What the cards show">
+          <button class=${whole ? '' : 'on'} aria-pressed=${!whole} onClick=${only(() => chooseWhole(false))}>Just dialog</button>
+          <button class=${whole ? 'on' : ''} aria-pressed=${whole} onClick=${only(() => chooseWhole(true))}>Whole scene</button>
+        </div>`}
       <div class="cues__bottom" aria-hidden="true">
         <span>${cues.source}${cues.note ? ` · ${cues.note}` : ''}</span>
-        <span>${next ? `next: ${next.name}` : 'last line'}</span>
+        <span>${!next ? 'last line' : next.kind === 'action' ? 'next: action' : `next: ${next.line.name}`}</span>
       </div>
       ${editor && html`<${CueLineEditor} key=${`${index}-${editor.adding}`} project=${project} sceneId=${cuesScene}
-        cues=${cues} editor=${editor} setEditor=${setEditor} close=${() => setEditor(null)} goTo=${setIndex} />`}
+        cues=${cues} editor=${editor} setEditor=${setEditor} close=${() => setEditor(null)} goTo=${goToLine} />`}
     </div>`;
 }

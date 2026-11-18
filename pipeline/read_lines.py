@@ -76,8 +76,10 @@ def join_text(parts):
 
 
 def read_lines(path, wanted=None, options=None):
-    """{'2': {'heading': 'INT. CASTELLO, CUCINA. GIORNO', 'lines': [{'name': 'INES', 'text': '…', 'action': '…'}, …]}}
-    action = the action paragraphs printed since the line before (only when there are some)."""
+    """{'2': {'heading': 'INT. CASTELLO, CUCINA. GIORNO', 'lines': [{'name': 'INES', 'text': '…', 'action': '…'}, …],
+    'end_action': '…'}}
+    action = the action paragraphs printed since the line before (only when there are some);
+    end_action = the action printed after the scene's last line (Dialogs → Whole scene, only when there is some)."""
     lines = page_lines(path, options)
     columns = (options or {}).get("columns", {})
     heading_x, cue_x = tuple(columns.get("heading", HEADING_X_DEFAULT)), tuple(columns.get("cue", CUE_X_DEFAULT))
@@ -96,13 +98,20 @@ def read_lines(path, wanted=None, options=None):
                 scenes[current]["lines"].append(line)
         speech = None
 
+    def finish_scene():
+        nonlocal action
+        finish()
+        ending = re.sub(r"\s+", " ", " ".join(action)).strip()
+        if current is not None and ending:
+            scenes[current]["end_action"] = ending
+        action = []
+
     for page, y, x, text in lines:
         if SCENE_X[0] <= x <= SCENE_X[1] and SCENE_ID_RE.match(text):
             heading = next((t for p, yy, xx, t in lines if p == page and abs(yy - y) <= 2
                             and heading_x[0] <= xx <= heading_x[1] and HEADING_RE.match(t)), None)
             if heading:
-                finish()
-                action = []
+                finish_scene()
                 current = text
                 scenes.setdefault(current, {"heading": re.sub(r"\s+", " ", heading), "lines": []})
                 continue
@@ -111,8 +120,7 @@ def read_lines(path, wanted=None, options=None):
         if unnumbered and heading_x[0] <= x <= heading_x[1] and HEADING_RE.match(text) and not any(
                 p == page and abs(yy - y) <= 2 and SCENE_X[0] <= xx <= SCENE_X[1] and SCENE_ID_RE.match(t)
                 for p, yy, xx, t in lines):
-            finish()  # a heading without a number: a new scene all the same
-            action = []
+            finish_scene()  # a heading without a number: a new scene all the same
             current = next_letter(current, scenes)
             scenes[current] = {"heading": re.sub(r"\s+", " ", text), "lines": []}
             continue
@@ -135,7 +143,7 @@ def read_lines(path, wanted=None, options=None):
             finish()  # action ends the speech
             if not PAGE_FURNITURE.match(text):
                 action.append(text)
-    finish()
+    finish_scene()
     # scene ids with their letters in capitals, as the ODG and the app write them: Il colpo's stralci print
     # "526a", the ODG "526A" (Ana, 11 Nov: day 61's lettered scenes got no lines)
     scenes = {sid.upper(): scene for sid, scene in scenes.items()}
