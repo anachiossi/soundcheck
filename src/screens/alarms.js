@@ -2,16 +2,17 @@
 // The switch says how the film works: Off · Fixed times · Follow the day's place. Every change is sent to the robot
 // (pipeline/gmail-trigger.gs planAnswer), which answers with the times: the app does no alarm sums of its own.
 //   • Save → the film's settings.json "commute" (the robot uses them tonight)
-//   • ⏰ Set alarm now → saves, then runs the "soundcheck alarms" shortcut with the robot's answer
+//   • on top, the robot's plan as the morning's timeline (parts/alarm-timeline.js)
+//   • "Set the 2 alarms" → saves, then runs the "soundcheck alarms" shortcut with the robot's answer
 //   • no signal: the last answer kept on the phone, marked; a change can't be counted until there is signal
 // Used by: main.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
-import { formatDate } from '../model.js';
 import { saveSettings } from '../kit-editing.js';
 import { showScreen } from '../state.js';
 import { AlarmFields, cleanCommute, pageChoices, savedCommute } from '../parts/alarm-fields.js';
-import { PlanTimes, alarmsLink, askedAt, canSetAlarms, problemText, useRobotPlan } from '../parts/robot-plan.js';
+import { alarmsLink, askedAt, canSetAlarms, problemText, useRobotPlan } from '../parts/robot-plan.js';
+import { AlarmTimeline, setAlarmsLabel } from '../parts/alarm-timeline.js';
 import { robotLink, setRobotLink } from '../robot-link.js';
 
 export function AlarmsScreen({ state }) {
@@ -32,12 +33,12 @@ export function AlarmsScreen({ state }) {
   return html`
     <button class="link back" onClick=${() => showScreen('hours')}>‹ Hours</button>
     <section class="tomorrow alarms">
-      <${PlanSummary} plan=${plan} commute=${commute} link=${link} asking=${asking} problem=${problem} />
+      <${PlanSummary} project=${project} plan=${plan} commute=${commute} link=${link} asking=${asking} problem=${problem} />
       ${plan?.wake && !commute.off && html`
         ${newMeetingPoint ? html`<p class="muted">Save the new meeting point: the robot counts it once it is saved.</p>`
           : canSetAlarms(plan) && (current || !changed)
           ? html`<a class="btn btn--primary alarms__set" href=${alarmsLink(plan)} onClick=${() => changed && save(message)}>
-              ⏰ Set alarm now · ${plan.wake} · ${plan.leaveAlarm}</a>`
+              ${setAlarmsLabel(plan)}</a>`
           : html`<p class="muted">${canSetAlarms(plan) ? 'Waiting for the robot to count your changes.' : 'The alarms can be set in the 24 hours before the wake-up.'}</p>`}`}
       ${changed && html`<button class="btn" onClick=${() => save(message)}>Save</button>`}
     </section>
@@ -45,15 +46,13 @@ export function AlarmsScreen({ state }) {
     <${RobotLinkField} link=${link} onChange=${setLink} />`;
 }
 
-function PlanSummary({ plan, commute, link, asking, problem }) {
+function PlanSummary({ project, plan, commute, link, asking, problem }) {
   if (commute.off) return html`<p class="muted">Alarms are off for this film: the robot sets none.</p>`;
   if (!link) return html`<p class="muted">Paste the robot link below: the robot counts the times.</p>`;
   if (!plan) return html`<p class="muted">${problemText(problem) || 'Asking the robot…'}</p>`;
   if (plan.none) return html`<p class="muted">No next shooting day with a call time yet.</p>`;
   return html`
-    <p class="tomorrow__day"><b>⏰ D${plan.day}</b> · ${formatDate(plan.date, { weekday: true })} · call <b>${plan.call}</b>
-      ${plan.rideWith && html` · 🚗 ${plan.rideWith.split(' ')[0]} ${plan.rideCall || '(call not known yet)'}`}</p>
-    <${PlanTimes} plan=${plan} />
+    <${AlarmTimeline} project=${project} plan=${plan} />
     <${Legs} plan=${plan} commute=${commute} asking=${asking} problem=${problem} />`;
 }
 

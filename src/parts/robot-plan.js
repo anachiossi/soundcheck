@@ -53,15 +53,4 @@ export function useRobotPlan(project, choices, refresh) {
   return { plan, asking, problem, current: answered === question };
 }
 
-export function PlanTimes({ plan }) {
-  return html`
-    <div class="tomorrow__times alarms__times">
-      <span><small>💤 sleep</small><b>${plan.sleep}</b></span>
-      <span><small>⏰ wake</small><b>${plan.wake}</b></span>
-      <span><small>🚪 leave home</small><b>${plan.walkOut}</b><small>⏰ ${plan.leaveAlarm}</small></span>
-      <span><small>🚇 meeting point</small><b>${plan.rideLeaves}</b></span>
-      <span><small>📍 on set</small><b>${plan.onSet}</b></span>
-    </div>`;
-}
-
 export const askedAt = plan => (plan?.asked_at ? new Date(plan.asked_at).toTimeString().slice(0, 5) : '');

@@ -1,12 +1,18 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-11-18 · version **v228** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-11-18 · version **v229** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
 `2026-09-29_soundcheck_handoff.md`.
 
 ## Latest (18 Nov 2026)
+- v229 **The alarm card as a timeline** (Ana liked the sketch; "be very mindful about the lines to look right"): the
+  robot's plan read top to bottom, bed → wake alarm → "15 min to go" alarm → leave → car with the ride → on set → call.
+  Black dots = the alarms that ring; the days with no alarm said in plain words ("D66–69: no 2nd unit"); one button
+  "Set the 2 alarms"; tap the timeline for the alarm page. Same on the Hours card and the alarm page
+  (`src/parts/alarm-timeline.js`, rows in `src/alarm-timeline-rules.js`). Every dot is centred on the rail by the CSS
+  itself (measured at phone size: 0.01 px).
 - v228 **One alarm calculator** (Ana: "multiple alarm calculator systems"): only the robot (`pipeline/gmail-trigger.gs`)
   works out the times. The Hours card and the alarm page show its answer (`planAnswer`, `src/parts/robot-plan.js`), the
   "Next" notification moved into the robot (`checkNextDayPush`); `pipeline/wake_plan.py` and the app's `wakePlan` are gone.

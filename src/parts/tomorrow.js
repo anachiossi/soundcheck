@@ -1,16 +1,17 @@
-// tomorrow.js — the card on Hours for the next shooting day: the robot's plan (parts/robot-plan.js) and one button.
-// ⏰ Set alarms hands the robot's answer to the iPhone shortcut "soundcheck alarms", which first removes its old alarms
+// tomorrow.js — the card on Hours for the next shooting day: the robot's plan as the morning's timeline
+// (parts/alarm-timeline.js; tap it to open the alarm page) and one button.
+// "Set the 2 alarms" hands the robot's answer to the iPhone shortcut "soundcheck alarms", which first removes its old alarms
 // and then creates the two new ones in Clock (a web app can't set alarms itself). The rules live on the alarm page.
 // While the app syncs the button waits: a new ODG may come. An ODG waiting for review already counts in the robot's
 // times (Ana, 7 Oct); it is shown here, tap it to review. The robot's "Next" notification opens this card.
 // Used by: screens/hours.js
 
 import { html } from '../../vendor/preact-htm.js';
-import { formatDate } from '../model.js';
 import { getState, setState } from '../state.js';
 import { undecided } from '../proposal-rules.js';
 import { robotLink } from '../robot-link.js';
-import { PlanTimes, alarmsLink, askedAt, canSetAlarms, problemText, useRobotPlan } from './robot-plan.js';
+import { alarmsLink, askedAt, canSetAlarms, problemText, useRobotPlan } from './robot-plan.js';
+import { AlarmTimeline, setAlarmsLabel } from './alarm-timeline.js';
 
 export function Tomorrow({ project }) {
   const syncing = Boolean(getState().sync?.running);
@@ -25,18 +26,16 @@ export function Tomorrow({ project }) {
     return html`<section class="tomorrow">
       <p class="muted">${problemText(problem) || (plan ? 'No next shooting day with a call time yet.' : 'Asking the robot…')}</p>${openPage}</section>`;
   }
-  const first = (plan.rideWith || '').split(' ')[0];
+  const openSettings = () => setState({ screen: 'alarms' });
   return html`
     <section class="tomorrow">
-      <p class="tomorrow__day"><b>Next: D${plan.day}</b> · ${formatDate(plan.date, { weekday: true })} · call <b>${plan.call}</b></p>
-      ${plan.rideWith && html`<p class="muted">🚗 With ${first}: ${plan.rideCall ? html`call <b>${plan.rideCall}</b>, the times follow it` : 'call not known yet (no ODG)'}</p>`}
-      <${PlanTimes} plan=${plan} />
+      <${AlarmTimeline} project=${project} plan=${plan} onOpen=${openSettings} />
       ${waiting.map(p => html`<button key=${p.id} class="btn tomorrow__odg" onClick=${() => setState({ screen: 'proposal', proposalId: p.id })}>
         📬 ${p.title} waits for your review: the alarms already use its call</button>`)}
-      ${syncing ? html`<span class="btn" aria-disabled="true">⏳ Checking for a new ODG…</span>`
-        : canSetAlarms(plan) ? html`<a class="btn btn--primary" href=${alarmsLink(plan)}>⏰ Set alarms ${plan.wake} · ${plan.leaveAlarm}</a>`
+      ${syncing ? html`<span class="btn tomorrow__set" aria-disabled="true">Checking for a new ODG…</span>`
+        : canSetAlarms(plan) ? html`<a class="btn btn--primary tomorrow__set" href=${alarmsLink(plan)}>${setAlarmsLabel(plan)}</a>`
         : html`<p class="muted">The alarms can be set in the 24 hours before the wake-up.</p>`}
-      <p class="muted">${problemText(problem) || `Asked the robot at ${askedAt(plan)}.`}</p>
-      ${openPage}
+      <button class="link tomorrow__hint" onClick=${openSettings}>Tap a time to change the minutes</button>
+      <p class="muted tomorrow__asked">${problemText(problem) || `Asked the robot at ${askedAt(plan)}.`}</p>
     </section>`;
 }
