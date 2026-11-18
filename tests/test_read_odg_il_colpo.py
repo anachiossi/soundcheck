@@ -136,6 +136,17 @@ class IlColpoLayoutTest(unittest.TestCase):
         self.assertEqual(scenes, {"526Cpt1": (None, "N", "PALACE/Garage"), "526A": (None, "N", "PALACE/Garage"),
                                   "527": ("2nd", "N", "PALACE/Flat")})
 
+    def test_the_scenes_after_splinter_or_split_are_the_2nd_unit(self):
+        for word, name in (("SPLINTER", "Splinter"), ("SPLIT", "Split")):
+            table = ["SCENA", "LUCE", "SET/SINOSSI", "DAY", "CAST", "PGS.", "TIMELINE",
+                     "20", "I", "G", "GYM", "Meet.", "9", "1", "2/8", "08:30", "10:30", "TOT PGS.", "2/8",
+                     word,
+                     "30 A", "I", "G", "STATION", "Watch.", "15", "3", "1/8", "08:45", "09:30", "TOT PGS.", "1/8"]
+            odg = read_il_colpo(HEADER + table + CAST, main_unit="MAIN")
+            self.assertEqual({s["scene_id"]: s.get("unit") for s in odg["scenes"]}, {"20": None, "30A": "2nd"})
+            self.assertEqual(odg["second_unit"], {"name": name, "call": "", "wrap": ""})
+            self.assertEqual(odg["unit_warnings"], [])
+
     def test_two_units_with_no_main_unit_set_say_which_was_taken(self):
         unit_table = ["Programma del giorno successivo Mercoledì 4 Novembre 2026 orario di lavorazione 14:00 – 22:00",
                       "SCENA", "LUCE", "SET/SINOSSI", "DAY", "CAST", "PGS.", "TIMELINE",

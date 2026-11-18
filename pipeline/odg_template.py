@@ -64,6 +64,18 @@ DEFAULT_TEMPLATE = {
 }
 
 
+# A row that opens the 2nd unit's scenes with no director's name: "SPLINTER" (Il colpo, ODG #67), "SPLIT",
+# "UNITÀ SPLIT", "SPLINTER 08:45 – 15:30". The whole row must be this: "PRONTI A GIRARE SPLIT" is a time's label.
+SPLIT_UNIT_RE = re.compile(r"^(?:UNIT[AÀ]?['’]?\s+)?(SPLINTER|SPLIT)(?:\s+UNIT[AÀ]?['’]?)?"
+                           r"(?:\s*[–-]?\s*(?:ORARIO)?\s*:?\s*(\d{1,2}[.:]\d{2})\s*[–/-]\s*(\d{1,2}[.:]\d{2}))?\s*$", re.I)
+
+
+def split_unit(row_text):
+    """'SPLINTER' → ('Splinter', '', '') · 'SPLIT 08:45 – 15:30' → ('Split', '08:45', '15:30') · any other row → None."""
+    match = SPLIT_UNIT_RE.match(str(row_text or "").strip())
+    return (match.group(1).title(), match.group(2) or "", match.group(3) or "") if match else None
+
+
 def template_for(settings):
     """The default words plus the film's own (settings.json "odg_template"), never fewer."""
     own = (settings or {}).get("odg_template") or {}

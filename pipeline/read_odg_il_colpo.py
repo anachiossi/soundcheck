@@ -21,6 +21,7 @@ import re
 import sys
 
 from odg_needs import read_needs, unit_spelling
+from odg_template import split_unit
 from read_odg import as_time, clean, read_date, section
 
 SCENE_ID_RE = re.compile(r"^\d+[A-Za-z]*\d*$")            # 315 · 517pt1 · 27A
@@ -132,13 +133,17 @@ def mark_units(table, scenes, main_unit, groups):
     """A day with two units prints "UNIT ALFIERI 14:00 – 22:00" before the main unit's scenes and
     "UNIT DE FEUDIS 08:00 – 16:00" before the 2nd unit's (ODG #55, 3 Nov). The main unit is the one the
     film's settings name ("main_unit": "ALFIERI"); every other unit is the 2nd: its scenes get
-    unit '2nd' + unit_name. Returns ({name, call, wrap} of the 2nd unit or None, warnings);
+    unit '2nd' + unit_name. "SPLINTER" or "SPLIT" (ODG #67) is always the 2nd unit, and the scenes printed
+    before it are the main unit's. Returns ({name, call, wrap} of the 2nd unit or None, warnings);
     fills groups = {'ALFIERI': [scene ids], 'DE FEUDIS': [...]} for the needs (read_needs)."""
-    unit_of, current, second, warnings = {}, None, None, []
+    unit_of, current, second, warnings, split_names = {}, None, None, [], set()
     for i, line in enumerate(table):
+        split = split_unit(line)
         marker = UNIT_RE.match(line)
-        if marker:
-            name, call, wrap = marker.groups()
+        if split or marker:
+            name, call, wrap = split or marker.groups()
+            if split:
+                split_names.add(name)
             current = (name.strip(), as_time(call) if call else "", as_time(wrap) if wrap else "")
         elif current and i + 2 < len(table) and is_scene_start(table, i):
             unit_of[line] = current
@@ -147,9 +152,10 @@ def mark_units(table, scenes, main_unit, groups):
     if not names:
         return None, []
     main = (main_unit or "").upper()
-    if main not in [n.upper() for n in names]:
-        main = names[0].upper()  # not set, or not on this ODG: the first unit printed, said so
-        warnings.append(f'Two units on the ODG ({", ".join(names)}): "{names[0]}" taken as the main unit '
+    named = [name for name in names if name not in split_names]
+    if named and main not in [n.upper() for n in named]:
+        main = named[0].upper()  # not set, or not on this ODG: the first unit printed, said so
+        warnings.append(f'Two units on the ODG ({", ".join(names)}): "{named[0]}" taken as the main unit '
                         f'(settings.json "main_unit" says "{main_unit or "nothing"}").')
     for scene in scenes:
         unit = unit_of.get(scene["scene_id"])

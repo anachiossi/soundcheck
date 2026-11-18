@@ -11,7 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "pipeline"))
 
-from odg_template import fields_named, template_for, DEFAULT_TEMPLATE  # noqa: E402
+from odg_template import fields_named, split_unit, template_for, DEFAULT_TEMPLATE  # noqa: E402
 from pdf_tables import without_stray_letters  # noqa: E402
 from read_odg_table import read_table_pages  # noqa: E402
 from reading_checks import checked_reading, eighths, odg_problems, readings_differ, reading_warnings  # noqa: E402
@@ -154,6 +154,20 @@ class TableReader(unittest.TestCase):
         self.assertEqual([(s["scene_id"], s.get("unit")) for s in odg["scenes"]], [("50", "2nd"), ("60", None)])
         self.assertEqual(odg["second_unit"], {"name": "Verdi", "call": "10:30", "wrap": "18:30"})
         self.assertEqual(odg["unit_warnings"], [])
+
+    def test_a_splinter_table_with_no_header_is_the_2nd_unit(self):
+        for word, name in (("SPLINTER", "Splinter"), ("SPLIT", "Split")):
+            first = {"line": len(LINES), "rows": [HEADER, scene("50"), row((20, "TOT"), (320, "1/8"))]}
+            second = {"line": len(LINES) + 1, "rows": [row((20, word)), scene("60"), row((20, "TOT"), (320, "1/8"))]}
+            odg = read_table_pages([{"lines": LINES, "tables": [first, second]}], main_unit="ROSSI")
+            self.assertEqual([(s["scene_id"], s.get("unit")) for s in odg["scenes"]], [("50", None), ("60", "2nd")])
+            self.assertEqual(odg["second_unit"], {"name": name, "call": "", "wrap": "", "split": True})
+            self.assertEqual(odg["unit_warnings"], [])
+
+    def test_only_a_whole_row_saying_split_opens_the_2nd_unit(self):
+        self.assertEqual(split_unit("UNITÀ SPLIT – orario 08:45 – 15:30"), ("Split", "08:45", "15:30"))
+        self.assertIsNone(split_unit("PRONTI A GIRARE SPLIT"))
+        self.assertIsNone(split_unit("SPLIT SCREEN"))
 
     def test_a_watermark_letter_alone_on_a_line_is_dropped_from_a_cell(self):
         self.assertEqual(without_stray_letters("s\nProgramma del giorno"), "Programma del giorno")

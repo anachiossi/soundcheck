@@ -18,7 +18,7 @@ import re
 import sys
 
 from odg_table_extras import day_count_and_week, needs_of_pages
-from odg_template import DEFAULT_TEMPLATE, fields_named, plain
+from odg_template import DEFAULT_TEMPLATE, fields_named, plain, split_unit
 from pdf_tables import pages_of
 from read_odg import MONTHS, as_time, clean, read_date
 
@@ -90,6 +90,12 @@ def read_scene_table(rows, header, template):
     unit_re = re.compile(r"^(?:" + "|".join(re.escape(w) for w in template["unit"]) + r")\s+([A-ZÀ-Þ' ]+?)(?=\s*[-–:(]|\s+\d|\s+ORARIO|$)", re.I)
     for row in rows:
         whole = clean(" ".join(cell["text"] for cell in row))
+        split = split_unit(whole)
+        if split:
+            unit = {"name": split[0], "call": as_time(split[1]) if split[1] else "",
+                    "wrap": as_time(split[2]) if split[2] else "", "split": True}
+            units.append(unit)
+            continue
         named = unit_re.match(whole)
         if named:
             times = TIME_RE.findall(whole)
@@ -200,14 +206,17 @@ def next_day_facts(lines, start, number, year):
 
 
 def with_units(scenes, units, main_unit):
-    """Marks the scenes of every unit but the main one as the 2nd unit's. → (second unit or None, warnings)."""
+    """Marks the scenes of every unit but the main one as the 2nd unit's. "SPLINTER" or "SPLIT" is always the
+    2nd unit, even as the only unit printed. → (second unit or None, warnings)."""
     names = [unit["name"] for unit in units]
-    if len(set(names)) < 2:
+    split_names = {unit["name"] for unit in units if unit.get("split")}
+    if len(set(names)) < 2 and not split_names:
         for scene in scenes:
             scene.pop("unit_name", None)
         return None, []
-    main = next((name for name in names if main_unit and name.upper() == main_unit.upper()), names[0])
-    warnings = [] if main_unit and main.upper() == main_unit.upper() else [
+    named = [name for name in names if name not in split_names]
+    main = next((name for name in named if main_unit and name.upper() == main_unit.upper()), named[0] if named else None)
+    warnings = [] if not named or (main_unit and main.upper() == main_unit.upper()) else [
         f'Two units on this ODG ({", ".join(dict.fromkeys(names))}): "{main}" was taken as the main one '
         f'(settings.json "main_unit" says "{main_unit or "nothing"}").']
     second = None
@@ -234,6 +243,7 @@ def read_table_pages(pages, template=None, main_unit=None):
     today = {"scenes": [], "units": [], "total": ""}
     tomorrow = {"scenes": [], "units": [], "total": ""}
     cast, offset, announced = [], 0, 0  # announced: how many "next day" rows were met inside the tables
+    scene_header = None  # the last scene table's header: a SPLINTER table prints none of its own (ODG #67)
     for page in pages:
         for table in page["tables"]:
             day = tomorrow if next_at is not None and offset + table["line"] >= next_at else today
@@ -261,10 +271,13 @@ def read_table_pages(pages, template=None, main_unit=None):
                     close_part()
                     part = []
                     kind, header = ("cast", as_cast) if is_cast else ("scenes", as_scenes) if is_scenes else (None, None)
+                    scene_header = as_scenes if is_scenes else scene_header
                     if announces:  # the first announcement is tomorrow; a second one (the day after) is not read
                         announced += 1
                         day = tomorrow if announced == 1 else {"scenes": [], "units": [], "total": ""}
                 else:
+                    if kind is None and scene_header and split_unit(whole):
+                        kind, header = "scenes", scene_header
                     part.append(row)
             close_part()
         offset += len(page["lines"])
