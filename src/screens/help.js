@@ -34,9 +34,9 @@ export function HelpScreen({ state }) {
 
       ${alarms && html`
       <h2 class="section-title">Alarms for the next day</h2>
-      <p>Projects → ⏱ Hours shows, for the next shooting day: when to sleep, wake up, leave and be at the meeting
-        point (the numbers are set per film, under "Wake-up plan"). <b>⏰ Set alarms</b> creates the wake-up and
-        leave alarms in the iPhone's Clock through a shortcut. Make the shortcut once, in the Shortcuts app:</p>
+      <p>Projects → ⏱ Hours shows the robot's plan for the next shooting day: when to sleep, wake up, leave and be at the
+        meeting point. The rules are set per film in <b>Alarm settings</b>. <b>⏰ Set alarms</b> creates the wake-up and
+        leave alarms in the iPhone's Clock through a shortcut, in the 24 hours before the wake-up. Make the shortcut once, in the Shortcuts app:</p>
       <ol class="help">
         <li>New shortcut, named exactly <b>soundcheck alarms</b>.</li>
         <li><b>First, clear yesterday's:</b> add <b>Find Alarms</b> (Clock) where <b>Label contains</b> <code>soundcheck</code>,
@@ -52,7 +52,7 @@ export function HelpScreen({ state }) {
       <p><b>Automatic, without the tap:</b> a second shortcut, <b>soundcheck auto alarms</b>, asks the robot every
         evening (Shortcuts → Automation, 20:00 and 22:30, Run Immediately). On a shooting eve it sets the alarms;
         on a weekend or day off it removes the soundcheck alarms. Steps: docs/HOW_IT_WORKS.md → "Automatic alarms".</p>
-      <p class="muted">The robot also sends a notification when tomorrow's ODG arrives, and one at bedtime 💤.</p>`}
+      <p class="muted">The robot also sends a notification the day before, again if the times change, and one at bedtime 💤.</p>`}
 
       <h2 class="section-title">Hearing the lines</h2>
       <ul class="help">

@@ -55,6 +55,7 @@ function filmRules(settings) {
 
 function alarmRules(commute) {
   if (!commute) return ['No wake-up plan for this film.'];
+  if (commute.off) return ['Alarms are off for this film.'];
   const items = [];
   if (commute.ride_with) items.push(`Riding with ${commute.ride_with}: the alarms follow their call on the ODG${commute.ride_gap_if_unknown ? ` (not printed yet: ${commute.ride_gap_if_unknown} min before yours)` : ''}.`);
   if (commute.days === 'days_with_2nd_unit') items.push('Only the days that also have a 2nd unit (you work the main unit those days).');

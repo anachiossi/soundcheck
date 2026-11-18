@@ -1,12 +1,20 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-11-14 · live version **v226** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-11-18 · version **v228** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
 `2026-09-29_soundcheck_handoff.md`.
 
-## Latest (14–15 Nov 2026)
+## Latest (18 Nov 2026)
+- v228 **One alarm calculator** (Ana: "multiple alarm calculator systems"): only the robot (`pipeline/gmail-trigger.gs`)
+  works out the times. The Hours card and the alarm page show its answer (`planAnswer`, `src/parts/robot-plan.js`), the
+  "Next" notification moved into the robot (`checkNextDayPush`); `pipeline/wake_plan.py` and the app's `wakePlan` are gone.
+  The shortcut's answer is unchanged. The alarm page is the one place for the rules: Off · Fixed times · Follow the day's
+  place. The app needs the robot link pasted once on each phone. See HOW_IT_WORKS → "Alarms: one calculator".
+- Next: the new menu (plan in the data repo, `notes/plans/alarm-and-menu.md`).
+
+## Before (14–15 Nov 2026)
 - Sides check: a call-sheet scene written "616B" or "526Cfine" finds the sides' "616b" / "526c" (before, the
   speakers of lettered scenes were never checked); a sides-only film is warned when a scene of the day is not in
   the day's sides (`pipeline/read_sides.py`, `propose.py`).

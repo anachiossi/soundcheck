@@ -71,117 +71,12 @@ test('hours/<day>.json travels with the film', () => {
   assert.equal(project.hours['8'].status, 'wrapped');
 });
 
-test('walking to the ride\'s house first moves the leave and the wake earlier', async () => {
-  const { wakePlan } = await import('../src/hours-rules.js');
-  const project = { ...film(), settings: { commute: { walk_to_ride: 20 } } };
-  const plan = wakePlan(project, { day: 10, date: '2026-10-02', call: '09:00' });
-  assert.equal(plan.meet, '08:15', 'the meeting point does not move');
-  assert.equal(plan.leaveFrom, '06:25', 'leave home 20 minutes earlier');
-  assert.equal(plan.wake, '05:40');
-});
-
-test('the leave alarm rings its heads-up minutes before walking out', async () => {
-  const { wakePlan } = await import('../src/hours-rules.js');
-  const project = { ...film(), settings: { commute: { walk_to_ride: 20, leave_alarm_before: 15 } } };
-  const plan = wakePlan(project, { day: 10, date: '2026-10-02', call: '09:00' });
-  assert.equal(plan.leaveFrom, '06:25', 'walking out does not move');
-  assert.equal(plan.leaveAlarm, '06:10');
-  assert.equal(plan.wake, '05:40', 'waking does not move');
-});
-
-test('the night before: meeting, leave window, wake, sleep (Ana\'s calculator)', async () => {
-  const { wakePlan, nextShootingDay } = await import('../src/hours-rules.js');
-  const project = { ...film(), settings: { commute: {} } };
-  assert.deepEqual(wakePlan(project, { day: 10, date: '2026-10-02', call: '09:00' }),
-    { day: 10, date: '2026-10-02', call: '09:00', rideWith: '', rideCall: '', meet: '08:15', leaveFrom: '06:45', rideLeaves: '06:45', leaveAlarm: '06:45', leaveTo: '07:00', wake: '06:00', sleep: '22:00' });
-  assert.equal(wakePlan(project, { day: 1, call: '06:00' }).sleep, '19:00');
-  assert.equal(wakePlan(project, { day: 1, call: '03:00' }).wake, '00:00');
-  assert.equal(wakePlan({ settings: {} }, { call: '09:00' }), null, 'no commute settings: no plan');
-  assert.equal(nextShootingDay(project, at('2026-09-30', '20:00')).day, 9);
-  assert.equal(nextShootingDay(project, at('2026-10-01', '00:15')).day, 9, 'after midnight: the day you wake up for');
-  assert.equal(nextShootingDay(project, at('2026-10-01', '12:00')), null, 'after its call: the next one');
-});
-
-test('on a film where Ana works only the days with a 2nd unit, a main-unit-only day sets no alarm (Ana, 5 Nov)', async () => {
-  const { nextShootingDay } = await import('../src/hours-rules.js');
-  const schedule = [
-    { scene_id: '1', day: 58, order: 1, date: '2026-11-06', call: '08:00', wrap: '16:00' },
-    { scene_id: '2', day: 59, order: 1, date: '2026-11-09', call: '17:00', wrap: '01:00' },
-    { scene_id: '3', day: 59, order: 2, date: '2026-11-09', call: '08:00', wrap: '16:00', unit: '2nd' }];
-  const project = { schedule, scenes: [], settings: { commute: { days: 'days_with_2nd_unit' } } };
-  const next = nextShootingDay(project, at('2026-11-05', '20:00'));
-  assert.equal(next.day, 59, 'day 58 has no 2nd unit: skipped');
-  assert.equal(next.call, '17:00', 'the main unit\'s call: Ana works the main unit');
-  assert.equal(nextShootingDay({ ...project, settings: { commute: {} } }, at('2026-11-05', '20:00')).day, 58, 'without the rule: every day');
-});
-
-test('the alarm page: Google\'s two legs and the page\'s unsaved numbers give the robot\'s times (Ana, 6 Nov)', async () => {
-  const { wakePlan } = await import('../src/hours-rules.js');
-  const project = { settings: { commute: { meet_before_call: 30, get_ready: 45, sleep_hours: 8, leave_alarm_before: 15, walk_to_ride: 20 } } };
-  const day = { day: 28, date: '2026-11-09', call: '10:00' };
-  const legs = { drive: { minutes: 60 }, toMeeting: { minutes: 25 } };
-  // the same numbers as tests/robot-alarms.test.js: on set 09:30 · truck 08:30 · leave home 08:05 · wake 07:20
-  const plan = wakePlan(project, day, { legs });
-  assert.deepEqual([plan.meet, plan.rideLeaves, plan.leaveFrom, plan.leaveAlarm, plan.wake, plan.sleep],
-    ['09:30', '08:30', '08:05', '07:50', '07:20', '23:20']);
-  assert.equal(wakePlan(project, day, { legs, commute: { meet_before_call: 45 } }).wake, '07:05', 'a number changed on the page, not saved yet');
-  assert.equal(wakePlan(project, day).leaveFrom, '07:40', 'no answer from Google: the longest drive (90) and the fixed 20 min');
-});
-
-test('the alarms are named after the film, day and date, between the two times (Ana, 5 Nov)', async () => {
-  const { alarmsLink } = await import('../src/parts/tomorrow.js');
-  const link = alarmsLink({ name: 'Il colpo' }, { day: 59, date: '2026-11-09', wake: '06:00', leaveAlarm: '06:45' });
-  assert.equal(decodeURIComponent(link.split('&text=')[1]), '06:00;Il colpo · D59 · 09/11/2026;06:45',
-    'first item = wake, last item = leave: a shortcut that ignores the name still works');
-});
-
-test('the alarms use the call of an ODG still waiting for review (Ana, 7 Oct)', async () => {
-  const { nextShootingDay, wakePlan } = await import('../src/hours-rules.js');
-  const project = {
-    settings: { commute: { meet_before_call: 90, travel_min: 30, travel_max: 45, get_ready: 45, sleep_hours: 8 } },
-    schedule: [{ day: 15, order: 1, scene_id: '27fin', date: '2026-10-09', call: '09:00', wrap: '17:00' }],
-    proposals: {
-      'odg-14': { id: 'odg-14', title: 'ODG #14', day: 14, status: 'open', decisions: {}, changes: [
-        { id: 'c1', op: { op: 'set_day', day: 15, fields: { call: '10:00', wrap: '18:00' } } },
-        { id: 'c2', op: { op: 'set_day_scenes', day: 15, scene_ids: [] } }] },
-    },
-  };
-  const now = new Date('2026-10-08T20:00:00');
-  const day = nextShootingDay(project, now);
-  assert.equal(day.call, '10:00');
-  assert.equal(day.fromOdg, 'ODG #14');
-  assert.equal(day.scenes.length, 1); // the scenes still wait for Ana
-  assert.equal(wakePlan(project, day).wake, '07:00');
-  project.proposals['odg-14'].decisions = { c1: 'rejected' };
-  assert.equal(nextShootingDay(project, now).call, '09:00'); // a rejected change doesn't count
-  project.proposals['odg-14'].decisions = {};
-  project.proposals['odg-15'] = { id: 'odg-15', title: 'ODG #15', day: 15, status: 'open', decisions: {}, changes: [
-    { id: 'c1', op: { op: 'set_day_scenes', day: 16, scene_ids: ['29'], fields: { date: '2026-10-12', call: '08:00' } } }] };
-  assert.equal(nextShootingDay(project, new Date('2026-10-10T20:00:00')).call, '08:00'); // a new day from an ODG
-});
-
 test('overtime after the first hour counts double (LBE: 1h 15m + 1h 15m = 3h)', () => {
   const lbe = { settings: { overtime: { double_after: 60 } } };
   assert.equal(countedOvertime(lbe, 75), 90);
   assert.equal(countedOvertime(lbe, 75) + countedOvertime(lbe, 75), 180);
   assert.equal(countedOvertime(lbe, 45), 45);
   assert.equal(countedOvertime({}, 75), 75, 'no rule: as worked');
-});
-
-test("riding with a colleague: the alarms follow their call on the ODG, Ana's call stays (Ana, 11 Oct)", async () => {
-  const { wakePlan } = await import('../src/hours-rules.js');
-  const project = emptyProject({ id: 'f', name: 'F' }, 'projects/f');
-  project.settings = { commute: { meet_before_call: 75, travel_min: 30, travel_max: 45, get_ready: 45, sleep_hours: 8,
-    ride_with: 'Maria Rossi' } };
-  setFileContent(project, 'calls.json', { '2026-10-12': { 'Maria  Rossi': '08:50', 'Ana Chiossi': '09:00' } });
-  assert.equal(fileContent(project, 'calls.json')['2026-10-12']['Ana Chiossi'], '09:00');
-  const plan = wakePlan(project, { day: 16, date: '2026-10-12', call: '09:00' });
-  assert.equal(plan.call, '09:00');
-  assert.equal(plan.rideCall, '08:50');
-  assert.deepEqual([plan.meet, plan.leaveFrom, plan.leaveTo, plan.wake], ['07:35', '06:50', '07:05', '06:05']);
-  const unknown = wakePlan(project, { day: 17, date: '2026-10-13', call: '10:00' });
-  assert.equal(unknown.rideCall, '', 'no ODG yet');
-  assert.equal(unknown.wake, '06:35', "40 min before Ana's call, then the same sums");
 });
 
 test('a worked day whose scenes a later ODG moved away stays in the week (D17, 13 Oct)', () => {
@@ -192,13 +87,3 @@ test('a worked day whose scenes a later ODG moved away stays in the week (D17, 1
   assert.equal(week[0].real_wrap, '18:00');
 });
 
-test('saving the alarm page keeps the film\'s other settings and takes out a choice emptied on the page', async () => {
-  const { savedCommute, cleanCommute } = await import('../src/parts/alarm-fields.js');
-  const current = { my_name: 'Someone', days: 'days_with_2nd_unit', to_meeting: 'auto', walk_to_ride: 20, meet_before_call: 30 };
-  const page = cleanCommute({ ...current, to_meeting: '', walk_to_ride: '25', drive_to: 'mezzi', drive_margin: '10' });
-  const saved = savedCommute(current, page);
-  assert.equal(saved.my_name, 'Someone');
-  assert.equal(saved.days, 'days_with_2nd_unit');
-  assert.equal(saved.to_meeting, undefined, '"Fixed minutes": no Google for the way to the meeting point');
-  assert.deepEqual([saved.walk_to_ride, saved.drive_margin, saved.drive_to, saved.travel], [25, 10, 'mezzi', 'maps']);
-});

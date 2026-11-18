@@ -1,105 +1,70 @@
-// alarms.js — the alarm page (Hours → ⏰ Alarm page, or #alarms). Ana, 5–6 Nov: "home → meeting point by mezzi or walk
-// (under 1 km), meeting point → location by car … as I change the values it shows the result … a large button that
-// says set alarm now". The robot keeps setting the alarms by itself every evening; this page is the same thing by hand.
-//   • the next shooting day (hours-rules.js nextShootingDay) and the call it follows (My call, or the ride's call)
-//   • the two legs come from the robot (robot-link.js → gmail-trigger.gs commuteLegs): Google Maps for that day and
-//     hour, with the page's choices even before they are saved; the SAME sums as the automatic alarms
-//   • no signal: the last answer kept on the phone, marked; none at all: the film's longest drive (travel_max)
-//   • Save → the film's settings.json "commute" (the robot uses them tonight); ⏰ Set alarm now → saves, then runs the
-//     "soundcheck alarms" shortcut with wake · film · leave (parts/tomorrow.js alarmsLink)
+// alarms.js — the alarm page (Hours → Alarm settings, or #alarms): the ONE place for a film's alarm rules (Ana, 18 Nov).
+// The switch says how the film works: Off · Fixed times · Follow the day's place. Every change is sent to the robot
+// (pipeline/gmail-trigger.gs planAnswer), which answers with the times: the app does no alarm sums of its own.
+//   • Save → the film's settings.json "commute" (the robot uses them tonight)
+//   • ⏰ Set alarm now → saves, then runs the "soundcheck alarms" shortcut with the robot's answer
+//   • no signal: the last answer kept on the phone, marked; a change can't be counted until there is signal
 // Used by: main.js
 
-import { html, useEffect, useState } from '../../vendor/preact-htm.js';
+import { html, useState } from '../../vendor/preact-htm.js';
 import { formatDate } from '../model.js';
-import { commuteOf, wakePlan, nextShootingDay } from '../hours-rules.js';
-import { myCallFor } from '../my-call.js';
 import { saveSettings } from '../kit-editing.js';
 import { showScreen } from '../state.js';
-import { alarmsLink } from '../parts/tomorrow.js';
-import { AlarmFields, cleanCommute, savedCommute } from '../parts/alarm-fields.js';
-import { askLegs, keptLegs, robotLink, setRobotLink } from '../robot-link.js';
-
-const CHOICES = ['drive_to', 'to_meeting', 'drive_margin'];
-const ASK_AFTER = 800; // ms after the last change: Google is asked once, not at every key
+import { AlarmFields, cleanCommute, pageChoices, savedCommute } from '../parts/alarm-fields.js';
+import { PlanTimes, alarmsLink, askedAt, canSetAlarms, problemText, useRobotPlan } from '../parts/robot-plan.js';
+import { robotLink, setRobotLink } from '../robot-link.js';
 
 export function AlarmsScreen({ state }) {
-  const { project, myCall } = state;
-  const saved = commuteOf(project) || {};
+  const { project } = state;
+  const saved = project.settings?.commute || {};
   const [values, setValues] = useState(() => ({ ...saved }));
-  const [legs, setLegs] = useState(null);       // the robot's answer (or the one kept)
-  const [asking, setAsking] = useState(false);
-  const [problem, setProblem] = useState('');
   const [link, setLink] = useState(robotLink());
-
-  const day = nextShootingDay(project);
   const commute = cleanCommute(values);
-  const draft = day && wakePlan(project, { ...day, call: myCallFor(project, day, myCall).call }, { commute });
-  const choices = Object.fromEntries(CHOICES.map(key => [key, commute[key] ?? '']));
-  const meet = draft?.meet;
+  const { plan, asking, problem, current } = useRobotPlan(project, pageChoices(commute), link);
 
-  useEffect(() => {
-    if (!draft) return undefined;
-    setLegs(keptLegs(project, draft.date, meet, choices));
-    if (!link) return undefined;
-    let cancelled = false;
-    const timer = setTimeout(async () => {
-      setAsking(true);
-      const answer = await askLegs(project, draft.date, meet, choices);
-      if (cancelled) return;
-      setAsking(false);
-      if (answer.error) setProblem(answer.error === 'no signal' ? 'No signal: showing the last answer kept on this phone.' : `The robot said: ${answer.error}`);
-      else { setProblem(''); setLegs(answer); }
-    }, ASK_AFTER);
-    return () => { cancelled = true; clearTimeout(timer); };
-  }, [draft?.date, meet, JSON.stringify(choices), link]);
-
-  if (!day || !draft) {
-    return html`<button class="link back" onClick=${() => showScreen('hours')}>‹ Hours</button>
-      <p class="empty">No next shooting day with a call time yet.</p>`;
-  }
-  const plan = wakePlan(project, { ...day, call: myCallFor(project, day, myCall).call }, { commute, legs });
-  const dayPlace = project.dayPlaces?.[day.date];
-  const people = Object.keys(project.crewCalls?.[day.date] || {}).sort();
-  const save = message => saveSettings({ commute: savedCommute(project.settings?.commute, commute) }, message);
+  const dayPlace = plan?.date ? project.dayPlaces?.[plan.date] : null;
+  const people = plan?.date ? Object.keys(project.crewCalls?.[plan.date] || {}).sort() : [];
+  const save = message => saveSettings({ commute: savedCommute(saved, commute) }, message);
   const changed = JSON.stringify(cleanCommute(saved)) !== JSON.stringify(commute);
+  const message = 'Alarm settings saved: the robot uses them tonight too.';
 
   return html`
     <button class="link back" onClick=${() => showScreen('hours')}>‹ Hours</button>
     <section class="tomorrow alarms">
-      <p class="tomorrow__day"><b>⏰ D${plan.day}</b> · ${formatDate(plan.date, { weekday: true })} · call <b>${plan.call}</b>
-        ${plan.rideWith && html` · 🚗 ${plan.rideWith.split(' ')[0]} ${plan.rideCall || '(call not known yet)'}`}</p>
-      <div class="tomorrow__times alarms__times">
-        <span><small>💤 sleep</small><b>${plan.sleep}</b></span>
-        <span><small>⏰ wake</small><b>${plan.wake}</b></span>
-        <span><small>🚪 leave home</small><b>${plan.leaveFrom}</b><small>⏰ ${plan.leaveAlarm}</small></span>
-        <span><small>🚇 meeting point</small><b>${plan.rideLeaves}</b></span>
-        <span><small>📍 on set</small><b>${plan.meet}</b></span>
-      </div>
-      <${Legs} legs=${legs} commute=${{ ...saved, ...commute }} asking=${asking} problem=${problem} link=${link} />
-      <a class="btn btn--primary alarms__set" href=${alarmsLink(project, plan)}
-         onClick=${() => changed && save('Alarm settings saved: the robot uses them tonight too.')}>
-        ⏰ Set alarm now · ${plan.wake} · ${plan.leaveAlarm}</a>
-      ${changed && html`<button class="btn" onClick=${() => save('Alarm settings saved: the robot uses them tonight too.')}>Save without setting</button>`}
+      <${PlanSummary} plan=${plan} commute=${commute} link=${link} asking=${asking} problem=${problem} />
+      ${plan?.wake && !commute.off && html`
+        ${canSetAlarms(plan) && (current || !changed)
+          ? html`<a class="btn btn--primary alarms__set" href=${alarmsLink(plan)} onClick=${() => changed && save(message)}>
+              ⏰ Set alarm now · ${plan.wake} · ${plan.leaveAlarm}</a>`
+          : html`<p class="muted">${canSetAlarms(plan) ? 'Waiting for the robot to count your changes.' : 'The alarms can be set in the 24 hours before the wake-up.'}</p>`}`}
+      ${changed && html`<button class="btn" onClick=${() => save(message)}>Save</button>`}
     </section>
     <${AlarmFields} values=${values} onChange=${setValues} people=${people} places=${dayPlace?.places || (dayPlace ? [dayPlace] : [])} />
     <${RobotLinkField} link=${link} onChange=${setLink} />`;
 }
 
-// where the two legs' minutes come from: Google now, the last answer kept, or the film's own numbers
-function Legs({ legs, commute, asking, problem, link }) {
-  if (!legs?.drive) {
-    return html`<p class="muted">${!link ? 'Paste the robot link below to get the real drive from Google.'
-      : asking ? 'Asking Google…' : problem || 'No answer yet.'} Counting the longest drive: ${commute.travel_max ?? 90} min.</p>`;
-  }
-  const { drive, toMeeting } = legs;
+function PlanSummary({ plan, commute, link, asking, problem }) {
+  if (commute.off) return html`<p class="muted">Alarms are off for this film: the robot sets none.</p>`;
+  if (!link) return html`<p class="muted">Paste the robot link below: the robot counts the times.</p>`;
+  if (!plan) return html`<p class="muted">${problemText(problem) || 'Asking the robot…'}</p>`;
+  if (plan.none) return html`<p class="muted">No next shooting day with a call time yet.</p>`;
+  return html`
+    <p class="tomorrow__day"><b>⏰ D${plan.day}</b> · ${formatDate(plan.date, { weekday: true })} · call <b>${plan.call}</b>
+      ${plan.rideWith && html` · 🚗 ${plan.rideWith.split(' ')[0]} ${plan.rideCall || '(call not known yet)'}`}</p>
+    <${PlanTimes} plan=${plan} />
+    <${Legs} plan=${plan} commute=${commute} asking=${asking} problem=${problem} />`;
+}
+
+// where the two legs' minutes come from
+function Legs({ plan, commute, asking, problem }) {
+  const { drive, toMeeting } = plan;
   const how = { walk: 'on foot', transit: 'public transport', fixed: 'your fixed minutes' }[toMeeting.mode] || toMeeting.mode;
-  const when = new Date(legs.asked_at).toTimeString().slice(0, 5);
   return html`
     <p class="muted alarms__legs">
       🚇 To the meeting point: <b>${toMeeting.minutes} min</b> ${how}${toMeeting.maps ? ' (Google)' : ''}<br />
       🚗 Drive to ${drive.place ? html`<b>${drive.place.label}</b> ${drive.place.text}` : 'the set'}: <b>${drive.minutes} min</b>${' '}
-      ${drive.maps ? `(Google ${drive.google}${drive.rain ? ` + rain ${commute.rain_penalty}` : ''}${Number(commute.drive_margin) ? ` + ${commute.drive_margin} extra` : ''})` : '(no Google answer: the longest drive)'}<br />
-      ${asking ? 'Asking Google again…' : problem || `Google asked at ${when}.`}
+      ${drive.maps ? `(Google ${drive.google}${drive.rain ? ` + rain ${commute.rain_penalty}` : ''}${Number(commute.drive_margin) ? ` + ${commute.drive_margin} extra` : ''})` : '(your fixed minutes)'}<br />
+      ${asking ? 'Asking the robot…' : problemText(problem) || `Asked the robot at ${askedAt(plan)}.`}
     </p>`;
 }
 
@@ -115,7 +80,7 @@ function RobotLinkField({ link, onChange }) {
   };
   return html`
     <details class="more" open=${!link}>
-      <summary>Robot link ${link ? '✓' : '— needed for Google\'s times'}</summary>
+      <summary>Robot link ${link ? '✓' : '(needed for the times)'}</summary>
       <form class="item-form" onSubmit=${keep}>
         <label><span>The link your "soundcheck alarms" shortcut opens (…/exec?key=…). Kept on this phone only.</span>
           <input type="text" value=${text} onInput=${e => setText(e.target.value)} placeholder="https://script.google.com/macros/s/…/exec?key=…" /></label>

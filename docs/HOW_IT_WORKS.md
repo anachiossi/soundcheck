@@ -93,6 +93,16 @@ Which emails belong to a film: `projects/<film>/inbox.json` in the data repo.
 5. ⏰ Triggers → the timer → ✎ → Failure notification: **Notify me immediately**.
 Check: Executions (☰ list icon) shows each check; GitHub → Actions shows the runs it started.
 
+### Alarms: one calculator (Ana, 18 Nov)
+`pipeline/gmail-trigger.gs` is the ONLY place that works out alarm times. Everything else shows its answer:
+- the iPhone shortcut asks `?key=<ALARM_KEY>` → `alarmAnswer` (`06:00;name;06:45`, `none` or `error`)
+- the app asks `?key=<ALARM_KEY>&plan=<film>` → `planAnswer` (the whole plan as JSON, its `answer` = the shortcut's words):
+  the Hours card (`src/parts/tomorrow.js`) and the alarm page (`src/screens/alarms.js`), through `src/parts/robot-plan.js`
+  and `src/robot-link.js`. No signal: the last answer kept on the phone, with the time it was asked
+- the "Next: D70" notification (`checkNextDayPush`) and bedtime (`checkBedtime`) come from the same plans
+The film's rules have one place, the alarm page: Off (`commute.off`) · Fixed times (`travel` not `maps`: `walk_to_ride`,
+`travel_max`) · Follow the day's place (`travel: maps`). The alarms can be set from the app only in the 24 hours before the wake.
+
 ### Automatic alarms (no tap) — setup once
 Ana, 9 Oct: she didn't tap ⏰ and the alarm wasn't set. The iPhone now asks the robot every evening.
 **3 Nov (Il colpo, night shoots):** the answer is now the next wake-up still ahead **within 24 hours**
@@ -102,14 +112,14 @@ before the drive. With `"travel": "maps"` in the film's commute, the drive is as
 Script's built-in Maps service: free, no key) from the script property **`RIDE_FROM`** (the ride's address:
 ONLY there, never in a file) to the day's place in `locations.json` (written by `run.py` from the ODG: crew
 parking, else the set; its map link → coordinates), for the time of leaving, + `travel_margin` (15). No address,
-no place yet, or Maps fails → `travel_max`. The app's Tomorrow card still counts `travel_max`.
+no place yet, or Maps fails → `travel_max`.
 Google's time only (no margin); `leave_alarm_before` = the ⏰ leave rings that many minutes before walking out;
 `rain_penalty` minutes are added when the ODG's METEO says rain/storm (`locations.json` "rain"). To check it all:
 in the Apps Script editor run **`testMyPlan`** → the log lists the next 3 days (drive, Maps or not, rain, wake, leave).
 **Phone calendar:** `<URL>?key=<ALARM_KEY>&calendar=<film>` = an iCalendar feed (settings `"calendar"`:
 `days_with_2nd_unit` | `all`); iPhone → Settings → Calendar → Accounts → Add Account → Other → Add Subscribed Calendar.
 - The robot (`doGet` → `alarmAnswer` in `pipeline/gmail-trigger.gs`) answers `06:00;Il colpo · D59 · 09/11/2026;06:45`
-  (wake;name;leave, the same sums as the app's ⏰) when the next morning is a shooting day, or `none` (weekend, day off).
+  (wake;name;leave) when the next morning is a shooting day, or `none` (weekend, day off).
   The name sits in the middle (5 Nov) so the shortcut's First Item / Last Item are still the two times; the shortcut
   uses Item 2 as the alarms' label. Il colpo's commute `"days": "days_with_2nd_unit"`: only the days with a 2nd unit. Before noon
   "next morning" = today; else tomorrow — so Friday's run says `none` and Sunday's sets Monday. An ODG not yet
@@ -142,7 +152,7 @@ in the Apps Script editor run **`testMyPlan`** → the log lists the next 3 days
   leave, sleep (app card, robot answer, bedtime and "Tomorrow" pushes) start from THAT call, Ana's own call
   stays everywhere else. The colleague leaves 1:15 before their call (`meet_before_call` 75), Ana needs 30–45
   min to reach them. No ODG yet → Ana's call − `ride_gap_if_unknown` (40, the widest gap in ODGs 1–16).
-  Same sums in `hours-rules.js` → `rideCall`, `gmail-trigger.gs` → `rideStart`, `wake_plan.py` → `ride_call`.
+  The sums: `gmail-trigger.gs` → `rideStart`.
 - Ana, 11 Oct, 20:00 run failed: "requires privacy permissions that cannot be granted while the device is
   locked". Each permission (internet to the robot's URL, alarms, notifications, the inner shortcut) must be
   allowed once by hand: run *soundcheck auto alarms* (and *soundcheck alarms*) from the Shortcuts app with the
@@ -364,10 +374,8 @@ outbox + sync like any settings change); picking General removes `my_name`. Only
 a `commute` (a wake-up plan): the app never adds one just for the name. The last choice on any of Ana's
 devices wins. The robots then use: her name found in that day's `calls.json` (same matching: no capitals,
 accents or extra spaces) → her own call; else the day's general call. `ride_with` unchanged (it starts from
-the colleague's call; not known → 40 min before HER call). Same rule in three places:
-`wake_plan.py` → `own_call` (the "Tomorrow" push, `tell_tomorrow` in `run.py`), `gmail-trigger.gs` →
-`ownCall` (bedtime and the automatic alarms) and the app (`myCallFor` + `wakePlan`). Tests with the same fixed
-times on both sides: `tests/robots-my-call.test.js` and `tests/test_wake_plan.py`.
+the colleague's call; not known → 40 min before HER call). The rule: `gmail-trigger.gs` → `ownCall`.
+Tests: `tests/robots-my-call.test.js` and `tests/robot-alarms.test.js`.
 **After changing `gmail-trigger.gs`:** paste it in Apps Script, save, then Deploy → Manage deployments →
 ✎ → Version: **New version** (never "New deployment"), or the alarms link keeps the old code.
 
@@ -376,7 +384,7 @@ times on both sides: `tests/robots-my-call.test.js` and `tests/test_wake_plan.py
 | The rules (`myCallFor`, `withMyCalls`, `sameName`, `daysNotOnSheet`) | `src/my-call.js` |
 | Projects → My call | `src/parts/my-call-switch.js` |
 | Saving it for the robots (`followMyCall`, `robotsMyNameAfter`) | `src/hours-editing.js` |
-| Tests | `tests/my-call.test.js`, `tests/robots-my-call.test.js`, `tests/test_wake_plan.py` |
+| Tests | `tests/my-call.test.js`, `tests/robots-my-call.test.js`, `tests/robot-alarms.test.js` |
 
 ## Notifications per person (v156)
 Each `push/<phone>.json` (🔔 Wrap alerts, `pushEntry` in `src/parts/wrap-alerts.js`) also says whose phone it

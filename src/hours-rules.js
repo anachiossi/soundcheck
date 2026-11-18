@@ -9,7 +9,6 @@
 // Rules from Ana (1 Oct 2026). Used by: parts/wrap-clock.js, screens/hours.js, hours-editing.js
 
 import { shootingDays, localTodayIso } from './model.js';
-import { callOnSheet } from './my-call.js';
 
 export const WORKDAYS = {
   '10h-lunch': { label: '10h (9 + lunch)', hours: 10 },
@@ -157,90 +156,3 @@ export function nowRounded(now = new Date()) {
   return timeOf(minute - (minute % 5));
 }
 
-// ---- the night before: when to sleep, wake up and leave (Ana's "hora de acordar", 1 Oct) ----
-// settings.json → "commute" (per film; a film that moves every day will change them per day):
-//   meet_before_call  the meeting point, minutes before the call (45)
-//   travel_min / travel_max  from home to the meeting point (75 / 90): the window to leave
-//   get_ready         from waking up to leaving (45) · sleep_hours (8)
-// call 09:00 → meeting 08:15 · leave 06:45–07:00 · wake 06:00 · sleep 22:00 (the night before)
-//   ride_with  riding with someone (Ana, 11 Oct: a colleague from costumes): the sums start from THAT person's call
-//              on the ODG (calls.json) — the app shows Ana's own call everywhere else. Not known yet →
-//              Ana's call − ride_gap_if_unknown (40: the widest gap seen in the ODGs so far)
-//   day.call = the person's own call ("My call", my-call.js: the crew call unless they chose Personal)
-//   walk_to_ride      on foot to the ride's house before the drive (0; Il colpo 20)
-//   leave_alarm_before the ⏰ "leave" rings this many minutes before walking out (0; Il colpo 15)
-export const COMMUTE = { meet_before_call: 45, travel_min: 75, travel_max: 90, get_ready: 45, sleep_hours: 8, walk_to_ride: 0,
-  leave_alarm_before: 0 };
-export const commuteOf = project => (project.settings?.commute ? { ...COMMUTE, ...project.settings.commute } : null);
-
-const clock = minutes => timeOf(((minutes % 1440) + 1440) % 1440); // -45 → '23:15'
-
-// trip (the alarm page, screens/alarms.js — Ana, 6 Nov):
-//   trip.commute  the page's numbers not saved yet (they win over the film's)
-//   trip.legs     the robot's Google Maps answer (robot-link.js askLegs): { drive: { minutes }, toMeeting: { minutes } }
-//                 → leave = meet − drive − the way to the meeting point, the SAME sums as the automatic alarms
-//                 (gmail-trigger.gs commuteLegs, tests/robot-alarms.test.js); without it travel_max / travel_min
-export function wakePlan(project, day, trip = {}) {
-  const saved = commuteOf(project);
-  const call = minutesOf(day?.call);
-  if (!saved || call === null) return null;
-  const commute = { ...saved, ...trip.commute };
-  const ride = rideCall(project, commute, day, call);
-  const meet = ride.minutes - commute.meet_before_call;
-  const legs = trip.legs?.drive ? trip.legs : null;
-  const walk = legs ? legs.toMeeting.minutes : commute.walk_to_ride; // to the meeting point first (Il colpo: 20, Ana 3 Nov)
-  const longest = legs ? legs.drive.minutes : commute.travel_max;
-  const leaveFrom = meet - longest - walk;
-  const wake = leaveFrom - commute.get_ready;
-  return { day: day.day, date: day.date, call: day.call, rideWith: ride.name, rideCall: ride.call,
-    meet: clock(meet), leaveFrom: clock(leaveFrom), rideLeaves: clock(meet - longest),
-    leaveAlarm: clock(leaveFrom - commute.leave_alarm_before), // the ⏰ "leave": a heads-up before walking out
-    leaveTo: clock(meet - (legs ? legs.drive.minutes : commute.travel_min) - walk), wake: clock(wake),
-    sleep: clock(wake - commute.sleep_hours * 60) };
-}
-
-// { minutes, name, call } — call '' = not known yet (the plan then counts ride_gap_if_unknown before Ana's)
-function rideCall(project, commute, day, call) {
-  const name = (commute.ride_with || '').trim();
-  if (!name) return { minutes: call, name: '', call: '' };
-  const theirs = minutesOf(callOnSheet(project, day.date, name)); // same name matching as "My call"
-  if (theirs === null) return { minutes: call - (commute.ride_gap_if_unknown ?? 40), name, call: '' };
-  return { minutes: theirs, name, call: timeOf(theirs) };
-}
-
-// the next shooting day whose call is still ahead: later today (after midnight, the day you are about
-// to wake up for — Ana, 00:15), tomorrow, or Monday after a weekend.
-// The alarms never wait for a review (Ana, 7 Oct: "make sure the alarm works with or without auto
-// approve"): the date / call / wrap of an ODG not yet accepted count already. Only times and dates —
-// the scenes still wait for Ana. day.fromOdg = the ODG it came from (shown on the card).
-// commute "days": "days_with_2nd_unit" → only the days that also have a 2nd unit are Ana's (Il colpo, 5 Nov: she
-// works the main unit, but only on those days); the same rule as the alarms robot (gmail-trigger.gs).
-export function nextShootingDay(project, now = new Date()) {
-  const { date: today, minute } = clockOf(now);
-  const ahead = d => d.date > today || (d.date === today && (minutesOf(d.call) ?? 0) > minute);
-  const mine = d => commuteOf(project)?.days !== 'days_with_2nd_unit' || Boolean(d.second);
-  return shootingDays(withWaitingOdgTimes(project)).filter(ahead).filter(mine).sort((a, b) => a.date.localeCompare(b.date))[0] || null;
-}
-
-const TIME_FIELDS = ['date', 'call', 'wrap'];
-export function withWaitingOdgTimes(project) {
-  const decided = (proposal, change) => proposal.decisions?.[change.id];
-  const odgs = Object.values(project.proposals || {}).filter(p => p.id?.startsWith('odg-') && p.status === 'open')
-    .sort((a, b) => (a.day || 0) - (b.day || 0)); // the newest ODG last: it wins
-  let schedule = project.schedule || [];
-  for (const proposal of odgs) {
-    for (const change of proposal.changes || []) {
-      const { op } = change;
-      if (decided(proposal, change) || !op || op.unit) continue; // a 2nd unit's times never move the day's alarm
-      const fields = Object.fromEntries(Object.entries(op.fields || {}).filter(([k, v]) => TIME_FIELDS.includes(k) && v));
-      if (!Object.keys(fields).length) continue;
-      const known = schedule.some(row => row.day === op.day);
-      if (op.op === 'set_day' || (op.op === 'set_day_scenes' && known)) {
-        schedule = schedule.map(row => (row.day === op.day ? { ...row, ...fields, fromOdg: proposal.title } : row));
-      } else if (op.op === 'set_day_scenes') { // a new day: only its times, for the alarm
-        schedule = [...schedule, { day: op.day, order: 1, scene_id: '', ...fields, fromOdg: proposal.title }];
-      }
-    }
-  }
-  return schedule === project.schedule ? project : { ...project, schedule };
-}

@@ -16,6 +16,7 @@ import datetime
 import json
 import re
 import sys
+import unicodedata
 from pathlib import Path
 
 from compare import NOTE_ICONS, note_kind, check_cast_list, check_date, check_next_day_date, check_day, check_scene_info, nice_date
@@ -88,12 +89,27 @@ def sides_by_day(inbox, settings=None):
     return found
 
 
+def plain_name(text):
+    """'Inês  Rossi ' → 'ines rossi': names match with no capitals, accents or extra spaces"""
+    letters = unicodedata.normalize("NFD", str(text or ""))
+    without_accents = "".join(c for c in letters if not unicodedata.combining(c))
+    return " ".join(without_accents.lower().split())
+
+
+def minutes_of(time):
+    """'09:30' → 570; None when it is not a time"""
+    try:
+        hours, minutes = (int(x) for x in str(time).replace(".", ":").split(":")[:2])
+    except ValueError:
+        return None
+    return hours * 60 + minutes
+
+
 def personal_call_warnings(commute, odg_crew, odg):
     """The alarms follow the call of the person Ana rides with (commute "ride_with") and her own ("my_name").
     Ana, 3 Nov: "if the personal call is different from the crew call or has some differences about unit,
-    beware" — and there are two Tommasos in sound: only the FULL name matches (wake_plan.plain_name)."""
+    beware" — and there are two Tommasos in sound: only the FULL name matches (plain_name)."""
     from read_odg import as_time
-    from wake_plan import plain_name, minutes_of
     warnings = []
     crew_call = minutes_of(odg.get("call") or "")
     second = odg.get("second_unit") or {}

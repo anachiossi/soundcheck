@@ -40,7 +40,7 @@ export const notYet = day => saveHours(day, {
 // the real wrap, typed (also for a past day, from the Hours screen)
 export const wrappedAt = (day, time) => saveHours(day, { status: 'wrapped', real_wrap: time, snooze_until: null }, `Day ${day}: wrap ${time}.`);
 
-// "My call" on Ana's own devices → the robots follow it too (pipeline/wake_plan.py, gmail-trigger.gs):
+// "My call" on Ana's own devices → the alarm robot follows it too (pipeline/gmail-trigger.gs):
 // Personal with a name → settings.json commute "my_name" = that name; General → no "my_name".
 // Crew phones never write it (their My call stays on their phone). Only films with a wake-up plan
 // ("commute"): adding one here would switch on the robots' wake notifications. Nothing changed → nothing saved.

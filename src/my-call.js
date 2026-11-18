@@ -4,11 +4,10 @@
 //   'personal'  the person's own call: their name as printed on the call sheet, looked up in
 //               calls.json ({ '2026-10-12': { 'Maria Rossi': '08:50', … } } → project.crewCalls)
 // Name not on that day's call sheet → the crew call, with a note that says so.
-// Names match with no capitals, accents or extra spaces ('Inês  Rossi' = 'ines rossi'); the
-// ride_with lookup of the wake plan uses the same matching (hours-rules.js).
-// Used for the person's own hours only: the Hours screen, the ⏱ wrap clock, the timesheet and the
-// wake plan. The Schedule always shows the film's crew call. Only rules here, no screens.
-// Used by: hours-rules.js, screens/hours.js, parts/wrap-clock.js, parts/tomorrow.js,
+// Names match with no capitals, accents or extra spaces ('Inês  Rossi' = 'ines rossi').
+// Used for the person's own hours only: the Hours screen, the ⏱ wrap clock and the timesheet.
+// The Schedule always shows the film's crew call. Only rules here, no screens.
+// Used by: screens/hours.js, parts/wrap-clock.js,
 // export/timesheet.js, parts/my-call-switch.js
 
 export const GENERAL_CALL = { mode: 'general', name: '' };

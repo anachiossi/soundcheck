@@ -6,7 +6,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { myCallFor, withMyCalls, daysNotOnSheet, sameName, NOT_ON_CALL_SHEET } from '../src/my-call.js';
-import { today, workedOf, weekOf, mondayOf, wakePlan } from '../src/hours-rules.js';
+import { today, workedOf, weekOf, mondayOf } from '../src/hours-rules.js';
 import { ownHoursOnly } from '../src/crew-sync.js';
 import { syncAsCrew, syncAsOwner } from '../src/sync.js';
 import { timesheetBlob, timesheetPeople } from '../src/export/timesheet.js';
@@ -72,15 +72,6 @@ test('with a personal call, the hours, the wrap clock and the week count from it
   assert.deepEqual(week.map(d => [d.day, d.call]), [[8, '09:30'], [9, '10:00']]);
   assert.deepEqual(daysNotOnSheet(project, week, personal('maria bianchi')).map(d => d.day), [9], 'day 9: the notice');
   assert.equal(project.schedule[0].call, '10:00', 'the film itself (the Schedule) keeps the crew call');
-});
-
-test('the wake plan starts from my call; riding with someone still follows their call', () => {
-  const project = { ...film(), settings: { commute: { meet_before_call: 45, travel_min: 75, travel_max: 90, get_ready: 45, sleep_hours: 8 } } };
-  const day = { day: 8, date: '2026-09-30', call: '10:00' };
-  assert.equal(wakePlan(project, { ...day, call: myCallFor(project, day, personal('Maria Bianchi')).call }).wake, '06:30');
-  assert.equal(wakePlan(project, day).wake, '07:00', 'general: as before');
-  project.settings.commute.ride_with = 'ines rossi';
-  assert.equal(wakePlan(project, { ...day, call: '09:30' }).rideCall, '08:50', 'ride_with matches accents too');
 });
 
 // ---- crew hours on the phone ------------------------------------------------------

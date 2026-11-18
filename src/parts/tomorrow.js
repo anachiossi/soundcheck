@@ -1,89 +1,42 @@
-// tomorrow.js — the night before the next shooting day (hours-rules.js wakePlan): when to sleep, wake
-// up, leave home and be at the meeting point, from the ODG's call. ⏰ Set alarms hands the wake-up and
-// leave times to an iPhone shortcut ("soundcheck alarms"), which first removes its old alarms (label
-// "soundcheck · …") and then creates the two new ones in Clock — never piling up (Ana) —
-// a web app can't set alarms itself. The robot's push "Tomorrow D10 · call 10:00" opens the app here.
-// While the app syncs the button waits: a new ODG may come. The times use the newest ODG even before it
-// is reviewed (hours-rules.js nextShootingDay); an ODG waiting for review is shown above — tap it to review.
-// Also: the five numbers of the film (settings.json → "commute"), editable. Riding with someone
-// (commute.ride_with): the times follow their call on the ODG, Ana's own call stays on top.
-// "My call" (my-call.js): with Personal, the plan starts from the person's own call on the call sheet
-// (also when riding with someone and their call isn't known yet).
+// tomorrow.js — the card on Hours for the next shooting day: the robot's plan (parts/robot-plan.js) and one button.
+// ⏰ Set alarms hands the robot's answer to the iPhone shortcut "soundcheck alarms", which first removes its old alarms
+// and then creates the two new ones in Clock (a web app can't set alarms itself). The rules live on the alarm page.
+// While the app syncs the button waits: a new ODG may come. An ODG waiting for review already counts in the robot's
+// times (Ana, 7 Oct); it is shown here, tap it to review. The robot's "Next" notification opens this card.
 // Used by: screens/hours.js
 
-import { html, useState } from '../../vendor/preact-htm.js';
+import { html } from '../../vendor/preact-htm.js';
 import { formatDate } from '../model.js';
-import { COMMUTE, commuteOf, wakePlan, nextShootingDay } from '../hours-rules.js';
-import { saveSettings } from '../kit-editing.js';
 import { getState, setState } from '../state.js';
 import { undecided } from '../proposal-rules.js';
-import { myCallFor } from '../my-call.js';
+import { robotLink } from '../robot-link.js';
+import { PlanTimes, alarmsLink, askedAt, canSetAlarms, problemText, useRobotPlan } from './robot-plan.js';
 
-export const SHORTCUT = 'soundcheck alarms';
-
-// shortcuts://run-shortcut?name=soundcheck%20alarms&input=text&text=06:00;Il colpo · D59 · 09/11/2026;06:45 — the
-// shortcut takes the First Item (wake) and the Last Item (leave): no index to type (Ana, iOS 27); the film, day and
-// date in the middle name the alarms (Ana, 5 Nov), the same answer as the robot's (gmail-trigger.gs alarmLabel)
-export const alarmLabel = (project, plan) =>
-  `${project.name || ''} · D${plan.day} · ${plan.date.split('-').reverse().join('/')}`.replace(/;/g, ',');
-export const alarmsLink = (project, plan) => `shortcuts://run-shortcut?name=${encodeURIComponent(SHORTCUT)}&input=text&text=${
-  encodeURIComponent(`${plan.wake};${alarmLabel(project, plan)};${plan.leaveAlarm}`)}`; // leaveAlarm: the heads-up before walking out
-
-export function Tomorrow({ project, myCall }) {
-  const day = nextShootingDay(project);
-  const plan = day && wakePlan(project, { ...day, call: myCallFor(project, day, myCall).call });
+export function Tomorrow({ project }) {
+  const syncing = Boolean(getState().sync?.running);
+  const { plan, problem } = useRobotPlan(project, null, syncing);
   const waiting = Object.values(project.proposals || {}).filter(p => p.id.startsWith('odg-') && p.status === 'open' && undecided(p).length);
-  if (!commuteOf(project)) return html`<${CommuteSettings} project=${project} />`;
+  const openPage = html`<button class="btn" onClick=${() => setState({ screen: 'alarms' })}>Alarm settings</button>`;
+
+  if (!project.settings?.commute) return html`<section class="tomorrow"><p class="muted">No alarms for this film yet.</p>${openPage}</section>`;
+  if (project.settings.commute.off) return html`<section class="tomorrow"><p class="muted">Alarms are off for this film.</p>${openPage}</section>`;
+  if (!robotLink()) return html`<section class="tomorrow"><p class="muted">Paste the robot link in Alarm settings to see the next wake-up.</p>${openPage}</section>`;
+  if (!plan || plan.none) {
+    return html`<section class="tomorrow">
+      <p class="muted">${problemText(problem) || (plan ? 'No next shooting day with a call time yet.' : 'Asking the robot…')}</p>${openPage}</section>`;
+  }
+  const first = (plan.rideWith || '').split(' ')[0];
   return html`
     <section class="tomorrow">
-      ${plan ? html`
-        <p class="tomorrow__day"><b>Next: D${plan.day}</b> · ${formatDate(plan.date, { weekday: true })} · call <b>${plan.call}</b></p>
-        ${plan.rideWith && html`<p class="muted">🚗 With ${plan.rideWith.split(' ')[0]}: ${plan.rideCall
-          ? html`call <b>${plan.rideCall}</b> — the times below follow it`
-          : `call not known yet (no ODG) — counted ${commuteOf(project).ride_gap_if_unknown ?? 40} min before yours`}</p>`}
-        <div class="tomorrow__times">
-          <span><small>💤 sleep</small><b>${plan.sleep}</b></span>
-          <span><small>⏰ wake</small><b>${plan.wake}</b></span>
-          <span><small>🚪 leave</small><b>${plan.leaveFrom}</b><small>${plan.leaveAlarm !== plan.leaveFrom ? `⏰ ${plan.leaveAlarm}` : `to ${plan.leaveTo}`}</small></span>
-          <span><small>📍 ${plan.rideWith ? 'ride leaves' : 'meet'}</small><b>${plan.meet}</b></span>
-        </div>
-        ${waiting.map(p => html`<button key=${p.id} class="btn tomorrow__odg" onClick=${() => setState({ screen: 'proposal', proposalId: p.id })}>
-          📬 ${p.title} waits for your review — the alarms already use its call</button>`)}
-        ${getState().sync?.running
-          ? html`<span class="btn" aria-disabled="true">⏳ Checking for a new ODG…</span>`
-          : html`<a class="btn btn--primary" href=${alarmsLink(project, plan)}>⏰ Set alarms ${plan.wake} · ${plan.leaveAlarm}</a>`}
-        <button class="btn" onClick=${() => setState({ screen: 'alarms' })}>🗺 Alarm page: real drive, meeting point, ODG place</button>`
-      : html`<p class="muted">No next shooting day with a call time yet.</p>`}
-      <${CommuteSettings} project=${project} />
+      <p class="tomorrow__day"><b>Next: D${plan.day}</b> · ${formatDate(plan.date, { weekday: true })} · call <b>${plan.call}</b></p>
+      ${plan.rideWith && html`<p class="muted">🚗 With ${first}: ${plan.rideCall ? html`call <b>${plan.rideCall}</b>, the times follow it` : 'call not known yet (no ODG)'}</p>`}
+      <${PlanTimes} plan=${plan} />
+      ${waiting.map(p => html`<button key=${p.id} class="btn tomorrow__odg" onClick=${() => setState({ screen: 'proposal', proposalId: p.id })}>
+        📬 ${p.title} waits for your review: the alarms already use its call</button>`)}
+      ${syncing ? html`<span class="btn" aria-disabled="true">⏳ Checking for a new ODG…</span>`
+        : canSetAlarms(plan) ? html`<a class="btn btn--primary" href=${alarmsLink(plan)}>⏰ Set alarms ${plan.wake} · ${plan.leaveAlarm}</a>`
+        : html`<p class="muted">The alarms can be set in the 24 hours before the wake-up.</p>`}
+      <p class="muted">${problemText(problem) || `Asked the robot at ${askedAt(plan)}.`}</p>
+      ${openPage}
     </section>`;
-}
-
-const FIELDS = [
-  ['meet_before_call', 'Meeting point, minutes before the call (with a ride: before their call)'],
-  ['travel_min', 'Travel to the meeting point, shortest (min)'],
-  ['travel_max', 'Travel to the meeting point, longest (min)'],
-  ['get_ready', 'From waking up to leaving (min)'],
-  ['sleep_hours', 'Hours of sleep'],
-];
-
-function CommuteSettings({ project }) {
-  const current = commuteOf(project);
-  const [values, setValues] = useState(current || COMMUTE);
-  const save = event => {
-    event.preventDefault();
-    const clean = Object.fromEntries(FIELDS.map(([key]) => [key, Math.max(0, Number(values[key]) || 0)]));
-    saveSettings({ commute: { ...project.settings?.commute, ...clean } }, 'Wake-up plan saved.'); // keeps ride_with
-  };
-  return html`
-    <details class="more tomorrow__settings" open=${!current}>
-      <summary>${current ? 'Wake-up plan for this film' : 'Wake-up plan (sleep · wake · leave · meet) — set it up'}</summary>
-      <form class="item-form" onSubmit=${save}>
-        ${FIELDS.map(([key, label]) => html`
-          <label key=${key}><span>${label}</span>
-            <input type="number" min="0" step=${key === 'sleep_hours' ? '0.5' : '5'} value=${values[key]}
-                   onInput=${e => setValues(v => ({ ...v, [key]: e.target.value }))} /></label>`)}
-        <div class="edit-actions"><button class="btn btn--primary">Save</button></div>
-      </form>
-      <p class="muted">The alarms need a shortcut on the iPhone, once: see Help → Alarms.</p>
-    </details>`;
 }

@@ -58,6 +58,7 @@ function checkForProductionEmails() {
   try { checkWrapAlerts(); } catch (error) { console.warn(`Wrap alerts: ${error.message}`); } // never stops the emails
   try { checkBedtime(); } catch (error) { console.warn(`Bedtime: ${error.message}`); }
   try { checkAlarmChange(); } catch (error) { console.warn(`Alarm email: ${error.message}`); }
+  try { checkNextDayPush(); } catch (error) { console.warn(`Next day push: ${error.message}`); }
   try { syncGoogleCalendar(); } catch (error) { console.warn(`Calendar: ${error.message}`); }
 }
 
@@ -104,7 +105,9 @@ function checkWrapAlerts() {
 
 // ---- Bedtime --------------------------------------------------------------------------------
 // The evening before a shooting day, at the time to sleep (the film's wake-up plan, settings.json
-// "commute": call − meeting − travel − getting ready − sleep hours; same as the app): "💤 Time to sleep".
+// "commute": call − meeting − travel − getting ready − sleep hours): "💤 Time to sleep".
+// THIS FILE IS THE ONLY ALARM CALCULATOR (Ana, 18 Nov): the app and every notification show its answer.
+// off: true → no alarms for this film.
 // walk_to_ride: minutes on foot to the ride's house first (Il colpo 20, Ana 3 Nov).
 // travel: "maps" → the drive is asked to Google Maps (travelMinutes below), else travel_max.
 // leave_alarm_before: the "leave" alarm rings this many minutes before walking out (0; Il colpo 15).
@@ -142,31 +145,48 @@ function checkBedtime() {
 // THE DAYS we have 2nd unit but I work ON THE MAIN unit … never set alarms for a day of main unit only").
 function upcomingPlans(now) {
   const plans = [];
-  const dates = [0, 1, 2].map(n => Utilities.formatDate(new Date(now.getTime() + n * 86400000), TIME_ZONE, 'yyyy-MM-dd'));
   for (const film of (readRepo('projects') || []).filter(item => item.type === 'dir').map(item => item.name)) {
-    const settings = readRepo(`projects/${film}/settings.json`, true);
-    if (!settings || !settings.commute) continue;
-    const c = Object.assign({}, COMMUTE, settings.commute);
-    const schedule = withWaitingOdgTimes(readRepo(`projects/${film}/schedule.json`, true) || [], openOdgs(film));
-    const main = schedule.filter(row => row.date && row.call && !row.unit);
-    const calls = c.ride_with || c.my_name ? readRepo(`projects/${film}/calls.json`, true) || {} : {};
-    const places = c.travel === 'maps' ? readRepo(`projects/${film}/locations.json`, true) || {} : {};
-    for (const date of dates) {
-      const row = main.filter(r => r.date === date).sort((a, b) => a.order - b.order)[0];
-      if (!row) continue;
-      if (c.days === 'days_with_2nd_unit' && !schedule.some(r => r.date === date && r.unit)) continue; // not Ana's day
-      const own = ownCall(c, row.call, calls[date]);
-      const start = rideStart(c, own, calls[date]);
-      if (start === null || start === undefined) continue;
-      const meet = start - c.meet_before_call;
-      const { drive, toMeeting } = commuteLegs(c, places[date], date, meet);
-      const leave = meet - drive.minutes - toMeeting.minutes;  // walking out of the house
-      const before = main.filter(r => r.date < date && r.wrap).sort((a, b) => (a.date < b.date ? 1 : -1))[0];
-      plans.push({ film, date, day: row.day, call: own, sleepHours: c.sleep_hours, drive,
-        // the "leave" alarm rings leave_alarm_before minutes before walking out (Ana, 3 Nov: a 15-minute heads-up)
-        leave: moment(date, leave - c.leave_alarm_before), wake: moment(date, leave - c.get_ready),
-        previousWrap: before ? wrapMoment(before) : null });
-    }
+    plans.push(...filmPlans(film, datesFrom(now, 3)));
+  }
+  return plans;
+}
+
+// 'YYYY-MM-DD' of today and the next days
+function datesFrom(now, days) {
+  return Array.from({ length: days }, (unused, n) => Utilities.formatDate(new Date(now.getTime() + n * 86400000), TIME_ZONE, 'yyyy-MM-dd'));
+}
+
+// One film's plans on these dates. choices: the alarm page's numbers not saved yet (pageChoices below).
+// firstAfter: stop at the first plan that wakes after this moment (the app asks only for the next one).
+function filmPlans(film, dates, choices, firstAfter) {
+  const plans = [];
+  const settings = readRepo(`projects/${film}/settings.json`, true);
+  if (!settings || !settings.commute) return plans;
+  const c = Object.assign({}, COMMUTE, settings.commute, choices || {});
+  if (c.off) return plans;
+  const schedule = withWaitingOdgTimes(readRepo(`projects/${film}/schedule.json`, true) || [], openOdgs(film));
+  const main = schedule.filter(row => row.date && row.call && !row.unit);
+  const calls = c.ride_with || c.my_name ? readRepo(`projects/${film}/calls.json`, true) || {} : {};
+  const places = c.travel === 'maps' ? readRepo(`projects/${film}/locations.json`, true) || {} : {};
+  for (const date of dates) {
+    const row = main.filter(r => r.date === date).sort((a, b) => a.order - b.order)[0];
+    if (!row) continue;
+    if (c.days === 'days_with_2nd_unit' && !schedule.some(r => r.date === date && r.unit)) continue; // not Ana's day
+    const own = ownCall(c, row.call, calls[date]);
+    const start = rideStart(c, own, calls[date]);
+    if (start === null || start === undefined) continue;
+    const meet = start - c.meet_before_call;
+    const { drive, toMeeting } = commuteLegs(c, places[date], date, meet);
+    const leave = meet - drive.minutes - toMeeting.minutes;  // walking out of the house
+    const before = main.filter(r => r.date < date && r.wrap).sort((a, b) => (a.date < b.date ? 1 : -1))[0];
+    const plan = { film, date, day: row.day, call: own, sleepHours: c.sleep_hours, drive, toMeeting,
+      rideWith: c.ride_with || '', rideCall: c.ride_with ? callOf(c.ride_with, calls[date]) : null,
+      onSet: moment(date, meet), rideLeaves: moment(date, meet - drive.minutes), walkOut: moment(date, leave),
+      // the "leave" alarm rings leave_alarm_before minutes before walking out (Ana, 3 Nov: a 15-minute heads-up)
+      leave: moment(date, leave - c.leave_alarm_before), wake: moment(date, leave - c.get_ready),
+      previousWrap: before ? wrapMoment(before) : null };
+    plans.push(plan);
+    if (firstAfter && plan.wake.getTime() > firstAfter.getTime()) break;
   }
   return plans;
 }
@@ -208,16 +228,14 @@ function wrapMoment(row) {
 //   toMeeting  commute "to_meeting": 'auto' (walk under 1 km, else public transport) · 'walk' · 'transit' → asked to
 //              Google from the script property HOME_FROM (Ana's address: only there) to the meeting point, arriving
 //              when the ride leaves; without it (or no answer) the film's walk_to_ride minutes
-// over: the page's unsaved choices ({ drive_to, to_meeting, drive_margin }), to see them before saving.
-function commuteLegs(c, dayPlace, date, meet, over) {
-  const settings = Object.assign({}, c, over || {});
-  const place = placeToDrive(dayPlace, settings.drive_to);
-  const drive = travelMinutes(settings, place, date, meet);
-  drive.rain = Boolean(dayPlace && dayPlace.rain && settings.rain_penalty);
+function commuteLegs(c, dayPlace, date, meet) {
+  const place = placeToDrive(dayPlace, c.drive_to);
+  const drive = travelMinutes(c, place, date, meet);
+  drive.rain = Boolean(dayPlace && dayPlace.rain && c.rain_penalty);
   drive.google = drive.minutes;
-  drive.minutes += (drive.rain ? Number(settings.rain_penalty) : 0) + (Number(settings.drive_margin) || 0);
+  drive.minutes += (drive.rain ? Number(c.rain_penalty) : 0) + (Number(c.drive_margin) || 0);
   drive.place = place ? { kind: place.kind || '', label: place.label || '', text: place.text || '' } : null;
-  const toMeeting = meetingMinutes(settings, date, meet - drive.minutes);
+  const toMeeting = meetingMinutes(c, date, meet - drive.minutes);
   return { drive, toMeeting };
 }
 
@@ -332,21 +350,21 @@ const clockAt = when => Utilities.formatDate(when, TIME_ZONE, 'HH:mm');
 // The iPhone asks this every evening (a Shortcuts automation at 21:00 and 23:00, Ana 9 Oct: she didn't
 // tap ⏰ and the alarm wasn't set): https://script.google.com/macros/s/…/exec?key=<ALARM_KEY>
 // Answer, as plain text:
-//   06:00;06:45  the next wake-up within 24 hours: wake and leave (the same sums as the app's ⏰ Set alarms)
-//   none         no wake-up in the next 24 hours (weekend, day off): the shortcut deletes the soundcheck alarms
+//   06:00;Il colpo · D59 · 09/11/2026;06:45  the next wake-up within 24 hours: wake, the alarms' name, leave
+//   none        no wake-up in the next 24 hours (weekend, day off): the shortcut deletes the soundcheck alarms
 //   error        something failed: the shortcut keeps the alarms as they are and says so
 // "Next" = the first wake still ahead (alarmAnswer): after a night shoot, the same day's afternoon call; a Monday
-// call is never set on Friday (Sunday's run sets it). The times of an ODG not yet reviewed count already, like
-// in the app (hours-rules.js → withWaitingOdgTimes). Several films shooting: the earliest wake.
+// call is never set on Friday (Sunday's run sets it). The times of an ODG not yet reviewed count already
+// (withWaitingOdgTimes). Several films shooting: the earliest wake.
 // Setup: Script properties → ALARM_KEY = a long random word; Deploy → New deployment → Web app,
 // Execute as: Me, Who has access: Anyone. See docs/HOW_IT_WORKS.md → "Automatic alarms".
 function doGet(e) {
   const key = PropertiesService.getScriptProperties().getProperty('ALARM_KEY');
   if (!key || !e || !e.parameter || e.parameter.key !== key) return ContentService.createTextOutput('wrong key');
-  if (e.parameter.legs) {  // the app's alarm page asks for the two legs (legsAnswer below)
-    let legs;
-    try { legs = legsAnswer(e.parameter); } catch (error) { legs = { error: error.message }; }
-    return ContentService.createTextOutput(JSON.stringify(legs)).setMimeType(ContentService.MimeType.JSON);
+  if (e.parameter.plan) {  // the app asks for the whole plan (planAnswer below)
+    let plan;
+    try { plan = planAnswer(e.parameter, new Date()); } catch (error) { plan = { error: error.message }; }
+    return ContentService.createTextOutput(JSON.stringify(plan)).setMimeType(ContentService.MimeType.JSON);
   }
   if (e.parameter.calendar) {  // the phone's subscribed calendar (see calendarOf below)
     return ContentService.createTextOutput(calendarOf(e.parameter.calendar, new Date()))
@@ -367,24 +385,64 @@ function alarmAnswer(now) {
     .filter(plan => plan.wake.getTime() > now.getTime() && plan.wake.getTime() - now.getTime() <= 24 * 3600 * 1000)
     .sort((a, b) => a.wake - b.wake);
   if (!ahead.length) return 'none';
-  return `${clockAt(ahead[0].wake)};${alarmLabel(ahead[0])};${clockAt(ahead[0].leave)}`;
+  return shortcutAnswer(ahead[0]);
 }
 
-// The app's alarm page (Ana, 6 Nov: "the app page in soundcheck to be able to send the signal too"):
-// …/exec?key=<ALARM_KEY>&legs=<film>&date=2026-11-09&meet=09:30[&drive_to=mezzi&to_meeting=auto&drive_margin=10]
-// → { drive: { minutes, google, maps, rain, place: { kind, label, text } }, toMeeting: { minutes, mode, maps } } — the
-// same sums as the alarms (commuteLegs); the page's unsaved choices go in the question. Never an address of Ana's.
-function legsAnswer(parameters) {
-  const film = parameters.legs;
-  const settings = readRepo(`projects/${film}/settings.json`, true) || {};
-  const date = parameters.date || '';
-  const meet = minutesOf(parameters.meet);
-  if (!settings.commute || !/^\d{4}-\d{2}-\d{2}$/.test(date) || meet === null) return { error: 'no plan' };
-  const c = Object.assign({}, COMMUTE, settings.commute);
-  const over = {};
-  for (const name of ['drive_to', 'to_meeting', 'drive_margin']) if (parameters[name] !== undefined) over[name] = parameters[name];
-  const dayPlace = c.travel === 'maps' ? (readRepo(`projects/${film}/locations.json`, true) || {})[date] : null;
-  return commuteLegs(c, dayPlace, date, meet, over);
+// What the "soundcheck alarms" shortcut receives: wake;name;leave
+function shortcutAnswer(plan) {
+  return `${clockAt(plan.wake)};${alarmLabel(plan)};${clockAt(plan.leave)}`;
+}
+
+// The whole plan for the app (Ana, 18 Nov: one calculator, the app only shows its answer):
+// …/exec?key=<ALARM_KEY>&plan=<film>[&the alarm page's numbers not saved yet]
+// → { day, date, label, call, sleep, wake, wakeAt, leaveAlarm, walkOut, rideLeaves, onSet, rideWith, rideCall, drive,
+//     toMeeting, answer } · { none: true } with no shooting day ahead. wakeAt = the real moment of the wake.
+// answer = exactly what the shortcut gets. Never an address of Ana's.
+const PLAN_DAYS_AHEAD = 45;
+function planAnswer(parameters, now) {
+  const plans = filmPlans(parameters.plan, datesFrom(now, PLAN_DAYS_AHEAD), pageChoices(parameters), now);
+  const plan = plans.filter(p => p.wake.getTime() > now.getTime())[0];
+  if (!plan) return { none: true };
+  const sleep = new Date(plan.wake.getTime() - plan.sleepHours * 3600 * 1000);
+  return { day: plan.day, date: plan.date, label: alarmLabel(plan), call: clockOf(plan.call),
+    sleep: clockAt(sleep), wake: clockAt(plan.wake), wakeAt: plan.wake.toISOString(), leaveAlarm: clockAt(plan.leave),
+    walkOut: clockAt(plan.walkOut), rideLeaves: clockAt(plan.rideLeaves), onSet: clockAt(plan.onSet),
+    rideWith: plan.rideWith, rideCall: plan.rideCall === null ? '' : clockOf(plan.rideCall),
+    drive: plan.drive, toMeeting: plan.toMeeting, answer: shortcutAnswer(plan) };
+}
+
+// The alarm page's numbers, to see the result before saving them
+const PAGE_WORDS = ['ride_with', 'ride_from', 'to_meeting', 'drive_to', 'travel'];
+const PAGE_NUMBERS = ['walk_to_ride', 'meet_before_call', 'drive_margin', 'rain_penalty', 'travel_max', 'get_ready',
+  'leave_alarm_before', 'sleep_hours'];
+function pageChoices(parameters) {
+  const choices = {};
+  for (const name of PAGE_WORDS) if (parameters[name] !== undefined) choices[name] = parameters[name];
+  for (const name of PAGE_NUMBERS) if (parameters[name] !== undefined && parameters[name] !== '') choices[name] = Number(parameters[name]);
+  if (parameters.off !== undefined) choices.off = parameters.off === 'yes';
+  return choices;
+}
+
+// The "next day" notification (Ana, 18 Nov: it was a second calculator in the email robot): when the next wake-up is
+// within 24 hours, and again each time its times change (a new ODG). Only to Ana's phones (send_push.py's default).
+function checkNextDayPush() {
+  const now = new Date();
+  const properties = PropertiesService.getScriptProperties();
+  const sent = JSON.parse(properties.getProperty('WRAP_SENT') || '[]');
+  for (const plan of upcomingPlans(now)) {
+    if (plan.wake.getTime() <= now.getTime() || plan.wake.getTime() - now.getTime() > 24 * 3600 * 1000) continue;
+    const key = `${plan.film}|next|${shortcutAnswer(plan)}`;
+    if (sent.includes(key)) continue;
+    const phones = readRepo(`projects/${plan.film}/push`);
+    if (!phones || !phones.length) continue;
+    const ride = plan.rideWith && plan.rideCall !== null ? ` · ${plan.rideWith.split(' ')[0]} ${clockOf(plan.rideCall)}` : '';
+    const sleep = new Date(plan.wake.getTime() - plan.sleepHours * 3600 * 1000);
+    startWorkflow(ALERTS, { film: plan.film, title: `Next: D${String(plan.day).padStart(2, '0')} · call ${clockOf(plan.call)}${ride}`,
+      body: `⏰ wake ${clockAt(plan.wake)} · 🚪 leave ${clockAt(plan.walkOut)} · 💤 sleep ${clockAt(sleep)}`, url: './#hours', tag: 'tomorrow' });
+    sent.push(key);
+    properties.setProperty('WRAP_SENT', JSON.stringify(sent.slice(-100)));
+    console.log(`Next day push for ${plan.film}: ${shortcutAnswer(plan)}`);
+  }
 }
 
 // The alarms' name, in the MIDDLE of the answer (Ana, 5 Nov: "remember the name of the project … alarms set for
@@ -539,7 +597,7 @@ function deleteAllDrafts() {
 
 // Riding with someone (settings commute.ride_with, Ana 11 Oct: a colleague from costumes): the plan starts from
 // THAT person's call on the ODG (calls.json, written by pipeline/run.py); not known yet → Ana's call −
-// ride_gap_if_unknown (40). Same as hours-rules.js → rideCall.
+// ride_gap_if_unknown (40).
 function rideStart(c, call, dayCalls) {
   if (call === null || call === undefined || !c.ride_with) return call;
   const theirs = callOf(c.ride_with, dayCalls);
@@ -548,7 +606,6 @@ function rideStart(c, call, dayCalls) {
 
 // Ana's own call (settings commute.my_name, saved by the app when she picks "Personal call" in My call,
 // Ana 16 Oct): her name's call on that day's calls.json; not there (or no my_name) → the day's general call.
-// Same as the app (my-call.js) and pipeline/wake_plan.py → own_call.
 // After changing this file: script.google.com → Deploy → Manage deployments → ✎ → Version: New version,
 // or the alarms web app keeps running the old code (the 10-minute timer picks up the saved file by itself).
 function ownCall(c, generalCall, dayCalls) {
@@ -593,7 +650,7 @@ function openOdgs(film) {
   return files.map(name => readRepo(`projects/${film}/proposals/${name}`, true)).filter(p => p && p.status === 'open');
 }
 
-// the date / call / wrap of the changes not yet decided count (as in the app); the newest ODG wins
+// the date / call / wrap of the changes not yet decided count; the newest ODG wins
 function withWaitingOdgTimes(schedule, odgs) {
   for (const proposal of odgs.sort((a, b) => (a.day || 0) - (b.day || 0))) {
     for (const change of proposal.changes || []) {
