@@ -28,7 +28,7 @@ export function dayMost(project, day) {
   };
 }
 
-// What the calendar marks on each day, chosen per film in Film rules:
+// What the calendar marks on each day, chosen per film in Film → Settings:
 //   'second-unit'  the days with a 2nd unit · 'counts'  the most speakers and lavaliers
 export const CALENDAR_MARKS = [['second-unit', '2nd unit days'], ['counts', 'Speakers and lavs']];
 

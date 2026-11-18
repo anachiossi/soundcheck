@@ -42,7 +42,11 @@ for (const [name, [width, height]] of Object.entries(SIZES)) {
   await shot('scenes');
   await open('Mics', 'Cues'); await shot('cues');
   await open('Mics', 'Transmitters'); await shot('transmitters');
-  await page.click('.topbar__film--button'); await shot('settings');
+  await page.click('.topbar__film--button'); await shot('films');
+  await page.click('.topbar__settings'); await shot('app-settings');
+  await open('Film', 'Lav Rules'); await shot('lav-rules');
+  await open('Film', 'Settings'); await shot('film-settings');
+  await open('Today', 'Alarms'); await shot('alarms');
 
   if (name === 'laptop') {
     // Exported images, drawn in the page exactly as the 📷 buttons do.

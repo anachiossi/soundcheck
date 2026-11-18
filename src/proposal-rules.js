@@ -74,6 +74,21 @@ const OPS = {
     return [presetFile(scene_id)];
   },
 
+  // the empty TX and lavs of a scene, from a call sheet (pipeline/day_mics.py): a TX already chosen is never changed
+  set_mics(film, { scene_id, mics }) {
+    const preset = film.presets[scene_id];
+    if (!preset) return [];
+    const rows = preset.rows.map(row => {
+      const mic = mics.find(item => item.char_id === row.char_id);
+      return mic && !row.tx_id ? { ...row, tx_id: mic.tx_id, lav_id: row.lav_id || mic.lav_id } : row;
+    });
+    // only the rows that got a mic take their accessories: what Ana took off the others stays off
+    const fitted = applyUsualTxAcc(film, applyLavAccessories(film, scene_id, rows, preset.rows), preset.rows);
+    film.presets = { ...film.presets, [scene_id]: {
+      ...preset, rows: fitted, updated_at: new Date().toISOString(), updated_by: 'preset review' } };
+    return [presetFile(scene_id)];
+  },
+
   add_row(film, { scene_id, row }) {
     return changeRows(film, scene_id, rows => (rows.some(r => r.char_id === row.char_id) ? rows : [...rows, row]));
   },

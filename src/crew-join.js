@@ -21,7 +21,7 @@ export async function joinFromLink() {
   const link = readCrewLink(location.hash);
   history.replaceState(null, '', location.pathname + location.search);
   if (!link) return showMessage('error', 'This link is not complete: ask for it again.');
-  if (!joinAsCrew(link)) return showMessage('error', 'This device is connected as the owner. To open a crew link here, Disconnect first (Projects).');
+  if (!joinAsCrew(link)) return showMessage('error', 'This device is connected as the owner. To open a crew link here, Disconnect first (App settings).');
   setState({ screen: 'projects' });
   if (navigator.onLine) showMessage('ok', `Welcome, ${link.name}. Downloading the film…`);
   await downloadCrewFilm(link.folder);

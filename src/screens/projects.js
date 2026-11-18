@@ -1,37 +1,15 @@
-// projects.js — the Settings screen (tap the film's name in the top bar).
-// • Connect this device to the data (the private soundcheck-data repo), once.
-// • Films: the ones in the repos (tap to download) and the ones on this device.
-//   Film repos (Ana's devices): the extra repos, one per film, her key reads (parts/film-repos.js).
-// • The open film: sync status, "Sync now", backup file; Alarm settings and 📋 Film rules;
-//   "Close film on this device" (film-close.js): frees the device, the data repo keeps the film.
-// • More (folded, Ana 2 Nov: rarely needed): Film repos, Share with crew, Backup files.
-// • Share with crew (Ana's devices, film open): a link per person (parts/crew-share.js).
-//   A crew phone sees "Connected as Davide (crew)" and no Connect, Share with crew or Alarm settings;
-//   instead: "My suggestions" (parts/crew-log.js) and "Enjoyed soundcheck? Share some feedback"
-//   (parts/crew-feedback-form.js).
-// • My call: General crew call / Personal call (parts/my-call-switch.js, every device).
-// • Screen: Auto / Light / Dark (parts/theme-switch.js).
-// • ? Help → the Help page (screens/help.js): offline use, wrap hours, hearing the lines…
-// Each film has its own database on the device; old films are kept.
+// projects.js — tap the film's name in the top bar: open a film or close one on this device, nothing else (Ana, 18 Nov).
+// Closing frees the device (film-close.js): the data repo keeps the film. Each film has its own database on the device.
+// A device not connected yet connects here, because the films come from the connection.
+// The film's own settings are in Film → Settings, the app's in App settings (the top bar).
 // Used by: main.js
 
 import { html, useState, useEffect } from '../../vendor/preact-htm.js';
 import { formatStamp } from '../model.js';
-import { openProject, importProjectFile, downloadProjectFile, saveConnection, forgetConnection, showMessage, setState } from '../state.js';
-import { syncNow } from '../sync.js';
+import { openProject, importProjectFile, downloadProjectFile } from '../state.js';
 import { downloadFilm, loadFilmList, filmsNote } from '../films.js';
-import { checkConnection } from '../store/github.js';
 import { Icon } from '../parts/icons.js';
-import { ThemeSwitch } from '../parts/theme-switch.js';
-import { tagOf } from '../model.js';
-import { saveTag } from '../kit-editing.js';
-import { isCrew, crewHides } from '../crew-link.js';
-import { ShareWithCrew } from '../parts/crew-share.js';
-import { MySuggestions } from '../parts/crew-log.js';
-import { FeedbackButton } from '../parts/crew-feedback-form.js';
-import { MyCallSwitch } from '../parts/my-call-switch.js';
-import { staysOnPhone } from '../crew-sync.js';
-import { FilmRepos } from '../parts/film-repos.js';
+import { ConnectForm } from '../parts/connect-form.js';
 import { onDevice } from '../film-source.js';
 import { closeFilm } from '../film-close.js';
 
@@ -39,136 +17,46 @@ export function ProjectsScreen({ state }) {
   const { project, projects, connection, films, online } = state;
   useEffect(() => { if (connection && films === null && online) loadFilmList(); }, [connection, online]);
 
+  const inRepos = (films || []).filter(film => !(film.id === project?.id && onDevice(film, [project], connection) === 'here'));
+  const onlyHere = projects.filter(p => p.id !== project?.id && !(films || []).some(film => onDevice(film, [p], connection) === 'here'));
+
   return html`
-    ${project && html`<${OpenFilm} state=${state} />`}
-    ${!connection && html`<${Connect} />`}
-    ${connection && html`
-      <h2 class="section-title">Films</h2>
-      ${films === null && filmsNote(state) && html`<p class="muted">${filmsNote(state)}</p>`}
-      <div class="project-list">
-        ${(films || []).filter(f => !(f.id === project?.id && onDevice(f, [project], connection) === 'here')).map(film => {
-          const here = onDevice(film, projects, connection) === 'here'; // same id AND same repo (film-source.js)
-          const from = film.showRepo ? ` · ${film.owner}/${film.repo}` : ''; // two films with the same id
-          return html`
-            <button key=${`${film.owner}/${film.repo}/${film.id}`} class="project" onClick=${() => (here ? openProject(film.id) : downloadFilm(film))}>
-              <b>${film.name}</b><small>${here ? 'on this device · open' : film.clash ? "same id as another film: can't download" : 'download to this device'}${from}</small>
-            </button>`;
-        })}
-      </div>`}
-    ${projects.filter(p => p.id !== project?.id && !(films || []).some(f => onDevice(f, [p], connection) === 'here')).map(p => html`
-      <button key=${p.id} class="project" onClick=${() => openProject(p.id)}>
-        <b>${p.name}</b><small>on this device · data as of ${formatStamp(p.data_as_of)}</small>
-      </button>`)}
-
-    ${connection && isCrew(connection) && html`
-      <p class="muted connection">Connected as <b>${connection.name}</b> (crew). <button class="link" onClick=${forgetConnection}>Disconnect</button></p>
-      ${project && html`<${MySuggestions} state=${state} /><${FeedbackButton} state=${state} />`}`}
-    ${connection && !isCrew(connection) && html`
-      <p class="muted connection">Connected to ${connection.owner}/${connection.repo}${connection.branch !== 'main' ? ` (${connection.branch})` : ''}
-        ${' '}as <b>${connection.device}</b>. <button class="link" onClick=${forgetConnection}>Disconnect</button></p>`}
-
-    <details class="more more--all"><summary>More</summary>
-      ${connection && !isCrew(connection) && html`<${FilmRepos} connection=${connection} />`}
-      ${connection && !isCrew(connection) && project && html`<${ShareWithCrew} state=${state} />`}
-      <details class="more"><summary>Backup files</summary>
-        ${project && html`<button class="btn" onClick=${downloadProjectFile}><${Icon} name="download" /> Save backup file of ${project.name}</button>`}
-        <label class="btn file-btn">+ Add film from a backup file
-          <input type="file" accept=".json,application/json" onChange=${e => { e.target.files[0] && importProjectFile(e.target.files[0]); e.target.value = ''; }} />
-        </label>
-      </details>
-    </details>
-
-    <${MyCallSwitch} state=${state} />
-    <${ThemeSwitch} />
-
-    <button class="btn help-link" onClick=${() => setState({ screen: 'help' })}>? Help</button>`;
-}
-
-function OpenFilm({ state }) {
-  const { project, connection, sync, online } = state;
-  // a crew phone's own hours stay on the phone: never "waiting to upload" (crew-sync.js)
-  const waiting = Object.keys(project.outbox || {}).filter(path => !isCrew(connection) || !staysOnPhone(path)).length;
-  const conflicts = Object.keys(project.conflicts || {}).length;
-  const status = sync.running ? 'Syncing…'
-    : conflicts ? `⚠ ${conflicts} change(s) made on two devices: open them to choose`
-    : waiting ? `● ${waiting} change(s) saved here, waiting to upload`
-    : sync.error ? `Last sync failed: ${sync.error}`
-    : `✓ Up to date · data as of ${formatStamp(project.data_as_of)}`;
-  return html`
-    <h2 class="section-title">${project.name} <${FilmTag} project=${project} /> <small>open</small></h2>
-    <p class=${waiting || conflicts || sync.error ? 'warn-text' : 'muted'}>${status}</p>
-    ${connection && html`
-      <button class="btn" disabled=${!online || sync.running} onClick=${() => syncNow({ loud: true })}>↻ Sync now</button>
-      ${!online && html`<small class="muted"> No signal: changes wait on this device.</small>`}`}
-    <div class="toolbar film-docs">
-      ${!crewHides(connection, 'tomorrow') && html`<button class="btn" onClick=${() => setState({ screen: 'alarms' })}>⏰ Alarm settings</button>`}
-      <button class="btn" onClick=${() => setState({ screen: 'film-rules' })}>📋 Film rules</button>
+    ${!connection && html`<${ConnectForm} />`}
+    <h2 class="section-title">Films</h2>
+    ${connection && films === null && filmsNote(state) && html`<p class="muted">${filmsNote(state)}</p>`}
+    <div class="project-list">
+      ${project && html`<${FilmRow} film=${project} isOpen=${true} note="open" />`}
+      ${inRepos.map(film => {
+        const here = onDevice(film, projects, connection) === 'here'; // same id AND same repo (film-source.js)
+        const from = film.showRepo ? ` · ${film.owner}/${film.repo}` : ''; // two films with the same id
+        const note = `${here ? 'on this device' : film.clash ? "same id as another film: can't download" : 'download to this device'}${from}`;
+        return html`<${FilmRow} key=${`${film.owner}/${film.repo}/${film.id}`} film=${film} note=${note} canClose=${here}
+          onOpen=${() => (here ? openProject(film.id) : downloadFilm(film))} />`;
+      })}
+      ${onlyHere.map(film => html`<${FilmRow} key=${film.id} film=${film} canClose=${true}
+        note=${`on this device · data as of ${formatStamp(film.data_as_of)}`} onOpen=${() => openProject(film.id)} />`)}
     </div>
-    <${CloseFilm} project=${project} />`;
+    <label class="btn file-btn">+ Add film from a backup file
+      <input type="file" accept=".json,application/json" onChange=${e => { e.target.files[0] && importProjectFile(e.target.files[0]); e.target.value = ''; }} />
+    </label>`;
 }
 
-// Close film on this device: a second tap confirms (the film stays safe in the data repo).
-// First a backup file is offered, to keep away from GitHub, e.g. in Google Drive (Ana, 2 Nov).
-function CloseFilm({ project }) {
+// One film: tap to open it; Close asks first (the film stays safe in the data repo).
+// The open film offers a backup file first, to keep away from GitHub, e.g. in Google Drive (Ana, 2 Nov).
+function FilmRow({ film, note, isOpen, canClose, onOpen }) {
   const [asking, setAsking] = useState(false);
-  if (!asking) return html`<button class="link close-film" onClick=${() => setAsking(true)}>Close film on this device…</button>`;
   return html`
-    <div class="close-film-ask">
-      <p>Close <b>${project.name}</b> on this device? It frees the space here. The film stays safe in your data
-        and can be downloaded again.</p>
-      <p class="muted">First, keep a backup file somewhere else (e.g. Files → Google Drive): the film's data, without the PDFs.</p>
-      <div class="toolbar">
-        <button class="btn" onClick=${downloadProjectFile}><${Icon} name="download" /> Save backup file</button>
-        <button class="btn btn--danger" onClick=${() => closeFilm(project.id)}>Close ${project.name}</button>
-        <button class="btn" onClick=${() => setAsking(false)}>Cancel</button>
-      </div>
-    </div>`;
-}
-
-// the film's tag ('LBE'): tap to change it — every exported file starts with it
-function FilmTag({ project }) {
-  const [typing, setTyping] = useState(null);
-  if (typing !== null) {
-    return html`<form class="film-tag-form" onSubmit=${e => { e.preventDefault(); saveTag(typing); setTyping(null); }}>
-      <input value=${typing} onInput=${e => setTyping(e.target.value)} maxlength="6" aria-label="Film tag" autofocus />
-      <button class="btn btn--small btn--primary">Save</button></form>`;
-  }
-  return html`<button class="film-tag" onClick=${() => setTyping(tagOf(project))} title="The film's tag: exported files start with it">${tagOf(project)}</button>`;
-}
-
-function Connect() {
-  const [key, setKey] = useState('');
-  const [device, setDevice] = useState('');
-  const [repo, setRepo] = useState('anachiossi/soundcheck-data');
-  const [branch, setBranch] = useState('main');
-  const [checking, setChecking] = useState(false);
-
-  const connect = async event => {
-    event.preventDefault();
-    const [owner, name] = repo.trim().split('/');
-    const connection = { owner, repo: name, branch: branch.trim() || 'main', token: key.trim(), device: device.trim() || 'a device' };
-    setChecking(true);
-    try {
-      await checkConnection(connection);
-      saveConnection(connection);
-      showMessage('ok', 'Connected. Pick your film below.');
-    } catch (error) {
-      showMessage('error', `Couldn't connect: ${error.message}.`);
-    } finally {
-      setChecking(false);
-    }
-  };
-
-  return html`
-    <h2 class="section-title">Connect this device to your data</h2>
-    <p class="muted">Once per device. The key stays on this device only.</p>
-    <form class="form" onSubmit=${connect}>
-      <label>GitHub key<input type="password" autocomplete="off" required value=${key} onInput=${e => setKey(e.target.value)} placeholder="github_pat_…" /></label>
-      <label>Name of this device<input value=${device} onInput=${e => setDevice(e.target.value)} placeholder="e.g. Ana iPhone" /></label>
-      <details><summary>Advanced</summary>
-        <label>Repo<input value=${repo} onInput=${e => setRepo(e.target.value)} /></label>
-        <label>Branch<input value=${branch} onInput=${e => setBranch(e.target.value)} /></label>
-      </details>
-      <button class="btn btn--primary" disabled=${checking}>${checking ? 'Checking…' : 'Connect'}</button>
-    </form>`;
+    <div class="film-row">
+      <button class="project" disabled=${isOpen} onClick=${onOpen}><b>${film.name}</b><small>${note}</small></button>
+      ${(isOpen || canClose) && html`<button class="btn" onClick=${() => setAsking(!asking)}>Close</button>`}
+    </div>
+    ${asking && html`
+      <div class="close-film-ask">
+        <p>Close <b>${film.name}</b> on this device? It frees the space here. The film stays safe in your data and can be downloaded again.</p>
+        <div class="toolbar">
+          ${isOpen && html`<button class="btn" onClick=${downloadProjectFile}><${Icon} name="download" /> Save backup file</button>`}
+          <button class="btn btn--danger" onClick=${() => closeFilm(film.id)}>Close ${film.name}</button>
+          <button class="btn" onClick=${() => setAsking(false)}>Cancel</button>
+        </div>
+      </div>`}`;
 }

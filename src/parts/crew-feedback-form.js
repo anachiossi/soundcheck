@@ -65,7 +65,7 @@ export function FeedbackOffer({ state }) {
   if (!due || tapped) return null;
   const open = () => {
     setTapped(true);
-    setState({ screen: 'projects', feedbackOpen: true });
+    setState({ screen: 'app-settings', feedbackOpen: true });
   };
   return html`
     <button class="proposal-banner" onClick=${open}>

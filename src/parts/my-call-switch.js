@@ -1,9 +1,9 @@
-// my-call-switch.js — "My call" in Projects: General crew call · Personal call (my-call.js).
+// my-call-switch.js — "My call" in Today → Alarms (a crew phone: App settings): General crew call · Personal call (my-call.js).
 // Personal: the person types their name as printed on the call sheet; their hours, the ⏱ wrap clock,
 // the timesheet and the wake plan then count from their own call. Kept on this device; on Ana's own
 // devices also saved for the robots' alarms and notifications (settings.json commute "my_name").
 // The same look as "Screen: Auto · Light · Dark" (parts/theme-switch.js).
-// Used by: screens/projects.js
+// Used by: parts/tomorrow.js, screens/app-settings.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
 import { rememberMyCall, showMessage } from '../state.js';

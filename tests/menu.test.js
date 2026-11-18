@@ -12,16 +12,17 @@ test('the five main buttons are Today, Film, Mics, IFB and Gear, in that order',
 });
 
 test('each main button has the tabs Ana chose', () => {
-  assert.deepEqual(names('today'), ['Day', 'Tomorrow', 'Calendar', 'Overview', 'Hours']);
-  assert.deepEqual(names('film'), ['Script', 'Scenes', 'Characters']);
+  assert.deepEqual(names('today'), ['Day', 'Calendar', 'Overview', 'Hours', 'Alarms']);
+  assert.deepEqual(names('film'), ['Script', 'Scenes', 'Characters', 'Lav Rules', 'Settings']);
   assert.deepEqual(names('mics'), ['Transmitters', 'Lavaliers', 'Preferences', 'Cues']);
   assert.deepEqual(names('ifb'), ['IFB', 'Crew', 'IFB kit']);
   assert.deepEqual(names('gear'), ['Truck', 'Inventory', 'Batteries', 'Manuals', 'Kit']);
 });
 
-test('a crew phone has no Tomorrow tab: the wake-up plan is personal', () => {
+test('a crew phone has no Alarms, Lav Rules or film Settings', () => {
   const crew = { role: 'crew', name: 'Davide' };
   assert.deepEqual(tabsOf('today', crew).map(([id]) => id), ['day', 'calendar', 'overview', 'hours']);
+  assert.deepEqual(tabsOf('film', crew).map(([id]) => id), ['script', 'scenes', 'characters']);
 });
 
 test('a screen inside another lights its main button; a screen apart keeps the last one', () => {
@@ -34,8 +35,10 @@ test('a screen inside another lights its main button; a screen apart keeps the l
 test('a screen name from an older version is not a screen, so the app opens on the Day', () => {
   assert.equal(isScreen('schedule'), false);
   assert.equal(isScreen('kit'), false);
+  assert.equal(isScreen('film-rules'), false);
   assert.equal(isScreen('day'), true);
   assert.equal(isScreen('projects'), true);
+  assert.equal(isScreen('app-settings'), true);
 });
 
 const project = {

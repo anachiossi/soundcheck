@@ -1,12 +1,21 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-11-18 · version **v229** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-11-18 · version **v231** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
 `2026-09-29_soundcheck_handoff.md`.
 
 ## Latest (18 Nov 2026)
+- v231 **Every ODG proposes the missing mics** (`pipeline/day_mics.py`): for the sheet's day and the next one, main unit
+  only, the empty TX and lavs from the sides, else the script, and the film's rules. A TX already chosen never changes.
+  Ana accepts them in the ODG's proposal (`set_mics`). A sides-only film uses the script only to say who DOES speak.
+- v231 **Pages moved**: tap the film's name = open or close films, nothing else. **Film → Lav Rules** (editable) and
+  **Film → Settings** replace the Film rules page. **App settings** (sliders in the top bar): connection, sync, screen,
+  Help. **Today → Alarms** replaces Tomorrow, last after Hours, with My call under it (a crew phone: in App settings).
+- The ODG readers know **SPLINTER** and **SPLIT** as the 2nd unit. The robot's PDF library is pinned to 1.27.2.3 (2.1 reads
+  no tables on Il colpo's ODGs).
+- v230 The menu: Today, Film, Mics, IFB, Gear in a top row.
 - v229 **The alarm card as a timeline** (Ana liked the sketch; "be very mindful about the lines to look right"): the
   robot's plan read top to bottom, bed → wake alarm → "15 min to go" alarm → leave → car with the ride → on set → call.
   Black dots = the alarms that ring; the days with no alarm said in plain words ("D66–69: no 2nd unit"); one button
@@ -18,7 +27,7 @@ The film-specific diary (decisions, dates, what Ana said) is private:
   "Next" notification moved into the robot (`checkNextDayPush`); `pipeline/wake_plan.py` and the app's `wakePlan` are gone.
   The shortcut's answer is unchanged. The alarm page is the one place for the rules: Off · Fixed times · Follow the day's
   place. The app needs the robot link pasted once on each phone. See HOW_IT_WORKS → "Alarms: one calculator".
-- Next: the new menu (plan in the data repo, `notes/plans/alarm-and-menu.md`).
+- Next: the dead-code clean-up (plan in the data repo, `notes/plans/alarm-and-menu.md`).
 
 ## Before (14–15 Nov 2026)
 - Sides check: a call-sheet scene written "616B" or "526Cfine" finds the sides' "616b" / "526c" (before, the
@@ -273,8 +282,8 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
 - v208–v213 (3 Nov, Il colpo): the robot reads the ODG crew table (personal calls, IFB, warnings when the ride's
   call differs: full names only); 74 characters with colours (21 recurring, one-liners brown, voices grey) and
   aliases; preset rules (Adriano's lavs by gender, silent recurring characters wired, main unit only);
-  **📋 Film rules** (Projects): every rule in plain words, **what kind of project** (Film / TV series, 1 / 2 units,
-  main unit name), **Copy rules from another film**. Scripts per episode (`cue_lines.py --episode N` →
+  **Film → Settings**: **what kind of project** (Film / TV series, 1 / 2 units, main unit name), **Copy rules from
+  another film**; **Film → Lav Rules**: the mic rules. Scripts per episode (`cue_lines.py --episode N` →
   docs/scripts/epN.pdf); the robot files new scripts by itself (settings `"scripts": {"match": "LA LISTA"}`; a
   series replaces only that episode); 📄 on each scene opens the official script at its page. Film aliases in
   film.json (`"aliases": ["LA LISTA"]`).

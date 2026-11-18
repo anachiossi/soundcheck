@@ -13,16 +13,21 @@
 | I want to change… | Open this file |
 |---|---|
 | A colour, a size, the font | `app.css`, the `:root` block at the top |
-| Dark screen (Projects → Screen) | dark colours at the end of `app.css` (`:root[data-theme="dark"]`); switch `src/theme.js`, `src/parts/theme-switch.js` |
+| Dark screen (App settings → Screen) | dark colours at the end of `app.css` (`:root[data-theme="dark"]`); switch `src/theme.js`, `src/parts/theme-switch.js` |
 | How a pill (character / TX / lav / speaker) looks | `src/parts/pills.js` + section 5 of `app.css` |
 | The scene table (#12 bar and its rows) | `src/parts/scene-table.js` |
 | Week / day banners, scene chips | `src/parts/banners.js` |
 | The day pills (Schedule and Cues: green = finished, chosen day centred) | `src/parts/day-strip.js` |
 | Icons (Cues = speech bubble; the mic = the Mics department only) | `src/parts/icons.js` |
-| The Schedule screen (Day / Week / All film) | `src/screens/schedule.js` |
+| The menu (Today, Film, Mics, IFB, Gear and their tabs) | `src/menu.js`, drawn by `src/parts/top-menu.js` |
+| The Day, Overview and Alarms tabs | `src/screens/day.js`, `src/screens/overview.js`, `src/parts/tomorrow.js` (alarm rules: `src/screens/alarms.js`) |
+| Film → Lav Rules (the editable mic rules) | `src/screens/lav-rules.js`, saved by `src/lav-rules.js` in settings.json `presets` |
+| Film → Settings (the open film's own settings) | `src/screens/film-settings.js`, `src/parts/copy-rules.js` |
+| App settings (connection, sync, screen, Help) | `src/screens/app-settings.js`, `src/parts/connect-form.js` |
+| The missing TX and lavs on every ODG | `pipeline/day_mics.py`, called by `pipeline/propose.py`; accepted in the app as `set_mics` (`src/proposal-rules.js`) |
 | Scene lookup | `src/screens/scenes.js` |
 | Kit (characters, TX, lavs) | `src/screens/kit.js`; its form `src/parts/item-form.js`; saving `src/kit-editing.js` |
-| Films on this device, import, backup | `src/screens/projects.js` |
+| Open or close a film (tap the film's name) | `src/screens/projects.js` |
 | The exported images | `src/export/image.js` (layout), `src/export/draw.js` (shapes) |
 | What a project contains | the comment at the top of `src/model.js` |
 | What happens when a button is pressed | the actions in `src/state.js` |

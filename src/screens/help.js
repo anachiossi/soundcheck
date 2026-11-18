@@ -1,4 +1,4 @@
-// help.js — the Help page (Settings → Help): how to set things up and the tips that used to sit
+// help.js — the Help page (App settings → Help): how to set things up and the tips that used to sit
 // on the screens themselves, so those keep only their controls.
 // A crew phone doesn't see Alarms and wrap alerts (Ana's personal setup: crew-link.js crewHides).
 // Used by: main.js
@@ -11,7 +11,7 @@ export function HelpScreen({ state }) {
   const alarms = !crewHides(state.connection, 'help-alarms');
   return html`
     <div class="help-page">
-      <button class="btn" onClick=${() => setState({ screen: 'projects' })}>‹ Settings</button>
+      <button class="btn" onClick=${() => setState({ screen: 'app-settings' })}>‹ App settings</button>
 
       <h2 class="section-title">Use it offline</h2>
       <ol class="help">
@@ -21,7 +21,7 @@ export function HelpScreen({ state }) {
       </ol>
 
       <h2 class="section-title">Screen</h2>
-      <p>Tap the film's name → Screen: <b>Auto</b> follows the phone's own light / dark setting. <b>Dark</b> is easier on the eyes on night sets.</p>
+      <p>App settings → Screen: <b>Auto</b> follows the phone's own light / dark setting. <b>Dark</b> is easier on the eyes on night sets.</p>
 
       <h2 class="section-title">Wrap hours</h2>
       <ul class="help">
@@ -29,12 +29,12 @@ export function HelpScreen({ state }) {
         <li>After the wrap: "Did today finish on time?" — No asks again every hour ("Is this a wrap?") until you type the real wrap.</li>
         <li>Tap ⏱ (or Today → Hours, any day) for the week, the overtime, and the images for production (week or whole film). Tap a day's wrap to correct it.</li>
         ${alarms && html`<li><b>Notifications</b> at the wrap, even with the app closed: Hours → 🔔 Wrap alerts → Allow (Home Screen app, iOS 16.4 or later). They can come up to 10 minutes late.</li>`}
-        <li>Tap the film's name → <b>My call</b>: your hours count from the crew call, or from your own call on the call sheet (your name as printed there).</li>
+        <li>${alarms ? 'Today → Alarms' : 'App settings'} → <b>My call</b>: your hours count from the crew call, or from your own call on the call sheet (your name as printed there).</li>
       </ul>
 
       ${alarms && html`
       <h2 class="section-title">Alarms for the next day</h2>
-      <p>Today → Tomorrow shows the robot's plan for the next shooting day: when to sleep, wake up, leave and be at the
+      <p>Today → Alarms shows the robot's plan for the next shooting day: when to sleep, wake up, leave and be at the
         meeting point. The rules are set per film in <b>Alarm settings</b>. <b>⏰ Set alarms</b> creates the wake-up and
         leave alarms in the iPhone's Clock through a shortcut, in the 24 hours before the wake-up. Make the shortcut once, in the Shortcuts app:</p>
       <ol class="help">

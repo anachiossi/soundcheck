@@ -1,7 +1,7 @@
 // month-calendar.js — Today → Calendar: the film as a small month calendar (Ana 3 Nov: "the source of
 // truth for when I work", before going into details). Every shooting day is a tappable box with its day
 // number (D56); a day already over is grey; today has a ring. Tapping a day opens it.
-// What else each day shows is chosen per film in Film rules (overview-rules.js calendarMarks):
+// What else each day shows is chosen per film in Film → Settings (overview-rules.js calendarMarks):
 //   2nd unit days: violet with "2nd" (Ana works those days on Il colpo)
 //   Speakers and lavs: the most speakers and the most lavaliers in one scene that day
 // It follows the schedule, so a new PDL or ODG moves the days here as soon as it is accepted.

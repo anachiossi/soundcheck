@@ -1,5 +1,5 @@
-// theme-switch.js — "Screen: Auto · Light · Dark" in Projects (dark = less light on night sets).
-// Used by: screens/projects.js
+// theme-switch.js — "Screen: Auto · Light · Dark" in App settings (dark = less light on night sets).
+// Used by: screens/app-settings.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
 import { themeChoice, setTheme } from '../theme.js';

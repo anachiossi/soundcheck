@@ -39,7 +39,9 @@ import { IfbPicker } from './parts/ifb-picker.js';
 import { ImageForQuestion } from './parts/image-for.js';
 import { HoursScreen } from './screens/hours.js';
 import { HelpScreen } from './screens/help.js';
-import { FilmRulesScreen } from './screens/film-rules.js';
+import { FilmSettingsScreen } from './screens/film-settings.js';
+import { LavRulesScreen } from './screens/lav-rules.js';
+import { AppSettingsScreen } from './screens/app-settings.js';
 import { LavShareScreen } from './screens/lav-share.js';
 import { GearTruckScreen, GearInventoryScreen, GearManualsScreen } from './screens/gear.js';
 import { GearBatteriesScreen } from './screens/gear-batteries.js';
@@ -47,7 +49,7 @@ import { GearKitScreen } from './screens/gear-kit.js';
 import { WrapBadge, WrapQuestion } from './parts/wrap-clock.js';
 import { TomorrowScreen } from './parts/tomorrow.js';
 import { CalendarScreen } from './parts/month-calendar.js';
-import { FilmButton, MessagesButton, MainButtons, Tabs } from './parts/top-menu.js';
+import { AppSettingsButton, FilmButton, MessagesButton, MainButtons, Tabs } from './parts/top-menu.js';
 import { EmailBadge } from './parts/email-robot.js';
 import { ConflictBadge } from './parts/conflicts.js';
 import { FeedbackOffer } from './parts/crew-feedback-form.js';
@@ -56,15 +58,18 @@ import { applyTheme, followPhone } from './theme.js';
 // which screen draws each name of the menu (menu.js)
 const SCREENS = {
   day: DayScreen, tomorrow: TomorrowScreen, calendar: CalendarScreen, overview: OverviewScreen, hours: HoursScreen,
-  script: ScriptScreen, scenes: ScenesScreen, characters: CharactersScreen,
+  script: ScriptScreen, scenes: ScenesScreen, characters: CharactersScreen, 'lav-rules': LavRulesScreen, 'film-settings': FilmSettingsScreen,
   transmitters: TransmittersScreen, lavaliers: LavaliersScreen, preferences: PreferencesScreen, 'cues-picker': CuesPickerScreen,
   'ifb-list': IfbListScreen, 'ifb-crew': IfbCrewScreen, 'ifb-kit': IfbKitScreen,
   'gear-truck': GearTruckScreen, 'gear-inventory': GearInventoryScreen, 'gear-batteries': GearBatteriesScreen,
   'gear-manuals': GearManualsScreen, 'gear-kit': GearKitScreen,
   projects: ProjectsScreen, messages: MessagesScreen, proposal: ProposalScreen, 'crew-suggestions': CrewSuggestionsScreen,
   'kit-requests': KitRequestsScreen, document: DocumentScreen, alarms: AlarmsScreen, help: HelpScreen,
-  'film-rules': FilmRulesScreen, 'lav-share': LavShareScreen,
+  'app-settings': AppSettingsScreen, 'lav-share': LavShareScreen,
 };
+
+// these work with no film open: the rest need one, so the app then opens the list of films
+const WITHOUT_A_FILM = ['app-settings', 'help'];
 
 function SyncBadge({ state }) {
   const { project, online, connection, sync } = state;
@@ -98,7 +103,7 @@ function AppVersion() {
 function App() {
   const state = useAppState();
   const { project, screen, message, busyText, connection } = state;
-  const current = project ? screen : 'projects';
+  const current = project || WITHOUT_A_FILM.includes(screen) ? screen : 'projects';
   if (current === 'cues') return html`<${CuesScreen} key=${state.cuesScene} state=${state} />`; // full screen
   // the Scene Map and Timeline are moments to focus: full screen too, no title, badges or tabs
   if (current === 'cues-map') return html`<main class="focus"><${CuesMapScreen} state=${state} /></main>`;
@@ -114,6 +119,7 @@ function App() {
       <div class="topbar__status">
         <${MessagesButton} state=${state} />
         <${SyncBadge} state=${state} /> ${!isCrew(connection) && html`<${EmailBadge} state=${state} />`} <${WrapBadge} project=${project} myCall=${state.myCall} />
+        <${AppSettingsButton} />
       </div>
     </header>
     ${project && html`<${MainButtons} section=${section} connection=${connection} /><${Tabs} section=${section} current=${current} connection=${connection} />`}
@@ -129,11 +135,11 @@ function App() {
     ${busyText && html`<div class="busy">${busyText}</div>`}`;
 }
 
-applyTheme();   // light / dark (Settings → Screen)
+applyTheme();   // light / dark (App settings → Screen)
 followPhone();
 render(html`<${App} />`, document.getElementById('app'));
 // a link into the app opens that screen: '#hours' (the robot's "Tomorrow" and "Time to sleep" notifications open the
-// Tomorrow card), '#lavs-18' (the "Day 18 lavs ready" notification → lav-share.js), '#join=…' (a crew link)
+// Alarms tab), '#lavs-18' (the "Day 18 lavs ready" notification → lav-share.js), '#join=…' (a crew link)
 function openFromLink() {
   const lavs = /^#lavs-(\d+)$/.exec(location.hash);
   if (location.hash.startsWith('#join=')) return joinFromLink();

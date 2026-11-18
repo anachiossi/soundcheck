@@ -1,10 +1,10 @@
-// film-rules-copy.js — "Copy rules from another film" (Projects → 📋 Film rules, Ana 3 Nov: "if I do again a project
+// film-rules-copy.js — "Copy rules from another film" (Film → Settings, Ana 3 Nov: "if I do again a project
 // with Adriano can I import these rules?"). Copies chosen groups of another film's settings.json into the open
 // film's; each film still keeps its own copy, to change freely afterwards.
 // Never copied: what belongs to one film's cast or one ride — the protagonist (cast #1 is someone else in each
 // film), the person Ana rides with and her own name on the call sheet; and the film's own readers, units,
 // episodes, calendar and kit (they describe that film's paperwork, not a way of working).
-// Used by: screens/film-rules.js
+// Used by: parts/copy-rules.js
 
 import { loadProject, listProjects } from './store/local.js';
 import { getState } from './state.js';

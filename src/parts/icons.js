@@ -14,6 +14,7 @@ const DRAWINGS = {
   document: html`<path d="M6 3h8l4 4v14H6z" /><path d="M14 3v4h4" /><path d="M9 12h6M9 16h6" />`,
   // an open book: the official script (script-page.js), apart from the ODG / sides documents
   book: html`<path d="M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5z" /><path d="M12 6.5v13" />`,
+  settings: html`<path d="M4 7h9M18 7h2M4 17h2M11 17h9" /><circle cx="15.5" cy="7" r="2.5" /><circle cx="8.5" cy="17" r="2.5" />`,  // sliders: App settings
   close: html`<path d="M6 6l12 12M18 6L6 18" />`,
   up: html`<path d="M12 19V5M6 11l6-6 6 6" />`,
   back: html`<path d="M15 5l-7 7 7 7" />`,

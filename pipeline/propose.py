@@ -22,6 +22,7 @@ from pathlib import Path
 from compare import NOTE_ICONS, note_kind, check_cast_list, check_date, check_next_day_date, check_day, check_scene_info, nice_date
 from compare_mics import check_scene_mics
 from compare_crew import check_crew
+from day_mics import odg_day_mics
 from odg_presets import odg_first_presets
 from odg_reader import odg_reader_for, crew_reader_for
 from reading_checks import checked_reading
@@ -248,6 +249,9 @@ def build_proposal(film_folder, email_folder, other_sides=None, sides_notes=None
             if scene.get("standby"):  # listed under "STAND BY:" in the ODG: shot only if there is time
                 day_number = odg["number"] if today else advance.get("day")
                 notes.setdefault(sid, []).append(("sound", f"⏸ stand-by on day {day_number}"))
+        # the empty TX and lavs of this day's scenes, from the sides or the script and the film's rules (day_mics.py)
+        mic_changes, mic_notes = odg_day_mics(film_folder, scenes, changes, sides if today else None, film["characters"])
+        changes.extend(mic_changes), warnings.extend(mic_notes)
     for sid, found in notes.items():
         known = film["scenes"].get(sid) or {}
         for kind, note in found:

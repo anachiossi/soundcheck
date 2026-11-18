@@ -1,5 +1,5 @@
-// top-menu.js — the top of the app: the film's name (opens Settings), the Messages button with its number,
-// the five main buttons and the tabs of the chosen one. The tree itself is in menu.js.
+// top-menu.js — the top of the app: the film's name (opens the list of films), App settings, the Messages button with
+// its number, the five main buttons and the tabs of the chosen one. The tree itself is in menu.js.
 // Used by: main.js
 
 import { html } from '../../vendor/preact-htm.js';
@@ -9,9 +9,12 @@ import { messagesWaiting } from '../messages.js';
 import { Icon } from './icons.js';
 
 export function FilmButton({ project }) {
-  if (!project) return html`<span class="topbar__film">soundcheck</span>`;
-  return html`<button class="topbar__film topbar__film--button" onClick=${() => showScreen('projects')} aria-label=${`${project.name}: settings`}>${project.name} ▾</button>`;
+  if (!project) return html`<button class="topbar__film topbar__film--button" onClick=${() => showScreen('projects')} aria-label="Open a film">soundcheck ▾</button>`;
+  return html`<button class="topbar__film topbar__film--button" onClick=${() => showScreen('projects')} aria-label=${`${project.name}: open or close films`}>${project.name} ▾</button>`;
 }
+
+export const AppSettingsButton = () => html`
+  <button class="topbar__settings" onClick=${() => showScreen('app-settings')} aria-label="App settings"><${Icon} name="settings" /></button>`;
 
 // shown only while something waits for an answer
 export function MessagesButton({ state }) {
