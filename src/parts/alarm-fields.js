@@ -88,7 +88,7 @@ export function cleanCommute(values) {
 // the question for the robot: every choice of the page, an emptied one too (it must win over the saved value)
 export function pageChoices(commute) {
   const choices = { off: commute.off ? 'yes' : 'no' };
-  for (const key of WORDS) choices[key] = commute[key] ?? '';
+  for (const key of WORDS) if (key !== 'ride_from') choices[key] = commute[key] ?? ''; // the robot counts only a saved meeting point
   for (const [key] of NUMBERS) if (commute[key] !== undefined) choices[key] = commute[key];
   return choices;
 }

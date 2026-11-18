@@ -411,8 +411,9 @@ function planAnswer(parameters, now) {
     drive: plan.drive, toMeeting: plan.toMeeting, answer: shortcutAnswer(plan) };
 }
 
-// The alarm page's numbers, to see the result before saving them
-const PAGE_WORDS = ['ride_with', 'ride_from', 'to_meeting', 'drive_to', 'travel'];
+// The alarm page's numbers, to see the result before saving them. Never the meeting point: asking the time from home to
+// any place named in the question would let whoever holds the link work out where Ana lives.
+const PAGE_WORDS = ['ride_with', 'to_meeting', 'drive_to', 'travel'];
 const PAGE_NUMBERS = ['walk_to_ride', 'meet_before_call', 'drive_margin', 'rain_penalty', 'travel_max', 'get_ready',
   'leave_alarm_before', 'sleep_hours'];
 function pageChoices(parameters) {

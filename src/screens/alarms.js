@@ -20,7 +20,8 @@ export function AlarmsScreen({ state }) {
   const [values, setValues] = useState(() => ({ ...saved }));
   const [link, setLink] = useState(robotLink());
   const commute = cleanCommute(values);
-  const { plan, asking, problem, current } = useRobotPlan(project, pageChoices(commute), link);
+  const { plan, asking, problem, current } = useRobotPlan(project, pageChoices(commute), `${link}|${Boolean(state.sync?.running)}`);
+  const newMeetingPoint = (commute.ride_from || '') !== (saved.ride_from || ''); // the robot counts it once saved and synced
 
   const dayPlace = plan?.date ? project.dayPlaces?.[plan.date] : null;
   const people = plan?.date ? Object.keys(project.crewCalls?.[plan.date] || {}).sort() : [];
@@ -33,7 +34,8 @@ export function AlarmsScreen({ state }) {
     <section class="tomorrow alarms">
       <${PlanSummary} plan=${plan} commute=${commute} link=${link} asking=${asking} problem=${problem} />
       ${plan?.wake && !commute.off && html`
-        ${canSetAlarms(plan) && (current || !changed)
+        ${newMeetingPoint ? html`<p class="muted">Save the new meeting point: the robot counts it once it is saved.</p>`
+          : canSetAlarms(plan) && (current || !changed)
           ? html`<a class="btn btn--primary alarms__set" href=${alarmsLink(plan)} onClick=${() => changed && save(message)}>
               ⏰ Set alarm now · ${plan.wake} · ${plan.leaveAlarm}</a>`
           : html`<p class="muted">${canSetAlarms(plan) ? 'Waiting for the robot to count your changes.' : 'The alarms can be set in the 24 hours before the wake-up.'}</p>`}`}

@@ -75,3 +75,7 @@ test('the robot is asked with every choice of the page, an emptied one too', () 
   assert.equal(choices.get_ready, 50);
   assert.equal('sleep_hours' in choices, false, 'an empty number: the film\'s own value stays');
 });
+
+test('the meeting point is never sent in the question to the robot', () => {
+  assert.equal('ride_from' in pageChoices(cleanCommute({ travel: 'maps', ride_from: 'Some Station' })), false);
+});

@@ -137,6 +137,13 @@ test('the alarm page sees its unsaved numbers counted, and they are never saved 
   assert.equal(files['projects/test-film/settings.json'].commute.get_ready, 45);
 });
 
+test('the link can never ask the time from home to a place of its choice', () => {
+  const { planAnswer, asked } = robot({ files: confine(), properties: { HOME_FROM: 'home' } });
+  planAnswer({ plan: 'test-film', ride_from: 'Some Other Place', to_meeting: 'walk' }, NOW);
+  assert.ok(asked.length > 0);
+  assert.ok(asked.every(question => question.to !== 'Some Other Place' && question.from !== 'Some Other Place'));
+});
+
 test('a plan further than three days ahead still reaches the app, but the shortcut answers none', () => {
   const { planAnswer, alarmAnswer } = robot({ files: confine() });
   const early = new Date('2026-11-03T20:00:00Z');
