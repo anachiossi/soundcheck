@@ -68,7 +68,9 @@ def every_scene_review(folder, film, today, cast=None):
     """Every scene from today on: the printed actors, who speaks and the empty TX and lavs (day_mics.py), one change per
     scene. The production's cast decides who is in a scene, also when the script numbers it another way."""
     cast = cast if cast is not None else cast_by_scene(folder)
-    days = {day: info for day, info in days_of(film).items() if (info["date"] or "") >= today}
+    days = {day: info for day, info in days_of(film).items() if (info["date"] or "") > today}  # today is being shot, or is shot
+    if not days:
+        return None
     changes, warnings, day_of = [], [], {}
     for day, info in days.items():
         scenes = [{"scene_id": scene_id, "cast": cast.get(scene_id, [])} for scene_id in info["scenes"]]

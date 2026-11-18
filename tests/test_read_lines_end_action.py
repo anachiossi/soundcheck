@@ -4,7 +4,9 @@ Run (from the repo folder):
     python3 -m unittest discover -s tests -p "test_*.py"
 """
 
+import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -12,6 +14,7 @@ from unittest import mock
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "pipeline"))
 
 import read_lines as reader  # noqa: E402
+from cue_lines import write_scene_files  # noqa: E402
 
 PAGE = [(0, 10, 54, "1"), (0, 10, 108, "INT. CASA - GIORNO"), (0, 30, 108, "Anna entra."), (0, 50, 250, "ANNA"), (0, 62, 180, "Ciao."),
         (0, 80, 108, "Esce sbattendo"), (0, 92, 108, "la porta."),
@@ -31,6 +34,29 @@ class EndAction(unittest.TestCase):
 
     def test_a_scene_that_ends_on_a_speech_has_no_end_action(self):
         self.assertNotIn("end_action", self.scenes()["2"])
+
+
+class FiledFilms(unittest.TestCase):
+    scene = {"heading": "INT. CASA", "lines": [{"name": "ANNA", "text": "Ciao."}]}
+
+    def test_a_scene_already_filed_is_not_rewritten_only_to_add_the_end_action(self):
+        with tempfile.TemporaryDirectory() as folder:
+            write_scene_files(Path(folder), {"1": self.scene}, "Sides", [])
+            before = (Path(folder) / "1.json").read_text(encoding="utf-8")
+            changed = write_scene_files(Path(folder), {"1": {**self.scene, "end_action": "Esce."}}, "Sides", [])
+            self.assertEqual(changed, [])
+            self.assertEqual((Path(folder) / "1.json").read_text(encoding="utf-8"), before)
+
+    def test_a_new_scene_keeps_its_end_action(self):
+        with tempfile.TemporaryDirectory() as folder:
+            write_scene_files(Path(folder), {"1": {**self.scene, "end_action": "Esce."}}, "Sides", [])
+            self.assertEqual(json.loads((Path(folder) / "1.json").read_text(encoding="utf-8"))["end_action"], "Esce.")
+
+    def test_a_changed_speech_is_still_written(self):
+        with tempfile.TemporaryDirectory() as folder:
+            write_scene_files(Path(folder), {"1": self.scene}, "Sides", [])
+            changed = write_scene_files(Path(folder), {"1": {**self.scene, "lines": [{"name": "ANNA", "text": "Addio."}]}}, "Sides", [])
+            self.assertEqual(changed, ["1"])
 
 
 if __name__ == "__main__":

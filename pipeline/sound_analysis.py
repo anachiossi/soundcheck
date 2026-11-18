@@ -40,7 +40,7 @@ def script_actions(script_pdf):
     scenes, current = {}, None
     for _, _, x, text in page_lines(script_pdf):
         if SCENE_X[0] <= x <= SCENE_X[1] and SCENE_ID_RE.match(text):
-            current = text
+            current = text.upper()  # the script prints "526a", the production "526A": one scene, one file
             scenes.setdefault(current, [])
         elif current and ACTION_X[0] <= x <= ACTION_X[1]:
             scenes[current].append(text)

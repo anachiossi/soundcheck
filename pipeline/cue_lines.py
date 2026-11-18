@@ -31,6 +31,12 @@ def with_characters(lines, characters):
     return out
 
 
+def same_but_end_action(filed, content):
+    """The two differ at most by the action after the last speech (added to the readers on 18 Nov 2026)."""
+    plain = lambda scene: {key: value for key, value in scene.items() if key != "end_action"}
+    return plain(filed) == plain(content)
+
+
 def write_scene_files(folder, scenes, source, characters):
     """Returns the scene ids whose file is new or changed."""
     changed = []
@@ -42,6 +48,8 @@ def write_scene_files(folder, scenes, source, characters):
                    **({"end_action": scene["end_action"]} if scene.get("end_action") else {})}
         text = json.dumps(content, ensure_ascii=False, indent=2) + "\n"
         path = folder / f"{scene_id}.json"
+        if path.exists() and same_but_end_action(json.loads(path.read_text(encoding="utf-8")), content):
+            continue  # a film already filed keeps its files as they are (LBE is finished: never rewritten for this)
         if not path.exists() or path.read_text(encoding="utf-8") != text:
             path.write_text(text, encoding="utf-8")
             changed.append(scene_id)

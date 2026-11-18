@@ -14,8 +14,9 @@
 // this line to the end of the scene in one go (don't tap while it reads). The app itself never speaks
 // (its read aloud was removed in v153, Ana 16 Oct); Speak Screen only starts from Ana's own swipe.
 // The map button opens the Scene Map (cues-map.js). ✎ changes, deletes or adds lines when the director changes them (cue-line-editor.js).
-// The switch under the panel: Just dialog · Whole scene (Ana, 18 Nov). Whole scene adds the action lines on grey cards, in
-// a smaller fixed text, divided into whole sentences (cues-cards.js). Each card is one page; `index` counts cards.
+// The switch under the panel: Just dialog · Whole scene (Ana, 18 Nov). Whole scene adds the action lines on grey cards,
+// divided into whole sentences (cues-cards.js). There speeches and actions share one size and start at the same place
+// on the panel, so the eyes don't jump from card to card. Each card is one page; `index` counts cards.
 // Used by: main.js (opened from the Dialogs tab or the microphone on a scene)
 
 import { html, useEffect, useLayoutEffect, useRef, useState } from '../../vendor/preact-htm.js';
@@ -140,7 +141,7 @@ export function CuesScreen({ state }) {
   };
 
   return html`
-    <div class="cues" style=${`background:${background};color:${textColourFor(background)};--speaker:${background}`} onClick=${onTap}>
+    <div class=${'cues' + (whole && hasAction(cues) ? ' cues--whole' : '')} style=${`background:${background};color:${textColourFor(background)};--speaker:${background}`} onClick=${onTap}>
       <div class="cues__top" aria-hidden="true">
         <span>${index + 1} / ${cards.length}</span>
         <span class="cues__scene"><${ScenePill} project=${project} sceneId=${cuesScene} hash /></span>
@@ -164,7 +165,7 @@ export function CuesScreen({ state }) {
       <div class="cues__panel">
         <div class="cues__text" ref=${textRef}>
           ${isAction
-            ? html`<div class="cues__speech cues__speech--action" aria-hidden="true">
+            ? html`<div class="cues__speech" data-kind="action" aria-hidden="true">
                 ${card.sentences.map((sentence, i) => html`<p class="cues__phrase" key=${i}>${sentence}</p>`)}
               </div>`
             : html`<div class="cues__speech">

@@ -1,6 +1,7 @@
-// battery-day.js — how many batteries a shooting day will use (Gear → Batteries, Ana 18 Nov): for each kind of transmitter
-// in the day's scenes, plus the booms: how many are on, how many batteries each takes, how many changes the day needs.
-// Batteries are changed at the minutes Ana sees in practice (the group's models, else the label's), so the count aims high.
+// battery-day.js — how many batteries a shooting day will use (Gear → Batteries, Ana 18 Nov):
+//   the transmitters in the day's scenes and the booms: changed at the minutes Ana sees in practice
+//   the devices on all day whatever is shot (gear/batteries.json devices "always_on": the 2 IFB transmitters on the cart)
+//   the IFB receivers on the IFB list: one set lasts the whole day (devices "whole_day")
 // Recharging during the day is not counted: the spare is what is left if nothing comes back from the charger.
 // No screen code here. Used by: parts/battery-day-plan.js
 
@@ -31,24 +32,37 @@ function txOfDay(project, day) {
 export const nextDay = (project, today = localTodayIso()) => shootingDays(project).find(day => day.date >= today && dayLength(day)) || null;
 
 // → { minutes, lines: [{ battery, have, need, spare, models: [{ model, count, takes, life, changes, need }] }] }
+// life 0: one set lasts the whole day
 export function batteryPlan(project, day) {
   const minutes = dayLength(day);
   const { devices } = batteryFile(project);
   const groups = batteryGroups(project);
   const byBattery = new Map();
+  const add = (device, life) => {
+    const line = byBattery.get(device.battery) || new Map();
+    byBattery.set(device.battery, line);
+    const model = line.get(device.model) || { model: device.model, count: 0, takes: device.takes || 1, life, changes: life ? Math.ceil(minutes / life) : 1 };
+    model.count += 1;
+    line.set(device.model, model);
+  };
+
   for (const tx of txOfDay(project, day)) {
     const device = devices.find(item => item.model === tx.model);
     const candidates = groupsForTx(project, tx.id);
     const group = candidates.find(item => item.models?.[tx.model]) || candidates[0];
-    if (!device?.battery || !group) continue;
-    const life = Number(group.models?.[tx.model] || minutesFromDraw(project, group, tx.model) || group.life_min) || 0;
-    if (!life) continue;
-    const line = byBattery.get(device.battery) || new Map();
-    byBattery.set(device.battery, line);
-    const model = line.get(tx.model) || { model: tx.model, count: 0, takes: device.takes || 1, life, changes: Math.ceil(minutes / life) };
-    model.count += 1;
-    line.set(tx.model, model);
+    const life = group ? Number(group.models?.[tx.model] || minutesFromDraw(project, group, tx.model) || group.life_min) || 0 : 0;
+    if (device?.battery && life) add(device, life);
   }
+  for (const device of devices.filter(item => item.always_on && item.battery)) {
+    const life = Number(groups.find(group => group.models?.[device.model])?.models[device.model]) || 0;
+    if (life) add(device, life);
+  }
+  for (const row of project.ifbList?.rows || []) {
+    const receiver = (project.ifbReceivers || []).find(item => String(item.id) === String(row.rx_id));
+    const device = receiver && devices.find(item => item.model === receiver.model && item.whole_day);
+    if (device?.battery && !row.out) add(device, 0);
+  }
+
   const lines = [...byBattery].map(([battery, models]) => {
     const list = [...models.values()].map(model => ({ ...model, need: model.count * model.takes * model.changes }));
     const need = list.reduce((sum, model) => sum + model.need, 0);

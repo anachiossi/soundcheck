@@ -24,6 +24,19 @@ test('an 8 hour day changing every 3 hours needs 3 sets for each transmitter on'
   assert.deepEqual([aa.battery, aa.need, aa.have, aa.spare], ['AA', 12, 50, 38]);
 });
 
+test('the IFB transmitters count all day and each receiver takes one set', () => {
+  const project = film();
+  project.gearBatteries.devices.push({ model: 'IFB mix', battery: 'AA', takes: 2, always_on: true }, { model: 'IFB boom', battery: 'AA', takes: 2, always_on: true },
+    { model: 'EK', battery: 'AA', takes: 2, whole_day: true });
+  project.gearBatteries.groups[1].models = { Boom: 180, 'IFB mix': 240, 'IFB boom': 240 };
+  project.ifbReceivers = [{ id: '1', model: 'EK' }, { id: '2', model: 'EK' }, { id: '3', model: 'EK' }];
+  project.ifbList = { rows: [{ rx_id: '1' }, { rx_id: '2' }, { rx_id: '3', out: true }, { rx_id: '' }] };
+  const aa = batteryPlan(project, day).lines.find(line => line.battery === 'AA');
+  const need = Object.fromEntries(aa.models.map(model => [model.model, model.need]));
+  assert.deepEqual(need, { Boom: 12, 'IFB mix': 4, 'IFB boom': 4, EK: 4 });
+  assert.equal(aa.need, 24);
+});
+
 test('a transmitter not used that day is not counted', () => {
   const { lines } = batteryPlan(film(), day);
   assert.equal(lines.flatMap(line => line.models).some(model => model.model === 'Small'), false);

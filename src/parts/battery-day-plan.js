@@ -19,7 +19,9 @@ export function BatteryDayPlan({ project }) {
           <p><b>${line.battery}</b>: needs <b>${line.need}</b> of ${line.have}${' '}
             <span class=${line.spare < 0 ? 'warn-text' : 'muted'}>${line.spare < 0 ? `${-line.spare} short` : `${line.spare} spare`}</span></p>
           ${line.models.map(model => html`
-            <p class="muted" key=${model.model}>${model.count} ${model.model} × ${model.takes} × ${model.changes} sets, a change every ${clock(model.life)} h</p>`)}
+            <p class="muted" key=${model.model}>${model.life
+              ? `${model.count} ${model.model} × ${model.takes} × ${model.changes} sets, a change every ${clock(model.life)} h`
+              : `${model.count} ${model.model} × ${model.takes}, one set all day`}</p>`)}
         </div>`)}
     </section>`;
 }

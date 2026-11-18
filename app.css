@@ -424,7 +424,7 @@ button.kit-item { border: 0; background: none; padding: 4px; border-radius: 12px
   --cue-font: 'Courier Prime', 'Courier New', monospace;
   --cue-size: clamp(22px, min(7vw, 7.5vh), 44px);   /* phone upright ≈ 27px, sideways ≈ 29px, laptop 44px */
   --cue-paper: #fffbf0; --cue-ink: #1f2430;
-  --cue-action-size: 18px;   /* action lines: one fixed size, compact, so a whole card of sentences fits a small phone */
+  --cue-whole-size: clamp(19px, 5.4vw, 26px);   /* Whole scene: speeches and action lines at one size, so the eyes never jump */
 }
 .cues { position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column; gap: 10px;
   padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
@@ -448,8 +448,14 @@ button.kit-item { border: 0; background: none; padding: 4px; border-radius: 12px
   line-height: 1.5; word-spacing: .08em; }
 .cues__phrase { margin: 0; }
 .cues__phrase + .cues__phrase { margin-top: .35em; }   /* a new phrase: a little space above */
-.cues__speech--action { max-width: none; text-align: left; font-size: var(--cue-action-size); line-height: 1.3; word-spacing: 0;
-  -webkit-text-stroke: 0; }
+/* Whole scene: every card starts at the same place, in the same size and weight, using the whole panel */
+.cues--whole { gap: 6px; padding-left: max(8px, env(safe-area-inset-left)); padding-right: max(8px, env(safe-area-inset-right)); }
+.cues--whole .cues__name { font-size: 20px; }
+.cues--whole .cues__panel { padding: 12px 12px 4px; border-radius: 14px; }
+.cues--whole .cues__speech { margin: 0; max-width: none; padding: 0; text-align: left; font-size: var(--cue-whole-size);
+  line-height: 1.32; word-spacing: .04em; -webkit-text-stroke: .2px currentColor; }
+.cues--whole .cues__phrase + .cues__phrase { margin-top: .22em; }
+.cues--whole .cues__more { margin-top: 2px; font-size: 13px; }
 .cues__mode { display: flex; align-self: center; gap: 2px; padding: 3px; border-radius: 999px; background: rgba(0,0,0,.18); }
 .cues__mode button { border: 0; border-radius: 999px; padding: 7px 14px; background: none; color: inherit; font: inherit; font-size: 14px; font-weight: 700; }
 .cues__mode button.on { background: var(--cue-paper); color: var(--cue-ink); }

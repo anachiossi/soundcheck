@@ -10,6 +10,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "pipeline"))
 
@@ -17,7 +18,7 @@ from auto_presets import auto_review, one_mic_each  # noqa: E402
 from day_mics import mic_changes_of_day  # noqa: E402
 from presets import gets_mic  # noqa: E402
 from second_unit_days import add_second_unit_days  # noqa: E402
-from sound_analysis import analyse, missing_analysis  # noqa: E402
+from sound_analysis import analyse, missing_analysis, script_actions  # noqa: E402
 
 PEOPLE = [{"id": "1", "name": "ANNA"}, {"id": "2", "name": "BRUNO"}]
 
@@ -45,6 +46,18 @@ class Analysis(unittest.TestCase):
 
     def test_a_scream_with_two_characters_names_nobody(self):
         self.assertEqual(analyse("Anna e Bruno urlano.", PEOPLE)["warnings"], [])
+
+    def test_a_scene_number_printed_in_small_letters_is_the_productions_scene(self):
+        page = [(0, 10, 54, "526a"), (0, 30, 108, "Il cane abbaia.")]
+        with mock.patch("sound_analysis.page_lines", return_value=page):
+            self.assertEqual(script_actions("any.pdf"), {"526A": "Il cane abbaia."})
+
+    def test_the_review_never_touches_the_day_being_shot(self):
+        folder = film_folder({"settings.json": {"presets": {"wire_silent": "cast", "tx_order": ["1"]}}, "characters.json": PEOPLE,
+                              "transmitters.json": [{"id": "1"}], "lavaliers.json": [{"id": "L1"}],
+                              "schedule.json": [{"day": 2, "date": "2026-11-20", "scene_id": "20", "order": 1}]})
+        (folder / "proposals").mkdir()
+        self.assertIsNone(auto_review(folder, today="2026-11-20", cast={"20": ["1"]}))
 
     def test_someone_who_only_hears_the_screams_is_not_loud(self):
         self.assertEqual(analyse("Bruno, fuori dalla porta, sente quelle urla.", PEOPLE)["warnings"], [])
