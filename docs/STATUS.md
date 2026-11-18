@@ -1,14 +1,46 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-11-18 · version **v235** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-11-18, night · version **v237** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
 `2026-09-29_soundcheck_handoff.md`.
 
+## State of things (night of 18 Nov 2026)
+The film's own state, and every open item in detail, are in the private repo: `notes/claude-log/2026-11-18_state-of-things.md`.
+
+**The app's menu:** Today (Day · Calendar · Overview · Hours · Alarms) · Film (Script · Scenes · Dialogs · Characters · Settings) ·
+Mics (Transmitters · Lavaliers · Preferences · Presets) · IFB (IFB · Crew · IFB kit) · Gear (Truck · Inventory · Batteries · Manuals · Kit).
+The film's name opens the list of films; the sliders in the top bar open App settings; banners on every screen show what waits for an answer.
+
+**The robot on each new email:** reads the ODG (two readers, PDF library pinned to 1.27.2.3), knows SPLINTER and SPLIT as the 2nd unit,
+puts a new 2nd unit straight in the schedule so the alarm rings, proposes the empty TX and lavs, reviews every scene of the days still
+to shoot (never today or earlier), and writes the first sound analysis of new scenes.
+
+**Rules that must hold:**
+- A TX or lav already chosen is never changed by the ODG step. Days already shot are never touched.
+- A film already filed keeps its files: LBE is finished and is not rewritten (`cue_lines.same_but_end_action`).
+- Scene file names are the production's, in capitals: Windows can't hold `526a.json` and `526A.json` side by side.
+- The alarm robot (`pipeline/gmail-trigger.gs`) was NOT changed on 18 Nov after v229: nothing to push to Apps Script.
+
+**Not checked yet:** the first real alarm, morning of 19 Nov (the first since the single calculator, v228). The app on Ana's own iPhone since
+v231. A new ODG email through the new robot steps (a run with no new email passed). `tests/sync.mjs` on GitHub. A crew phone since v231.
+
+**Still to do:**
+1. Fable's clean-up (`notes/plans/fable-refurbish.md` in the private repo): the Sheets-era tools and `_seed/`, `connectorMismatch`, `subCategories`,
+   `startsAsVolume`, `upgradeOutbox`, the 3 merged remote branches, `npm test` also running the Python tests, trim this file.
+   Keep the `voices` setting dormant.
+2. Sound analysis: lav placement and water warnings, kids on set and Ana's own levels need a person reading each scene.
+3. Presets for days 72–88: they come by themselves when the next PDL arrives.
+4. Git history rewrite of this public repo: planned, on hold until Ana says (`2026-11-14_history_rewrite_plan.md`, private).
+
 ## Latest (18 Nov 2026)
-- v235 **Dialogs reader: Just dialog · Whole scene** (`src/cues-cards.js`). Whole scene adds the action lines on grey cards, at one
-  fixed text size, divided into whole sentences. The map, timeline and game keep only the speeches. The robot now also files the
+- v237 The reader shows the script's "--" as one dash, so it never breaks across two lines.
+- v236 **Whole scene reads at one size from one place**: speeches and action lines share `--cue-whole-size` and start at the same spot on
+  the panel, with less padding. Just dialog keeps the big centred text. Gear → Batteries counts the 2 IFB transmitters (2 AA, every 4 h) and
+  each IFB receiver on the list (2 AA, all day).
+- v235 **Dialogs reader: Just dialog · Whole scene** (`src/cues-cards.js`). Whole scene adds the action lines on grey cards,
+  divided into whole sentences. The map, timeline and game keep only the speeches. The robot now also files the
   action after a scene's last speech (`end_action`, `pipeline/read_lines.py`).
 - v234 Overview: with no sides yet every actor counts as a speaker ("3 speakers ?"); the sides confirm it. Gear → Batteries opens
   with what the next shooting day will use (`src/battery-day.js`). Adriano's kit: 24 NP-BX1 and 50 AA numbered, changed at 3 hours.
@@ -40,7 +72,6 @@ The film-specific diary (decisions, dates, what Ana said) is private:
   "Next" notification moved into the robot (`checkNextDayPush`); `pipeline/wake_plan.py` and the app's `wakePlan` are gone.
   The shortcut's answer is unchanged. The alarm page is the one place for the rules: Off · Fixed times · Follow the day's
   place. The app needs the robot link pasted once on each phone. See HOW_IT_WORKS → "Alarms: one calculator".
-- Next: the dead-code clean-up (plan in the data repo, `notes/plans/alarm-and-menu.md`).
 
 ## Before (14–15 Nov 2026)
 - Sides check: a call-sheet scene written "616B" or "526Cfine" finds the sides' "616b" / "526c" (before, the

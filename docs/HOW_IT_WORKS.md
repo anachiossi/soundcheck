@@ -40,7 +40,7 @@
 | How a film is split into files | `src/store/repo-files.js` |
 | The films list in Projects, downloading a film the first time | `src/films.js` |
 | One repo per film: which repo a film lives in (`project.source`), `connectionFor(project, connection)` used by everything that talks to GitHub about a film | `src/film-source.js` (tests: `tests/film-repos.test.js`) |
-| Projects → Film repos: the extra repos Ana's key reads (`connection.repos`), Add (checks the key can read it) / Remove | `src/film-repos.js` (actions), `src/parts/film-repos.js` (the panel) |
+| App settings → Film repos: the extra repos Ana's key reads (`connection.repos`), Add (checks the key can read it) / Remove | `src/film-repos.js` (actions), `src/parts/film-repos.js` (the panel) |
 | Preparing the next film's own data repo (local folder, never pushes) | `tools/new-film-repo.mjs` (tests: `tests/new-film-repo.test.js`) |
 | Week / all-film images | `src/export/schedule-images.js` |
 
@@ -179,7 +179,7 @@ last check, last robot run, **Check emails now** (starts the robot, waits, syncs
 Files: `src/email-robot.js`, `src/parts/email-robot.js`, `emailRobot` / `startEmailRobot` in `src/store/github.js`.
 The app's GitHub key needs **Actions: Read and write** and **Variables: Read-only** besides Contents.
 
-## 🎙 Cues (learn a scene's lines)
+## 🎙 Dialogs (called Cues in the code: learn a scene's lines)
 | What | File |
 |---|---|
 | Who says what, from sides / script PDFs | `pipeline/read_lines.py` → `pipeline/cue_lines.py` writes `lines/sides/<scene>.json`, `lines/script/<scene>.json` |
@@ -252,7 +252,7 @@ No notifications yet (after the aesthetics, Ana 12 Oct).
 | Saving | `src/battery-editing.js` |
 | The screen and its sheets | `src/screens/gear-batteries.js` (sheet from `src/parts/gear-form.js`), styles `.battery*` in `app.css` |
 
-## Crew link (Projects → Share with crew; plan: `docs/CREW_SHARING.md`)
+## Crew link (Film → Settings → Share with crew; plan: `docs/CREW_SHARING.md`)
 One link per crew person opens the film on their phone, with no GitHub account. The link holds owner,
 repo, branch, the film's crew key, the person's name and the film folder, after `#join=` (never sent anywhere).
 
@@ -337,7 +337,7 @@ Ana's devices see everything as before.
 "Closed", "Feedback sent"). Never a name. Each sent suggestion now also keeps its lines
 (`crewSuggestions.sent[path].lines`).
 
-**Feedback** (crew only): Projects → "Enjoyed soundcheck? Share some feedback" → stars 1–5, What helped, What
+**Feedback** (crew only): App settings → "Enjoyed soundcheck? Share some feedback" → stars 1–5, What helped, What
 annoyed you, Anything else. Send keeps it on the phone (localStorage `sc_crew_feedback`); the crew sync sends it
 (`sendWaitingFeedback`, never throws) as an issue "Feedback from Davide": readable lines + a JSON block
 `{ soundcheck: 'crew-feedback', version: 1, film, by, stars, helped, annoyed, text, at }`, label `crew-feedback`
@@ -347,7 +347,7 @@ is wrapping. Enjoyed soundcheck? Share some feedback ›"; the film is remembere
 
 **Ana's side**: the owner sync also lists open feedback of the film (`state.crewFeedback`): a 📬 banner
 "Feedback from the crew · n to read ›" → a Feedback section on the `crew-suggestions` screen; ✓ Mark as read
-comments "thanks" and closes the issue. **Remove / Restore** next to each name in Projects → Share with crew
+comments "thanks" and closes the issue. **Remove / Restore** next to each name in Film → Settings → Share with crew
 (localStorage `sc_crew_removed`): a removed name's suggestions and feedback are not shown and never closed
 (their link still opens the film; to lock someone out, make a new crew key).
 
@@ -362,7 +362,7 @@ comments "thanks" and closes the issue. **Remove / Restore** next to each name i
 | Tests | `tests/crew-screens.test.js` (fake GitHub) |
 
 ## My call (crew sharing step 6)
-Every device (Ana's and crew) chooses in Projects → **My call** (segmented, like Screen): **General crew call**
+Every device (Ana's and crew) chooses in Today → Alarms (a crew phone: App settings) → **Call time based on:** (segmented, like Screen): **General crew call**
 (the default: exactly as before) or **Personal call** + "Your name as printed on the call sheet". Kept on the
 device only: localStorage `sc_my_call` = `{ mode: 'general' | 'personal', name }` → `state.myCall`
 (`rememberMyCall` in `src/state.js`).
@@ -371,7 +371,7 @@ looks the name up in `calls.json` (`project.crewCalls[date]`), matching with no 
 spaces (`sameName`, also used by the wake plan's `ride_with`). Not on that day's sheet → the crew call, source
 `fallback`, note "Your name wasn't on this day's call sheet: using the crew call." (a muted line on Hours).
 `withMyCalls(project, setting)` gives the Hours screen, the ⏱ wrap clock / question and the timesheet a copy of
-the film where each day's call is "my call" (General → the very same film). The wake plan (Tomorrow card)
+the film where each day's call is "my call" (General → the very same film). The wake plan (Today → Alarms)
 starts from my call; `ride_with` still follows the colleague's call. The Schedule always shows the crew call.
 Nothing is saved from it on crew phones.
 
@@ -389,7 +389,7 @@ Tests: `tests/robots-my-call.test.js` and `tests/robot-alarms.test.js`.
 | What | File |
 |---|---|
 | The rules (`myCallFor`, `withMyCalls`, `sameName`, `daysNotOnSheet`) | `src/my-call.js` |
-| Projects → My call | `src/parts/my-call-switch.js` |
+| Today → Alarms → Call time based on | `src/parts/my-call-switch.js` |
 | Saving it for the robots (`followMyCall`, `robotsMyNameAfter`) | `src/hours-editing.js` |
 | Tests | `tests/my-call.test.js`, `tests/robots-my-call.test.js`, `tests/robot-alarms.test.js` |
 
