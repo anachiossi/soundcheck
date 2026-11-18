@@ -22,7 +22,7 @@ from pathlib import Path
 
 from day_mics import mic_changes_of_day, rows_after
 from first_presets import cast_by_scene
-from presets import by_tx
+from presets import by_tx, day_plan, gets_mic
 from propose_presets import days_of, describe_new, load_film, proposal_of, review, write_proposal
 
 
@@ -44,6 +44,26 @@ def offered_before(folder):
     return offered
 
 
+def one_mic_each(film, presets, scene_ids):
+    """One day: someone with two TX or lavs, or a TX or lav on two people, takes the day's own → the scenes changed."""
+    worn = [(str(row["char_id"]), kind, row[kind]) for scene_id in scene_ids for row in presets[scene_id]["rows"]
+            for kind in ("tx_id", "lav_id") if row.get(kind)]
+    clashing = {who for who, kind, mic in worn
+                if len({m for w, k, m in worn if w == who and k == kind}) > 1 or len({w for w, k, m in worn if k == kind and m == mic}) > 1}
+    plan, _, _ = day_plan({**film, "presets": presets}, film["settings"], scene_ids, keep_tx=True)
+    changed = []
+    for scene_id in scene_ids:
+        for row in presets[scene_id]["rows"]:
+            tx_id, lav_id = plan.get(str(row["char_id"]), ("", ""))
+            if str(row["char_id"]) in clashing and tx_id and (row.get("tx_id"), row.get("lav_id")) != (tx_id, lav_id):
+                row.update(tx_id=tx_id, lav_id=lav_id)
+                changed.append(scene_id)
+            elif str(row["char_id"]) in clashing and row.get("tx_id") and not gets_mic(film, scene_id, row):
+                row.update(tx_id="", lav_id="")  # an extra holding an actor's mic
+                changed.append(scene_id)
+    return changed
+
+
 def every_scene_review(folder, film, today, cast=None):
     """Every scene from today on: the printed actors, who speaks and the empty TX and lavs (day_mics.py), one change per
     scene. The production's cast decides who is in a scene, also when the script numbers it another way."""
@@ -57,6 +77,9 @@ def every_scene_review(folder, film, today, cast=None):
         warnings += [f"Day {day}: {note}" for note in notes]
         day_of.update({change["scene_id"]: day for change in found})
     after = rows_after(film["presets"], changes)
+    for day, info in days.items():
+        fixed = one_mic_each(film, after, [scene_id for scene_id in info["scenes"] if scene_id in after])
+        day_of.update({scene_id: day for scene_id in fixed})
     offered = offered_before(folder)
     review_changes = []
     for scene_id, day in day_of.items():

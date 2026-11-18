@@ -21,17 +21,17 @@ from first_presets import cast_by_scene
 from read_lines import SCENE_ID_RE, SCENE_X, page_lines
 
 WORDS = {
-    "water": r"piscina|mare|fiume|lago|doccia|vasca|bagnat[oaie]|sott'acqua|nuot\w+|pioggia|piove\w*|tuff[ao]\w*",
+    "water": r"piscina|doccia|vasca|sott'acqua|nuot\w+|pioggia battente|sotto la pioggia|piove|tuff[ao]\w*",
     "scream": r"urla\w*|urlo|grida\w*|grido|strill\w*|rissa",
-    "eating": r"mangia\w*|mastica\w*|addenta\w*|pranz\w+|cenano",
+    "eating": r"mangia|mangiano|mangiando|mangiare|mastica\w*|addenta\w*",
     "fx": r"spar[aoi]|sparano|sparando|sparatoria|pistolettat\w+|esplo\w+|detona\w+|mitragli\w+|trapan\w+|tagliasiepi",
     "music": r"canta|cantano|cantando|concerto|orchestra|suonano",   # live music only: it makes a scene HARD
-    "car": r"auto|automobile|macchina|furgone|moto|camion|berlina",
-    "crowd": r"folla|invitati|pubblico|tifosi|ressa|calca",
-    "kids": r"bambin[oaie]|ragazzin[oaie]|neonat[oaie]",
+    "car": r"auto|automobile|macchina|furgone|camion|berlina",
+    "crowd": r"folla|invitati|(?:il|del|al|dal) pubblico|tifosi|ressa|calca",
     "animal": r"cane|cani|molosso|cavall[oi]|gatto|pappagall[oi]|parrocchett[oi]",
-}
+}   # no "kids": the scripts say "come un bambino" far more often than a child is on set
 FOUND = {flag: re.compile(rf"\b(?:{words})\b", re.I) for flag, words in WORDS.items()}
+SCREAMS = r"(?:\s+\w+){0,3}\s+(?:urla|urlare|grida|gridare|strilla|strillare)\b"  # "Mirko inizia a urlare", not "le urla di Mirko"
 ACTION_X = (95, 125)  # the action lines of the script's page (the dialogue and the names are further right)
 
 
@@ -60,7 +60,7 @@ def analyse(text, characters):
                 flags.append(flag)
                 notes.append(f"{flag}: {sentence}")
         if FOUND["scream"].search(sentence):
-            named = [c for c in characters if re.search(rf"\b{re.escape(c['name'])}\b", sentence, re.I)]
+            named = [c for c in characters if re.search(rf"\b{re.escape(c['name'])}\b{SCREAMS}", sentence, re.I)]
             if len(named) == 1 and not any(w["char_id"] == named[0]["id"] for w in warnings):
                 warnings.append({"char_id": named[0]["id"], "kind": "loud", "text": sentence[:80]})
     return {"flags": [flag for flag in FOUND if flag in flags], "notes": "\n".join(notes), "warnings": warnings}

@@ -13,7 +13,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "pipeline"))
 
-from auto_presets import auto_review  # noqa: E402
+from auto_presets import auto_review, one_mic_each  # noqa: E402
 from day_mics import mic_changes_of_day  # noqa: E402
 from presets import gets_mic  # noqa: E402
 from second_unit_days import add_second_unit_days  # noqa: E402
@@ -45,6 +45,13 @@ class Analysis(unittest.TestCase):
 
     def test_a_scream_with_two_characters_names_nobody(self):
         self.assertEqual(analyse("Anna e Bruno urlano.", PEOPLE)["warnings"], [])
+
+    def test_someone_who_only_hears_the_screams_is_not_loud(self):
+        self.assertEqual(analyse("Bruno, fuori dalla porta, sente quelle urla.", PEOPLE)["warnings"], [])
+
+    def test_a_public_phone_is_not_a_crowd_and_the_public_is(self):
+        self.assertEqual(analyse("Inquadra il telefono pubblico.", PEOPLE)["flags"], [])
+        self.assertEqual(analyse("Vociare del pubblico.", PEOPLE)["flags"], ["crowd"])
 
     def files(self, **more):
         return {"settings.json": {"sound_analysis": True}, "characters.json": PEOPLE, "schedule.json": [],
@@ -110,6 +117,20 @@ class EveryActorHasAMic(unittest.TestCase):
         self.assertTrue(gets_mic(film, "40", row("2", speaker="no")))
         self.assertFalse(gets_mic(film, "40", row("136", speaker="no")))
         self.assertFalse(gets_mic(film, "40", row("c-voce", speaker="no")))
+
+    def test_an_extra_printed_only_as_a_number_gets_no_mic(self):
+        self.assertFalse(gets_mic(self.film(), "40", row("151", speaker="maybe")))
+
+    def test_one_lav_on_two_people_is_put_right_for_the_whole_day(self):
+        presets = {"40": {"scene_id": "40", "rows": [row("1", "1", "L1")]}, "41": {"scene_id": "41", "rows": [row("2", "2", "L1")]}}
+        film = self.film(presets)
+        self.assertEqual(one_mic_each(film, presets, ["40", "41"]), ["41"])
+        self.assertEqual((presets["40"]["rows"][0]["lav_id"], presets["41"]["rows"][0]["lav_id"]), ("L1", "L2"))
+
+    def test_an_extra_holding_an_actors_mic_gives_it_back(self):
+        presets = {"40": {"scene_id": "40", "rows": [row("1", "1", "L1")]}, "41": {"scene_id": "41", "rows": [row("151", "1", "L2", "maybe")]}}
+        one_mic_each(self.film(presets), presets, ["40", "41"])
+        self.assertEqual((presets["41"]["rows"][0]["tx_id"], presets["41"]["rows"][0]["lav_id"]), ("", ""))
 
     def test_with_no_sides_every_printed_actor_speaks_and_gets_a_mic(self):
         changes, _ = mic_changes_of_day(self.film(), [{"scene_id": "40", "cast": ["1", "2", "136"]}], [])

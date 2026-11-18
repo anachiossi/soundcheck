@@ -82,8 +82,10 @@ def gets_mic(film, scene_id, row):
     protagonist = str(rules.get("protagonist", ""))
     character = next((c for c in film.get("characters", []) if str(c["id"]) == str(row["char_id"])), {})
     recurring = rules.get("wire_silent") == "recurring" and not character.get("small_part") and not character.get("off_set")
-    every_actor = rules.get("wire_silent") == "cast" and cast_actor(film, row["char_id"])
-    wired = row.get("speaker") != "no" or str(row["char_id"]) == protagonist or recurring or every_actor
+    if rules.get("wire_silent") == "cast":  # an extra only printed as a number is not sure to speak: no mic
+        wired = cast_actor(film, row["char_id"]) or row.get("speaker") == "yes" or str(row["char_id"]) == protagonist
+    else:
+        wired = row.get("speaker") != "no" or str(row["char_id"]) == protagonist or recurring
     return wired and not lav_blocked(film, scene_id, row["char_id"])
 
 
