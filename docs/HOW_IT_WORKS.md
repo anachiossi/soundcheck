@@ -21,8 +21,10 @@
 | Icons (Cues = speech bubble; the mic = the Mics department only) | `src/parts/icons.js` |
 | The menu (Today, Film, Mics, IFB, Gear and their tabs) | `src/menu.js`, drawn by `src/parts/top-menu.js` |
 | The Day, Overview and Alarms tabs | `src/screens/day.js`, `src/screens/overview.js`, `src/parts/tomorrow.js` (alarm rules: `src/screens/alarms.js`) |
-| Film → Lav Rules (the editable mic rules) | `src/screens/lav-rules.js`, saved by `src/lav-rules.js` in settings.json `presets` |
-| Film → Settings (the open film's own settings) | `src/screens/film-settings.js`, `src/parts/copy-rules.js` |
+| Mics → Presets (the editable mic rules) | `src/screens/lav-rules.js`, saved by `src/lav-rules.js` in settings.json `presets` |
+| Film → Dialogs (called Cues in the code) | `src/screens/cues-picker.js`, `src/screens/cues.js` |
+| Film → Settings (the open film's own settings) | `src/screens/film-settings.js`, `src/parts/film-fields.js`, `src/parts/copy-rules.js` |
+| The first sound analysis of a film's scenes | `pipeline/sound_analysis.py`, called by `pipeline/run.py` |
 | App settings (connection, sync, screen, Help) | `src/screens/app-settings.js`, `src/parts/connect-form.js` |
 | The missing TX and lavs on every ODG | `pipeline/day_mics.py`, called by `pipeline/propose.py`; accepted in the app as `set_mics` (`src/proposal-rules.js`) |
 | Scene lookup | `src/screens/scenes.js` |

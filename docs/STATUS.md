@@ -1,17 +1,25 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-11-18 · version **v231** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-11-18 · version **v233** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
 `2026-09-29_soundcheck_handoff.md`.
 
 ## Latest (18 Nov 2026)
+- v233 The banners are back on every screen while something waits for an answer (the Messages button and page are gone).
+- v232 **Cues is now Dialogs**, under Film after Scenes. **Mics → Presets** is the editable mic rules page. Film → Settings
+  has fields instead of a list of facts. Scene pills and the sound bar take the colour of Ana's level, else the suggested one.
+- **Every actor has a mic** (settings `presets.wire_silent: "cast"`, Il colpo): actors with a cast number are wired even when
+  silent, not extras or special extras (`special_extra` on the character). With no sides, every printed actor counts as speaking.
+  `auto_presets.every_scene_review`: every scene still to shoot, one TX and lav per person all day.
+- **First sound analysis** (`pipeline/sound_analysis.py`, settings `sound_analysis: true`): flags, the sentence each came from
+  and "loud" warnings, from the scripts' action lines and the PDL. Never writes a level, never changes an existing file.
+- A new ODG's 2nd unit goes straight into schedule.json on films that work only those days (`pipeline/second_unit_days.py`).
 - v231 **Every ODG proposes the missing mics** (`pipeline/day_mics.py`): for the sheet's day and the next one, main unit
   only, the empty TX and lavs from the sides, else the script, and the film's rules. A TX already chosen never changes.
   Ana accepts them in the ODG's proposal (`set_mics`). A sides-only film uses the script only to say who DOES speak.
-- v231 **Pages moved**: tap the film's name = open or close films, nothing else. **Film → Lav Rules** (editable) and
-  **Film → Settings** replace the Film rules page. **App settings** (sliders in the top bar): connection, sync, screen,
+- v231 **Pages moved**: tap the film's name = open or close films, nothing else. **Film → Settings** replaces the Film rules page. **App settings** (sliders in the top bar): connection, sync, screen,
   Help. **Today → Alarms** replaces Tomorrow, last after Hours, with My call under it (a crew phone: in App settings).
 - The ODG readers know **SPLINTER** and **SPLIT** as the 2nd unit. The robot's PDF library is pinned to 1.27.2.3 (2.1 reads
   no tables on Il colpo's ODGs).
@@ -283,7 +291,7 @@ fine-grained key (Contents RW + Actions RW + Variables R on soundcheck-data only
   call differs: full names only); 74 characters with colours (21 recurring, one-liners brown, voices grey) and
   aliases; preset rules (Adriano's lavs by gender, silent recurring characters wired, main unit only);
   **Film → Settings**: **what kind of project** (Film / TV series, 1 / 2 units, main unit name), **Copy rules from
-  another film**; **Film → Lav Rules**: the mic rules. Scripts per episode (`cue_lines.py --episode N` →
+  another film**; **Mics → Presets**: the mic rules. Scripts per episode (`cue_lines.py --episode N` →
   docs/scripts/epN.pdf); the robot files new scripts by itself (settings `"scripts": {"match": "LA LISTA"}`; a
   series replaces only that episode); 📄 on each scene opens the official script at its page. Film aliases in
   film.json (`"aliases": ["LA LISTA"]`).
