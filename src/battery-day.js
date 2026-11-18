@@ -66,8 +66,11 @@ export function batteryPlan(project, day) {
   const lines = [...byBattery].map(([battery, models]) => {
     const list = [...models.values()].map(model => ({ ...model, need: model.count * model.takes * model.changes }));
     const need = list.reduce((sum, model) => sum + model.need, 0);
-    const have = groups.filter(group => group.battery === battery).reduce((sum, group) => sum + group.batteries.length, 0);
-    return { battery, have, need, spare: have - need, models: list };
+    const ofType = groups.filter(group => group.battery === battery);
+    const have = ofType.reduce((sum, group) => sum + group.batteries.length, 0);
+    // the group that holds them: where Ana's count goes
+    const group = [...ofType].sort((a, b) => b.batteries.length - a.batteries.length)[0];
+    return { battery, have, need, spare: have - need, models: list, groupId: group?.id, counted: Boolean(group?.counted) };
   });
   return { minutes, lines };
 }

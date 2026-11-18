@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-11-18, night · version **v237** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-11-18, night · version **v238** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
@@ -35,6 +35,8 @@ v231. A new ODG email through the new robot steps (a run with no new email passe
 4. Git history rewrite of this public repo: planned, on hold until Ana says (`2026-11-14_history_rewrite_plan.md`, private).
 
 ## Latest (18 Nov 2026)
+- v238 Gear → Batteries: "I have [n]" for each kind of battery, to type the real count (`countBatteries`); "not counted yet" until then. Whole scene: the
+  white card is the same size in both modes (the switch moved into the bottom bar) and each card holds as much text as fits this phone (`cardCapacity`).
 - v237 The reader shows the script's "--" as one dash, so it never breaks across two lines.
 - v236 **Whole scene reads at one size from one place**: speeches and action lines share `--cue-whole-size` and start at the same spot on
   the panel, with less padding. Just dialog keeps the big centred text. Gear → Batteries counts the 2 IFB transmitters (2 AA, every 4 h) and

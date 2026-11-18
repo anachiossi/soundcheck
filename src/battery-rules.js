@@ -46,6 +46,23 @@ const RUNS_KEPT = 10;
 const RUNS_LEARNED = 3;
 const DEAD_CUT = 0.9;
 
+// the batteries after Ana counts a group: more are numbered after the last one; fewer leave from the highest number.
+// A battery in use in a transmitter never leaves.
+export function withBatteryCount(batteries, groupId, count, since) {
+  const mine = batteries.filter(b => b.group === groupId).sort((a, b) => naturalCompare(String(a.label), String(b.label)));
+  const others = batteries.filter(b => b.group !== groupId);
+  const kept = [...mine];
+  for (let i = kept.length - 1; i >= 0 && kept.length > count; i--) {
+    if (kept[i].state !== 'in_use') kept.splice(i, 1);
+  }
+  let label = Math.max(0, ...kept.map(b => Number(b.label) || 0));
+  while (kept.length < count) {
+    label++;
+    kept.push({ id: `${groupId}-${label}`, group: groupId, label: String(label), state: 'full', since });
+  }
+  return [...others, ...kept];
+}
+
 // the groups, each with its batteries in number order
 export function batteryGroups(project) {
   const { groups = [], batteries = [] } = batteryFile(project);

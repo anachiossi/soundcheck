@@ -3,6 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { batteryPlan, dayLength, nextDay } from '../src/battery-day.js';
+import { withBatteryCount } from '../src/battery-rules.js';
 
 const film = (count = { mini: 24, aa: 50 }) => ({
   transmitters: [{ id: '1', model: 'Mini' }, { id: '2', model: 'Mini' }, { id: '3', model: 'Mini' }, { id: 'B1', model: 'Boom' }, { id: 'B2', model: 'Boom' }, { id: '13', model: 'Small' }],
@@ -35,6 +36,35 @@ test('the IFB transmitters count all day and each receiver takes one set', () =>
   const need = Object.fromEntries(aa.models.map(model => [model.model, model.need]));
   assert.deepEqual(need, { Boom: 12, 'IFB mix': 4, 'IFB boom': 4, EK: 4 });
   assert.equal(aa.need, 24);
+});
+
+const numbered = (...states) => states.map((state, i) => ({ id: `b-${i + 1}`, group: 'b', label: String(i + 1), state }));
+
+test('counting more batteries numbers the new ones after the last', () => {
+  const after = withBatteryCount(numbered('full', 'full'), 'b', 4, 'now');
+  assert.deepEqual(after.map(b => b.label), ['1', '2', '3', '4']);
+  assert.equal(after[3].state, 'full');
+});
+
+test('counting fewer batteries takes away the highest numbers', () => {
+  assert.deepEqual(withBatteryCount(numbered('full', 'full', 'full'), 'b', 1, 'now').map(b => b.label), ['1']);
+});
+
+test('a battery in use in a transmitter is never taken away by a count', () => {
+  const after = withBatteryCount(numbered('full', 'full', 'in_use'), 'b', 1, 'now');
+  assert.deepEqual(after.map(b => b.label), ['3']);
+});
+
+test('a count changes only its own group', () => {
+  const other = { id: 'x-1', group: 'x', label: '1', state: 'full' };
+  assert.ok(withBatteryCount([other, ...numbered('full')], 'b', 0, 'now').includes(other));
+});
+
+test('the plan says where the count goes and whether it was counted', () => {
+  const project = film();
+  project.gearBatteries.groups[0].counted = '2026-11-19';
+  const lines = batteryPlan(project, day).lines;
+  assert.deepEqual(lines.map(line => [line.battery, line.groupId, line.counted]), [['NP-BX1', 'b1', true], ['AA', 'b2', false]]);
 });
 
 test('a transmitter not used that day is not counted', () => {

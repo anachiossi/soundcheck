@@ -424,7 +424,7 @@ button.kit-item { border: 0; background: none; padding: 4px; border-radius: 12px
   --cue-font: 'Courier Prime', 'Courier New', monospace;
   --cue-size: clamp(22px, min(7vw, 7.5vh), 44px);   /* phone upright ≈ 27px, sideways ≈ 29px, laptop 44px */
   --cue-paper: #fffbf0; --cue-ink: #1f2430;
-  --cue-whole-size: clamp(19px, 5.4vw, 26px);   /* Whole scene: speeches and action lines at one size, so the eyes never jump */
+  --cue-whole-size: clamp(21px, 6vw, 28px);   /* Whole scene: speeches and action lines at one size, so the eyes never jump */
 }
 .cues { position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column; gap: 10px;
   padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
@@ -448,16 +448,15 @@ button.kit-item { border: 0; background: none; padding: 4px; border-radius: 12px
   line-height: 1.5; word-spacing: .08em; }
 .cues__phrase { margin: 0; }
 .cues__phrase + .cues__phrase { margin-top: .35em; }   /* a new phrase: a little space above */
-/* Whole scene: every card starts at the same place, in the same size and weight, using the whole panel */
-.cues--whole { gap: 6px; padding-left: max(8px, env(safe-area-inset-left)); padding-right: max(8px, env(safe-area-inset-right)); }
-.cues--whole .cues__name { font-size: 20px; }
-.cues--whole .cues__panel { padding: 12px 12px 4px; border-radius: 14px; }
+/* Whole scene: the white card keeps its size; every card's text starts at the same place, in the same size and weight, and fills it */
+.cues--whole .cues__panel { padding: 12px 12px 4px; }
 .cues--whole .cues__speech { margin: 0; max-width: none; padding: 0; text-align: left; font-size: var(--cue-whole-size);
   line-height: 1.32; word-spacing: .04em; -webkit-text-stroke: .2px currentColor; }
 .cues--whole .cues__phrase + .cues__phrase { margin-top: .22em; }
 .cues--whole .cues__more { margin-top: 2px; font-size: 13px; }
-.cues__mode { display: flex; align-self: center; gap: 2px; padding: 3px; border-radius: 999px; background: rgba(0,0,0,.18); }
-.cues__mode button { border: 0; border-radius: 999px; padding: 7px 14px; background: none; color: inherit; font: inherit; font-size: 14px; font-weight: 700; }
+.cues__mode { display: flex; flex: none; gap: 2px; padding: 2px; border-radius: 999px; background: rgba(0,0,0,.18); }   /* in the bottom bar: the white card stays the same in both modes */
+.cues__mode button { border: 0; border-radius: 999px; padding: 3px 9px; background: none; color: inherit; font: inherit; font-size: 13px; font-weight: 700; white-space: nowrap; }
+.cues__next { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cues__mode button.on { background: var(--cue-paper); color: var(--cue-ink); }
 .cues__more { align-self: center; margin-top: 6px; font-size: 16px; font-weight: 700; color: var(--cue-more); }
 .cues__more--hidden { visibility: hidden; }            /* keeps its space, so the panel doesn't jump */
@@ -1047,3 +1046,5 @@ mark.hit--now { background: #f59e0b; box-shadow: 0 0 0 2px #f59e0b; }           
 .battery-plan .section-title { margin-top: 0; }
 .battery-plan__line p { margin: 2px 0; font-size: 14px; }
 .battery-plan__line { margin-bottom: 8px; }
+.battery-plan__count { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: 14px; }
+.battery-plan__count input { width: 4.5em; font-size: 16px; padding: 4px 6px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--card); color: var(--ink); }

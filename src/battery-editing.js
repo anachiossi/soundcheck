@@ -4,7 +4,7 @@
 // Used by: screens/gear-batteries.js, parts/battery-cell.js
 
 import { getState, saveAndShow, showMessage } from './state.js';
-import { batteryFile, withRun, batteryIn, placeOfTx, freeChargerFor, chargersFor } from './battery-rules.js';
+import { batteryFile, withBatteryCount, withRun, batteryIn, placeOfTx, freeChargerFor, chargersFor } from './battery-rules.js';
 import { sleep, wake } from './battery-sleep.js';
 import { syncNow } from './sync.js';
 
@@ -57,6 +57,16 @@ export function saveGroup(fields) {
     extra.push({ id: `${id}-${label}`, group: id, label: String(label), state: 'full', since: now() });
   }
   return save({ ...file, groups, batteries: [...file.batteries, ...extra] }, `${name} saved.`);
+}
+
+// how many batteries Ana really has of a group, once she has counted them (Gear → Batteries, the day's card)
+export function countBatteries(groupId, count) {
+  const file = batteryFile(getState().project);
+  const wanted = Math.max(0, Math.round(Number(count) || 0));
+  const batteries = withBatteryCount(file.batteries, groupId, wanted, now());
+  const groups = file.groups.map(g => (g.id === groupId ? { ...g, counted: now().slice(0, 10) } : g));
+  const have = batteries.filter(b => b.group === groupId).length;
+  return save({ ...file, groups, batteries }, have === wanted ? `${have} batteries counted.` : `${have} batteries: the ones in use stay until they come out.`);
 }
 
 // a battery request from the kit website, approved (kit-approve.js, kit-battery-requests.js): `add` new batteries

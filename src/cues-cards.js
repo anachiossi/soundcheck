@@ -6,18 +6,27 @@
 
 import { phraseLines, sentencesOf } from './cues-phrases.js';
 
-export const MOST_ON_A_CARD = 300; // characters that fit a small phone with no scrolling
+export const MOST_ON_A_CARD = 300; // when the screen's size is not given
+
+// how many characters fill the white card on this screen, with no scrolling: the text size is --cue-whole-size in app.css;
+// the bars around the card take about 240 px, its margins 56 px; lines end early and sentences leave gaps, so 72% of the room
+export function cardCapacity(width, height) {
+  const size = Math.min(28, Math.max(21, width * 0.06));
+  const perLine = Math.floor((width - 56) / (size * 0.6));
+  const lines = Math.floor((height - 240) / (size * 1.32));
+  return Math.max(120, Math.floor(perLine * lines * 0.72));
+}
 
 // a sentence that fits a card, or its phrases
-const piecesOf = sentence => (sentence.length <= MOST_ON_A_CARD ? [sentence] : phraseLines(sentence).split('\n'));
+const piecesOf = (sentence, most) => (sentence.length <= most ? [sentence] : phraseLines(sentence).split('\n'));
 
 // the action text → [[sentences of card 1], [sentences of card 2]…]
-export function actionPages(text) {
+export function actionPages(text, most = MOST_ON_A_CARD) {
   const pages = [];
   let page = [];
   let size = 0;
-  for (const piece of sentencesOf(text).flatMap(piecesOf)) {
-    if (page.length && size + piece.length + 1 > MOST_ON_A_CARD) {
+  for (const piece of sentencesOf(text).flatMap(sentence => piecesOf(sentence, most))) {
+    if (page.length && size + piece.length + 1 > most) {
       pages.push(page);
       page = [];
       size = 0;
@@ -29,10 +38,10 @@ export function actionPages(text) {
 }
 
 // → [{ kind: 'line', line, lineIndex } | { kind: 'action', sentences, lineIndex }]
-export function sceneCards(cues, wholeScene) {
+export function sceneCards(cues, wholeScene, most = MOST_ON_A_CARD) {
   const cards = [];
   const addAction = (text, lineIndex) => {
-    if (wholeScene) cards.push(...actionPages(text).map(sentences => ({ kind: 'action', sentences, lineIndex })));
+    if (wholeScene) cards.push(...actionPages(text, most).map(sentences => ({ kind: 'action', sentences, lineIndex })));
   };
   (cues?.lines || []).forEach((line, lineIndex) => {
     addAction(line.action, lineIndex);

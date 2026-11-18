@@ -2,7 +2,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { actionPages, cardOfLine, hasAction, MOST_ON_A_CARD, sceneCards } from '../src/cues-cards.js';
+import { actionPages, cardCapacity, cardOfLine, hasAction, MOST_ON_A_CARD, sceneCards } from '../src/cues-cards.js';
 import { sentencesOf } from '../src/cues-phrases.js';
 
 const cues = { lines: [{ name: 'ANNA', text: 'Ciao.', action: 'Anna entra.' }, { name: 'BRUNO', text: 'Ehi.' }], end_action: 'Escono.' };
@@ -42,6 +42,12 @@ test('a sentence too long for one card is divided at its commas', () => {
   const pages = actionPages(text);
   assert.ok(pages.length > 1);
   assert.equal(pages.flat().join(' '), text);
+});
+
+test('a bigger phone puts more text on each card', () => {
+  assert.ok(cardCapacity(390, 844) > cardCapacity(360, 640));
+  const text = Array(10).fill('Mino e Terry si guardano sorpresi, poi lentamente si voltano verso la porta.').join(' ');
+  assert.ok(actionPages(text, cardCapacity(390, 844)).length <= actionPages(text, cardCapacity(360, 640)).length);
 });
 
 test('a scene with no action has nothing to switch', () => {
