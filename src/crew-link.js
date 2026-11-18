@@ -25,7 +25,7 @@ export const PERSONAL_PARTS = ['wrap-alerts', 'tomorrow', 'help-alarms'];
 
 // Parts that are Ana's job on the film, not the crew's: not shown on crew phones either.
 //   'email-proposals'  the 📬 banner of a production email (ODG, sides…) and its proposal screen
-//   'lav-rules', 'film-settings'  Film → Lav Rules and Film → Settings
+//   'lav-rules', 'film-settings'  Mics → Presets and Film → Settings
 export const OWNER_ONLY_PARTS = ['email-proposals', 'lav-rules', 'film-settings'];
 
 export function crewHides(connection, part) {

@@ -64,9 +64,10 @@ export function lavProblems(project, sceneId, rows) {
 // Speakers: 0 → AMB, 1–2 → EASY, 3–4 → MEDIUM, 5+ → HARD; with dialogue, ONE step up for
 // EXT with 2 speakers, or scream / FX / crowd / kids / animal, or talking in the water;
 // live music → HARD. (Summing every bump overshoots Ana's own ratings, so at most one.)
+// A scene where nobody is sure yet ("?" under Speaks) counts its "?": it is never taken for a silent scene.
 export function suggestedLevel(project, sceneId) {
   const rows = project.presets?.[sceneId]?.rows || [];
-  const speakers = rows.filter(row => row.speaker === 'yes').length;
+  const speakers = rows.filter(row => row.speaker === 'yes').length || rows.filter(row => row.speaker === 'maybe').length;
   const flags = new Set(soundOf(project, sceneId)?.flags || []);
   const ext = /^E/i.test(project.scenes?.[sceneId]?.int_ext || '');
   if (flags.has('music')) return 5;
@@ -74,4 +75,11 @@ export function suggestedLevel(project, sceneId) {
   const base = speakers <= 2 ? 3 : speakers <= 4 ? 4 : 5;
   const harder = (ext && speakers === 2) || ['scream', 'fx', 'crowd', 'kids', 'animal', 'water'].some(f => flags.has(f));
   return Math.min(5, base + (harder ? 1 : 0));
+}
+
+// The level that colours a scene: Ana's own, else the suggestion. A scene with nobody in it yet has no colour.
+export function tintLevel(project, sceneId) {
+  const own = soundOf(project, sceneId)?.level;
+  if (own) return own;
+  return project.presets?.[sceneId]?.rows?.length ? suggestedLevel(project, sceneId) : null;
 }

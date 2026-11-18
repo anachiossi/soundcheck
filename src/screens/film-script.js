@@ -24,5 +24,5 @@ export function ScriptScreen({ state }) {
       ${papers.map(([path, title, icon]) => html`
         <button key=${path} class="btn btn--doc" onClick=${() => openPaper(path, title)}><${Icon} name=${icon} /> ${title}</button>`)}
     </div>
-    ${script.script > 0 && html`<p class="muted with-icon"><${Icon} name="cues" /> Cues for ${script.script} scenes${script.sides ? `, ${script.sides} updated from the sides` : ''}</p>`}`;
+    ${script.script > 0 && html`<p class="muted with-icon"><${Icon} name="cues" /> Dialogs for ${script.script} scenes${script.sides ? `, ${script.sides} updated from the sides` : ''}</p>`}`;
 }

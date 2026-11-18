@@ -29,7 +29,7 @@ export function HelpScreen({ state }) {
         <li>After the wrap: "Did today finish on time?" — No asks again every hour ("Is this a wrap?") until you type the real wrap.</li>
         <li>Tap ⏱ (or Today → Hours, any day) for the week, the overtime, and the images for production (week or whole film). Tap a day's wrap to correct it.</li>
         ${alarms && html`<li><b>Notifications</b> at the wrap, even with the app closed: Hours → 🔔 Wrap alerts → Allow (Home Screen app, iOS 16.4 or later). They can come up to 10 minutes late.</li>`}
-        <li>${alarms ? 'Today → Alarms' : 'App settings'} → <b>My call</b>: your hours count from the crew call, or from your own call on the call sheet (your name as printed there).</li>
+        <li>${alarms ? 'Today → Alarms' : 'App settings'} → <b>Call time based on</b>: your hours count from the crew call, or from your own call on the call sheet (your name as printed there).</li>
       </ul>
 
       ${alarms && html`
@@ -56,7 +56,7 @@ export function HelpScreen({ state }) {
 
       <h2 class="section-title">Hearing the lines</h2>
       <ul class="help">
-        <li>soundcheck never speaks by itself. To hear a scene with Siri's voice: open Cues on the first line and swipe down with two fingers from the top (Speak Screen,
+        <li>soundcheck never speaks by itself. To hear a scene with Siri's voice: open Dialogs on the first line and swipe down with two fingers from the top (Speak Screen,
           turn it on in Settings → Accessibility → Spoken Content). It reads each character's name, then the line,
           to the end of the scene. Don't tap while it reads.</li>
       </ul>

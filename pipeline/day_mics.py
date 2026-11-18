@@ -5,8 +5,10 @@ For the main unit's scenes of one day, after the sheet's other changes (who was 
   who speaks    the day's sides; a scene with no sides takes the script. The script can number its scenes another
                 way than the production, so it only ever says who DOES speak, and not when it names someone the
                 sheet's cast doesn't list for that scene
-  which mic     the film's rules (Film → Lav Rules), the same TX and lav all day (presets.day_plan)
+  which mic     the film's rules (Mics → Presets), the same TX and lav all day (presets.day_plan)
   never         a TX or lav already chosen is not changed: only the empty ones are filled
+  every actor   a film with "wire_silent": "cast" (Il colpo): each actor the production prints for the scene gets a row,
+                and with no sides for the scene counts as speaking
 
 Each scene gets one change "set_mics", accepted or rejected in the proposal like the others.
 Used by: propose.py · tests: tests/test_day_mics.py
@@ -15,7 +17,7 @@ Used by: propose.py · tests: tests/test_day_mics.py
 import copy
 
 from odg_presets import lines_from_speakers
-from presets import day_plan, gets_mic
+from presets import cast_actor, day_plan, gets_mic
 from propose_presets import describe_new, load_film
 
 
@@ -35,6 +37,11 @@ def rows_after(presets, changes):
             for row in rows:
                 if row["char_id"] == op["char_id"]:
                     row["speaker"] = op["speaker"]
+        elif op["op"] == "set_mics" and rows is not None:
+            for mic in op["mics"]:
+                for row in rows:
+                    if row["char_id"] == mic["char_id"] and not row.get("tx_id"):
+                        row.update(tx_id=mic["tx_id"], lav_id=row.get("lav_id") or mic["lav_id"])
         elif op["op"] == "number_character":
             for preset in after.values():
                 for row in preset["rows"]:
@@ -53,6 +60,30 @@ def script_speakers(film, scene):
     speaking = list(dict.fromkeys(str(line.get("char_id") or "") for line in lines if line.get("char_id")))
     cast = {str(number) for number in scene.get("cast") or []}
     return [] if any(char_id.isdigit() and char_id not in cast for char_id in speaking) else speaking
+
+
+def every_actor_rows(film, scene, names):
+    """"wire_silent": "cast": the printed actors missing from the scene get a row; with no sides they all speak.
+    → the changes (the rows in film["presets"] are changed too)."""
+    scene_id = scene["scene_id"]
+    rows = film["presets"][scene_id]["rows"]
+    sides = film["lines"].get(f"sides/{scene_id}")
+    speaking = {str(line.get("char_id")) for line in (sides or {}).get("lines") or []}
+    found = []
+    for char_id in map(str, scene.get("cast") or []):
+        if cast_actor(film, char_id) and not any(str(row["char_id"]) == char_id for row in rows):
+            row = {"char_id": char_id, "tx_id": "", "lav_id": "", "speaker": "no" if sides is not None and char_id not in speaking else "yes"}
+            rows.append(row)
+            found.append({"text": f"Scene {scene_id}: add {names.get(char_id, char_id)} (printed for this scene)", "scene_id": scene_id,
+                          "op": {"op": "add_row", "scene_id": scene_id, "row": dict(row)}})
+    if sides is None:
+        for row in rows:
+            if row.get("speaker") == "maybe" and cast_actor(film, row["char_id"]):
+                row["speaker"] = "yes"
+                found.append({"text": f"Scene {scene_id}: {names.get(str(row['char_id']), row['char_id'])} speaks MAYBE → YES (no sides yet)",
+                              "scene_id": scene_id,
+                              "op": {"op": "set_speaker", "scene_id": scene_id, "char_id": row["char_id"], "speaker": "yes"}})
+    return found
 
 
 def missing_mics(film, scene_id, plan):
@@ -74,9 +105,12 @@ def mic_changes_of_day(film, scenes, changes, sides=None):
     sides: read_sides' { scene: {"speakers": [...]} } for that day. → (the new changes, lines for Ana)"""
     film = {**film, "presets": rows_after(film["presets"], changes), "lines": dict(film["lines"])}
     names = {str(character["id"]): character["name"] for character in film["characters"]}
-    main = [scene for scene in scenes if not scene.get("unit") and scene["scene_id"] in film["presets"]]
+    every_actor = film["settings"]["presets"].get("wire_silent") == "cast"
+    main = [scene for scene in scenes if not scene.get("unit")
+            and (scene["scene_id"] in film["presets"] or (every_actor and scene.get("cast")))]
     found = []
     for scene in main:
+        film["presets"].setdefault(scene["scene_id"], {"scene_id": scene["scene_id"], "rows": []})
         scene_id = scene["scene_id"]
         if sides and scene_id in sides:
             film["lines"][f"sides/{scene_id}"] = lines_from_speakers(film, sides[scene_id]["speakers"])
@@ -87,6 +121,8 @@ def mic_changes_of_day(film, scenes, changes, sides=None):
                 found.append({"text": f"Scene {scene_id}: {names.get(str(row['char_id']), row['char_id'])} speaks MAYBE → YES (script)",
                               "scene_id": scene_id,
                               "op": {"op": "set_speaker", "scene_id": scene_id, "char_id": row["char_id"], "speaker": "yes"}})
+        if every_actor:
+            found += every_actor_rows(film, scene, names)
     scene_ids = [scene["scene_id"] for scene in main]
     plan, _, notes = day_plan(film, film["settings"], scene_ids, keep_tx=True)
     for scene_id in scene_ids:

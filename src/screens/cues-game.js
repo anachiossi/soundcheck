@@ -48,7 +48,7 @@ export function CuesGameScreen({ state }) {
 
   const bar = html`
     <div class="focus-bar">
-      <button class="icon-btn" onClick=${() => setState({ screen: 'cues', cuesLine: beat.start, cuesFrom: 'cues-game' })} aria-label="Cues"><${Icon} name="cues" /></button>
+      <button class="icon-btn" onClick=${() => setState({ screen: 'cues', cuesLine: beat.start, cuesFrom: 'cues-game' })} aria-label="Dialogs"><${Icon} name="cues" /></button>
       <button class="icon-btn" onClick=${() => setState({ screen: 'cues-map' })} aria-label="Dialogue map"><${Icon} name="map" /></button>
       <button class="icon-btn" onClick=${() => setState({ screen: 'cues-timeline' })} aria-label="Timeline"><${Icon} name="timeline" /></button>
       <span class="focus-bar__space"></span>

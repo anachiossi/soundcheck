@@ -1,7 +1,7 @@
 // scene-pill.js — THE scene number pill, the same everywhere (day chips, Scenes search, All film,
 // the #11 on each slate, the Cues list, Cues and the Scene Map). Change it here → it changes
-// everywhere. Tinted (except on the slate) with the scene's dificultômetro colour (sound-rules.js LEVELS); no level
-// yet = a plain white pill.
+// everywhere. Tinted (except on the slate) with the scene's dificultômetro colour (sound-rules.js LEVELS): Ana's level,
+// else the suggested one; nobody in the scene yet = a plain white pill.
 //   <${ScenePill} project=${project} sceneId="11" />                     small, "11"
 //   <${ScenePill} project=${project} sceneId="11" size="title" hash />   the slate's "#11": big, black, never tinted
 //   onClick → a button (active = chosen); without it, a plain label. done → dark grey (already shot).
@@ -10,11 +10,11 @@
 
 import { html } from '../../vendor/preact-htm.js';
 import { textColourFor } from '../colour.js';
-import { LEVELS, soundOf } from '../sound-rules.js';
+import { LEVELS, tintLevel } from '../sound-rules.js';
 
 export function ScenePill({ project, sceneId, size = 'chip', hash = false, onClick, active = false, done = false }) {
   // the slate is already full of information: its number stays plain black; a scene already shot is dark grey (Scenes tab)
-  const colour = size === 'title' ? null : done ? '#374151' : LEVELS[soundOf(project, sceneId)?.level]?.color;
+  const colour = size === 'title' ? null : done ? '#374151' : LEVELS[tintLevel(project, sceneId)]?.color;
   const style = colour ? `background:${colour};color:${textColourFor(colour)};border-color:${colour}` : '';
   const className = `scene-pill scene-pill--${size}` + (active ? ' scene-pill--on' : '');
   const label = hash ? `#${sceneId}` : sceneId;

@@ -134,7 +134,7 @@ export function CuesTimelineScreen({ state }) {
     <div class="timeline">
       <div class="focus-bar">
         <button class="icon-btn" onClick=${() => setState({ screen: 'cues', cuesLine: now?.index || 0, cuesFrom: 'cues-timeline' })}
-                aria-label="Cues from this line"><${Icon} name="cues" /></button>
+                aria-label="Dialogs from this line"><${Icon} name="cues" /></button>
         <button class="icon-btn" onClick=${() => setState({ screen: 'cues-map' })} aria-label="Dialogue map"><${Icon} name="map" /></button>
         <button class="icon-btn" onClick=${() => setState({ screen: 'cues-game' })} aria-label="Who's next game"><${Icon} name="game" /></button>
         <span class="focus-bar__space"></span>

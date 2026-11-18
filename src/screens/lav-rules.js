@@ -1,4 +1,4 @@
-// lav-rules.js — Film → Lav Rules: who gets a mic and which one, to change here (Ana, 18 Nov). Each choice is saved at
+// lav-rules.js — Mics → Presets: who gets a mic and which one, to change here (Ana, 18 Nov). Each choice is saved at
 // once in the film's settings.json; the robot uses it on the next ODG. Mics already in a scene don't change.
 // Used by: main.js
 
@@ -6,7 +6,8 @@ import { html, useState } from '../../vendor/preact-htm.js';
 import { showMessage } from '../state.js';
 import { lavModels, lavName, readTxOrder, saveLavRules, txIds, txModels } from '../lav-rules.js';
 
-const WHO = [['', 'Only who speaks'], ['recurring', 'Main and medium characters, even when silent']];
+const WHO = [['', 'Only who speaks'], ['recurring', 'Main and medium characters, even when silent'],
+  ['cast', 'Every actor, even when silent (not extras or special extras)']];
 
 function Choice({ label, value, options, empty, onChange }) {
   return html`
@@ -62,9 +63,24 @@ export function LavRulesScreen({ state }) {
 
       <h2 class="section-title">Transmitters</h2>
       <${TxOrder} key=${(rules.tx_order || []).join()} project=${project} rules=${rules} booms=${booms} />
-      <p class="field">Never on an actor (the booms)</p>
-      <${Ticks} items=${txIds(project).map(id => [id, `TX ${id}`])} chosen=${booms} onChange=${setBooms} />
-      <${BigDay} key=${rules.small_day_max_speakers} project=${project} rules=${rules} />
+      <${Exceptions} label="Never on an actor (the booms)" items=${txIds(project)} chosen=${booms} onChange=${setBooms} />
+    </div>`;
+}
+
+// The TX kept off the actors: one small tag each (✕ takes it off) and a list to add another.
+function Exceptions({ label, items, chosen, onChange }) {
+  const left = items.filter(id => !chosen.includes(id));
+  return html`
+    <label class="field">${label}
+      <select value="" onChange=${event => event.target.value && onChange([...chosen, event.target.value])}>
+        <option value="">Add a TX…</option>
+        ${left.map(id => html`<option key=${id} value=${id}>TX ${id}</option>`)}
+      </select>
+    </label>
+    <div class="chips">
+      ${chosen.map(id => html`
+        <button key=${id} class="chip chip--on" aria-label=${`Take TX ${id} off the list`}
+                onClick=${() => onChange(chosen.filter(other => other !== id))}>TX ${id} ✕</button>`)}
     </div>`;
 }
 
@@ -80,21 +96,6 @@ function TxOrder({ project, rules, booms }) {
   return html`
     <form class="field" onSubmit=${submit}>TX order (who comes first takes the first one)
       <span class="toolbar"><input value=${text} onInput=${event => setText(event.target.value)} placeholder="1, 2, 3" />
-        <button class="btn btn--small">Save</button></span>
-    </form>`;
-}
-
-function BigDay({ project, rules }) {
-  const [speakers, setSpeakers] = useState(String(rules.small_day_max_speakers ?? 7));
-  const submit = event => {
-    event.preventDefault();
-    const number = Number(speakers);
-    if (!Number.isInteger(number) || number < 1) return showMessage('error', 'Type a whole number of speakers.');
-    saveLavRules(project, { small_day_max_speakers: number }, 'Big day rule saved.');
-  };
-  return html`
-    <form class="field" onSubmit=${submit}>Most speakers in a scene on a normal day (above it, characters take their preferred TX first)
-      <span class="toolbar"><input type="number" inputmode="numeric" min="1" value=${speakers} onInput=${event => setSpeakers(event.target.value)} />
         <button class="btn btn--small">Save</button></span>
     </form>`;
 }

@@ -35,6 +35,8 @@ from fetch_mail import emails_oldest_first, fetch  # noqa: E402
 from mail_packets import is_odg  # noqa: E402
 from propose import build_proposal, pick_sides, sides_for_film, NO_SIDES  # noqa: E402
 from auto_presets import auto_review  # noqa: E402
+from second_unit_days import add_second_unit_days  # noqa: E402
+from sound_analysis import missing_analysis  # noqa: E402
 from propose_pdl import build_pdl_proposal  # noqa: E402
 
 
@@ -88,6 +90,7 @@ def run(film_folder, include_past=False):
         known.add(source.get("message_id") or source["subject"])
 
     written = []
+    schedule_changed = False  # a new ODG's 2nd unit went into the schedule (second_unit_days.py)
     other_sides, sides_notes, loose_sides = sides_for_film(film)  # by number, or by date ("sides_by": "date")
     for note in loose_sides:
         print(f"sides: {note}")
@@ -117,6 +120,8 @@ def run(film_folder, include_past=False):
         proposal["source"]["message_id"] = info.get("message_id", "")
         write_json(proposals / f"{name}.json", proposal)
         written.append(proposal)
+        if "PDL" not in names and proposal["date"] >= today:
+            schedule_changed = add_second_unit_days(film, proposal) or schedule_changed
         print(f"proposal {name}: {len(proposal['changes'])} changes, {len(proposal['warnings'])} warnings, "
               f"{len(proposal['checks'])} checks OK")
 
@@ -139,9 +144,20 @@ def run(film_folder, include_past=False):
                 print(f"proposal {preset_review['id']}: first presets for {len(preset_review['changes'])} scene(s)")
         except Exception as error:
             print(f"WARNING the preset review failed, the emails are saved anyway: {error}")
+        try:
+            analysed = missing_analysis(film)
+            if analysed:
+                print(f"sound analysis: {len(analysed)} scene(s)")
+        except Exception as error:
+            analysed = []
+            print(f"WARNING the sound analysis failed, the emails are saved anyway: {error}")
+        if analysed:
+            git(repo, "add", str(film / "sound"))
     if written or documents:
         if written:
             git(repo, "add", str(proposals))
+        if schedule_changed:
+            git(repo, "add", str(film / "schedule.json"))
         if documents:
             git(repo, "add", str(film / "docs"), str(film / "lines"),
                 *[str(film / name) for name in ("calls.json", "locations.json") if (film / name).exists()])

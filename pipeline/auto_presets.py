@@ -9,6 +9,9 @@ rejects scene by scene (the same kind as propose_presets.py writes by hand).
   never twice  a scene already offered with exactly these rows (waiting, accepted or rejected) is not offered
                again; when its rows change (the sides arrived: now it is known who speaks) it is
 
+A film with "wire_silent": "cast" (Il colpo, Ana 18 Nov: "from the PDL and the scripts it should already create presets
+for every scene") gets every_scene_review instead: every scene of every day still to shoot, not only the coming week.
+
 A film with no "presets" rules in its settings.json gets nothing.
 Used by: run.py · tests: tests/test_auto_presets.py
 """
@@ -17,8 +20,10 @@ import datetime
 import json
 from pathlib import Path
 
+from day_mics import mic_changes_of_day, rows_after
 from first_presets import cast_by_scene
-from propose_presets import days_of, load_film, proposal_of, review, write_proposal
+from presets import by_tx
+from propose_presets import days_of, describe_new, load_film, proposal_of, review, write_proposal
 
 
 def coming_days(film, today, days_ahead=7):
@@ -39,12 +44,42 @@ def offered_before(folder):
     return offered
 
 
+def every_scene_review(folder, film, today, cast=None):
+    """Every scene from today on: the printed actors, who speaks and the empty TX and lavs (day_mics.py), one change per
+    scene. The production's cast decides who is in a scene, also when the script numbers it another way."""
+    cast = cast if cast is not None else cast_by_scene(folder)
+    days = {day: info for day, info in days_of(film).items() if (info["date"] or "") >= today}
+    changes, warnings, day_of = [], [], {}
+    for day, info in days.items():
+        scenes = [{"scene_id": scene_id, "cast": cast.get(scene_id, [])} for scene_id in info["scenes"]]
+        found, notes = mic_changes_of_day(film, scenes, changes)
+        changes += found
+        warnings += [f"Day {day}: {note}" for note in notes]
+        day_of.update({change["scene_id"]: day for change in found})
+    after = rows_after(film["presets"], changes)
+    offered = offered_before(folder)
+    review_changes = []
+    for scene_id, day in day_of.items():
+        rows = by_tx(after[scene_id]["rows"])
+        if rows not in offered.get(scene_id, []):
+            review_changes.append({"id": f"c{len(review_changes) + 1}", "scene_id": scene_id,
+                                   "text": f"Day {day} · scene {scene_id}: " + "; ".join(describe_new(film, rows)),
+                                   "op": {"op": "set_preset", "scene_id": scene_id, "rows": rows}})
+    if not review_changes:
+        return None
+    proposal = proposal_of(folder, review_changes, warnings, f"days {min(days)}–{max(days)}", min(days))
+    write_proposal(folder, proposal)
+    return proposal
+
+
 def auto_review(folder, today=None, cast=None):
     """Writes the review when there is something new to offer → the proposal, else None.
     cast: { scene: [cast numbers] } given by a test; else read from the film's PDL and call sheets."""
     film = load_film(folder, with_cast=False)
     if not film["settings"].get("presets"):
         return None
+    if film["settings"]["presets"].get("wire_silent") == "cast":
+        return every_scene_review(folder, film, today or datetime.date.today().isoformat(), cast)
     days = coming_days(film, today or datetime.date.today().isoformat())
     missing = [scene for day in days for scene in days_of(film)[day]["scenes"] if scene not in film["presets"]]
     if not missing:

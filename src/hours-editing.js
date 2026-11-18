@@ -59,8 +59,8 @@ export function followMyCall(setting) {
   const { project, connection } = getState();
   const commute = robotsMyNameAfter(project, connection, setting);
   if (!commute) return;
-  const message = commute.my_name ? `My call: the call of ${commute.my_name} — the robots' alarms follow it too.`
-    : 'My call: the general crew call — the robots\' alarms follow it too.';
+  const message = commute.my_name ? `Call time based on ${commute.my_name}'s call: the robots' alarms follow it too.`
+    : 'Call time based on the general crew call: the robots\' alarms follow it too.';
   return saveSettings({ commute }, message);
 }
 

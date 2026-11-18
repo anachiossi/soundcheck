@@ -44,7 +44,7 @@ export function CuesMapScreen({ state }) {
     return () => { removeEventListener('scroll', onScroll); cancelAnimationFrame(frame); };
   }, [cuesScene]);
   const back = () => setState({ screen: 'cues-picker', cuesScene: null });
-  if (!cues) return html`<p class="empty">No lines for scene ${cuesScene}.</p><button class="btn" onClick=${back}>‹ Cues</button>`;
+  if (!cues) return html`<p class="empty">No lines for scene ${cuesScene}.</p><button class="btn" onClick=${back}>‹ Dialogs</button>`;
 
   const chars = byId(project.characters);
   const colourOf = line => {
@@ -74,7 +74,7 @@ export function CuesMapScreen({ state }) {
   return html`
     <div class="map-top">
       <div class="focus-bar">
-        <button class="icon-btn" onClick=${() => learnFrom(0)} aria-label="Cues from the start"><${Icon} name="cues" /></button>
+        <button class="icon-btn" onClick=${() => learnFrom(0)} aria-label="Dialogs from the start"><${Icon} name="cues" /></button>
         <button class="icon-btn" onClick=${() => setState({ screen: 'cues-timeline' })} aria-label="Timeline"><${Icon} name="timeline" /></button>
         <button class="icon-btn" onClick=${() => setState({ screen: 'cues-game' })} aria-label="Who's next game"><${Icon} name="game" /></button>
         <span class="focus-bar__space"></span>
@@ -109,7 +109,7 @@ export function CuesMapScreen({ state }) {
                   query=${search?.query} now=${found && found.line === row.index && found.phrase === k ? found.nth : -1} /></span>`)}
                 ${notes.length > 0 && html`<small>${notes.join(' · ')}</small>`}
                 ${isOpen && html`<span class="map-line__learn">
-                  <button class="icon-btn" aria-label="Cues from this line"
+                  <button class="icon-btn" aria-label="Dialogs from this line"
                     onClick=${event => { event.stopPropagation(); learnFrom(row.index); }}><${Icon} name="cues" /></button>
                   <button class="icon-btn" aria-label="Edit this line"
                     onClick=${event => { event.stopPropagation(); setEditor({ index: row.index, adding: null }); }}><${Icon} name="edit" /></button>

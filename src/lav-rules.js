@@ -1,4 +1,4 @@
-// lav-rules.js — the film's mic rules, kept in settings.json → "presets" (Film → Lav Rules, Ana 18 Nov). The robot's
+// lav-rules.js — the film's mic rules, kept in settings.json → "presets" (Mics → Presets, Ana 18 Nov). The robot's
 // presets (pipeline/presets.py) follow them. What can be chosen comes from the film's own kit.
 // Used by: screens/lav-rules.js
 

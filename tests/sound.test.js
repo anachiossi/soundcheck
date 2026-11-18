@@ -1,7 +1,18 @@
 // sound.test.js — the sound breakdown: suggested level, lav warnings, the proposal change. Run: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { suggestedLevel, lavProblems, warningsFor } from '../src/sound-rules.js';
+import { suggestedLevel, tintLevel, lavProblems, warningsFor } from '../src/sound-rules.js';
+
+test('a scene is coloured by Ana\'s level, else by the suggestion, and has no colour with nobody in it', () => {
+  const rows = [{ speaker: 'yes' }, { speaker: 'yes' }, { speaker: 'yes' }];
+  assert.equal(tintLevel({ presets: { 7: { rows } }, sound: { 7: { level: 1 } }, scenes: {} }, '7'), 1);
+  assert.equal(tintLevel({ presets: { 7: { rows } }, sound: {}, scenes: {} }, '7'), 4);
+  assert.equal(tintLevel({ presets: {}, sound: {}, scenes: {} }, '7'), null);
+});
+
+test('a scene where nobody is sure who speaks is not suggested as silent', () => {
+  assert.equal(suggestedLevel({ presets: { 7: { rows: [{ speaker: 'maybe' }] } }, sound: {}, scenes: {} }, '7'), 3);
+});
 import { applyChange } from '../src/proposal-rules.js';
 import { fileContent, setFileContent } from '../src/store/repo-files.js';
 

@@ -59,7 +59,7 @@ export function SceneTable({ project, sceneId, edit, showDay = false, onRemove, 
           ${info?.time_of_day && html`<span class=${'tag tag--' + timeClass(info.time_of_day)}>${info.time_of_day}</span>`}
           <span class="slate__set">${info?.set || `Scene ${sceneId}`}</span>
           <span class="slate__actions">
-            ${!editing && cueLines(project, sceneId) && html`<button class="icon-btn" title="Cues: learn the lines"
+            ${!editing && cueLines(project, sceneId) && html`<button class="icon-btn" title="Dialogs: learn the lines"
               onClick=${() => setState({ screen: 'cues', cuesScene: sceneId, cuesFrom: getState().screen })}><${Icon} name="cues" /></button>`}
             ${!editing && scriptPage(project, sceneId) && html`<button class="icon-btn" title="This scene in the official script"
               onClick=${() => openScriptPage(scriptPage(project, sceneId))}><${Icon} name="book" /></button>`}

@@ -1,6 +1,6 @@
 // sound-bar.js — the thin sound breakdown bar under each scene's slate, coloured by the
-// dificultômetro level: "▇ 4 MEDIUM │ water · scream │ ⚠ 1". Not rated yet: a grey bar with
-// the suggested level. Tap → the 🔊 panel: level, flags, notes, and the per-character
+// dificultômetro level: "▇ 4 MEDIUM │ water · scream │ ⚠ 1". Not rated yet: the suggested level, in
+// its colour. Tap → the 🔊 panel: level, flags, notes, and the per-character
 // warnings used when choosing lavs (e.g. OONA · No lav · "jumps in the pool").
 // The level also tints every scene number pill (scene-pill.js).
 // Used by: parts/scene-table.js, parts/scene-editor.js
@@ -8,7 +8,7 @@
 import { html, useState } from '../../vendor/preact-htm.js';
 import { byId, naturalCompare } from '../model.js';
 import { textColourFor } from '../colour.js';
-import { LEVELS, FLAGS, WARNING_KINDS, KIND_EMOJI, soundOf, suggestedLevel, flagText, warningText } from '../sound-rules.js';
+import { LEVELS, FLAGS, WARNING_KINDS, KIND_EMOJI, soundOf, suggestedLevel, tintLevel, flagText, warningText } from '../sound-rules.js';
 import { saveSound } from '../sound-editing.js';
 import { resolveConflict } from '../sync.js';
 import { soundFile } from '../store/repo-files.js';
@@ -36,7 +36,7 @@ export function SoundBar({ project, sceneId }) {
             aria-label=${`Sound breakdown of scene ${sceneId}`}>
       ${sound?.level
         ? html`<span class="sound-bar__level" style=${levelStyle(sound.level)}>${sound.level} ${LEVELS[sound.level].label}</span>`
-        : html`<span class="sound-bar__level">sound · suggested ${suggested} ${LEVELS[suggested].label}</span>`}
+        : html`<span class="sound-bar__level" style=${tintLevel(project, sceneId) ? levelStyle(suggested) : ''}>suggested ${suggested} ${LEVELS[suggested].label}</span>`}
       <span class="sound-bar__flags">${summary}</span>
       ${warnings > 0 && html`<span class="sound-bar__warn">⚠ ${warnings}</span>`}
       ${waiting && html`<span class="sound-bar__waiting" title="Saved on this device, not uploaded yet">●</span>`}

@@ -63,18 +63,27 @@ def lav_blocked(film, scene_id, char_id):
     return any(str(w["char_id"]) == str(char_id) and w["kind"] in BLOCKS_LAV for w in warnings)
 
 
+def cast_actor(film, char_id):
+    """An actor with a cast number: not an extra, a special extra or a voice off set."""
+    character = next((c for c in film.get("characters", []) if str(c["id"]) == str(char_id)), None)
+    return bool(character) and str(char_id).isdigit() and not character.get("special_extra") and not character.get("off_set")
+
+
 def gets_mic(film, scene_id, row):
     """In this scene the character wears TX + lav: they speak (YES or ?) — or they are the protagonist,
     who is always wired, even silent — and nothing blocks a lav. Otherwise the row stays (they are in
     the scene) with no TX and no lav — silent, or in the pool.
     "wire_silent": "recurring" (Il colpo, Ana 3 Nov: "all characters, the important ones we set, even if they
     don't speak, receive a lav and TX"): every character that is not a one-liner ("small_part") or a voice off
-    set ("off_set") is wired, silent or not."""
+    set ("off_set") is wired, silent or not.
+    "wire_silent": "cast" (Il colpo, Ana 18 Nov: "every main actor, not extras or special extras, have a microfone on
+    set even if they don't speak"): every actor with a cast number is wired (cast_actor)."""
     rules = film.get("settings", {}).get("presets", {})
     protagonist = str(rules.get("protagonist", ""))
     character = next((c for c in film.get("characters", []) if str(c["id"]) == str(row["char_id"])), {})
     recurring = rules.get("wire_silent") == "recurring" and not character.get("small_part") and not character.get("off_set")
-    wired = row.get("speaker") != "no" or str(row["char_id"]) == protagonist or recurring
+    every_actor = rules.get("wire_silent") == "cast" and cast_actor(film, row["char_id"])
+    wired = row.get("speaker") != "no" or str(row["char_id"]) == protagonist or recurring or every_actor
     return wired and not lav_blocked(film, scene_id, row["char_id"])
 
 

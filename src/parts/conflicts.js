@@ -15,7 +15,7 @@ function describe(project, path) {
   const name = (rest || '').replace(/\.json$/, '');
   if (folder === 'presets') return `Scene ${name} · mics`;
   if (folder === 'sound') return `Scene ${name} · sound breakdown`;
-  if (folder === 'lines') return `Scene ${path.split('/').pop().replace('.json', '')} · lines (Cues)`;
+  if (folder === 'lines') return `Scene ${path.split('/').pop().replace('.json', '')} · lines (Dialogs)`;
   if (folder === 'proposals') return `📬 ${project.proposals?.[name]?.title || name}`;
   const plain = { 'schedule.json': 'Schedule', 'scenes.json': 'Scene info', 'characters.json': 'Characters',
     'transmitters.json': 'Transmitters', 'lavaliers.json': 'Lavaliers', 'ifb/list.json': 'IFB list', 'ifb/crew.json': 'IFB crew' };

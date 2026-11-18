@@ -13,21 +13,22 @@ test('the five main buttons are Today, Film, Mics, IFB and Gear, in that order',
 
 test('each main button has the tabs Ana chose', () => {
   assert.deepEqual(names('today'), ['Day', 'Calendar', 'Overview', 'Hours', 'Alarms']);
-  assert.deepEqual(names('film'), ['Script', 'Scenes', 'Characters', 'Lav Rules', 'Settings']);
-  assert.deepEqual(names('mics'), ['Transmitters', 'Lavaliers', 'Preferences', 'Cues']);
+  assert.deepEqual(names('film'), ['Script', 'Scenes', 'Dialogs', 'Characters', 'Settings']);
+  assert.deepEqual(names('mics'), ['Transmitters', 'Lavaliers', 'Preferences', 'Presets']);
   assert.deepEqual(names('ifb'), ['IFB', 'Crew', 'IFB kit']);
   assert.deepEqual(names('gear'), ['Truck', 'Inventory', 'Batteries', 'Manuals', 'Kit']);
 });
 
-test('a crew phone has no Alarms, Lav Rules or film Settings', () => {
+test('a crew phone has no Alarms, Presets or film Settings', () => {
   const crew = { role: 'crew', name: 'Davide' };
   assert.deepEqual(tabsOf('today', crew).map(([id]) => id), ['day', 'calendar', 'overview', 'hours']);
-  assert.deepEqual(tabsOf('film', crew).map(([id]) => id), ['script', 'scenes', 'characters']);
+  assert.deepEqual(tabsOf('film', crew).map(([id]) => id), ['script', 'scenes', 'cues-picker', 'characters']);
+  assert.deepEqual(tabsOf('mics', crew).map(([id]) => id), ['transmitters', 'lavaliers', 'preferences']);
 });
 
 test('a screen inside another lights its main button; a screen apart keeps the last one', () => {
   assert.equal(sectionOf('alarms', 'gear'), 'today');
-  assert.equal(sectionOf('cues-map', 'today'), 'mics');
+  assert.equal(sectionOf('cues-map', 'today'), 'film');
   assert.equal(sectionOf('document', 'gear'), 'gear');
   assert.equal(sectionOf('transmitters', 'gear'), 'mics');
 });

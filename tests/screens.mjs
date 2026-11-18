@@ -40,11 +40,11 @@ for (const [name, [width, height]] of Object.entries(SIZES)) {
   await page.fill('.search input', '15'); await page.press('.search input', 'Enter');
   await page.fill('.search input', '7A'); await page.press('.search input', 'Enter');
   await shot('scenes');
-  await open('Mics', 'Cues'); await shot('cues');
+  await open('Film', 'Dialogs'); await shot('dialogs');
   await open('Mics', 'Transmitters'); await shot('transmitters');
   await page.click('.topbar__film--button'); await shot('films');
   await page.click('.topbar__settings'); await shot('app-settings');
-  await open('Film', 'Lav Rules'); await shot('lav-rules');
+  await open('Mics', 'Presets'); await shot('presets');
   await open('Film', 'Settings'); await shot('film-settings');
   await open('Today', 'Alarms'); await shot('alarms');
 

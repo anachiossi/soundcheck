@@ -27,11 +27,11 @@ export function MyCallSwitch({ state }) {
     event.preventDefault();
     const chosen = { mode: 'personal', name: name.trim() };
     rememberMyCall(chosen);
-    showMessage('ok', `My call: the call of ${chosen.name} on the call sheet.`);
+    showMessage('ok', `Call time based on ${chosen.name}'s call on the call sheet.`);
     followMyCall(chosen);
   };
   return html`
-    <h2 class="section-title">My call</h2>
+    <h2 class="section-title">Call time based on:</h2>
     <div class="segmented">
       ${CHOICES.map(([value, label]) => html`
         <button key=${value} class=${setting.mode === value ? 'on' : ''} onClick=${() => choose(value)}>${label}</button>`)}
@@ -41,6 +41,5 @@ export function MyCallSwitch({ state }) {
         <label>Your name as printed on the call sheet
           <input required value=${name} onInput=${event => setName(event.target.value)} placeholder="e.g. Maria Rossi" /></label>
         <button class="btn btn--primary" disabled=${!name.trim() || name.trim() === setting.name}>Save</button>
-      </form>`}
-    <p class="muted">Your hours count from it. The Day page always shows the crew call.</p>`;
+      </form>`}`;
 }
