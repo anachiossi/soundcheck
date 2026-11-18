@@ -59,7 +59,7 @@ The film-specific diary (decisions, dates, what Ana said) is private:
 ## Before (5–12 Nov 2026)
 - v220 Alarm page (#alarms): live legs from the robot (`commuteLegs` in gmail-trigger.gs, `?legs=`), ⏰ Set alarm now.
   Ana still to do: script property `HOME_FROM`, `bash /d/apps-script/update-links.sh` (links → new version), paste
-  the robot link on the page. Extra deployment links: delete only after Ana says which ones her phone uses.
+  the robot link on the page. The robot has one web-app link since 18 Nov (the 4 extras were deleted).
 - v221–v223 Documents: sticky ‹ Back bar; script opened from a scene shows "Sc. 208 · Script Ep 2"; pinch zooms
   only the pages (`src/parts/pinch-zoom.js`), not the bar.
 - Il colpo ODG reader (`pipeline/read_odg_il_colpo.py`): 2nd unit printed first (#59), "UNITÀ X – orario",
