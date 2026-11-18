@@ -1,15 +1,14 @@
-// hours.js — the Hours screen (Projects → ⏱ Hours, or the ⏱ in the top bar): one week of shooting days, Monday to Sunday,
+// hours.js — Today → Hours (or the ⏱ in the top bar), the team's record: one week of shooting days, Monday to Sunday,
 // for production: call and wrap of the ODG, the REAL wrap, hours worked and overtime, and the total.
 //   • ‹ › other weeks · tap a day's real wrap to type it (also for days already gone)
 //   • the film's working day (8h continuate…) decides where overtime starts (hours-rules.js)
 //   • Week / Whole film → the hours as an image for production (the film: week by week, with totals)
 //   • 📊 Timesheet → the week as an editable Excel for production, one block per person of the sound department
 //   • 🔔 Wrap alerts: a notification at the wrap, even with the app closed (parts/wrap-alerts.js)
-//   • on top, the next shooting day: the alarm robot's plan and ⏰ Set alarms (parts/tomorrow.js)
-// "My call" (Projects, my-call.js): the calls here count from the person's own call when they chose
+// "My call" (Settings, my-call.js): the calls here count from the person's own call when they chose
 // Personal; a day their name wasn't on the call sheet uses the crew call, with a muted line saying so.
 // On a crew phone: the person's OWN hours (kept on the phone only, crew-sync.js) and 📊 Export my
-// timesheet (only their block); the wake plan and wrap alerts never show (crew-link.js crewHides).
+// timesheet (only their block); wrap alerts never show (crew-link.js crewHides).
 // Used by: main.js
 
 import { html, useState } from '../../vendor/preact-htm.js';
@@ -21,7 +20,6 @@ import { timesheetBlob } from '../export/timesheet.js';
 import { shareCanvas, shareFile } from '../export/share.js';
 import { Icon } from '../parts/icons.js';
 import { WrapAlerts } from '../parts/wrap-alerts.js';
-import { Tomorrow } from '../parts/tomorrow.js';
 import { crewHides, isCrew } from '../crew-link.js';
 import { withMyCalls, daysNotOnSheet, NOT_ON_CALL_SHEET } from '../my-call.js';
 
@@ -42,7 +40,6 @@ export function HoursScreen({ state }) {
 
   return html`
     <div class="hours">
-      ${!crewHides(connection, 'tomorrow') && html`<${Tomorrow} project=${state.project} />`}
       <div class="hours__week">
         <button class="btn" onClick=${() => move(-1)} aria-label="Week before">‹</button>
         <b>${title}</b>

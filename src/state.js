@@ -10,23 +10,22 @@ import * as local from './store/local.js';
 import { defaultDay } from './model.js';
 import { upgradeOutbox } from './store/repo-files.js';
 import { isCrew } from './crew-link.js';
+import { isScreen } from './menu.js';
 
 let state = {
   project: null,            // the open film (see model.js)
   projects: local.listProjects(),
-  department: 'mics',       // 'mics' | 'ifb' | 'gear' — which department's tabs are shown
-  screen: 'schedule',       // 'schedule' | 'scenes' | 'cues-picker' | 'kit' | 'projects' | 'proposal' | 'document' | 'alarms' | 'cues'
+  department: 'today',      // the main button last chosen (menu.js): 'today' | 'film' | 'mics' | 'ifb' | 'gear'
+  screen: 'day',            // which screen is open: every name is in menu.js
   proposalId: null,         // the proposal open in the 'proposal' screen
   documentPath: null,       // the PDF open in the 'document' screen, e.g. '…/docs/day-6/odg.pdf'
   documentPage: null,       // the page to open it at (a scene in the script, script-page.js); null = the first
   documentTitle: '',
   documentFile: '',      // the name it gets when shared: 'DAY09_ODG.pdf' (the film's tag goes in front)
-  documentFrom: '',      // the screen ‹ Back returns to (Schedule when empty)
+  documentFrom: '',      // the screen ‹ Back returns to (the Day when empty)
   cuesScene: null,          // the scene open in 🎙 Cues (full screen)
   cuesFrom: null,           // the screen to go back to when Cues closes
-  scheduleMode: 'day',      // 'calendar' | 'day' | 'week' | 'all'
   day: null,                // chosen shooting day number
-  week: null,               // chosen week number
   lookup: [],               // scene ids chosen in the Scenes screen
   online: navigator.onLine,
   message: null,            // { kind: 'ok' | 'error', text }
@@ -87,11 +86,11 @@ export async function saveAndShow(project, extra = {}) {
 // ---- remembered choices (per device) ------------------------------------------
 
 function savePreferences() {
-  const { screen, scheduleMode, day, week, lookup, project, edit, department,
+  const { screen, day, lookup, project, edit, department,
     cuesScene, cuesFrom, documentPath, documentTitle, documentFile, documentFrom, proposalId } = state;
   try {
     // (the open Cues scene / document / proposal too, so reopening comes back to it)
-    localStorage.setItem('sc_prefs', JSON.stringify({ screen, scheduleMode, day, week, lookup, department, projectId: project?.id,
+    localStorage.setItem('sc_prefs', JSON.stringify({ screen, day, lookup, department, projectId: project?.id,
       cuesScene, cuesFrom, documentPath, documentTitle, documentFile, documentFrom, proposalId }));
     localStorage.setItem('sc_edit', JSON.stringify(edit && { ...edit, projectId: project?.id }));
   } catch { /* private mode: fine, just not remembered */ }
@@ -140,23 +139,24 @@ export async function start() {
   const project = upgradeOutbox(saved);
 
   const { projectId: _, ...choices } = prefs;
-  // A screen that needs a scene / document / proposal it doesn't have → the Schedule.
+  // A screen that needs a scene / document / proposal it doesn't have, or a name no longer in the menu → the Day.
   const needs = { cues: choices.cuesScene, 'cues-map': choices.cuesScene, 'cues-timeline': choices.cuesScene, document: choices.documentPath, proposal: choices.proposalId,
     'crew-suggestions': null }; // the crew's suggestions come back with the next sync
-  if (choices.screen in needs && !needs[choices.screen]) Object.assign(choices, { screen: 'schedule', department: 'mics' });
+  if (!isScreen(choices.screen) || (choices.screen in needs && !needs[choices.screen])) choices.screen = 'day';
   const draft = loadJson('sc_edit', null);
   const edit = draft?.projectId === project.id ? { sceneId: draft.sceneId, rows: draft.rows } : null;
   setState({ ...choices, project, edit });
   setState({ day: defaultDay(project) }); // always open on the day we are in (not the last one looked at)
 }
 
-// Tapping Schedule or Cues always brings back the day we are in (today until wrap, then the next day).
-export const showScreen = screen => setState({ screen, message: null,
-  ...(screen === 'schedule' && state.project ? { day: defaultDay(state.project), scheduleMode: 'day' } : {}),
-  ...(screen === 'cues-picker' && state.project ? { day: defaultDay(state.project) } : {}) });
-export const setScheduleMode = scheduleMode => setState({ scheduleMode });
-export const pickDay = day => setState({ day, scheduleMode: 'day' });
-export const pickWeek = week => setState({ week, scheduleMode: 'week' });
+// Tapping Day or Cues always brings back the day we are in (today until wrap, then the next day).
+export function showScreen(wanted) {
+  const screen = isScreen(wanted) ? wanted : 'day';
+  const backToToday = ['day', 'cues-picker'].includes(screen) && state.project;
+  setState({ screen, message: null, ...(backToToday ? { day: defaultDay(state.project) } : {}) });
+}
+export const pickDay = day => setState({ day });                 // another day on the same screen (Day, Cues)
+export const openDay = day => setState({ day, screen: 'day' });  // from the Calendar and the Overview
 export const clearMessage = () => setState({ message: null });
 export const showMessage = (kind, text) => setState({ message: { kind, text } });
 
@@ -171,8 +171,8 @@ export async function openProject(projectId) {
   const saved = await local.loadProject(projectId);
   if (!saved) return showMessage('error', 'That film is not on this device.');
   const project = upgradeOutbox(saved);
-  setState({ project, screen: 'schedule', lookup: [], edit: null, picker: null,
-    day: defaultDay(project), week: null, emailRobot: null }); // ✉ of this film comes with its sync
+  setState({ project, screen: 'day', lookup: [], edit: null, picker: null,
+    day: defaultDay(project), emailRobot: null }); // ✉ of this film comes with its sync
 }
 
 // Backup file → device. Unsent changes already on the device are kept.

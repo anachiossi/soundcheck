@@ -1,13 +1,12 @@
-// projects.js — the Projects screen.
+// projects.js — the Settings screen (tap the film's name in the top bar).
 // • Connect this device to the data (the private soundcheck-data repo), once.
 // • Films: the ones in the repos (tap to download) and the ones on this device.
 //   Film repos (Ana's devices): the extra repos, one per film, her key reads (parts/film-repos.js).
-// • The open film: sync status, "Sync now", backup file; its documents (📄 script, 📄 latest PDL,
-//   offline) and ⏱ Hours (the week / whole film for production, fix any day's wrap);
+// • The open film: sync status, "Sync now", backup file; Alarm settings and 📋 Film rules;
 //   "Close film on this device" (film-close.js): frees the device, the data repo keeps the film.
 // • More (folded, Ana 2 Nov: rarely needed): Film repos, Share with crew, Backup files.
 // • Share with crew (Ana's devices, film open): a link per person (parts/crew-share.js).
-//   A crew phone sees "Connected as Davide (crew)" and no Connect or Share with crew (⏱ Hours = its own);
+//   A crew phone sees "Connected as Davide (crew)" and no Connect, Share with crew or Alarm settings;
 //   instead: "My suggestions" (parts/crew-log.js) and "Enjoyed soundcheck? Share some feedback"
 //   (parts/crew-feedback-form.js).
 // • My call: General crew call / Personal call (parts/my-call-switch.js, every device).
@@ -24,10 +23,9 @@ import { downloadFilm, loadFilmList, filmsNote } from '../films.js';
 import { checkConnection } from '../store/github.js';
 import { Icon } from '../parts/icons.js';
 import { ThemeSwitch } from '../parts/theme-switch.js';
-import { cuesSummary } from '../cues-rules.js';
 import { tagOf } from '../model.js';
 import { saveTag } from '../kit-editing.js';
-import { isCrew } from '../crew-link.js';
+import { isCrew, crewHides } from '../crew-link.js';
 import { ShareWithCrew } from '../parts/crew-share.js';
 import { MySuggestions } from '../parts/crew-log.js';
 import { FeedbackButton } from '../parts/crew-feedback-form.js';
@@ -36,7 +34,6 @@ import { staysOnPhone } from '../crew-sync.js';
 import { FilmRepos } from '../parts/film-repos.js';
 import { onDevice } from '../film-source.js';
 import { closeFilm } from '../film-close.js';
-import { episodeScripts } from '../script-page.js';
 
 export function ProjectsScreen({ state }) {
   const { project, projects, connection, films, online } = state;
@@ -103,7 +100,10 @@ function OpenFilm({ state }) {
     ${connection && html`
       <button class="btn" disabled=${!online || sync.running} onClick=${() => syncNow({ loud: true })}>↻ Sync now</button>
       ${!online && html`<small class="muted"> No signal: changes wait on this device.</small>`}`}
-    <${FilmDocuments} project=${project} />
+    <div class="toolbar film-docs">
+      ${!crewHides(connection, 'tomorrow') && html`<button class="btn" onClick=${() => setState({ screen: 'alarms' })}>⏰ Alarm settings</button>`}
+      <button class="btn" onClick=${() => setState({ screen: 'film-rules' })}>📋 Film rules</button>
+    </div>
     <${CloseFilm} project=${project} />`;
 }
 
@@ -134,28 +134,6 @@ function FilmTag({ project }) {
       <button class="btn btn--small btn--primary">Save</button></form>`;
   }
   return html`<button class="film-tag" onClick=${() => setTyping(tagOf(project))} title="The film's tag: exported files start with it">${tagOf(project)}</button>`;
-}
-
-// 📄 Script · 📄 PDL (when they are on the device) · ⏱ Hours (on a crew phone: the person's own)
-function FilmDocuments({ project }) {
-  const script = cuesSummary(project);
-  const doc = (file, title) => {
-    const path = `${project.folder}/docs/${file}`;
-    return project.documents?.[path] && html`
-      <button class="btn btn--doc" onClick=${() => setState({ screen: 'document', documentPath: path, documentTitle: title, documentFile: `${title.replace(/\s+/g, '_')}.pdf`, documentFrom: 'projects' })}>
-        <${Icon} name="document" /> ${title}</button>`;
-  };
-  return html`
-    <div class="toolbar film-docs">
-      ${doc('script.pdf', `Script${script.version ? ` ${script.version}` : ''}`)}
-      ${episodeScripts(project).map(({ episode, path }) => html`
-        <button key=${path} class="btn btn--doc" onClick=${() => setState({ screen: 'document', documentPath: path, documentTitle: `Script Ep ${episode}`, documentFile: `Script_Ep${episode}.pdf`, documentFrom: 'projects' })}>
-          <${Icon} name="book" /> Ep ${episode}</button>`)}
-      ${doc('pdl.pdf', 'PDL')}
-      <button class="btn" onClick=${() => setState({ screen: 'hours' })}>⏱ Hours</button>
-      <button class="btn" onClick=${() => setState({ screen: 'film-rules' })}>📋 Film rules</button>
-    </div>
-    ${script.script > 0 && html`<p class="muted with-icon"><${Icon} name="cues" /> Cues for ${script.script} scenes${script.sides ? `, ${script.sides} updated from the sides` : ''}</p>`}`;
 }
 
 function Connect() {

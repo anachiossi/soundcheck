@@ -27,7 +27,7 @@ export function KitRequestsBanner({ state }) {
 export function KitRequestsScreen({ state }) {
   const groups = requestsByPerson(state.kitRequests).filter(([who]) => !state.kitBy || who === state.kitBy);
   return html`
-    <button class="link back" onClick=${() => showScreen('schedule')}>‹ Back to schedule</button>
+    <button class="link back" onClick=${() => showScreen('messages')}>‹ Messages</button>
     ${state.kitCantRead && html`<p class="muted">This device's key can't see the kit inbox: add the inbox repo to the key.</p>`}
     ${groups.length === 0 && html`<p class="empty">Nothing waiting from the kit website.</p>`}
     ${groups.map(([who, requests]) => html`

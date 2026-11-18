@@ -27,6 +27,6 @@ export async function closeFilm(projectId) {
 
   await local.deleteProject(projectId);
   setState({ projects: local.listProjects(),
-    ...(isOpen && { project: null, screen: 'projects', edit: null, picker: null, lookup: [], day: null, week: null }) });
+    ...(isOpen && { project: null, screen: 'projects', edit: null, picker: null, lookup: [], day: null }) });
   showMessage('ok', `${project.name} is closed on this device. It is safe in your data: download it again here whenever you want.`);
 }

@@ -3,8 +3,8 @@
 //   changes     — each one: ✓ Accept or ✕ Reject ("Accept all" sits on top of the list: Ana, 18 Nov, a PDL has 141)
 //   🎧 IFB today — who on the IFB list isn't on the call sheet
 //   ✓ checked   — what was compared and is fine
-// Also: the banner that shows up on every screen while a proposal waits.
-// Used by: main.js
+// Also: the line for this proposal on the Messages screen.
+// Used by: main.js, screens/messages.js
 
 import { html } from '../../vendor/preact-htm.js';
 import { setState, showScreen } from '../state.js';
@@ -36,7 +36,7 @@ export function ProposalScreen({ state }) {
   };
 
   return html`
-    <button class="link back" onClick=${() => showScreen('schedule')}>‹ Back to schedule</button>
+    <button class="link back" onClick=${() => showScreen('messages')}>‹ Messages</button>
     <h2 class="section-title">${proposal.title}</h2>
     <p class="muted">${proposal.kind === 'sound' ? `From ${proposal.source.subject} · the sound breakdown, scene by scene`
       : proposal.kind === 'presets' ? `From ${proposal.source.subject} · same TX and lav all day, one scene at a time`

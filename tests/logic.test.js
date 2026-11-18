@@ -8,7 +8,7 @@ import { parseCsv } from '../tools/csv.js';
 import { convertSheets, scheduleFromCsv } from '../tools/sheets.js';
 import { textColourFor, isNearWhite } from '../src/colour.js';
 import {
-  naturalCompare, toSpeaker, shootingDays, weeks, defaultDay, dayIsDone, sceneRows,
+  naturalCompare, toSpeaker, shootingDays, defaultDay, dayIsDone, sceneRows,
   unscheduledScenes, formatDate, allSceneIds, sceneInfo, timeClass,
 } from '../src/model.js';
 
@@ -52,7 +52,6 @@ test('days come in order with scenes in shooting order', () => {
   const days = shootingDays(project);
   assert.deepEqual(days.map(d => d.day), [1, 2]);
   assert.deepEqual(days[0].scenes.map(s => s.scene_id), ['2', '10A']);
-  assert.equal(weeks(project).length, 2);
 });
 
 test('the app opens on today, or the next shooting day', () => {

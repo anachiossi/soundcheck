@@ -3,10 +3,9 @@
 // audience (parts/image-for.js asks it): 'mixer' = Character · TX · Lav · Speaks;
 //   'assistants' = Character · TX + MHz · Change at (the battery's change time, no colours) · Lav · Lav acc. · TX acc.
 //   (each accessory a pill in its colour) · Position · Speaks
-// (Week / all-film images: schedule-images.js, built from the same pieces.)
 // Every image carries the film name and "data as of …" so an old screenshot
 // is never mistaken for the current plan.
-// Used by: screens/schedule.js, screens/scenes.js (through share.js)
+// Used by: screens/day.js, screens/scenes.js (through share.js)
 
 import { sceneRows, scheduleFor, sceneInfo, timeClass, formatDate, formatStamp } from '../model.js';
 import { newCanvas, box, text, font, pill, tag, wrapLines } from './draw.js';

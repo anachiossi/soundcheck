@@ -27,7 +27,7 @@ export async function downloadFilm(film) {
   const { connection } = getState();
   const remember = isCrew(connection) || !sameRepo(film, connection);
   if (film.owner && film.repo && remember) project.source = { owner: film.owner, repo: film.repo, branch: film.branch || 'main' };
-  await saveAndShow(project, { screen: 'schedule', lookup: [], edit: null });
+  await saveAndShow(project, { screen: 'day', lookup: [], edit: null });
   await syncNow({ loud: true });
   setState({ day: defaultDay(getState().project) });
 }

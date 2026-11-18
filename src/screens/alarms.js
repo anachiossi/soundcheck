@@ -1,4 +1,4 @@
-// alarms.js — the alarm page (Hours → Alarm settings, or #alarms): the ONE place for a film's alarm rules (Ana, 18 Nov).
+// alarms.js — the alarm page (Today → Tomorrow → Alarm settings, Settings → Alarm settings, or #alarms): the ONE place for a film's alarm rules (Ana, 18 Nov).
 // The switch says how the film works: Off · Fixed times · Follow the day's place. Every change is sent to the robot
 // (pipeline/gmail-trigger.gs planAnswer), which answers with the times: the app does no alarm sums of its own.
 //   • Save → the film's settings.json "commute" (the robot uses them tonight)
@@ -31,7 +31,7 @@ export function AlarmsScreen({ state }) {
   const message = 'Alarm settings saved: the robot uses them tonight too.';
 
   return html`
-    <button class="link back" onClick=${() => showScreen('hours')}>‹ Hours</button>
+    <button class="link back" onClick=${() => showScreen('tomorrow')}>‹ Tomorrow</button>
     <section class="tomorrow alarms">
       <${PlanSummary} project=${project} plan=${plan} commute=${commute} link=${link} asking=${asking} problem=${problem} />
       ${plan?.wake && !commute.off && html`

@@ -1,10 +1,10 @@
-// tomorrow.js — the card on Hours for the next shooting day: the robot's plan as the morning's timeline
+// tomorrow.js — Today → Tomorrow: the card for the next shooting day: the robot's plan as the morning's timeline
 // (parts/alarm-timeline.js; tap it to open the alarm page) and one button.
 // "Set the 2 alarms" hands the robot's answer to the iPhone shortcut "soundcheck alarms", which first removes its old alarms
 // and then creates the two new ones in Clock (a web app can't set alarms itself). The rules live on the alarm page.
 // While the app syncs the button waits: a new ODG may come. An ODG waiting for review already counts in the robot's
 // times (Ana, 7 Oct); it is shown here, tap it to review. The robot's "Next" notification opens this card.
-// Used by: screens/hours.js
+// Used by: main.js
 
 import { html } from '../../vendor/preact-htm.js';
 import { getState, setState } from '../state.js';
@@ -12,6 +12,8 @@ import { undecided } from '../proposal-rules.js';
 import { robotLink } from '../robot-link.js';
 import { alarmsLink, askedAt, canSetAlarms, problemText, useRobotPlan } from './robot-plan.js';
 import { AlarmTimeline, setAlarmsLabel } from './alarm-timeline.js';
+
+export const TomorrowScreen = ({ state }) => html`<${Tomorrow} project=${state.project} />`;
 
 export function Tomorrow({ project }) {
   const syncing = Boolean(getState().sync?.running);

@@ -29,16 +29,20 @@ for (const [name, [width, height]] of Object.entries(SIZES)) {
   await page.waitForSelector('.scene');
   const shot = async label => page.screenshot({ path: `.shots/${name}-${label}.png`, fullPage: label !== 'day' });
 
+  const open = async (main, tab) => {
+    await page.click(`.department button:has-text("${main}")`);
+    await page.click(`.tabs button:has-text("${tab}")`);
+  };
   await shot('day');
-  await page.click('.page .segmented button:nth-child(2)'); await shot('week');
-  await page.click('.page .segmented button:nth-child(3)'); await shot('all');
-  await page.click('.tabs button:nth-child(2)');
+  await open('Today', 'Calendar'); await shot('calendar');
+  await open('Today', 'Overview'); await shot('overview');
+  await open('Film', 'Scenes');
   await page.fill('.search input', '15'); await page.press('.search input', 'Enter');
   await page.fill('.search input', '7A'); await page.press('.search input', 'Enter');
   await shot('scenes');
-  await page.click('.tabs button:nth-child(3)'); await shot('cues');
-  await page.click('.tabs button:nth-child(4)'); await shot('kit');
-  await page.click('.tabs button:nth-child(5)'); await shot('projects');
+  await open('Mics', 'Cues'); await shot('cues');
+  await open('Mics', 'Transmitters'); await shot('transmitters');
+  await page.click('.topbar__film--button'); await shot('settings');
 
   if (name === 'laptop') {
     // Exported images, drawn in the page exactly as the 📷 buttons do.
@@ -62,8 +66,7 @@ for (const [name, [width, height]] of Object.entries(SIZES)) {
     await page.evaluate(() => navigator.serviceWorker.ready);
     await context.setOffline(true);
     await page.reload();
-    await page.click('.tabs button:nth-child(1)');
-    await page.click('.page .segmented button:nth-child(1)');
+    await open('Today', 'Day');
     await page.waitForSelector('.scene', { timeout: 5000 }).catch(() => problems.push('offline: app did not open'));
     await shot('offline');
   }

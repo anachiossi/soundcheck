@@ -42,8 +42,13 @@ async function device(name, width = 390) {
 }
 
 // Edit scene `sceneId`: first row gets TX `txId`.
+async function openScenes(page) {
+  await page.click('.department button:has-text("Film")');
+  await page.click('.tabs button:has-text("Scenes")');
+}
+
 async function editScene(page, sceneId, txId) {
-  await page.click('.tabs button:nth-child(2)');
+  await openScenes(page);
   await page.fill('.search input', sceneId);
   await page.press('.search input', 'Enter');
   await page.click(`#scene-${sceneId} button[title=Edit]`);
@@ -79,7 +84,7 @@ await editScene(A.page, '2', '20');
 check(await A.page.waitForSelector('#scene-2 .scene__waiting', { timeout: 5000 }).then(() => true, () => false), 'offline save waits on the device');
 await A.page.screenshot({ path: '.shots/sync-A-waiting.png', fullPage: true });
 await A.page.reload();
-await A.page.click('.tabs button:nth-child(2)');
+await openScenes(A.page);
 check(await A.page.isVisible('#scene-2 .scene__waiting'), 'still waiting after closing and reopening, offline');
 await A.context.setOffline(false);
 await A.page.evaluate(async () => (await import('./src/sync.js')).syncNow());
@@ -89,7 +94,7 @@ check(scene2.rows[0].tx_id === '20' && scene2.updated_by === 'test A', 'back onl
 
 // 3. second device sees it
 const B = await device('B', 820);
-await B.page.click('.tabs button:nth-child(2)');
+await openScenes(B.page);
 await B.page.fill('.search input', '2'); await B.page.press('.search input', 'Enter');
 check((await B.page.textContent('#scene-2 .mics__row >> nth=0')).includes('20'), 'device B sees A\'s change');
 
@@ -115,11 +120,16 @@ for (let i = 0; i < 30; i++) { // check once a second, up to 30 s
 }
 check((await api('projects/la-buona-educazione/presets/11.json')).rows[0].tx_id === '19', '"Keep mine": A\'s version is in the repo');
 
-// 5. kit: change a character's actor + preferred TX; picker shows preferences
-await A.page.click('.tabs button:has-text("Kit")');
+// 5. a character's actor (Film → Characters) + preferred TX (Mics → Preferences); picker shows preferences
+await A.page.click('.tabs button:has-text("Characters")');
 await A.page.click('button.kit-item:has-text("KLAUS")');
 await A.page.screenshot({ path: '.shots/kit-form.png', fullPage: true });
 await A.page.fill('.item-form label:has-text("Actor") input', 'Test Actor');
+await A.page.click('.item-form .btn--primary');
+await A.page.waitForSelector('.message >> text=character 10 saved');
+await A.page.click('.department button:has-text("Mics")');
+await A.page.click('.tabs button:has-text("Preferences")');
+await A.page.click('button.kit-item:has-text("KLAUS")');
 await A.page.click('.item-form label:has-text("Preferred TX") .choice:text-is("21")');
 await A.page.click('.item-form .btn--primary');
 await A.page.waitForSelector('.message >> text=character 10 saved');
@@ -134,28 +144,13 @@ for (let i = 0; i < 30; i++) {
 const klaus = (await api('projects/la-buona-educazione/characters.json')).find(c => c.name === 'KLAUS');
 check(klaus.actor === 'Test Actor' && klaus.pref_tx === '21', 'kit: character change uploaded (actor + preferred TX)');
 await A.page.screenshot({ path: '.shots/kit.png' });
-await A.page.click('.tabs button:nth-child(2)');
+await openScenes(A.page);
 await A.page.click('#scene-2 button[title=Edit]');
 await A.page.click('#scene-2 .mics__row--edit >> nth=0 >> .edit-cell >> nth=2');
 check(await A.page.isVisible('.sheet >> text=Preferred for INES'), 'lav picker shows "Preferred for INES"');
 await A.page.screenshot({ path: '.shots/picker-lav-prefs.png' });
 await A.page.click('.sheet .icon-btn');
 await A.page.click('#scene-2 .edit-actions .btn:text-is("Cancel")');
-
-// 6. images
-const sizes = await A.page.evaluate(async () => {
-  const { scheduleImages } = await import('./src/export/schedule-images.js');
-  const { getState } = await import('./src/state.js');
-  const { weeks, shootingDays } = await import('./src/model.js');
-  const p = getState().project;
-  const week = await scheduleImages(p, weeks(p)[1].days.map(d => d.day), 'Week 2 · mic list');
-  const all = await scheduleImages(p, shootingDays(p).map(d => d.day), 'All film');
-  return { week: week.map(c => [c.width, c.height, c.toDataURL()]), all: all.map(c => [c.width, c.height, c.toDataURL()]) };
-});
-for (const [kind, parts] of Object.entries(sizes)) {
-  for (const [i, [w, h, url]] of parts.entries()) await writeFile(`.shots/export-${kind}-${i + 1}.png`, Buffer.from(url.split(',')[1], 'base64'));
-  check(parts.every(([, h]) => h <= 15000), `${kind}: ${parts.length} image(s), ${parts.map(([w, h]) => `${w}×${h}`).join(', ')}`);
-}
 
 // Picker screenshot on the phone
 await A.page.click(`#scene-2 button[title=Edit]`);

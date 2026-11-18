@@ -58,6 +58,8 @@ body { margin: 0; background: var(--page); -webkit-text-size-adjust: 100%; }
 .topbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; padding: 4px 4px 10px; }
 .topbar__title { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
 .topbar__film { font-weight: 800; font-size: 22px; letter-spacing: -0.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }   /* the film's name only */
+.topbar__film--button { border: 0; background: none; padding: 0; max-width: 100%; }   /* tap: Settings */
+.badge--messages { background: var(--accent); color: var(--on-accent); font-weight: 700; }
 .badge { font-size: 12px; background: var(--badge-bg); border-radius: 999px; padding: 4px 10px; color: var(--ink-soft); }
 .badge--offline { background: var(--warn-bg); color: var(--warn); font-weight: 600; }
 .page { background: var(--card); border-radius: var(--radius); padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.08); min-height: 50vh; }
@@ -152,20 +154,20 @@ button { font: inherit; color: inherit; cursor: pointer; }
 
 /* ---- 5. Mic tables & pills ------------------------------------------------ */
 .scene { margin: 12px 0 18px; scroll-margin-top: 12px; }
-.slate { background: var(--slate); border-left: 8px solid var(--stripe); border-radius: 8px; padding: 6px 8px 8px 12px; }
+.slate { background: var(--slate); border-left: 8px solid var(--stripe); border-radius: 8px; padding: 4px 8px 6px 10px; }
 .slate__top { display: flex; align-items: center; gap: 8px; min-width: 0; }
 /* THE scene number pill (parts/scene-pill.js), tinted by the dificultômetro level */
 .scene-pill { display: inline-flex; align-items: center; justify-content: center; font: inherit; font-weight: 800;
   border: 1px solid var(--line-strong); border-radius: 999px; background: var(--card); color: var(--ink); white-space: nowrap; }
 .scene-pill--chip { min-width: 40px; padding: 6px 12px; font-size: 14px; }
-.scene-pill--title { padding: 0; border: 0; background: none; font-size: 30px; line-height: 1.2; }   /* the slate's #11: sober */
+.scene-pill--title { padding: 0; border: 0; background: none; font-size: 25px; line-height: 1.15; }   /* the slate's #11: sober */
 .scene-pill--big { padding: 2px 12px; font-size: 26px; }
 .scene-pill--on { box-shadow: 0 0 0 3px var(--ink); }
 button.scene-pill { cursor: pointer; }
 .slate__set { flex: 1; font-weight: 800; font-size: 15px; min-width: 0; line-height: 1.2; }
 .slate__actions { display: flex; margin-left: auto; }
-.slate__details { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 15px; color: var(--ink-soft); margin-top: 2px; }
-.slate__synopsis { margin: 4px 0 0; font-size: 16px; line-height: 1.35; color: var(--ink-soft); }
+.slate__details { display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 14px; color: var(--ink-soft); margin-top: 2px; }
+.slate__synopsis { margin: 3px 0 0; font-size: 15px; line-height: 1.3; color: var(--ink-soft); }
 .slate__notes { margin: 4px 0 0; font-size: 15px; color: var(--warn); font-weight: 600; }   /* only what can impact sound */
 .slate__more { border: 0; background: none; padding: 4px 0 0; font: inherit; font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer; }
 .slate__info { margin: 4px 0 0; padding-left: 18px; font-size: 14px; color: var(--ink-soft); }
@@ -571,8 +573,19 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
 .map-line__cue small { display: block; text-indent: 0; font-family: inherit; font-size: 12px; color: var(--muted); margin-top: 2px; }
 
 /* ---- 13. IFB department ------------------------------------------------------ */
-.department { margin: 0 0 0 auto; }
-.department button { padding: 8px 14px; font-size: 15px; }
+.department { display: flex; width: 100%; margin: 0 0 8px; }   /* the five main buttons (parts/top-menu.js) */
+.department button { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-width: 0; padding: 8px 4px; font-size: 15px; }
+/* Today → Overview (screens/overview.js) and Film → Scenes → Difficulty (screens/scenes.js) */
+.overview-day { margin: 0 0 16px; }
+.overview-day__head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; width: 100%; margin: 0 0 4px; padding: 6px 10px; border: 0; border-radius: 8px;
+  background: var(--soft); color: var(--ink); text-align: left; }
+.overview-day__lavs { margin-left: auto; font-weight: 700; }
+.overview-day__unit2 { margin: 6px 0 2px; }
+.overview-scene { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--line); }
+.overview-scene__names { font-size: 14px; color: var(--ink-soft); }
+.overview-scene__speakers, .scene-level__speakers { font-size: 13px; font-weight: 700; white-space: nowrap; }
+.scene-level { display: grid; grid-template-columns: 56px minmax(0, 1fr); align-items: center; gap: 2px 8px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.scene-level .sound-bar { grid-column: 1 / -1; margin-top: 0; }
 .ifb-summary { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 18px; }
 .ifb-summary .segmented { margin: 0; }
 .ifb-row { display: grid; grid-template-columns: minmax(0, 1fr) 64px 64px 96px; gap: 6px; align-items: center; padding: 3px 0; }
@@ -655,7 +668,7 @@ input[type=search]::-webkit-search-cancel-button { filter: grayscale(1); }   /* 
   .pill--lav .pill__id { font-size: 15px; font-weight: 800; }
   .slate__top { flex-wrap: wrap; row-gap: 2px; }
   .slate__set { order: 5; flex-basis: 100%; font-size: 16px; }
-  .scene-pill--title { font-size: 27px; }
+  .scene-pill--title { font-size: 23px; }
   .speaker { font-size: 14px; }
   .banner { font-size: 13px; padding: 8px 10px; }
   .tabs { gap: 3px; }

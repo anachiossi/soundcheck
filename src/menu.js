@@ -1,0 +1,43 @@
+// menu.js — the app's menu tree (Ana, 18 Nov): five main buttons in a top row, each with its own tabs.
+//   Today · Film · Mics · IFB · Gear
+// The film's name in the top bar opens Settings (the 'projects' screen); the Messages button opens 'messages'.
+// Only names live here: main.js says which screen draws each one.
+// Used by: main.js, parts/top-menu.js, state.js
+
+import { crewHides } from './crew-link.js';
+
+export const MENU = [
+  { id: 'today', label: 'Today', icon: 'calendar', tabs: [
+    ['day', 'Day'], ['tomorrow', 'Tomorrow'], ['calendar', 'Calendar'], ['overview', 'Overview'], ['hours', 'Hours'],
+  ] },
+  { id: 'film', label: 'Film', icon: 'book', tabs: [
+    ['script', 'Script'], ['scenes', 'Scenes'], ['characters', 'Characters'],
+  ] },
+  { id: 'mics', label: 'Mics', icon: 'mic', tabs: [
+    ['transmitters', 'Transmitters'], ['lavaliers', 'Lavaliers'], ['preferences', 'Preferences'], ['cues-picker', 'Cues'],
+  ] },
+  { id: 'ifb', label: 'IFB', icon: 'headphones', tabs: [
+    ['ifb-list', 'IFB'], ['ifb-crew', 'Crew'], ['ifb-kit', 'IFB kit'],
+  ] },
+  { id: 'gear', label: 'Gear', icon: 'gear', tabs: [
+    ['gear-truck', 'Truck'], ['gear-inventory', 'Inventory'], ['gear-batteries', 'Batteries'], ['gear-manuals', 'Manuals'], ['gear-kit', 'Kit'],
+  ] },
+];
+
+// screens opened from inside another one, and the main button they belong to
+const INSIDE = { alarms: 'today', 'lav-share': 'today', cues: 'mics', 'cues-map': 'mics', 'cues-timeline': 'mics', 'cues-game': 'mics' };
+// screens that belong to no main button
+const APART = ['projects', 'messages', 'proposal', 'crew-suggestions', 'kit-requests', 'document', 'help', 'film-rules'];
+
+const inMenu = screen => MENU.find(section => section.tabs.some(([id]) => id === screen));
+
+export const isScreen = screen => Boolean(inMenu(screen)) || screen in INSIDE || APART.includes(screen);
+
+// which main button is lit: the screen's own, or the last one used for a screen that belongs to none
+export const sectionOf = (screen, last) => inMenu(screen)?.id || INSIDE[screen] || last || MENU[0].id;
+
+// a section's tabs on this device: a crew phone has no Tomorrow (the wake-up plan is personal)
+export function tabsOf(sectionId, connection) {
+  const section = MENU.find(item => item.id === sectionId) || MENU[0];
+  return section.tabs.filter(([id]) => id !== 'tomorrow' || !crewHides(connection, 'tomorrow'));
+}

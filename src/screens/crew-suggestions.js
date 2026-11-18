@@ -37,7 +37,7 @@ export function CrewSuggestionsScreen({ state }) {
   const groups = suggestionsByPerson(state).filter(([by]) => !state.crewBy || by === state.crewBy);
   const feedback = feedbackToRead(state).filter(item => !state.crewBy || item.by === state.crewBy);
   return html`
-    <button class="link back" onClick=${() => showScreen('schedule')}>‹ Back to schedule</button>
+    <button class="link back" onClick=${() => showScreen('messages')}>‹ Messages</button>
     ${state.crewCantAnswer && html`<p class="muted">Your key can't answer suggestions (it needs Issues: read and write).</p>`}
     ${groups.length === 0 && feedback.length === 0 && html`<p class="empty">Nothing waiting: every suggestion has an answer.</p>`}
     ${groups.map(([by, suggestions]) => html`

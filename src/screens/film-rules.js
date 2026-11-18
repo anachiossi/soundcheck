@@ -1,7 +1,7 @@
-// film-rules.js — the Film rules page (Projects → 📋 Film rules): every rule this film's robots and preset
+// film-rules.js — the Film rules page (Settings → 📋 Film rules): every rule this film's robots and preset
 // generator follow, in plain words, so Ana can recall them (3 Nov, Il colpo: "make a settings page for these
-// rules so I can recall eventually"). At the top, what kind of project (film / TV series, 1 or 2 units), to change
-// here. The rules live in the film's settings.json (each film its own); at the
+// rules so I can recall eventually"). At the top, what kind of project (film / TV series, 1 or 2 units) and what the
+// calendar marks, to change here. The rules live in the film's settings.json (each film its own); at the
 // bottom, "Copy rules from another film" (film-rules-copy.js) brings another film's rules in.
 // Used by: main.js
 
@@ -9,6 +9,7 @@ import { html, useState } from '../../vendor/preact-htm.js';
 import { setState } from '../state.js';
 import { RULE_GROUPS, otherFilms, copyRules } from '../film-rules-copy.js';
 import { saveSettings } from '../kit-editing.js';
+import { CALENDAR_MARKS, calendarMarks } from '../overview-rules.js';
 
 const LAV_NAMES = { cos11: 'Sanken COS-11', 6060: 'DPA 6060', 6061: 'DPA 6061', 4060: 'DPA 4060', 4061: 'DPA 4061' };
 const lavName = model => LAV_NAMES[model] || model;
@@ -78,10 +79,16 @@ export function FilmRulesScreen({ state }) {
     <ul class="help">${items.map(text => html`<li>${text}</li>`)}</ul>`;
   return html`
     <div class="help-page">
-      <button class="btn" onClick=${() => setState({ screen: 'projects' })}>‹ Projects</button>
+      <button class="btn" onClick=${() => setState({ screen: 'projects' })}>‹ Settings</button>
       <p class="muted">${project.name}'s own rules. Another film keeps its own.</p>
       ${project.aliases?.length > 0 && html`<p>Also called: <b>${project.aliases.join(', ')}</b></p>`}
       <${ProjectKind} settings=${settings} />
+      <h2 class="section-title">The calendar marks</h2>
+      <div class="segmented">
+        ${CALENDAR_MARKS.map(([id, label]) => html`
+          <button key=${id} class=${calendarMarks(settings) === id ? 'on' : ''}
+                  onClick=${() => saveSettings({ calendar_marks: id }, `The calendar marks: ${label}.`)}>${label}</button>`)}
+      </div>
       ${section('Mics', micRules(project))}
       ${section('This film', filmRules(settings))}
       ${section('Alarms', alarmRules(settings.commute))}

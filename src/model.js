@@ -89,15 +89,6 @@ export function shootingDays(project) {
   return [...days.values()].sort((a, b) => a.day - b.day);
 }
 
-export function weeks(project) {
-  const result = new Map();
-  for (const d of shootingDays(project)) {
-    if (!result.has(d.week)) result.set(d.week, { week: d.week, days: [] });
-    result.get(d.week).days.push(d);
-  }
-  return [...result.values()];
-}
-
 // Scenes that have a preset but no shooting day (e.g. "fuori piano").
 export function unscheduledScenes(project) {
   const scheduled = new Set(project.schedule.map(s => String(s.scene_id)));

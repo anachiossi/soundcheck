@@ -42,5 +42,5 @@ export function MyCallSwitch({ state }) {
           <input required value=${name} onInput=${event => setName(event.target.value)} placeholder="e.g. Maria Rossi" /></label>
         <button class="btn btn--primary" disabled=${!name.trim() || name.trim() === setting.name}>Save</button>
       </form>`}
-    <p class="muted">Your hours count from it. The Schedule always shows the crew call.</p>`;
+    <p class="muted">Your hours count from it. The Day page always shows the crew call.</p>`;
 }

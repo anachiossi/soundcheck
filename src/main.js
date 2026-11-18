@@ -1,26 +1,30 @@
-// main.js — starts the app: loads the saved film, then draws the top bar
-// (with the sync badge), the tabs, the current screen and, when open, the
-// picker. Starts automatic syncing, and registers sw.js so the app itself is
+// main.js — starts the app: loads the saved film, then draws the top bar (the film's name, the sync badge,
+// Messages), the five main buttons with their tabs (menu.js, parts/top-menu.js), the current screen and, when
+// open, the picker. Starts automatic syncing, and registers sw.js so the app itself is
 // stored on the device and opens with no signal (and updates itself).
 // A crew phone sees the ⏱ wrap clock and Hours too: the person's own hours (crew-link.js crewHides),
 // but not the 📬 production-email proposals (Ana's job). Crew links: crew-join.js.
 // Used by: index.html
 
 import { html, render, useState, useEffect } from '../vendor/preact-htm.js';
-import { useAppState, start, showScreen, clearMessage, setState } from './state.js';
+import { useAppState, start, clearMessage, setState } from './state.js';
 import { startAutoSync, syncNow } from './sync.js';
 import { joinFromLink, watchPendingJoin } from './crew-join.js';
 import { isCrew, crewHides } from './crew-link.js';
 import { proposedPaths, staysOnPhone } from './crew-sync.js';
 import { formatStamp } from './model.js';
-import { ScheduleScreen } from './screens/schedule.js';
+import { sectionOf } from './menu.js';
+import { DayScreen } from './screens/day.js';
+import { OverviewScreen } from './screens/overview.js';
+import { ScriptScreen } from './screens/film-script.js';
 import { ScenesScreen } from './screens/scenes.js';
-import { KitScreen } from './screens/kit.js';
+import { CharactersScreen, TransmittersScreen, LavaliersScreen, PreferencesScreen } from './screens/kit.js';
 import { ProjectsScreen } from './screens/projects.js';
 import { Picker } from './parts/picker.js';
-import { ProposalScreen, ProposalBanner } from './screens/proposal.js';
-import { CrewSuggestionsScreen, CrewSuggestionsBanner } from './screens/crew-suggestions.js';
-import { KitRequestsScreen, KitRequestsBanner } from './screens/kit-requests.js';
+import { MessagesScreen } from './screens/messages.js';
+import { ProposalScreen } from './screens/proposal.js';
+import { CrewSuggestionsScreen } from './screens/crew-suggestions.js';
+import { KitRequestsScreen } from './screens/kit-requests.js';
 import { DocumentScreen } from './screens/document.js';
 import { AlarmsScreen } from './screens/alarms.js';
 import { CuesScreen } from './screens/cues.js';
@@ -41,48 +45,26 @@ import { GearTruckScreen, GearInventoryScreen, GearManualsScreen } from './scree
 import { GearBatteriesScreen } from './screens/gear-batteries.js';
 import { GearKitScreen } from './screens/gear-kit.js';
 import { WrapBadge, WrapQuestion } from './parts/wrap-clock.js';
-import { Icon } from './parts/icons.js';
+import { TomorrowScreen } from './parts/tomorrow.js';
+import { CalendarScreen } from './parts/month-calendar.js';
+import { FilmButton, MessagesButton, MainButtons, Tabs } from './parts/top-menu.js';
 import { EmailBadge } from './parts/email-robot.js';
 import { ConflictBadge } from './parts/conflicts.js';
 import { FeedbackOffer } from './parts/crew-feedback-form.js';
 import { applyTheme, followPhone } from './theme.js';
 
-// Three departments, each with its own big tabs. Projects is shared.
-const TABS = {
-  mics: [
-    ['schedule', 'Schedule', ScheduleScreen],
-    ['scenes', 'Scenes', ScenesScreen],
-    ['cues-picker', 'Cues', CuesPickerScreen],
-    ['kit', 'Kit', KitScreen],
-    ['projects', 'Projects', ProjectsScreen],
-  ],
-  ifb: [
-    ['ifb-list', 'IFB', IfbListScreen],
-    ['ifb-crew', 'Crew', IfbCrewScreen],
-    ['ifb-kit', 'Kit', IfbKitScreen],
-    ['projects', 'Projects', ProjectsScreen],
-  ],
-  gear: [
-    ['gear-truck', 'Truck', GearTruckScreen],
-    ['gear-inventory', 'Inventory', GearInventoryScreen],
-    ['gear-batteries', 'Batteries', GearBatteriesScreen],
-    ['gear-manuals', 'Manuals', GearManualsScreen],
-    ['gear-kit', 'Kit', GearKitScreen],
-    ['projects', 'Projects', ProjectsScreen],
-  ],
+// which screen draws each name of the menu (menu.js)
+const SCREENS = {
+  day: DayScreen, tomorrow: TomorrowScreen, calendar: CalendarScreen, overview: OverviewScreen, hours: HoursScreen,
+  script: ScriptScreen, scenes: ScenesScreen, characters: CharactersScreen,
+  transmitters: TransmittersScreen, lavaliers: LavaliersScreen, preferences: PreferencesScreen, 'cues-picker': CuesPickerScreen,
+  'ifb-list': IfbListScreen, 'ifb-crew': IfbCrewScreen, 'ifb-kit': IfbKitScreen,
+  'gear-truck': GearTruckScreen, 'gear-inventory': GearInventoryScreen, 'gear-batteries': GearBatteriesScreen,
+  'gear-manuals': GearManualsScreen, 'gear-kit': GearKitScreen,
+  projects: ProjectsScreen, messages: MessagesScreen, proposal: ProposalScreen, 'crew-suggestions': CrewSuggestionsScreen,
+  'kit-requests': KitRequestsScreen, document: DocumentScreen, alarms: AlarmsScreen, help: HelpScreen,
+  'film-rules': FilmRulesScreen, 'lav-share': LavShareScreen,
 };
-
-const tabsOf = department => TABS[department] || TABS.mics;
-
-function DepartmentSwitch({ department }) {
-  const choose = next => next !== department && setState({ department: next, screen: TABS[next][0][0] });
-  return html`
-    <div class="segmented department">
-      <button class=${department === 'mics' ? 'on' : ''} onClick=${() => choose('mics')}><${Icon} name="mic" /> Mics</button>
-      <button class=${department === 'ifb' ? 'on' : ''} onClick=${() => choose('ifb')}><${Icon} name="headphones" /> IFB</button>
-      <button class=${department === 'gear' ? 'on' : ''} onClick=${() => choose('gear')}><${Icon} name="gear" /> Gear</button>
-    </div>`;
-}
 
 function SyncBadge({ state }) {
   const { project, online, connection, sync } = state;
@@ -122,41 +104,23 @@ function App() {
   if (current === 'cues-map') return html`<main class="focus"><${CuesMapScreen} state=${state} /></main>`;
   if (current === 'cues-timeline') return html`<main class="focus"><${CuesTimelineScreen} state=${state} /></main>`;
   if (current === 'cues-game') return html`<main class="focus"><${CuesGameScreen} key=${state.cuesScene} state=${state} /></main>`;
-  const tabs = tabsOf(state.department);
-  const emailProposals = !crewHides(connection, 'email-proposals'); // a crew phone: never (Ana's job)
-  const Screen = current === 'proposal' && emailProposals ? ProposalScreen
-    : current === 'crew-suggestions' ? CrewSuggestionsScreen
-    : current === 'kit-requests' ? KitRequestsScreen
-    : current === 'document' ? DocumentScreen
-    : current === 'hours' ? HoursScreen
-    : current === 'alarms' ? AlarmsScreen
-    : current === 'help' ? HelpScreen
-    : current === 'film-rules' ? FilmRulesScreen
-    : current === 'lav-share' ? LavShareScreen
-    : current === 'cues-map' ? CuesMapScreen
-    : current === 'cues-timeline' ? CuesTimelineScreen
-    : (tabs.find(([id]) => id === current) || tabs[0])[2];
+  const section = sectionOf(current, state.department);
+  const refused = current === 'proposal' && crewHides(connection, 'email-proposals'); // a crew phone: never (Ana's job)
+  const Screen = refused ? DayScreen : SCREENS[current] || DayScreen;
 
   return html`
     <header class="topbar">
-      <div class="topbar__title">
-        <span class="topbar__film">${project ? project.name : 'soundcheck'}</span>
+      <div class="topbar__title"><${FilmButton} project=${project} /></div>
+      <div class="topbar__status">
+        <${MessagesButton} state=${state} />
+        <${SyncBadge} state=${state} /> ${!isCrew(connection) && html`<${EmailBadge} state=${state} />`} <${WrapBadge} project=${project} myCall=${state.myCall} />
       </div>
-      <div class="topbar__status"><${SyncBadge} state=${state} /> ${!isCrew(connection) && html`<${EmailBadge} state=${state} />`} <${WrapBadge} project=${project} myCall=${state.myCall} /></div>
-      ${project && html`<${DepartmentSwitch} department=${state.department} />`}
     </header>
-    <nav class="tabs">
-      ${tabs.map(([id, label]) => html`
-        <button key=${id} class=${id === current || (id === 'cues-picker' && ['cues-map', 'cues-timeline', 'cues-game'].includes(current)) ? 'on' : ''} disabled=${!project && id !== 'projects'}
-                onClick=${() => showScreen(id)}>${label}</button>`)}
-    </nav>
+    ${project && html`<${MainButtons} section=${section} connection=${connection} /><${Tabs} section=${section} current=${current} connection=${connection} />`}
     ${message && html`
       <div class=${'message message--' + message.kind} onClick=${clearMessage}>${message.text} <span>✕</span></div>`}
     ${project && html`<${WrapQuestion} project=${project} myCall=${state.myCall} />`}
     ${project && isCrew(connection) && html`<${FeedbackOffer} key=${project.folder} state=${state} />`}
-    ${project && emailProposals && !['proposal', 'document', 'crew-suggestions', 'kit-requests'].includes(current) && html`<${ProposalBanner} project=${project} />`}
-    ${project && !['proposal', 'document', 'crew-suggestions', 'kit-requests'].includes(current) && html`<${CrewSuggestionsBanner} state=${state} />`}
-    ${project && !isCrew(connection) && !['proposal', 'document', 'crew-suggestions', 'kit-requests'].includes(current) && html`<${KitRequestsBanner} state=${state} />`}
     <main class="page"><${Screen} state=${state} /></main>
     <footer class="footer">© 2025–2026 Ana Chiossi · soundcheck<${AppVersion} /></footer>
     <${Picker} state=${state} />
@@ -165,17 +129,17 @@ function App() {
     ${busyText && html`<div class="busy">${busyText}</div>`}`;
 }
 
-applyTheme();   // light / dark (Projects → Screen)
+applyTheme();   // light / dark (Settings → Screen)
 followPhone();
 render(html`<${App} />`, document.getElementById('app'));
-// a link into the app opens that screen: '#hours' (the "Tomorrow" notification),
-// '#lavs-18' (the "Day 18 lavs ready" notification → lav-share.js), '#join=…' (a crew link)
+// a link into the app opens that screen: '#hours' (the robot's "Tomorrow" and "Time to sleep" notifications open the
+// Tomorrow card), '#lavs-18' (the "Day 18 lavs ready" notification → lav-share.js), '#join=…' (a crew link)
 function openFromLink() {
   const lavs = /^#lavs-(\d+)$/.exec(location.hash);
   if (location.hash.startsWith('#join=')) return joinFromLink();
-  if (location.hash === '#hours') setState({ screen: 'hours', department: 'mics' });
-  if (location.hash === '#alarms') setState({ screen: 'alarms', department: 'mics' });
-  else if (lavs) setState({ screen: 'lav-share', lavDay: Number(lavs[1]), department: 'mics' });
+  if (location.hash === '#hours') setState({ screen: 'tomorrow' });
+  else if (location.hash === '#alarms') setState({ screen: 'alarms' });
+  else if (lavs) setState({ screen: 'lav-share', lavDay: Number(lavs[1]) });
   else return;
   history.replaceState(null, '', location.pathname + location.search);
 }

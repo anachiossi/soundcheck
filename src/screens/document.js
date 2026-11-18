@@ -3,7 +3,7 @@
 // so it opens with no signal. Pages are drawn one under the other, as wide as the
 // screen; pinch to zoom the pages only (parts/pinch-zoom.js: the bar on top keeps its size). "Share" hands the PDF to the phone (Files, Books, WhatsApp…).
 // The PDF drawing uses pdf.js (vendor/pdfjs), loaded only when a document is opened.
-// Used by: main.js (opened from the 📄 buttons in the Schedule)
+// Used by: main.js (opened from the 📄 buttons on the Day and in Film → Script)
 
 import { html, useEffect, useRef, useState } from '../../vendor/preact-htm.js';
 import { showScreen, getState, setState } from '../state.js';
@@ -65,7 +65,7 @@ export function DocumentScreen({ state }) {
   const fileName = exportName(getState().project, getState().documentFile || `${documentTitle}.pdf`);
   return html`
     <div class="document-bar">
-      <button class="link back" onClick=${() => showScreen(getState().documentFrom || 'schedule')}>‹ Back</button>
+      <button class="link back" onClick=${() => showScreen(getState().documentFrom || 'day')}>‹ Back</button>
       <b>${documentTitle}</b>
       ${zoom > 1 && html`<button class="btn btn--small" onClick=${resetZoom}>↺ 100%</button>`}
       ${blob && html`<button class="btn btn--small" onClick=${() => shareFile(blob, fileName)}>Share</button>`}
