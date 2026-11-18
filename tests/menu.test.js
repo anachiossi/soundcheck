@@ -67,6 +67,30 @@ test('a "?" under Speaks is never counted as nobody speaking', () => {
   assert.equal(speakersText({ presets: { 5: { rows: [{ speaker: 'maybe' }] } } }, '5'), 'speakers ?');
 });
 
+const everyActor = lines => ({
+  settings: { presets: { wire_silent: 'cast' } }, lines,
+  characters: [{ id: '1' }, { id: '2' }, { id: '136', special_extra: true }, { id: '9', off_set: true }],
+  presets: { 5: { rows: [{ char_id: '1', speaker: 'yes' }, { char_id: '2', speaker: 'no' }, { char_id: '136', speaker: 'no' }, { char_id: '9', speaker: 'no' }, { char_id: '151', speaker: 'maybe' }] } },
+});
+
+test('with no sides yet every actor in the scene counts as a speaker, marked to confirm', () => {
+  assert.equal(speakersIn(everyActor({}), '5'), 2);
+  assert.equal(speakersText(everyActor({}), '5'), '2 speakers ?');
+});
+
+test('when the sides arrive only who really speaks is counted', () => {
+  const film = everyActor({ 'sides/5': { lines: [] } });
+  film.presets[5].rows[4].speaker = 'no';
+  assert.equal(speakersIn(film, '5'), 1);
+  assert.equal(speakersText(film, '5'), '1 speaker');
+});
+
+test('a part of a scene is confirmed by the sides of the whole scene', () => {
+  const film = everyActor({ 'sides/5': { lines: [] } });
+  film.presets['5pt1'] = { rows: [{ char_id: '1', speaker: 'yes' }, { char_id: '2', speaker: 'no' }] };
+  assert.equal(speakersText(film, '5pt1'), '1 speaker');
+});
+
 test('a day shows its busiest scene, and the 2nd unit does not count', () => {
   const day = { scenes: [{ scene_id: '1' }, { scene_id: '2' }], second: { scenes: [{ scene_id: '9' }] } };
   assert.deepEqual(dayMost(project, day), { speakers: 2, lavs: 3, unsure: true });

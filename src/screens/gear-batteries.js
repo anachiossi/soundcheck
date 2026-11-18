@@ -17,6 +17,7 @@ import { setBattery, saveGroup, saveCharger, saveDevice } from '../battery-editi
 import { naturalCompare } from '../model.js';
 import { Sheet, ObjectPhotos } from '../parts/gear-form.js';
 import { useMinuteClock } from '../parts/battery-tag.js';
+import { BatteryDayPlan } from '../parts/battery-day-plan.js';
 
 const TONE_OF_STATE = { full: 'green', charging: 'yellow', in_use: '', empty: 'red' };
 
@@ -38,6 +39,7 @@ export function GearBatteriesScreen({ state }) {
   const { chargers, devices } = batteryFile(project);
   return html`
     <div class="gear">
+      <${BatteryDayPlan} project=${project} />
       ${groups.length === 0 && html`<p class="empty">No batteries yet. "+ Group" for each kind: AA ×20, NP-F970 ×5…</p>`}
       ${groups.map(g => {
         const counts = countsOf(g.batteries);
