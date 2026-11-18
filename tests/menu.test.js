@@ -37,6 +37,7 @@ test('a screen name from an older version is not a screen, so the app opens on t
   assert.equal(isScreen('schedule'), false);
   assert.equal(isScreen('kit'), false);
   assert.equal(isScreen('film-rules'), false);
+  assert.equal(isScreen('messages'), false);
   assert.equal(isScreen('day'), true);
   assert.equal(isScreen('projects'), true);
   assert.equal(isScreen('app-settings'), true);

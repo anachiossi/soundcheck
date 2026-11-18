@@ -1,5 +1,5 @@
-// main.js — starts the app: loads the saved film, then draws the top bar (the film's name, the sync badge,
-// Messages), the five main buttons with their tabs (menu.js, parts/top-menu.js), the current screen and, when
+// main.js — starts the app: loads the saved film, then draws the top bar (the film's name, the sync badge),
+// the five main buttons with their tabs (menu.js, parts/top-menu.js), the banners, the current screen and, when
 // open, the picker. Starts automatic syncing, and registers sw.js so the app itself is
 // stored on the device and opens with no signal (and updates itself).
 // A crew phone sees the ⏱ wrap clock and Hours too: the person's own hours (crew-link.js crewHides),
@@ -21,10 +21,9 @@ import { ScenesScreen } from './screens/scenes.js';
 import { CharactersScreen, TransmittersScreen, LavaliersScreen, PreferencesScreen } from './screens/kit.js';
 import { ProjectsScreen } from './screens/projects.js';
 import { Picker } from './parts/picker.js';
-import { MessagesScreen } from './screens/messages.js';
-import { ProposalScreen } from './screens/proposal.js';
-import { CrewSuggestionsScreen } from './screens/crew-suggestions.js';
-import { KitRequestsScreen } from './screens/kit-requests.js';
+import { ProposalScreen, ProposalBanner } from './screens/proposal.js';
+import { CrewSuggestionsScreen, CrewSuggestionsBanner } from './screens/crew-suggestions.js';
+import { KitRequestsScreen, KitRequestsBanner } from './screens/kit-requests.js';
 import { DocumentScreen } from './screens/document.js';
 import { AlarmsScreen } from './screens/alarms.js';
 import { CuesScreen } from './screens/cues.js';
@@ -49,7 +48,7 @@ import { GearKitScreen } from './screens/gear-kit.js';
 import { WrapBadge, WrapQuestion } from './parts/wrap-clock.js';
 import { TomorrowScreen } from './parts/tomorrow.js';
 import { CalendarScreen } from './parts/month-calendar.js';
-import { AppSettingsButton, FilmButton, MessagesButton, MainButtons, Tabs } from './parts/top-menu.js';
+import { AppSettingsButton, FilmButton, MainButtons, Tabs } from './parts/top-menu.js';
 import { EmailBadge } from './parts/email-robot.js';
 import { ConflictBadge } from './parts/conflicts.js';
 import { FeedbackOffer } from './parts/crew-feedback-form.js';
@@ -63,13 +62,15 @@ const SCREENS = {
   'ifb-list': IfbListScreen, 'ifb-crew': IfbCrewScreen, 'ifb-kit': IfbKitScreen,
   'gear-truck': GearTruckScreen, 'gear-inventory': GearInventoryScreen, 'gear-batteries': GearBatteriesScreen,
   'gear-manuals': GearManualsScreen, 'gear-kit': GearKitScreen,
-  projects: ProjectsScreen, messages: MessagesScreen, proposal: ProposalScreen, 'crew-suggestions': CrewSuggestionsScreen,
+  projects: ProjectsScreen, proposal: ProposalScreen, 'crew-suggestions': CrewSuggestionsScreen,
   'kit-requests': KitRequestsScreen, document: DocumentScreen, alarms: AlarmsScreen, help: HelpScreen,
   'app-settings': AppSettingsScreen, 'lav-share': LavShareScreen,
 };
 
 // these work with no film open: the rest need one, so the app then opens the list of films
 const WITHOUT_A_FILM = ['app-settings', 'help'];
+// what waits for an answer shows as a banner on every screen (Ana, 18 Nov), except while answering it
+const NO_BANNERS = ['proposal', 'document', 'crew-suggestions', 'kit-requests'];
 
 function SyncBadge({ state }) {
   const { project, online, connection, sync } = state;
@@ -117,7 +118,6 @@ function App() {
     <header class="topbar">
       <div class="topbar__title"><${FilmButton} project=${project} /></div>
       <div class="topbar__status">
-        <${MessagesButton} state=${state} />
         <${SyncBadge} state=${state} /> ${!isCrew(connection) && html`<${EmailBadge} state=${state} />`} <${WrapBadge} project=${project} myCall=${state.myCall} />
         <${AppSettingsButton} />
       </div>
@@ -127,6 +127,10 @@ function App() {
       <div class=${'message message--' + message.kind} onClick=${clearMessage}>${message.text} <span>✕</span></div>`}
     ${project && html`<${WrapQuestion} project=${project} myCall=${state.myCall} />`}
     ${project && isCrew(connection) && html`<${FeedbackOffer} key=${project.folder} state=${state} />`}
+    ${project && !NO_BANNERS.includes(current) && html`
+      ${!crewHides(connection, 'email-proposals') && html`<${ProposalBanner} project=${project} />`}
+      <${CrewSuggestionsBanner} state=${state} />
+      ${!isCrew(connection) && html`<${KitRequestsBanner} state=${state} />`}`}
     <main class="page"><${Screen} state=${state} /></main>
     <footer class="footer">© 2025–2026 Ana Chiossi · soundcheck<${AppVersion} /></footer>
     <${Picker} state=${state} />

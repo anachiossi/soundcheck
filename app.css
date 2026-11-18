@@ -59,7 +59,6 @@ body { margin: 0; background: var(--page); -webkit-text-size-adjust: 100%; }
 .topbar__title { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
 .topbar__film { font-weight: 800; font-size: 22px; letter-spacing: -0.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }   /* the film's name only */
 .topbar__film--button { border: 0; background: none; padding: 0; max-width: 100%; }   /* tap: Settings */
-.badge--messages { background: var(--accent); color: var(--on-accent); font-weight: 700; }
 .badge { font-size: 12px; background: var(--badge-bg); border-radius: 999px; padding: 4px 10px; color: var(--ink-soft); }
 .badge--offline { background: var(--warn-bg); color: var(--warn); font-weight: 600; }
 .page { background: var(--card); border-radius: var(--radius); padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.08); min-height: 50vh; }

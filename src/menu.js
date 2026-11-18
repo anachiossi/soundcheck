@@ -1,7 +1,7 @@
 // menu.js — the app's menu tree (Ana, 18 Nov): five main buttons in a top row, each with its own tabs.
 //   Today · Film · Mics · IFB · Gear
-// The film's name in the top bar opens the list of films ('projects'), the sliders open 'app-settings', the Messages
-// button opens 'messages'. Only names live here: main.js says which screen draws each one.
+// The film's name in the top bar opens the list of films ('projects'), the sliders open 'app-settings'.
+// Only names live here: main.js says which screen draws each one.
 // Used by: main.js, parts/top-menu.js, state.js
 
 import { crewHides } from './crew-link.js';
@@ -27,7 +27,7 @@ export const MENU = [
 // screens opened from inside another one, and the main button they belong to
 const INSIDE = { alarms: 'today', 'lav-share': 'today', cues: 'film', 'cues-map': 'film', 'cues-timeline': 'film', 'cues-game': 'film' };
 // screens that belong to no main button
-const APART = ['projects', 'app-settings', 'messages', 'proposal', 'crew-suggestions', 'kit-requests', 'document', 'help'];
+const APART = ['projects', 'app-settings', 'proposal', 'crew-suggestions', 'kit-requests', 'document', 'help'];
 
 const inMenu = screen => MENU.find(section => section.tabs.some(([id]) => id === screen));
 

@@ -1,11 +1,10 @@
-// top-menu.js — the top of the app: the film's name (opens the list of films), App settings, the Messages button with
-// its number, the five main buttons and the tabs of the chosen one. The tree itself is in menu.js.
+// top-menu.js — the top of the app: the film's name (opens the list of films), App settings, the five main buttons
+// and the tabs of the chosen one. The tree itself is in menu.js.
 // Used by: main.js
 
 import { html } from '../../vendor/preact-htm.js';
 import { showScreen, setState } from '../state.js';
 import { MENU, tabsOf } from '../menu.js';
-import { messagesWaiting } from '../messages.js';
 import { Icon } from './icons.js';
 
 export function FilmButton({ project }) {
@@ -15,13 +14,6 @@ export function FilmButton({ project }) {
 
 export const AppSettingsButton = () => html`
   <button class="topbar__settings" onClick=${() => showScreen('app-settings')} aria-label="App settings"><${Icon} name="settings" /></button>`;
-
-// shown only while something waits for an answer
-export function MessagesButton({ state }) {
-  const waiting = messagesWaiting(state);
-  if (!waiting) return null;
-  return html`<button class="badge badge--messages" onClick=${() => showScreen('messages')}>Messages ${waiting}</button>`;
-}
 
 export function MainButtons({ section, connection }) {
   const choose = next => {
