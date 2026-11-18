@@ -31,25 +31,25 @@ def with_characters(lines, characters):
     return out
 
 
-def same_but_end_action(filed, content):
-    """The two differ at most by the action after the last speech (added to the readers on 18 Nov 2026)."""
-    plain = lambda scene: {key: value for key, value in scene.items() if key != "end_action"}
-    return plain(filed) == plain(content)
+def wants_end_action(folder):
+    """The action after a scene's last speech is filed only for a film that asks (settings.json "end_action": true, Il colpo):
+    the films already filed keep their files byte for byte (LBE is finished). folder: <film>/lines/<sides or script>"""
+    settings = Path(folder).parents[1] / "settings.json"
+    return settings.exists() and bool(json.loads(settings.read_text(encoding="utf-8")).get("end_action"))
 
 
 def write_scene_files(folder, scenes, source, characters):
     """Returns the scene ids whose file is new or changed."""
     changed = []
     folder.mkdir(parents=True, exist_ok=True)
+    end_action = wants_end_action(folder)
     for scene_id, scene in scenes.items():
         content = {"scene_id": scene_id, "source": source, "heading": scene["heading"],
                    **({"pdf": scene["pdf"], "page": scene["page"]} if scene.get("pdf") else {}),
                    "lines": with_characters(scene["lines"], characters),
-                   **({"end_action": scene["end_action"]} if scene.get("end_action") else {})}
+                   **({"end_action": scene["end_action"]} if end_action and scene.get("end_action") else {})}
         text = json.dumps(content, ensure_ascii=False, indent=2) + "\n"
         path = folder / f"{scene_id}.json"
-        if path.exists() and same_but_end_action(json.loads(path.read_text(encoding="utf-8")), content):
-            continue  # a film already filed keeps its files as they are (LBE is finished: never rewritten for this)
         if not path.exists() or path.read_text(encoding="utf-8") != text:
             path.write_text(text, encoding="utf-8")
             changed.append(scene_id)

@@ -39,23 +39,29 @@ class EndAction(unittest.TestCase):
 class FiledFilms(unittest.TestCase):
     scene = {"heading": "INT. CASA", "lines": [{"name": "ANNA", "text": "Ciao."}]}
 
-    def test_a_scene_already_filed_is_not_rewritten_only_to_add_the_end_action(self):
-        with tempfile.TemporaryDirectory() as folder:
-            write_scene_files(Path(folder), {"1": self.scene}, "Sides", [])
-            before = (Path(folder) / "1.json").read_text(encoding="utf-8")
-            changed = write_scene_files(Path(folder), {"1": {**self.scene, "end_action": "Esce."}}, "Sides", [])
-            self.assertEqual(changed, [])
-            self.assertEqual((Path(folder) / "1.json").read_text(encoding="utf-8"), before)
+    def film(self, film_folder, settings):
+        (Path(film_folder) / "settings.json").write_text(json.dumps(settings), encoding="utf-8")
+        return Path(film_folder) / "lines" / "sides"
 
-    def test_a_new_scene_keeps_its_end_action(self):
-        with tempfile.TemporaryDirectory() as folder:
-            write_scene_files(Path(folder), {"1": {**self.scene, "end_action": "Esce."}}, "Sides", [])
-            self.assertEqual(json.loads((Path(folder) / "1.json").read_text(encoding="utf-8"))["end_action"], "Esce.")
+    def test_a_film_that_did_not_ask_is_filed_byte_for_byte_as_before(self):
+        with tempfile.TemporaryDirectory() as film_folder:
+            folder = self.film(film_folder, {})
+            write_scene_files(folder, {"1": self.scene}, "Sides", [])
+            changed = write_scene_files(folder, {"1": {**self.scene, "end_action": "Esce."}}, "Sides", [])
+            self.assertEqual(changed, [])
+            self.assertNotIn("end_action", json.loads((folder / "1.json").read_text(encoding="utf-8")))
+
+    def test_a_film_that_asks_gets_the_end_action(self):
+        with tempfile.TemporaryDirectory() as film_folder:
+            folder = self.film(film_folder, {"end_action": True})
+            write_scene_files(folder, {"1": {**self.scene, "end_action": "Esce."}}, "Sides", [])
+            self.assertEqual(json.loads((folder / "1.json").read_text(encoding="utf-8"))["end_action"], "Esce.")
 
     def test_a_changed_speech_is_still_written(self):
-        with tempfile.TemporaryDirectory() as folder:
-            write_scene_files(Path(folder), {"1": self.scene}, "Sides", [])
-            changed = write_scene_files(Path(folder), {"1": {**self.scene, "lines": [{"name": "ANNA", "text": "Addio."}]}}, "Sides", [])
+        with tempfile.TemporaryDirectory() as film_folder:
+            folder = self.film(film_folder, {})
+            write_scene_files(folder, {"1": self.scene}, "Sides", [])
+            changed = write_scene_files(folder, {"1": {**self.scene, "lines": [{"name": "ANNA", "text": "Addio."}]}}, "Sides", [])
             self.assertEqual(changed, ["1"])
 
 

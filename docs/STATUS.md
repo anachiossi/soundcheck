@@ -19,7 +19,7 @@ to shoot (never today or earlier), and writes the first sound analysis of new sc
 
 **Rules that must hold:**
 - A TX or lav already chosen is never changed by the ODG step. Days already shot are never touched.
-- A film already filed keeps its files: LBE is finished and is not rewritten (`cue_lines.same_but_end_action`).
+- A film already filed keeps its files byte for byte: LBE is finished. Only a film with settings `"end_action": true` (Il colpo) files the action after the last speech.
 - Scene file names are the production's, in capitals: Windows can't hold `526a.json` and `526A.json` side by side.
 - The alarm robot (`pipeline/gmail-trigger.gs`) was NOT changed on 18 Nov after v229: nothing to push to Apps Script.
 
