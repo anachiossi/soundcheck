@@ -1,6 +1,6 @@
 // proposal.js — reviewing a proposal from a production email (e.g. ODG #6):
 //   ⚠ warnings  — probably mistakes on the sheet itself: nothing to change
-//   changes     — each one: ✓ Accept or ✕ Reject (or "Accept all")
+//   changes     — each one: ✓ Accept or ✕ Reject ("Accept all" sits on top of the list: Ana, 18 Nov, a PDL has 141)
 //   🎧 IFB today — who on the IFB list isn't on the call sheet
 //   ✓ checked   — what was compared and is fine
 // Also: the banner that shows up on every screen while a proposal waits.
@@ -58,6 +58,7 @@ export function ProposalScreen({ state }) {
 
     <h2 class="section-title">Changes <small>${waiting.length} to decide</small></h2>
     ${proposal.changes.length === 0 && html`<p class="muted">Nothing to change: everything matches.</p>`}
+    ${waiting.length > 1 && html`<button class="btn btn--primary" onClick=${() => acceptAll(proposal.id)}>✓ Accept all ${waiting.length}</button>`}
     <ul class="changes">
       ${proposal.changes.map(change => html`
         <li key=${change.id} class=${proposal.decisions?.[change.id] ? 'change change--decided' : 'change'}>
@@ -65,7 +66,6 @@ export function ProposalScreen({ state }) {
           <${Decision} change=${change} />
         </li>`)}
     </ul>
-    ${waiting.length > 1 && html`<button class="btn btn--primary" onClick=${() => acceptAll(proposal.id)}>✓ Accept all ${waiting.length}</button>`}
 
     <details class="more">
       <summary>✓ Checked and fine (${proposal.checks.length})</summary>
