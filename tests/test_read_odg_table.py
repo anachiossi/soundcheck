@@ -155,6 +155,11 @@ class TableReader(unittest.TestCase):
         self.assertEqual(odg["second_unit"], {"name": "Verdi", "call": "10:30", "wrap": "18:30"})
         self.assertEqual(odg["unit_warnings"], [])
 
+    def test_a_unit_line_with_a_space_and_an_opening_quote_still_opens_that_unit(self):
+        odg = sheet(HEADER, row((20, "UNITA’ ROSSI")), scene("50"), row((20, "UNITA ‘ VERDI ")), scene("60"), main_unit="ROSSI")
+        self.assertEqual([(s["scene_id"], s.get("unit")) for s in odg["scenes"]], [("50", None), ("60", "2nd")])
+        self.assertEqual(odg["second_unit"]["name"], "Verdi")
+
     def test_a_splinter_table_with_no_header_is_the_2nd_unit(self):
         for word, name in (("SPLINTER", "Splinter"), ("SPLIT", "Split")):
             first = {"line": len(LINES), "rows": [HEADER, scene("50"), row((20, "TOT"), (320, "1/8"))]}

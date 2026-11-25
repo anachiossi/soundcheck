@@ -41,5 +41,49 @@ class CheckDayTest(unittest.TestCase):
         self.assertEqual(scenes_change(changes)["fields"], {"date": "2026-10-21", "call": "10:00", "wrap": "18:00"})
 
 
+PDL_SECOND_UNIT = [
+    {"day": 70, "date": "2026-03-24", "call": "08:00", "wrap": "16:00", "scene_id": "10", "order": 1},
+    {"day": 70, "date": "2026-03-24", "call": "08:00", "wrap": "16:00", "scene_id": "20", "order": 1, "unit": "2nd"},
+]
+
+
+@unittest.skipIf(not __import__("importlib").util.find_spec("pymupdf"), "pymupdf is not installed")
+class MissingSecondUnitTest(unittest.TestCase):
+    def test_an_odg_with_no_2nd_unit_today_proposes_removing_the_pdls(self):
+        from propose import check_units
+        results = check_units(70, "2026-03-24", "08:00", "16:00", [{"scene_id": "10"}], None, PDL_SECOND_UNIT,
+                              "Day 70", own_day=True)
+        changes = [change for result in results for change in result[0]]
+        self.assertEqual(len(changes), 1)
+        self.assertEqual(changes[0]["op"]["scene_ids"], [])
+        self.assertEqual(changes[0]["op"]["unit"], "2nd")
+        self.assertIn("prints no 2nd unit today", changes[0]["text"])
+
+    def test_the_next_day_box_never_removes_a_2nd_unit(self):
+        from propose import check_units
+        results = check_units(70, "2026-03-24", "08:00", "16:00", [{"scene_id": "10"}], None, PDL_SECOND_UNIT,
+                              "Day 70 (next day)")
+        self.assertEqual([change for result in results for change in result[0]], [])
+
+
+class CheckDateTest(unittest.TestCase):
+    def test_a_right_date_on_the_sheet_wins_over_the_email_subject(self):
+        from compare import check_date
+        # two ODGs in one email named after the first: the second keeps its own date
+        odg = {"date": "2026-11-25", "weekday_printed": "mercoledì"}
+        self.assertEqual(check_date(odg, "2026-11-24"), ("2026-11-25", []))
+
+    def test_a_date_whose_weekday_is_wrong_takes_the_subject_date(self):
+        from compare import check_date
+        odg = {"date": "2026-10-07", "weekday_printed": "giovedì"}   # 7 Oct 2026 is a Wednesday
+        date, warnings = check_date(odg, "2026-10-08")
+        self.assertEqual(date, "2026-10-08")
+        self.assertEqual(len(warnings), 1)
+
+    def test_no_date_on_the_sheet_takes_the_subject_date(self):
+        from compare import check_date
+        self.assertEqual(check_date({"date": "", "weekday_printed": ""}, "2026-10-08")[0], "2026-10-08")
+
+
 if __name__ == "__main__":
     unittest.main()

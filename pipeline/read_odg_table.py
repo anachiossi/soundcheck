@@ -87,7 +87,10 @@ def scene_of(values):
 def read_scene_table(rows, header, template):
     """The rows under a header → (scenes, units found, the total pages printed)."""
     scenes, units, total, unit, standby = [], [], "", None, False
-    unit_re = re.compile(r"^(?:" + "|".join(re.escape(w) for w in template["unit"]) + r")\s+([A-ZÀ-Þ' ]+?)(?=\s*[-–:(]|\s+\d|\s+ORARIO|$)", re.I)
+    # "UNITA’ ALFIERI" · "UNITA ‘ DE FEUDIS" (Il colpo ODG #70–71: a space, then an OPENING quote; the line went unseen
+    # and the 2nd unit's scenes counted as the main unit's): after the word, a space or a quote of any kind
+    unit_re = re.compile(r"^(?:" + "|".join(re.escape(w) for w in template["unit"]) + r")(?:\s*['‘’`´]\s*|\s+)"
+                         r"([A-ZÀ-Þ][A-ZÀ-Þ' ]*?)(?=\s*[-–:(]|\s+\d|\s+ORARIO|$)", re.I)
     for row in rows:
         whole = clean(" ".join(cell["text"] for cell in row))
         split = split_unit(whole)

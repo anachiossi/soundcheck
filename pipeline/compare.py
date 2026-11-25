@@ -63,7 +63,9 @@ def nice_date(iso):
 
 
 def check_date(odg, subject_date):
-    """The date on the sheet can be wrong: trust the weekday + the email subject."""
+    """The date on the sheet can be wrong: trust the weekday + the email subject.
+    The subject's date is used only when the sheet's own date is wrong (its weekday doesn't match) or missing: one email
+    can carry two ODGs (Ana, 25 Nov: ODG #70 and #71 in an email named "…_70_24.11.26.pdf", and day 71 was put on 24 Nov)."""
     warnings = []
     printed, weekday = odg["date"], odg["weekday_printed"]
     if printed and weekday:
@@ -72,7 +74,8 @@ def check_date(odg, subject_date):
             warnings.append(f"The ODG prints '{weekday.capitalize()} {int(printed[8:])}/{printed[5:7]}', but that date is a "
                             f"{ENGLISH_DAYS[real]}: a typo on the sheet" + (f". The email says {subject_date[8:]}/{subject_date[5:7]}, "
                             "so that date is used." if subject_date else "."))
-    return (subject_date or printed), warnings
+            return (subject_date or printed), warnings
+    return (printed or subject_date), warnings
 
 
 def check_next_day_date(advance, after):

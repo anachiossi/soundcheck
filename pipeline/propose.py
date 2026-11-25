@@ -134,15 +134,23 @@ def personal_call_warnings(commute, odg_crew, odg):
     return warnings
 
 
-def check_units(number, date, call, wrap, scenes, second, schedule, label):
+def check_units(number, date, call, wrap, scenes, second, schedule, label, own_day=False):
     """The day's main unit, and its 2nd unit when the ODG prints one ("UNIT DE FEUDIS 08:00 – 16:00",
-    read_odg_il_colpo.py → scenes with unit '2nd'): each checked against its own rows (Ana, 3 Nov)."""
+    read_odg_il_colpo.py → scenes with unit '2nd'): each checked against its own rows (Ana, 3 Nov).
+    own_day: the ODG's own day (not its next-day box). When it prints NO 2nd unit but the schedule has one (from the
+    PDL), removing it is proposed (Ana, 25 Nov: "this week we haven't had yet a second unit, the ODGs differ from the
+    pdl" — the PDL's 2nd unit stayed on 24 and 25 Nov, and the alarms follow the 2nd-unit days)."""
     main_ids = [s["scene_id"] for s in scenes if not s.get("unit")]
     second_ids = [s["scene_id"] for s in scenes if s.get("unit") == "2nd"]
     results = [check_day(number, date, call, wrap, main_ids, schedule, label)]
     if second_ids:
         results.append(check_day(number, date, second["call"], second["wrap"], second_ids, schedule,
                                  f"{label} · 2nd unit", unit="2nd", unit_name=second["name"]))
+    elif own_day and any(row["day"] == number and row.get("unit") == "2nd" for row in schedule):
+        changes, checks = check_day(number, date, "", "", [], schedule, f"{label} · 2nd unit", unit="2nd")
+        for change in changes:
+            change["text"] += " — the ODG prints no 2nd unit today"
+        results.append((changes, checks))
     return results
 
 
@@ -196,7 +204,7 @@ def build_proposal(film_folder, email_folder, other_sides=None, sides_notes=None
     warnings.extend(odg.get("unit_warnings", []))
     warnings.extend(reading_lines)
     for result in check_units(odg["number"], date, odg["call"], odg["wrap"], odg["scenes"], odg.get("second_unit"),
-                              film["schedule"], f"Day {odg['number']}"):
+                              film["schedule"], f"Day {odg['number']}", own_day=True):
         add(result)
     by_gender = bool(((film["settings"].get("presets") or {}).get("lav_rules") or {}).get("by_gender"))
     add(check_cast_list(odg["cast"], film["characters"], predict_gender=by_gender))
