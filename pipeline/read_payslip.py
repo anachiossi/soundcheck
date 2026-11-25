@@ -5,7 +5,7 @@
      "gross": 1300.0, "net": 1180.25, "paid_on": "2026-03-10", "role": "SOUND ASSISTANT"}
 
 What the PDF prints (the text comes out one value per line, each value BEFORE or AFTER its label):
-    "Retribuzione dal 09/11/2026 al 11/11/2026"          the period
+    "Retribuzione dal 02/03/2026 al 04/03/2026"          the period
     under "Titolo Produzione": one row per day paid:    "012.001" · "THE FILM" · "02/03/2026" · "02/03/2026" · "1111"
                                                          (code, production, from, to, number); from–to can be several days
     "1.300,00" then "LORDO"                             gross
