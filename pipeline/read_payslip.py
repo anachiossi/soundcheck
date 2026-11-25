@@ -1,15 +1,15 @@
 """read_payslip.py — reads a payslip (busta paga) PDF made with Alfa Software (docs.alfasoftware.it, "Buste_dipendente
 …pdf", the payroll program many Italian productions use) into plain data:
 
-    {"production": "IL COLPO", "days": ["2026-11-09", "2026-11-11"], "period": ["2026-11-09", "2026-11-11"],
-     "gross": 440.0, "net": 401.09, "paid_on": "2026-11-18", "role": "AIUTO MICROFONISTA"}
+    {"production": "THE FILM", "days": ["2026-03-02", "2026-03-04"], "period": ["2026-03-02", "2026-03-04"],
+     "gross": 1300.0, "net": 1180.25, "paid_on": "2026-03-10", "role": "SOUND ASSISTANT"}
 
 What the PDF prints (the text comes out one value per line, each value BEFORE or AFTER its label):
     "Retribuzione dal 09/11/2026 al 11/11/2026"          the period
-    under "Titolo Produzione": one row per day paid:    "032.002" · "IL COLPO" · "09/11/2026" · "09/11/2026" · "2951"
+    under "Titolo Produzione": one row per day paid:    "012.001" · "THE FILM" · "02/03/2026" · "02/03/2026" · "1111"
                                                          (code, production, from, to, number); from–to can be several days
-    "440,00" then "LORDO"                                gross
-    "401,09" then "NETTO A PAGARE"                       net
+    "1.300,00" then "LORDO"                             gross
+    "1.180,25" then "NETTO A PAGARE"                    net
     "Data pagamento:" … the first date after it          when it is paid
 Never kept: the tax code, the IBAN, the INPS numbers (they stay inside the PDF, in Ana's private pay repo).
 Used by: payslips.py
@@ -40,13 +40,13 @@ def money(text):
 
 
 def days_between(first, last):
-    """'2026-11-09', '2026-11-11' → the three dates, both ends included."""
+    """'2026-03-02', '2026-03-04' → the three dates, both ends included."""
     start, end = datetime.date.fromisoformat(first), datetime.date.fromisoformat(last)
     return [(start + datetime.timedelta(days=n)).isoformat() for n in range((end - start).days + 1)]
 
 
 def value_before(lines, label):
-    """The money printed on the line just before a label ('440,00' · 'LORDO'), or None."""
+    """The money printed on the line just before a label ('1.300,00' · 'LORDO'), or None."""
     for index, line in enumerate(lines):
         if line == label and index and MONEY_RE.match(lines[index - 1]):
             return money(lines[index - 1])
