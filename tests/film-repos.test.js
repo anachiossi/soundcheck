@@ -90,7 +90,9 @@ test('a film downloaded from an extra repo remembers its repo, and its sync read
   await syncNow();
   assert.equal(getState().sync.error, null);
   assert.ok(asked.includes('https://api.github.com/repos/someone/film-x/git/commits'), 'committed in film-x');
-  assert.ok(asked.length > 0 && asked.every(url => url.startsWith('https://api.github.com/repos/someone/film-x/')), asked.join('\n'));
+  // the film's data only from its own repo (Ana's private pay repo is read apart, after the sync: pay-download.js)
+  const filmRequests = asked.filter(url => !url.startsWith('https://api.github.com/repos/someone/soundcheck-pay/'));
+  assert.ok(filmRequests.length > 0 && filmRequests.every(url => url.startsWith('https://api.github.com/repos/someone/film-x/')), asked.join('\n'));
   forgetDevice();
 });
 

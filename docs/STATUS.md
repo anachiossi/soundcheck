@@ -1,6 +1,6 @@
 # soundcheck — where things stand (start here)
 
-Last updated: 2026-11-18, night · version **v238** · https://anachiossi.github.io/soundcheck/
+Last updated: 2026-11-25 · version **v239** · https://anachiossi.github.io/soundcheck/
 Read this first in a new session, then `CLAUDE.md` (rules) and `docs/HOW_IT_WORKS.md` (file map).
 The film-specific diary (decisions, dates, what Ana said) is private:
 `D:\script_read_claude\docs\` → `2026-09-27_soundcheck_plan.md`, `2026-09-29_soundcheck_log.md`,
@@ -9,7 +9,7 @@ The film-specific diary (decisions, dates, what Ana said) is private:
 ## State of things (night of 18 Nov 2026)
 The film's own state, and every open item in detail, are in the private repo: `notes/claude-log/2026-11-18_state-of-things.md`.
 
-**The app's menu:** Today (Day · Calendar · Overview · Hours · Alarms) · Film (Script · Scenes · Dialogs · Characters · Settings) ·
+**The app's menu:** Today (Day · Calendar · Overview · Hours · Alarms) · Film (Script · Scenes · Dialogs · Characters · Paycheck · Settings) ·
 Mics (Transmitters · Lavaliers · Preferences · Presets) · IFB (IFB · Crew · IFB kit) · Gear (Truck · Inventory · Batteries · Manuals · Kit).
 The film's name opens the list of films; the sliders in the top bar open App settings; banners on every screen show what waits for an answer.
 
@@ -33,6 +33,15 @@ v231. A new ODG email through the new robot steps (a run with no new email passe
 2. Sound analysis: lav placement and water warnings, kids on set and Ana's own levels need a person reading each scene.
 3. Presets for days 72–88: they come by themselves when the next PDL arrives.
 4. Git history rewrite of this public repo: planned, on hold until Ana says (`2026-11-14_history_rewrite_plan.md`, private).
+
+## Latest (25 Nov 2026)
+- v239 **Film → Paycheck** (Ana: "a paycheck page on the app to keep track of weeks and days"): your days (only the 2nd-unit days on
+  Il colpo, settings `commute.days`) week by week, each with the payslip that paid it; a day skipped while a later one is paid is
+  marked red; the payslips (paid on, days, gross, net), each opening its PDF offline. `src/pay-rules.js`, `src/pay-download.js`,
+  `src/screens/paycheck.js`. The payslips live in Ana's PRIVATE repo `soundcheck-pay` (never the data repo: a crew key reads that),
+  filed by the email robot (`pipeline/payslips.py`, reader `pipeline/read_payslip.py`, Alfa Software "Buste_dipendente" PDFs) when
+  the data repo has the secret `PAY_REPO_TOKEN`. Hidden on crew phones. **Waits for Ana:** make the repo, the robot's key, her
+  device key reading it, a Gmail filter forwarding the payslips to the robot's mailbox.
 
 ## Latest (18 Nov 2026)
 - v238 Gear → Batteries: "I have [n]" for each kind of battery, to type the real count (`countBatteries`); "not counted yet" until then. Whole scene: the

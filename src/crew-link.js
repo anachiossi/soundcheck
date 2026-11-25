@@ -21,7 +21,8 @@ export function isCrew(connection) {
 //   'help-alarms'  Help → Alarms for the next day (and the wrap alerts line of Help → Wrap hours)
 // The Hours screen, the ⏱ wrap clock and its question DO show on crew phones: the person's own
 // hours, kept on the phone only (crew-sync.js), with "Export my timesheet" (screens/hours.js).
-export const PERSONAL_PARTS = ['wrap-alerts', 'tomorrow', 'help-alarms'];
+//   'paycheck'     Film → Paycheck: Ana's payslips (from her private pay repo, pay-download.js)
+export const PERSONAL_PARTS = ['wrap-alerts', 'tomorrow', 'help-alarms', 'paycheck'];
 
 // Parts that are Ana's job on the film, not the crew's: not shown on crew phones either.
 //   'email-proposals'  the 📬 banner of a production email (ODG, sides…) and its proposal screen

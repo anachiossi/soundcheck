@@ -13,13 +13,13 @@ test('the five main buttons are Today, Film, Mics, IFB and Gear, in that order',
 
 test('each main button has the tabs Ana chose', () => {
   assert.deepEqual(names('today'), ['Day', 'Calendar', 'Overview', 'Hours', 'Alarms']);
-  assert.deepEqual(names('film'), ['Script', 'Scenes', 'Dialogs', 'Characters', 'Settings']);
+  assert.deepEqual(names('film'), ['Script', 'Scenes', 'Dialogs', 'Characters', 'Paycheck', 'Settings']);
   assert.deepEqual(names('mics'), ['Transmitters', 'Lavaliers', 'Preferences', 'Presets']);
   assert.deepEqual(names('ifb'), ['IFB', 'Crew', 'IFB kit']);
   assert.deepEqual(names('gear'), ['Truck', 'Inventory', 'Batteries', 'Manuals', 'Kit']);
 });
 
-test('a crew phone has no Alarms, Presets or film Settings', () => {
+test('a crew phone has no Alarms, Presets, Paycheck or film Settings', () => {
   const crew = { role: 'crew', name: 'Davide' };
   assert.deepEqual(tabsOf('today', crew).map(([id]) => id), ['day', 'calendar', 'overview', 'hours']);
   assert.deepEqual(tabsOf('film', crew).map(([id]) => id), ['script', 'scenes', 'cues-picker', 'characters']);

@@ -11,7 +11,7 @@ export const MENU = [
     ['day', 'Day'], ['calendar', 'Calendar'], ['overview', 'Overview'], ['hours', 'Hours'], ['tomorrow', 'Alarms'],
   ] },
   { id: 'film', label: 'Film', icon: 'book', tabs: [
-    ['script', 'Script'], ['scenes', 'Scenes'], ['cues-picker', 'Dialogs'], ['characters', 'Characters'], ['film-settings', 'Settings'],
+    ['script', 'Script'], ['scenes', 'Scenes'], ['cues-picker', 'Dialogs'], ['characters', 'Characters'], ['paycheck', 'Paycheck'], ['film-settings', 'Settings'],
   ] },
   { id: 'mics', label: 'Mics', icon: 'mic', tabs: [
     ['transmitters', 'Transmitters'], ['lavaliers', 'Lavaliers'], ['preferences', 'Preferences'], ['lav-rules', 'Presets'],

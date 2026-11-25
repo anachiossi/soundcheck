@@ -1048,3 +1048,23 @@ mark.hit--now { background: #f59e0b; box-shadow: 0 0 0 2px #f59e0b; }           
 .battery-plan__line { margin-bottom: 8px; }
 .battery-plan__count { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: 14px; }
 .battery-plan__count input { width: 4.5em; font-size: 16px; padding: 4px 6px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--card); color: var(--ink); }
+/* Film → Paycheck (screens/paycheck.js): the summary, the weeks with each day's payslip, the payslips */
+.paycheck-summary { display: grid; gap: 4px; padding: 14px; border-radius: 16px; background: var(--card); border: 1px solid var(--line); }
+.paycheck-summary p { margin: 0; }
+.paycheck-summary b { font-size: 17px; }
+.paycheck-skipped { color: var(--no); background: var(--no-bg); border-radius: 10px; padding: 8px 10px; font-weight: 600; font-size: 14px; }
+.paycheck-week { margin-bottom: 12px; }
+.paycheck-week__title { font-size: 14px; color: var(--muted); font-weight: 600; margin: 0 0 6px; }
+.paycheck-days, .paycheck-slips { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.paycheck-day { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 10px 12px; border-radius: 12px; background: var(--card); border: 1px solid var(--line); }
+.paycheck-day__when { display: flex; align-items: center; gap: 6px; font-weight: 600; }
+.paycheck-day__status { color: var(--muted); font-size: 14px; text-align: right; }
+.paycheck-day--paid .paycheck-day__status { color: var(--yes); text-decoration: none; font-weight: 600; }
+.paycheck-day--skipped { background: var(--no-bg); border-color: var(--no-bg); }
+.paycheck-day--skipped .paycheck-day__status { color: var(--no); font-weight: 700; }
+.paycheck-slip { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; text-align: left;
+  font: inherit; color: var(--ink); padding: 10px 12px; border-radius: 12px; background: var(--card); border: 1px solid var(--line); }
+.paycheck-slip span { display: grid; gap: 2px; min-width: 0; }
+.paycheck-slip small { color: var(--muted); font-size: 13px; }
+.paycheck-slip__money { text-align: right; font-variant-numeric: tabular-nums; }

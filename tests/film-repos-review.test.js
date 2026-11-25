@@ -64,7 +64,9 @@ test('opening another film between download and upload: nothing is committed, th
   await syncNow();
   assert.equal(getState().sync.error, null);
   assert.deepEqual(commits(asked), ['https://api.github.com/repos/someone/film-x/git/commits']);
-  assert.ok(asked.every(url => url.startsWith('https://api.github.com/repos/someone/film-x/')), asked.join('\n'));
+  // the film's data only from its own repo (Ana's private pay repo is read apart, after the sync: pay-download.js)
+  const filmRequests = asked.filter(url => !url.startsWith('https://api.github.com/repos/someone/soundcheck-pay/'));
+  assert.ok(filmRequests.every(url => url.startsWith('https://api.github.com/repos/someone/film-x/')), asked.join('\n'));
   assert.deepEqual(getState().project.outbox, {}, 'film B uploaded');
   assert.equal(getState().project.id, 'film-b');
   forgetDevice();

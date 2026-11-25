@@ -39,6 +39,7 @@ import { ImageForQuestion } from './parts/image-for.js';
 import { HoursScreen } from './screens/hours.js';
 import { HelpScreen } from './screens/help.js';
 import { FilmSettingsScreen } from './screens/film-settings.js';
+import { PaycheckScreen } from './screens/paycheck.js';
 import { LavRulesScreen } from './screens/lav-rules.js';
 import { AppSettingsScreen } from './screens/app-settings.js';
 import { LavShareScreen } from './screens/lav-share.js';
@@ -58,6 +59,7 @@ import { applyTheme, followPhone } from './theme.js';
 const SCREENS = {
   day: DayScreen, tomorrow: TomorrowScreen, calendar: CalendarScreen, overview: OverviewScreen, hours: HoursScreen,
   script: ScriptScreen, scenes: ScenesScreen, characters: CharactersScreen, 'lav-rules': LavRulesScreen, 'film-settings': FilmSettingsScreen,
+  paycheck: PaycheckScreen,
   transmitters: TransmittersScreen, lavaliers: LavaliersScreen, preferences: PreferencesScreen, 'cues-picker': CuesPickerScreen,
   'ifb-list': IfbListScreen, 'ifb-crew': IfbCrewScreen, 'ifb-kit': IfbKitScreen,
   'gear-truck': GearTruckScreen, 'gear-inventory': GearInventoryScreen, 'gear-batteries': GearBatteriesScreen,

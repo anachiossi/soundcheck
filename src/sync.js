@@ -23,6 +23,7 @@ import { sendWaitingFeedback } from './crew-feedback.js';
 import { refreshEmailRobot } from './email-robot.js';
 import { connectionFor } from './film-source.js';
 import { downloadPhotos } from './photos.js';
+import { downloadPayslips } from './pay-download.js';
 import { filmStore } from './sync-store.js';
 import { applyRemote, filesToDownload, fileContent, setFileContent, formatJson } from './store/repo-files.js';
 import { filmPaths, repoPath, kitOf } from './store/kit-files.js';
@@ -60,6 +61,7 @@ export async function syncNow({ loud = false } = {}) {
       if (loud) showMessage('ok', uploaded ? `Uploaded ${uploaded} change(s).` : 'Everything is up to date.');
     }
     downloadPhotos(connection, deviceStore).catch(() => {}); // costume and kit photos, in the background (photos.js)
+    downloadPayslips(connection, deviceStore).catch(() => {}); // Ana's payslips from her private pay repo (pay-download.js)
   } catch (error) {
     const accessEnded = error.status === 401 && isCrew(connection); // the crew key expired
     const switched = error.filmSwitched; // another film was opened (sync-store.js): stop quietly
