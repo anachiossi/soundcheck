@@ -169,6 +169,13 @@ class TableReader(unittest.TestCase):
             self.assertEqual(odg["second_unit"], {"name": name, "call": "", "wrap": "", "split": True})
             self.assertEqual(odg["unit_warnings"], [])
 
+    def test_a_splinter_printed_with_a_named_2nd_unit_is_a_split_of_the_main_unit(self):
+        odg = sheet(HEADER, row((20, "UNITA’ ROSSI")), scene("50"), row((20, "SPLINTER UNIT")), scene("51"),
+                    row((20, "UNITA ‘ VERDI")), scene("60"), main_unit="ROSSI")
+        self.assertEqual([(s["scene_id"], s.get("unit")) for s in odg["scenes"]], [("50", None), ("51", None), ("60", "2nd")])
+        self.assertEqual(odg["second_unit"]["name"], "Verdi")
+        self.assertIn("scene 51 kept on the main unit's day", odg["unit_warnings"][0])
+
     def test_only_a_whole_row_saying_split_opens_the_2nd_unit(self):
         self.assertEqual(split_unit("UNITÀ SPLIT – orario 08:45 – 15:30"), ("Split", "08:45", "15:30"))
         self.assertIsNone(split_unit("PRONTI A GIRARE SPLIT"))

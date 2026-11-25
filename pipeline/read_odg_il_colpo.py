@@ -133,8 +133,9 @@ def mark_units(table, scenes, main_unit, groups):
     """A day with two units prints "UNIT ALFIERI 14:00 – 22:00" before the main unit's scenes and
     "UNIT DE FEUDIS 08:00 – 16:00" before the 2nd unit's (ODG #55, 3 Nov). The main unit is the one the
     film's settings name ("main_unit": "ALFIERI"); every other unit is the 2nd: its scenes get
-    unit '2nd' + unit_name. "SPLINTER" or "SPLIT" (ODG #67) is always the 2nd unit, and the scenes printed
-    before it are the main unit's. Returns ({name, call, wrap} of the 2nd unit or None, warnings);
+    unit '2nd' + unit_name. "SPLINTER" or "SPLIT" (ODG #67) is the 2nd unit when it is the only other unit, and the
+    scenes printed before it are the main unit's; printed together with a named 2nd unit (ODG #72) it is a split of
+    the main unit, whose scenes stay the main unit's. Returns ({name, call, wrap} of the 2nd unit or None, warnings);
     fills groups = {'ALFIERI': [scene ids], 'DE FEUDIS': [...]} for the needs (read_needs)."""
     unit_of, current, second, warnings, split_names = {}, None, None, [], set()
     for i, line in enumerate(table):
@@ -157,8 +158,13 @@ def mark_units(table, scenes, main_unit, groups):
         main = named[0].upper()  # not set, or not on this ODG: the first unit printed, said so
         warnings.append(f'Two units on the ODG ({", ".join(names)}): "{named[0]}" taken as the main unit '
                         f'(settings.json "main_unit" says "{main_unit or "nothing"}").')
+    # a splinter printed together with a named 2nd unit is a split of the MAIN unit (ODG #72, Ana 25 Nov): its scenes
+    # stay the main unit's, like the table reader (read_odg_table.py with_units)
+    split_of_main = bool(split_names) and len(set(named)) >= 2
     for scene in scenes:
         unit = unit_of.get(scene["scene_id"])
+        if unit and split_of_main and unit[0] in split_names:
+            continue
         if unit and unit[0].upper() != main:
             scene["unit"], scene["unit_name"] = "2nd", unit[0].title()
             second = second or {"name": unit[0].title(), "call": unit[1], "wrap": unit[2]}

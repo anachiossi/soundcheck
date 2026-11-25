@@ -209,8 +209,11 @@ def next_day_facts(lines, start, number, year):
 
 
 def with_units(scenes, units, main_unit):
-    """Marks the scenes of every unit but the main one as the 2nd unit's. "SPLINTER" or "SPLIT" is always the
-    2nd unit, even as the only unit printed. → (second unit or None, warnings)."""
+    """Marks the scenes of every unit but the main one as the 2nd unit's. "SPLINTER" or "SPLIT" is the 2nd unit when
+    it is the only other unit printed (ODG #67). When the ODG also prints a named 2nd unit, the splinter is a split of
+    the MAIN unit (ODG #72, 26 Nov: "UNITA' ALFIERI" · "SPLINTER UNIT" inside its table · "UNITA ‘ DE FEUDIS"): its
+    scenes stay on the main unit's day (Ana, 25 Nov: "part of the main unit") and a line says so.
+    → (second unit or None, warnings)."""
     names = [unit["name"] for unit in units]
     split_names = {unit["name"] for unit in units if unit.get("split")}
     if len(set(names)) < 2 and not split_names:
@@ -222,9 +225,14 @@ def with_units(scenes, units, main_unit):
     warnings = [] if not named or (main_unit and main.upper() == main_unit.upper()) else [
         f'Two units on this ODG ({", ".join(dict.fromkeys(names))}): "{main}" was taken as the main one '
         f'(settings.json "main_unit" says "{main_unit or "nothing"}").']
+    split_of_main = bool(split_names) and len(set(named)) >= 2   # a splinter AND a named 2nd unit
+    if split_of_main:
+        kept = [scene["scene_id"] for scene in scenes if scene.get("unit_name") in split_names]
+        warnings.append(f"{' / '.join(sorted(split_names))} unit inside {main}'s: scene {' · '.join(kept)} kept on the "
+                        "main unit's day (a split of the main unit, not the 2nd unit).")
     second = None
     for scene in scenes:
-        if scene.get("unit_name", main) == main:
+        if scene.get("unit_name", main) == main or (split_of_main and scene.get("unit_name") in split_names):
             scene.pop("unit_name", None)
         else:
             scene["unit"] = "2nd"
